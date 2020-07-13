@@ -1,4 +1,7 @@
-# Get state GDP, employee compensation, taxes, gross operating surplus 2007-2018
+#' Get BEA state data from 2007-2018.
+#' @param dataname A text indicating what state data to get.
+#' Can be GDP, employee compensation, taxes, and gross operating surplus.
+#' @return A data frame of BEA state data from 2007-2018.
 getBEAStateData <- function (dataname) {
   # Create the placeholder file
   StateGDPzip <- "inst/extdata/SAGDP.zip"
@@ -47,7 +50,8 @@ usethis::use_data(State_Compensation_2007_2017, overwrite = TRUE)
 State_GOS_2007_2017 <- getBEAStateData("GOS")
 usethis::use_data(State_GOS_2007_2017, overwrite = TRUE)
 
-# Get state employment (full-time and part-time) 2009-2018
+#' Get BEA state employment (full-time and part-time) data from 2009-2018
+#' @return A data frame of BEA state employment data from 2009-2018.
 getBEAStateEmployment <- function () {
   APIkey <- readLines(rappdirs::user_data_dir("BEA_API_KEY.txt"), warn = FALSE)
   linecodes <- jsonlite::fromJSON(paste0("https://apps.bea.gov/api/data/?&UserID=", APIkey,
@@ -82,7 +86,8 @@ getBEAStateEmployment <- function () {
 State_Employment_2009_2018 <- getBEAStateEmployment()
 usethis::use_data(State_Employment_2009_2018, overwrite = TRUE)
 
-# Get state PCE (personal consumption expenditures) 2007-2018
+#' Get BEA state PCE (personal consumption expenditures) data from 2007-2018
+#' @return A data frame of BEA state PCE data from 2007-2018.
 getBEAStatePCE <- function () {
   # Create the placeholder file
   StatePCEzip <- "inst/extdata/SAEXP.zip"
@@ -111,7 +116,8 @@ getBEAStatePCE <- function () {
 State_PCE_2007_2018 <- getBEAStatePCE()
 usethis::use_data(State_PCE_2007_2018, overwrite = TRUE)
 
-# Download US Gov Expenditure (NIPA table) from BEA
+#' Download BEA US Gov Expenditure data (NIPA table) from 2007-2019.
+#' @return A data frame of BEA US Gov Expenditure data (NIPA table) from 2007-2019.
 getBEAGovExpenditure <- function() {
   TableName <- "Section3All_xls.xlsx"
   FileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
@@ -122,7 +128,8 @@ getBEAGovExpenditure <- function() {
   }
 }
 
-# Get US Gov Investment table (Table 3.9.5 annual)
+#' Get US Gov Investment data (Table 3.9.5 annual) from 2007-2019.
+#' @return A data frame of BEA US Gov Investment data from 2007-2019.
 getBEAGovInvestment <- function() {
   # Download US Gov Expenditure (NIPA table) from BEA
   getBEAGovExpenditure()
@@ -143,7 +150,8 @@ getBEAGovInvestment <- function() {
 GovInvestment_2007_2019 <- getBEAGovInvestment()
 usethis::use_data(GovInvestment_2007_2019, overwrite = TRUE)
 
-# Get US Gov Consumption table (Table 3.10.5 annual)
+#' Get US Gov Consumption data (Table 3.10.5 annual) from 2007-2019.
+#' @return A data frame of BEA US Gov Consumption data from 2007-2019.
 getBEAGovConsumption <- function() {
   # Download US Gov Expenditure (NIPA table) from BEA
   getBEAGovExpenditure()
