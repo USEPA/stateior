@@ -1,0 +1,22 @@
+Package: stateio
+Type: Package
+Title: USEEIO R modeling software
+Version: 0.0.1
+Date: 2020-07-13
+Authors@R: c(
+  person("Mo","Li", email="mo.li@gdit.com", role="aut"),
+  person("Joao-Pedro","Ferreira", email="joao.ferreira@ufl.edu", role= c("aut")),
+  person("Yilun"," Zha", email="yilunzha@gatech.eduv", role= c("aut")),
+  person("Christa","Court", email="ccourt@ufl.edu", role= c("aut")),
+  person("David","Meyer", email="meyer.david@epa.gov", role= c("aut")),
+  person("Wesley","Ingwersen", email="ingwersen.wesley@epa.gov", role= c("aut", "cre")))
+Description:
+  Description to go here
+URL: https://github.com/USEPA/stateio
+BugReports: https://github.com/USEPA/stateio/issues
+Depends:
+  R (>= 3.6)
+License: file LICENSE
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.0
