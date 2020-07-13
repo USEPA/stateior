@@ -1,6 +1,7 @@
 #' Get US import/export table from usatrade.census.gov, and convert it to Census import/export table format.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @param flow_ratio_type Type of commodity flow, can be "export" or "import".
+#' @return A data frame contains US import/export data from 2012-2017.
 getCensusUSATradebyNAICS <- function (year, flow_ratio_type) {
   # Load the downloaded table from usatrade.census.gov
   filename <- paste0("Census_USATrade", Hmisc::capitalize(flow_ratio_type), "_", year, ".csv")
