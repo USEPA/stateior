@@ -27,6 +27,7 @@ Imports:
     useeior,
     utils (>= 3.6.1)
 Depends:
+  dplyr,
   R (>= 3.6),
   useeior
 Remotes:
