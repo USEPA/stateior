@@ -17,6 +17,7 @@ StateValueAdded <- allocateStateTabletoBEASummary("GDP", year, allocationweights
 
 #' 3 - Load US Summary Make table for given year
 #' Generate US Summary Make Transaction and Industry and Commodity Output
+US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"))*1E6
 US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
 US_Summary_MakeTransaction <- US_Summary_Make[-which(rownames(US_Summary_Make)=="Total Commodity Output"),
                                               -which(colnames(US_Summary_Make)=="Total Industry Output")]
@@ -49,7 +50,7 @@ for (state in c(states, "Overseas")) {
 #' Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors (retail, real estate, gov)
 for (linecode in c("35", "57", "84", "86")) {
   # Determine BEA sectors that need allocation
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "useeior"),
+  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateio"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   allocation_sectors <- BEAStateGDPtoBEASummary[duplicated(BEAStateGDPtoBEASummary$LineCode) |
                                                   duplicated(BEAStateGDPtoBEASummary$LineCode, fromLast = TRUE), ]
@@ -61,7 +62,7 @@ for (linecode in c("35", "57", "84", "86")) {
   t_c <- StateIndustryOutputbyLineCode[StateIndustryOutputbyLineCode$LineCode==linecode, as.character(year)]
   # Generate another vector of US industry output for the LineCode by BEA Summary
   # Load State GDP to BEA Summary sector-mapping table
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "useeior"),
+  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateio"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Create m0
   EstimatedStateIndustryOutput <- do.call(cbind.data.frame, State_Summary_IndustryOutput_list)
