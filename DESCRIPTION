@@ -27,7 +27,8 @@ Imports:
     useeior,
     utils (>= 3.6.1)
 Depends:
-  R (>= 3.6)
+  R (>= 3.6),
+  useeior
 Remotes:
   github::USEPA/useeior@master
 License: file LICENSE
