@@ -59,8 +59,9 @@ t_r <- US_Summary_Use[rownames(US_Summary_UseTransaction), "F010"]
 t_c <- as.numeric(calculateStateTotalPCE(year)[colnames(m0), ])
 # Apply RAS, RAS converged after 1000001 iterations.
 State_PCE_balanced <- as.data.frame(applyRAS(m0, t_r, t_c, relative_diff = NULL,
-                                             absolute_diff = 1E6, max_itr = 1E6))
+                                             absolute_diff = 0, max_itr = 1E6))
 colnames(State_PCE_balanced) <- colnames(m0)
+save(State_PCE_balanced, file = paste0("data/State_PCE_", year, ".rda"))
 
 # Convert State_PCE_balanced from a commodity x state matrix to a long df
 State_PCE_balanced$BEA_2012_Summary_Code <- rownames(State_PCE_balanced)
