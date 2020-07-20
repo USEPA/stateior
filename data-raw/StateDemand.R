@@ -61,7 +61,7 @@ t_c <- as.numeric(calculateStateTotalPCE(year)[colnames(m0), ])
 State_PCE_balanced <- as.data.frame(applyRAS(m0, t_r, t_c, relative_diff = NULL,
                                              absolute_diff = 0, max_itr = 1E6))
 colnames(State_PCE_balanced) <- colnames(m0)
-save(State_PCE_balanced, file = paste0("data/State_PCE_", year, ".rda"))
+save(State_PCE_balanced, file = paste0("data/State_PCE_", year, "_afterRAS.rda"))
 
 # Convert State_PCE_balanced from a commodity x state matrix to a long df
 State_PCE_balanced$BEA_2012_Summary_Code <- rownames(State_PCE_balanced)
@@ -77,9 +77,10 @@ colnames(State_PCE_balanced) <- "F010"
 StateFinalDemand <- cbind(State_PCE_balanced,
                           estimateStatePrivateInvestment(year),
                           estimateStateExport(year),
-                          # state fed gov expenditure
+                          estimateStateFedGovExpenditure(year), # state fed gov expenditure using comm output ratio
                           estimateStateSLGovExpenditure(year))
-State_Summary_Use <- cbind(State_Summary_UseTransaction, StateFinalDemand[rownames(State_Summary_Use), ])
+State_Summary_Use <- cbind(State_Summary_UseTransaction, StateFinalDemand[rownames(State_Summary_UseTransaction), ])
+save(State_Summary_Use, file = paste0("data/State_Summary_Use_", year, "_tmp.rda"))
 
 #' 10 - Estimate state imports
 State_Summary_Use_Domestic <- State_Summary_Use*(1 - calculateUSImportRatioMatrix(year))
