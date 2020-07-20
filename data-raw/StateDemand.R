@@ -74,17 +74,30 @@ colnames(State_PCE_balanced) <- "F010"
 #' 8 - Apply RAS to federal gov expenditure
 
 #' 9 - Assemble final demand columns
+#' Create a placeholding State_Import
+State_Import <- State_PCE_balanced
+colnames(State_Import) <- "F050"
+State_Import$F050 <- 0
 StateFinalDemand <- cbind(State_PCE_balanced,
                           estimateStatePrivateInvestment(year),
                           estimateStateExport(year),
+                          State_Import,
                           estimateStateFedGovExpenditure(year), # state fed gov expenditure using comm output ratio
                           estimateStateSLGovExpenditure(year))
 State_Summary_Use <- cbind(State_Summary_UseTransaction, StateFinalDemand[rownames(State_Summary_UseTransaction), ])
-save(State_Summary_Use, file = paste0("data/State_Summary_Use_", year, "_tmp.rda"))
 
-#' 10 - Estimate state imports
-State_Summary_Use_Domestic <- State_Summary_Use*(1 - calculateUSImportRatioMatrix(year))
-StateImport <- rowSums(State_Summary_Use_Domestic) - rowSums(State_Summary_Use)
+#' 10 - Estimate state imports following these steps:
+#' NationalDomesticUse = NationalUse - NationalImportMatrix
+#' NationalDomesticUseRatios = NationalDomesticUse/NationalUse
+#' For each state, StateDomesticUse = StateUse * NationalDomesticUseRatios
+#' StateImportColumn  = rowSums(StateDomesticUse) - rowSums(StateUse)
+#' Optional: StateImportMatrix = StateDomesticUse - StateUse
+Use_Domestic_ratios <- do.call("rbind", replicate(52, 1 - calculateUSImportRatioMatrix(year), simplify = FALSE))
+rownames(Use_Domestic_ratios) <- rownames(State_Summary_Use)
+State_Summary_Use_Domestic <- State_Summary_Use*Use_Domestic_ratios
+State_Summary_Use_Domestic[is.na(State_Summary_Use_Domestic)] <- 0
+State_Summary_Use$F050 <- rowSums(State_Summary_Use_Domestic) - rowSums(State_Summary_Use)
+save(State_Summary_Use, file = paste0("data/State_Summary_Use_", year, "_tmp.rda"))
 
 #' Last step - For each state, append detailed Value Added to the end of Use table
 State_Value_Added <- assembleStateValueAdded(year)
