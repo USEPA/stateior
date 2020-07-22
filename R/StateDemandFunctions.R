@@ -1,5 +1,5 @@
 # Load BEA schema_info based on model BEA
-SchemaInfo <- utils::read.table(system.file("extdata", "2012_Summary_Schema_Info.csv", package = "stateio"),
+SchemaInfo <- utils::read.table(system.file("extdata", "2012_Summary_Schema_Info.csv", package = "useeior"),
                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
 # Extract desired columns from SchemaInfo, return vectors with strings of codes
 getVectorOfCodes <- function(colName) {
@@ -284,7 +284,7 @@ estimateStatePrivateInvestment <- function(year) {
   PCE_ratio <- calculateStateUSPCERatio(year)
   # Apply state Commodity Output ratio to F02S, F02E, F02N, and F030
   # Generate state Commodity Output ratio
-  CommodityOutput_ratio <- calculateStateCommodityOutputRatio(year)
+  CommOutput_ratio <- calculateStateCommodityOutputRatio(year)
   # Calculate state Private Investment (Residential and NonResidential)
   State_ResidentialInvestment <- data.frame()
   State_NonResidentialInvestment <- data.frame()
@@ -299,9 +299,16 @@ estimateStatePrivateInvestment <- function(year) {
     rownames(ResidentialInvestment) <- paste(state, rownames(ResidentialInvestment), sep = ".")
     State_ResidentialInvestment <- rbind.data.frame(State_ResidentialInvestment, ResidentialInvestment)
     # NonResidential
-    NonResidentialInvestment <- US_NonResidentialInvestment * CommodityOutput_ratio[CommodityOutput_ratio$State==state, "Ratio"]
+    NonResidentialInvestment <- merge(US_NonResidentialInvestment,
+                                      CommOutput_ratio[CommOutput_ratio$State==state, ],
+                                      by.x = 0, by.y = "BEA_2012_Summary_Code")
+    columns <- colnames(US_NonResidentialInvestment)
+    NonResidentialInvestment[, columns] <- NonResidentialInvestment[, columns] * NonResidentialInvestment$Ratio
+    rownames(NonResidentialInvestment) <- NonResidentialInvestment$Row.names
+    NonResidentialInvestment <- NonResidentialInvestment[rownames(US_ResidentialInvestment), ]
     rownames(NonResidentialInvestment) <- paste(state, rownames(NonResidentialInvestment), sep = ".")
-    State_NonResidentialInvestment <- rbind.data.frame(State_NonResidentialInvestment, NonResidentialInvestment)
+    State_NonResidentialInvestment <- rbind.data.frame(State_NonResidentialInvestment,
+                                                       NonResidentialInvestment[, columns])
   }
   # Assemble State Residential and NonResidential Private Investment
   State_PrivateInvestment <- cbind(State_ResidentialInvestment, State_NonResidentialInvestment)
@@ -318,7 +325,7 @@ estimateStateExport <- function(year) {
   # Extract US Export
   US_Export <- US_Summary_Use[Commodities, ExportCodes, drop = FALSE]
   # Generate state Commodity Output ratio
-  CommodityOutput_ratio <- calculateStateCommodityOutputRatio(year)
+  CommOutput_ratio <- calculateStateCommodityOutputRatio(year)
   # Calculate state export
   State_Export <- data.frame()
   for (state in c(state.name, "Disctrict of Columbia")) {
@@ -326,7 +333,7 @@ estimateStateExport <- function(year) {
     State_export_ratio <- calculateCensusForeignCommodityFlowRatios(state, year, "export", 2012, "Summary")
     # For commodities that are not covered by Census data, use Commodity Output ratio instead
     State_export_ratio <- merge(State_export_ratio[, c("BEA_2012_Summary_Code", "SoITradeRatio")],
-                                CommodityOutput_ratio[CommodityOutput_ratio$State==state, ],
+                                CommOutput_ratio[CommOutput_ratio$State==state, ],
                                 by = "BEA_2012_Summary_Code", all.y = TRUE)
     State_export_ratio[is.na(State_export_ratio$SoITradeRatio), "SoITradeRatio"] <- State_export_ratio[is.na(State_export_ratio$SoITradeRatio), "Ratio"]
     rownames(State_export_ratio) <- State_export_ratio$BEA_2012_Summary_Code
@@ -499,12 +506,12 @@ estimateStateFedGovExpenditure <- function(year) {
   US_FedGovExp <- US_Summary_Use[Commodities, FedGovernmentDemandCodes, drop = FALSE]
   # Apply state Commodity Output ratio as a temporary solution
   # Generate state Commodity Output ratio
-  CommodityOutput_ratio <- calculateStateCommodityOutputRatio(year)
+  CommOutput_ratio <- calculateStateCommodityOutputRatio(year)
   # Calculate State_FedGovExp
   State_FedGovExp <- data.frame()
-  for (state in unique(CommodityOutput_ratio$State)) {
-    # Merge US_FedGovExp and CommodityOutput_ratio
-    State_FedGovExp_state <- merge(CommodityOutput_ratio[CommodityOutput_ratio$State==state, ],
+  for (state in unique(CommOutput_ratio$State)) {
+    # Merge US_FedGovExp and CommOutput_ratio
+    State_FedGovExp_state <- merge(CommOutput_ratio[CommOutput_ratio$State==state, ],
                                    US_FedGovExp, by.x = "BEA_2012_Summary_Code", by.y = 0, all.y = TRUE)
     # Calculate state FedGovExp
     State_FedGovExp_state[, FedGovernmentDemandCodes] <- State_FedGovExp_state[, FedGovernmentDemandCodes] * State_FedGovExp_state$Ratio

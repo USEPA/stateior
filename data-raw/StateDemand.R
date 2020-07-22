@@ -18,6 +18,7 @@ US_Summary_IndustryOutput <- rowSums(US_Summary_MakeTransaction)
 US_Summary_Use <- get(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
 US_Summary_UseTransaction <- US_Summary_Use[colnames(US_Summary_MakeTransaction),
                                             rownames(US_Summary_MakeTransaction)]
+FinalDemand_columns <- colnames(US_Summary_Use)[75:94]
 
 #' 4 - Calculate state_US_IndustryOutput_ratio, for each state and each industry,
 #' Divide state IndustryOutput by US IndustryOutput.
@@ -84,19 +85,21 @@ StateFinalDemand <- cbind(State_PCE_balanced,
                           State_Import,
                           estimateStateFedGovExpenditure(year), # state fed gov expenditure using comm output ratio
                           estimateStateSLGovExpenditure(year))
-State_Summary_Use <- cbind(State_Summary_UseTransaction, StateFinalDemand[rownames(State_Summary_UseTransaction), ])
+State_Summary_Use <- cbind(State_Summary_UseTransaction,
+                           StateFinalDemand[rownames(State_Summary_UseTransaction), FinalDemand_columns])
+save(StateFinalDemand, file = paste0("data/State_Summary_FinalDemand_", year, "_tmp.rda"))
 
 #' 10 - Estimate state imports following these steps:
 #' NationalDomesticUse = NationalUse - NationalImportMatrix
 #' NationalDomesticUseRatios = NationalDomesticUse/NationalUse
 #' For each state, StateDomesticUse = StateUse * NationalDomesticUseRatios
-#' StateImportColumn  = rowSums(StateDomesticUse) - rowSums(StateUse)
+#' StateImportColumn  = rowSums(StateUse) - rowSums(StateDomesticUse)
 #' Optional: StateImportMatrix = StateDomesticUse - StateUse
 Use_Domestic_ratios <- do.call("rbind", replicate(52, 1 - calculateUSImportRatioMatrix(year), simplify = FALSE))
 rownames(Use_Domestic_ratios) <- rownames(State_Summary_Use)
 State_Summary_Use_Domestic <- State_Summary_Use*Use_Domestic_ratios
 State_Summary_Use_Domestic[is.na(State_Summary_Use_Domestic)] <- 0
-State_Summary_Use$F050 <- rowSums(State_Summary_Use_Domestic) - rowSums(State_Summary_Use)
+State_Summary_Use$F050 <- rowSums(State_Summary_Use) - rowSums(State_Summary_Use_Domestic)
 save(State_Summary_Use, file = paste0("data/State_Summary_Use_", year, "_tmp.rda"))
 
 #' Last step - For each state, append detailed Value Added to the end of Use table
