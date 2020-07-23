@@ -326,24 +326,23 @@ estimateStateExport <- function(year) {
   US_Export <- US_Summary_Use[Commodities, ExportCodes, drop = FALSE]
   # Generate state Commodity Output ratio
   CommOutput_ratio <- calculateStateCommodityOutputRatio(year)
+  # Generate State_export_ratio
+  State_export_ratio <- calculateCensusForeignCommodityFlowRatios(year, "export", 2012, "Summary")
+  # Add SoITradeRatio of Overseas as zero
+  Overseas_export_ratio <- cbind.data.frame(unique(State_export_ratio$BEA_2012_Summary_Code),
+                                            "Overseas", "SoITradeRatio")
+  colnames(Overseas_export_ratio) <- colnames(State_export_ratio)
+  Overseas_export_ratio$SoITradeRatio <- 0
+  State_export_ratio <- rbind.data.frame(State_export_ratio, Overseas_export_ratio)
+  # For commodities that are not covered by Census data, use Commodity Output ratio instead
+  State_export_ratio <- merge(State_export_ratio, CommOutput_ratio,
+                              by = c("BEA_2012_Summary_Code", "State"), all.y = TRUE)
+  State_export_ratio[is.na(State_export_ratio$SoITradeRatio), "SoITradeRatio"] <- State_export_ratio[is.na(State_export_ratio$SoITradeRatio), "Ratio"]
   # Calculate state export
-  State_Export <- data.frame()
-  for (state in c(state.name, "Disctrict of Columbia")) {
-    # Generate State_export_ratio
-    State_export_ratio <- calculateCensusForeignCommodityFlowRatios(state, year, "export", 2012, "Summary")
-    # For commodities that are not covered by Census data, use Commodity Output ratio instead
-    State_export_ratio <- merge(State_export_ratio[, c("BEA_2012_Summary_Code", "SoITradeRatio")],
-                                CommOutput_ratio[CommOutput_ratio$State==state, ],
-                                by = "BEA_2012_Summary_Code", all.y = TRUE)
-    State_export_ratio[is.na(State_export_ratio$SoITradeRatio), "SoITradeRatio"] <- State_export_ratio[is.na(State_export_ratio$SoITradeRatio), "Ratio"]
-    rownames(State_export_ratio) <- State_export_ratio$BEA_2012_Summary_Code
-    # Calculate state export
-    Export <- US_Export * State_export_ratio[rownames(US_Export), "SoITradeRatio"]
-    rownames(Export) <- paste(state, rownames(Export), sep = ".")
-    State_Export <- rbind.data.frame(State_Export, Export)
-  }
-  # Add Overseas to the table
-  State_Export[paste("Overseas", rownames(US_Export), sep = "."), ] <- 0
+  State_Export <- merge(US_Export, State_export_ratio, by.x = 0, by.y = "BEA_2012_Summary_Code")
+  State_Export$F040 <- State_Export$F040 * State_Export$SoITradeRatio
+  rownames(State_Export) <- paste(State_Export$State, State_Export$Row.names, sep = ".")
+  State_Export <- State_Export[, "F040", drop = FALSE]
   return(State_Export)
 }
 
