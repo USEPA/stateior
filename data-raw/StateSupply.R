@@ -48,6 +48,7 @@ for (state in c(states, "Overseas")) {
 }
 
 #' Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors (retail, real estate, gov)
+#' RAS converged after 1000001, 6, 911, and 6 iterations.
 for (linecode in c("35", "57", "84", "86")) {
   # Determine BEA sectors that need allocation
   BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateio"),
@@ -81,7 +82,8 @@ for (linecode in c("35", "57", "84", "86")) {
     state_US_VA_ratio[state_US_VA_ratio$BEA_2012_Summary_Code==sector, "Ratio"] <- state_US_VA_ratio_linecode[sector, ]
   }
 }
-
+df <- state_US_VA_ratio
+# Apply the adjusted VA_ratio to calculate State Summary MakeTransaction, IndustryOutput, and CommodityOutput
 State_Summary_MakeTransaction_list <- list()
 State_Summary_IndustryOutput_list <- list()
 State_Summary_CommodityOutput_list <- list()
@@ -145,6 +147,7 @@ colnames(State_Summary_MakeTransaction) <- colnames(US_Summary_MakeTransaction)
 
 #' 8 - Perform RAS until model is balanced
 #' Apply RAS balancing to the entire Make table
+#' RAS converged after 386 iterations.
 m0 <- State_Summary_MakeTransaction
 t_r <- as.numeric(unlist(State_Summary_IndustryOutput_list))
 t_c <- as.numeric(colSums(US_Summary_MakeTransaction))
@@ -153,16 +156,16 @@ colnames(State_Summary_MakeTransaction_balanced) <- colnames(m0)
 
 #' 9 - Generae MarketShare matrix for US and each state
 # US MS
-US_Summary_MarketShare <- normalizeIOTransactions(US_Summary_MakeTransaction, US_Summary_CommodityOutput)
+US_Summary_MarketShare <- useeior::normalizeIOTransactions(US_Summary_MakeTransaction, US_Summary_CommodityOutput)
 # State MS
 State_Summary_MarketShare_list <- list()
 for (state in states) {
-  StateMS <- normalizeIOTransactions(State_Summary_MakeTransaction_list[[state]],
-                                     State_Summary_CommodityOutput_list[[state]])
-  # print(paste(state, max(StateMS)))
-  # print(paste(state, min(StateMS)))
+  StateMake <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
+  StateCommOutput <- colSums(StateMake)
+  StateMS <- useeior::normalizeIOTransactions(StateMake, StateCommOutput)
   State_Summary_MarketShare_list[[state]] <- cbind.data.frame(rownames(StateMS), StateMS)
   colnames(State_Summary_MarketShare_list[[state]])[1] <- ""
+  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(StateCommOutput)
 }
 
 # Compare state MS to US MS

@@ -141,21 +141,20 @@ calculateStateUSValueAddedRatio <- function(year) {
 #' @return A data frame contains ratios of state/US GDP (value added) for all states at a specific year by BEA State LineCode.
 calculateStateUSVARatiobyLineCode <- function(year) {
   # Load LineCode-coded State ValueAdded
-  StateValueAdded <- getStateGDP(year)
-  # Generate sum of State ValueAdded table
-  StateValueAdded_sum <- stats::aggregate(StateValueAdded[, as.character(year)], by = list(StateValueAdded$LineCode), sum)
-  colnames(StateValueAdded_sum) <- c("LineCode", as.character(year))
+  ValueAdded <- getStateGDP(year)
   # Extract US value added
-  USValueAdded <- StateValueAdded[StateValueAdded$GeoName=="United States *", ]
-  # Convert values to numeric and to US $
-  USValueAdded[, as.character(year)] <- as.numeric(USValueAdded[, as.character(year)])*1E6
+  USValueAdded <- ValueAdded[ValueAdded$GeoName=="United States *", ]
+  # Generate sum of State ValueAdded table
+  StateValueAdded <- ValueAdded[ValueAdded$GeoName!="United States *", ]
+  StateValueAdded_sum <- stats::aggregate(StateValueAdded[, as.character(year)],
+                                          by = list(StateValueAdded$LineCode), sum)
+  colnames(StateValueAdded_sum) <- c("LineCode", as.character(year))
   # Merge sum of state GDP with US VA to get VA of Overseas region
   OverseasValueAdded <- merge(StateValueAdded_sum, USValueAdded, by = "LineCode")
-  OverseasValueAdded[, as.character(year)] <- OverseasValueAdded[, paste0(year, ".y")] - OverseasValueAdded[, paste0(year, ".x")]
+  OverseasValueAdded[, paste0(year, ".x")] <- OverseasValueAdded[, paste0(year, ".y")] - OverseasValueAdded[, paste0(year, ".x")]
   OverseasValueAdded$GeoName <- "Overseas"
   # Merge state and US ValueAdded by LineCode
-  StateUSValueAdded <- merge(StateValueAdded[StateValueAdded$GeoName!="United States *", ],
-                             USValueAdded[, -1], by = "LineCode")
+  StateUSValueAdded <- merge(StateValueAdded, USValueAdded[, -1], by = "LineCode")
   # Append Overseas VA to StateValueAdded
   StateUSValueAdded <- rbind(StateUSValueAdded, OverseasValueAdded[, colnames(StateUSValueAdded)])
   # Calculate the state-US ValueAdded ratios by LineCode
@@ -171,8 +170,6 @@ calculateStateUSVARatiobyLineCode <- function(year) {
 calculateStateIndustryOutputbyLineCode <- function(year) {
   # Generate state_US_VA_ratio_LineCode
   state_US_VA_ratio_LineCode <- calculateStateUSVARatiobyLineCode(year)
-  # # Load US Gross Output
-  # USGrossOutput <- useeior::Summary_GrossOutput_IO[, as.character(year), drop = FALSE]
   # Get US Industry Output from US Make table
   US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
   US_Summary_MakeTrasaction <- US_Summary_Make[-which(rownames(US_Summary_Make)=="Total Commodity Output"),
