@@ -2,10 +2,9 @@
 % Please edit documentation in R/CommodityFlowFunctions.R
 \name{calculateCensusForeignCommodityFlowRatios}
 \alias{calculateCensusForeignCommodityFlowRatios}
-\title{Calculate Census import/export commodity flow ratios by state}
+\title{Calculate Census import/export commodity flow ratios by BEA for all available states.}
 \usage{
 calculateCensusForeignCommodityFlowRatios(
-  state,
   year,
   flow_ratio_type,
   ioschema,
@@ -13,8 +12,6 @@ calculateCensusForeignCommodityFlowRatios(
 )
 }
 \arguments{
-\item{state}{State name.}
-
 \item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
 
 \item{flow_ratio_type}{Type of commodity flow, can be "export" or "import".}
@@ -24,8 +21,8 @@ calculateCensusForeignCommodityFlowRatios(
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A data frame contains international commodity flow ratios by BEA.
+A data frame contains international commodity flow ratios by BEA for all available states.
 }
 \description{
-Calculate Census import/export commodity flow ratios by state
+Calculate Census import/export commodity flow ratios by BEA for all available states.
 }

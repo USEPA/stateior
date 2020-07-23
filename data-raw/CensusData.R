@@ -10,10 +10,10 @@ getCensusUSATradebyNAICS <- function (year, flow_ratio_type) {
                              col.names = c("Commodity", "State", "Country", "Year", "Value"))
   # Keep rows for the specified year and drop "All Commodities"
   table <- table[table$Year==year & !table$Commodity=="All Commodities", ]
-  # Change state name from "Dist of Columbia" to "Disctrict of Columbia"
-  table[table$State=="Dist of Columbia", "State"] <- "Disctrict of Columbia"
+  # Change state name from "Dist of Columbia" to "District of Columbia"
+  table[table$State=="Dist of Columbia", "State"] <- "District of Columbia"
   # Drop "All States" and non-state rows
-  table <- table[table$State %in% c(state.name, "Disctrict of Columbia"), ]
+  table <- table[table$State %in% c(state.name, "District of Columbia"), ]
   # Create NAICS
   table$NAICS <- as.integer(do.call(rbind, strsplit(table$Commodity, "\\ "))[, 1])
   # Convert trade value to numeric
