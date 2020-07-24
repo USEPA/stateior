@@ -358,6 +358,7 @@ calculateUSImportRatioMatrix <- function(year) {
   columns <- intersect(colnames(US_Summary_Use), colnames(US_Summary_Import))
   # Calculate state Import ratios
   Import_Ratio <- US_Summary_Import[rows, columns]/US_Summary_Use[rows, columns]
+  Import_Ratio[is.na(Import_Ratio)] <- 0
   return(Import_Ratio)
 }
 
