@@ -1,5 +1,5 @@
 #'Creates Combined Demand Table (in Use Table form) for all 52 states (including DC and Overseas) for a given year
-#'Stores table by year .rda files in useeior package
+#'Stores table by year .rda files in stateio package
 
 #' 1 - Load state industry output for the given year.
 year <- 2012
@@ -79,15 +79,16 @@ colnames(State_PCE_balanced) <- "F010"
 State_Import <- State_PCE_balanced
 colnames(State_Import) <- "F050"
 State_Import$F050 <- 0
+row_names <- rownames(State_PCE_balanced)
 StateFinalDemand <- cbind(State_PCE_balanced,
-                          estimateStatePrivateInvestment(year),
-                          estimateStateExport(year),
-                          State_Import,
-                          estimateStateFedGovExpenditure(year), # state fed gov expenditure using comm output ratio
-                          estimateStateSLGovExpenditure(year))
+                          estimateStatePrivateInvestment(year)[row_names, ],
+                          estimateStateExport(year)[row_names, , drop = FALSE],
+                          State_Import[row_names, , drop = FALSE],
+                          estimateStateFedGovExpenditure(year)[row_names, ], # state fed gov expenditure using comm output ratio
+                          estimateStateSLGovExpenditure(year))[row_names, ]
 State_Summary_Use <- cbind(State_Summary_UseTransaction,
                            StateFinalDemand[rownames(State_Summary_UseTransaction), FinalDemand_columns])
-save(StateFinalDemand, file = paste0("data/State_Summary_FinalDemand_", year, "_tmp.rda"))
+save(StateFinalDemand, file = paste0("data/State_Summary_FinalDemand_", year, ".rda"))
 
 #' 10 - Estimate state imports following these steps:
 #' NationalDomesticUse = NationalUse - NationalImportMatrix
@@ -95,12 +96,25 @@ save(StateFinalDemand, file = paste0("data/State_Summary_FinalDemand_", year, "_
 #' For each state, StateDomesticUse = StateUse * NationalDomesticUseRatios
 #' StateImportColumn  = rowSums(StateUse) - rowSums(StateDomesticUse)
 #' Optional: StateImportMatrix = StateDomesticUse - StateUse
-Use_Domestic_ratios <- do.call("rbind", replicate(52, 1 - calculateUSImportRatioMatrix(year), simplify = FALSE))
-rownames(Use_Domestic_ratios) <- rownames(State_Summary_Use)
-State_Summary_Use_Domestic <- State_Summary_Use*Use_Domestic_ratios
-State_Summary_Use_Domestic[is.na(State_Summary_Use_Domestic)] <- 0
-State_Summary_Use$F050 <- rowSums(State_Summary_Use) - rowSums(State_Summary_Use_Domestic)
-save(State_Summary_Use, file = paste0("data/State_Summary_Use_", year, "_tmp.rda"))
+Domestic_Use_ratios <- do.call("rbind", replicate(52, 1 - calculateUSImportRatioMatrix(year), simplify = FALSE))
+rownames(Domestic_Use_ratios) <- rownames(State_Summary_Use)
+State_Summary_Domestic_Use <- State_Summary_Use*Domestic_Use_ratios
+State_Summary_Domestic_Use[is.na(State_Summary_Domestic_Use)] <- 0
+State_Summary_Use$F050 <- rowSums(State_Summary_Domestic_Use) - rowSums(State_Summary_Use)
+save(State_Summary_Use, file = paste0("data/State_Summary_Use_", year, ".rda"))
+save(State_Summary_Domestic_Use, file = paste0("data/State_Summary_Domestic_Use_", year, ".rda"))
+
+#' 11 - Calculate imports by industry
+ImportByIndustry <- colSums(State_Summary_Use) - colSums(State_Summary_Domestic_Use)
+
+#' 12 - Aggregate state Use tables to national level and check if == US Use table
+State_Summary_Use$BEA <- gsub(".*\\.", "", rownames(State_Summary_Use))
+State_Summary_Use_agg <- stats::aggregate(State_Summary_Use[, colnames(State_Summary_Use)[1:91]],
+                                          by = list(State_Summary_Use$BEA), sum)
+rownames(State_Summary_Use_agg) <- State_Summary_Use_agg$Group.1
+State_Summary_Use_agg$Group.1 <- NULL
+test <- State_Summary_Use_agg - US_Summary_Use[rownames(State_Summary_Use_agg), colnames(State_Summary_Use_agg)]
+View(test[, FinalDemand_columns])
 
 #' Last step - For each state, append detailed Value Added to the end of Use table
 State_Value_Added <- assembleStateValueAdded(year)
