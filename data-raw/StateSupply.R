@@ -1,5 +1,5 @@
 #'Creates Combined Supply Table (in Make Table form) for all 52 states (including DC and Overseas) for a given year
-#'Stores table by year .rda files in useeior package
+#'Stores table by year .rda files in stateio package
 
 #' 1 - Load state GDP/value added (VA) by industry for the given year.
 #' Map to BEA Summary level
