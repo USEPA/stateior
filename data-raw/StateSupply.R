@@ -17,7 +17,6 @@ StateValueAdded <- allocateStateTabletoBEASummary("GDP", year, allocationweights
 
 #' 3 - Load US Summary Make table for given year
 #' Generate US Summary Make Transaction and Industry and Commodity Output
-US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"))*1E6
 US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
 US_Summary_MakeTransaction <- US_Summary_Make[-which(rownames(US_Summary_Make)=="Total Commodity Output"),
                                               -which(colnames(US_Summary_Make)=="Total Industry Output")]
@@ -82,7 +81,6 @@ for (linecode in c("35", "57", "84", "86")) {
     state_US_VA_ratio[state_US_VA_ratio$BEA_2012_Summary_Code==sector, "Ratio"] <- state_US_VA_ratio_linecode[sector, ]
   }
 }
-df <- state_US_VA_ratio
 # Apply the adjusted VA_ratio to calculate State Summary MakeTransaction, IndustryOutput, and CommodityOutput
 State_Summary_MakeTransaction_list <- list()
 State_Summary_IndustryOutput_list <- list()

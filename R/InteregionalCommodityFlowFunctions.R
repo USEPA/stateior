@@ -1,7 +1,7 @@
 #' Calculate domestic local and traded ratio, which will be used in the next function generateDomestic2RegionICFs
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
-#' @param SoI A boolean variable indicating whether to calculate local and traded ratios for SoI or RoU.
+#' @param SoI A boolean variable indicating whether to calculate local and traded ratios for SoI or RoUS.
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data frame contains local and traded ratios by BEA sectors for the specified state.
@@ -49,7 +49,7 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
 generateDomestic2RegionICFs <- function (state, year, remove_scrap = FALSE, ioschema, iolevel) {
   # Specify BEA code
   bea <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
-  # Generate SoI-RoU commodity flow ratios
+  # Generate SoI-RoUS commodity flow ratios
   ICF_2r <- calculateCommodityFlowRatios(state, year, "domestic", ioschema, iolevel)
   ICF_2r$flowpath <- paste0(ICF_2r$ORIG, "2", ICF_2r$DEST)
   ICF_2r_wide <- reshape2::dcast(ICF_2r[, c(bea, "ratio", "flowpath")],
@@ -63,8 +63,8 @@ generateDomestic2RegionICFs <- function (state, year, remove_scrap = FALSE, iosc
                all.y = TRUE)
   # Calculate SoI local and traded ratios
   LocalTradeSoI <- calculateLocalandTradedRatios(state, year, SoI = TRUE, ioschema, iolevel)
-  # Calculate RoU local and traded ratios
-  LocalTradeRoU <- calculateLocalandTradedRatios(state, year, SoI = FALSE, ioschema, iolevel)
+  # Calculate RoUS local and traded ratios
+  LocalTradeRoUS <- calculateLocalandTradedRatios(state, year, SoI = FALSE, ioschema, iolevel)
   # Generate SoI Commodity Output
   # Generate state Commodity Output ratio
   CommOutput_ratio <- calculateStateCommodityOutputRatio(year)
@@ -72,23 +72,23 @@ generateDomestic2RegionICFs <- function (state, year, remove_scrap = FALSE, iosc
   # Use local and traded ratios and SoI commodity output
   for (BEAcode in Reduce(intersect, list(ICF[is.na(ICF$SoI2SoI), bea],
                                          LocalTradeSoI[, bea],
-                                         LocalTradeRoU[, bea]))) {
+                                         LocalTradeRoUS[, bea]))) {
     # Assign data source
     ICF[ICF[, bea]==BEAcode, "source"] <- "Cluster Mapping and state commodity output"
-    # Calculate LocalRoU, TradedRoU and COR (Comm Output Ratio)
-    LocalRoU <- LocalTradeRoU[LocalTradeRoU[, bea]==BEAcode, "LocalRatio"]
-    TradedRoU <- LocalTradeRoU[LocalTradeRoU[, bea]==BEAcode, "TradedRatio"]
+    # Calculate LocalRoUS, TradedRoUS and COR (Comm Output Ratio)
+    LocalRoUS <- LocalTradeRoUS[LocalTradeRoUS[, bea]==BEAcode, "LocalRatio"]
+    TradedRoUS <- LocalTradeRoUS[LocalTradeRoUS[, bea]==BEAcode, "TradedRatio"]
     COR <- CommOutput_ratio[CommOutput_ratio[, bea]==BEAcode, "Ratio"]
     # Assign ratios
-    ICF[ICF[, bea]==BEAcode, "RoU2RoU"] <- LocalRoU + TradedRoU*COR
+    ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] <- LocalRoUS + TradedRoUS*COR
     ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- LocalTradeSoI[LocalTradeSoI[, bea]==BEAcode, "LocalRatio"]
-    ICF[ICF[, bea]==BEAcode, "RoU2SoI"] <- 1 - ICF[ICF[, bea]==BEAcode, "SoI2SoI"]
-    ICF[ICF[, bea]==BEAcode, "SoI2RoU"] <- 1 - ICF[ICF[, bea]==BEAcode, "RoU2RoU"]
     # If SoI2SoI == 0, replace it with COR
     if (ICF[ICF[, bea]==BEAcode, "SoI2SoI"]==0) {
       ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- COR
       ICF[ICF[, bea]==BEAcode, "source"] <- "state commodity output"
     }
+    ICF[ICF[, bea]==BEAcode, "RoUS2SoI"] <- 1 - ICF[ICF[, bea]==BEAcode, "SoI2SoI"]
+    ICF[ICF[, bea]==BEAcode, "SoI2RoUS"] <- 1 - ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"]
   }
   # Use SoI commodity output
   for (BEAcode in intersect(ICF[is.na(ICF$source), bea], CommOutput_ratio[, bea])) {
@@ -96,10 +96,10 @@ generateDomestic2RegionICFs <- function (state, year, remove_scrap = FALSE, iosc
     ICF[ICF[, bea]==BEAcode, "source"] <- "state commodity output"
     # Assign ratios
     COR <- CommOutput_ratio[CommOutput_ratio[, bea]==BEAcode, "Ratio"]
-    ICF[ICF[, bea]==BEAcode, "RoU2RoU"] <- 1 - COR
+    ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] <- 1 - COR
     ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- COR
-    ICF[ICF[, bea]==BEAcode, "RoU2SoI"] <- 1 - COR
-    ICF[ICF[, bea]==BEAcode, "SoI2RoU"] <- COR
+    ICF[ICF[, bea]==BEAcode, "RoUS2SoI"] <- 1 - COR
+    ICF[ICF[, bea]==BEAcode, "SoI2RoUS"] <- COR
   }
   # Re-order by BEA code
   ICF <- ICF[order(match(ICF[, bea], CommodityCodeName[, 1])), ]
