@@ -1,7 +1,6 @@
 if (!require(tidyverse)) { install.packages(tidyverse) }
 library(tidyverse)
 library(readr)
-source('CrosswalkGenerator.R')
 
 #' GetFedGovSpendingData
 #' 
@@ -51,13 +50,10 @@ GetFedGovSpendingData = function(year, scope, column, type) {
   output = output %>% group_by(county, NAICS) %>% summarise(amount = sum(amount)) %>% spread(county, amount) %>% filter(NAICS != 0)
   output[is.na(output)] = 0
   
-  # mapping from NAICS6 to BEA summary using functions from crosswalkGenerator
-  indmap = getCrosswalk('bea_summary', 'naics')
-  indmap = indmap[indmap$`2012_NAICS_Code` >= 100000, ]
-  output = indmap %>% left_join(., output, by = c('2012_NAICS_Code' = 'NAICS'))
-  output[is.na(output)] = 0
-  colnames(output)[1] = 'BEA'
-  output = output %>% select(1,5:ncol(output)) %>% group_by(BEA) %>% summarise_if(is.numeric, sum)
+  # Map from NAICS to BEA Summary
+  output <- merge(unique(useeior::MasterCrosswalk2012[, c("NAICS_2012_Code", "BEA_2012_Summary_Code")]),
+                  output, by.x = "NAICS_2012_Code", by.y = "NAICS")
+  output <- output %>% select(1, 5:ncol(output)) %>% group_by(BEA_2012_Summary_Code) %>% summarise_if(is.numeric, sum)
   
   return(output)
 }
