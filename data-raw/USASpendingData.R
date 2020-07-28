@@ -1,63 +1,57 @@
-if (!require(tidyverse)) { install.packages(tidyverse) }
-library(tidyverse)
-library(readr)
-
-#' GetFedGovSpendingData
-#' 
-#' This function is to return dataframes containing Federal Government Spending data pulled
-#' from USASpending API. Time ranges from 2008-2018.
-#' 
-#' 
+#' Download Federal Government Spending data by 6-digit NAICS code
+#' By state and zipcode from USASpending.gov.
 #' @param year Integer, A numeric value between 2008-2018 specifying the year of interest
-#' @param scope String, 'GAcounty' or 'state'
-#' @param column String, 'intermediate', 'equipment', 'ip', or 'structure'
-#' @param type String, 'defense', 'nondefense'
-#' @return A data frame containing data asked for at a specific year.
-
-GetFedGovSpendingData = function(year, scope, column, type) {
-  # column selection
-  filename = paste0('../USAspending_API/output/fedspending_', paste0(column, "_0724.csv"))
-  df = readr::read_csv(filename)
-  df$StartDate = parse_date(df$`Start Date`, format = '%m/%d/%y')
-  df$EndDate = parse_date(df$`End Date`, format = '%m/%d/%y')
-  
-  # scope and year selection
-  if (scope == 'GAcounty') {
+#' @param scope String, "GAcounty" or "state"
+#' @param sector String, "intermediate", "equipment", "ip", or "structure"
+#' @param Defense A boolean variable indicating whether to get defense of non-defense data.
+#' @return A data frame of Federal Government Spending data by 6-digit NAICS
+#' by state and zipcode from 2008 to 2019.
+getFedGovSpending <- function(sector) {
+  # Load USA Spending data
+  # ! replace the loading code with actual downloading code
+  filename <- paste0("fedspending_", sector, ".csv")
+  df <- utils::read.csv(system.file("extdata", filename, package = "stateio"),
+                        stringsAsFactors = FALSE, check.names = FALSE)
+  # Assign year, state and zipcode
+  df$Year <- as.integer(substr(as.character(as.Date(df$`Start Date`, "%m/%d/%y")), 1, 4))
+  df <- df[df$`Place of Performance State Code`%in%c(state.abb, "DC"), ]
+  df$State <- state.name[match(df$`Place of Performance State Code`, state.abb)]
+  df[df$`Place of Performance State Code`=="DC", "State"] <- "District of Columbia"
+  df$Zipcode <- df$`Place of Performance Zip5`
+  df$Amount <- df$`Award Amount`
+  # Separate and store dfs in list
+  FedGovSpending <- list()
+  columns <- c("NAICS", "Year", "State", "Zipcode", "Amount")
+  for (year in 2008:2019) {
     
-    df = df[df$`Place of Performance State Code`=='GA', ] %>% filter(StartDate >= as.Date(paste0(year, '-01-01')), StartDate <= as.Date(paste0(year, '-12-31'))) %>%
-      select(6, 7, 10, 11, 14)
-    colnames(df) = c('amount', 'agency', 'state', 'zip', 'NAICS')
-    
-  } else {
-
-    df = df[df$`Place of Performance State Code`=='GA', ] %>% filter(StartDate >= as.Date(paste0(year, '-01-01')), StartDate <= as.Date(paste0(year, '-12-31'))) %>%
-      select(6, 7, 10, 11, 14)  ##### NOT IN USE
-    colnames(df) = c('amount', 'agency', 'state', 'zip', 'NAICS')  ##### NOT IN USE
-    
+    FedGovSpending[["Defense"]][[as.character(year)]] <- df[df$`Awarding Agency`=="Department of Defense" &
+                                                              df$Year==year, columns]
+    FedGovSpending[["NonDefense"]][[as.character(year)]] <- df[df$`Awarding Agency`!="Department of Defense" &
+                                                                 df$Year==year, columns]
   }
-  
-  # type selection
-  if (type == 'defense') {df = df %>% filter(agency == 'Department of Defense') %>% group_by(zip, NAICS) %>% summarise(amount = sum(amount))} 
-  else {df = df %>% filter(agency != 'Department of Defense') %>% group_by(zip, NAICS) %>% summarise(amount = sum(amount))}
-  
-  # mapping from zip to county 
-  map = readr::read_csv('../data/extdata/Crosswalk_GAZipCodeToCounty.csv')
-  output = full_join(map, df, by  = 'zip') %>% select(1,3,4,5)
-  output$county = paste0(output$county, paste0('/',output$fips))
-  output[is.na(output)] = 0
-  
-  # spread rows into columns
-  output = output %>% group_by(county, NAICS) %>% summarise(amount = sum(amount)) %>% spread(county, amount) %>% filter(NAICS != 0)
-  output[is.na(output)] = 0
-  
-  # Map from NAICS to BEA Summary
-  output <- merge(unique(useeior::MasterCrosswalk2012[, c("NAICS_2012_Code", "BEA_2012_Summary_Code")]),
-                  output, by.x = "NAICS_2012_Code", by.y = "NAICS")
-  output <- output %>% select(1, 5:ncol(output)) %>% group_by(BEA_2012_Summary_Code) %>% summarise_if(is.numeric, sum)
-  
-  return(output)
+  return(FedGovSpending)
 }
 
+USASpending_Intermediate <- getFedGovSpending("intermediate")
+FedGovExp_IntermediateDefense_2012 <- USASpending_Intermediate[["Defense"]][["2012"]]
+usethis::use_data(FedGovExp_IntermediateDefense_2012, overwrite = TRUE)
+FedGovExp_IntermediateNonDefense_2012 <- USASpending_Intermediate[["NonDefense"]][["2012"]]
+usethis::use_data(FedGovExp_IntermediateNonDefense_2012, overwrite = TRUE)
 
+USASpending_Equipment <- getFedGovSpending("equipment")
+FedGovExp_EquipmentDefense_2012 <- USASpending_Equipment[["Defense"]][["2012"]]
+usethis::use_data(FedGovExp_EquipmentDefense_2012, overwrite = TRUE)
+FedGovExp_EquipmentNonDefense_2012 <- USASpending_Equipment[["NonDefense"]][["2012"]]
+usethis::use_data(FedGovExp_EquipmentNonDefense_2012, overwrite = TRUE)
 
-#test = GetFedGovSpendingData(2015, 'GAcounty', 'structure', 'defense')
+USASpending_IP <- getFedGovSpending("ip")
+FedGovExp_IPDefense_2012 <- USASpending_IP[["Defense"]][["2012"]]
+usethis::use_data(FedGovExp_IPDefense_2012, overwrite = TRUE)
+FedGovExp_IPNonDefense_2012 <- USASpending_IP[["NonDefense"]][["2012"]]
+usethis::use_data(FedGovExp_IPNonDefense_2012, overwrite = TRUE)
+
+USASpending_Structure <- getFedGovSpending("structure")
+FedGovExp_StructureDefense_2012 <- USASpending_Structure[["Defense"]][["2012"]]
+usethis::use_data(FedGovExp_StructureDefense_2012, overwrite = TRUE)
+FedGovExp_StructureNonDefense_2012 <- USASpending_Structure[["NonDefense"]][["2012"]]
+usethis::use_data(FedGovExp_StructureNonDefense_2012, overwrite = TRUE)
