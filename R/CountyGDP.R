@@ -6,7 +6,7 @@ setwd("~/Documents/GitHub/stateio")
 source('../../stateio/R/UtilityFunctions.R')
 
 
-#' calculateStateSummarySectorGDPRatio
+#' calculateStateSummarySectorGDPRatio (MODIFIED)
 #' 
 #' It returns the state ratio of subsector level GDP to GDP of the sector which 
 #' the subsector belongs to. All ratios from one sector sums up to 1.0. For instance,
@@ -32,19 +32,16 @@ calculateStateSummarySectorGDPRatio = function(year, state) {
                       left_join(., cw, by = c('LineCode' = 'LineCodeSum')) %>%
                       mutate(GDPRatio = 0) %>%
                       select(-DescriptionSec, -DescriptionSum, -BEA_2012_Summary_Name)
-  
-  # assign ratio to each subsector
+  # assign GDPratio to each subsector
   for (i in 1:nrow(GDPRatio)) {
     if (!is.na(GDPRatio$LineCodeSec[i])) {
       GDPRatio$GDPRatio[i] = GDPRatio[[as.character(year)]][i] / GDPRatio[[as.character(year)]][which(GDPRatio$LineCode == GDPRatio$LineCodeSec[i])]
     }
   }
-  # drop na, which is the row for sector
+  # drop NA, which only exists in rows for sectors
   GDPRatio = na.omit(GDPRatio[,c('LineCode', 'LineCodeSec', 'GDPRatio')])
   return(GDPRatio)
 }
-
-
 
 
 
