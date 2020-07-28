@@ -1,73 +1,51 @@
 if (!require(tidyverse)) { install.packages(tidyverse) }
 library(tidyverse)
-source('CrosswalkGenerator.R')
-source('CountyEmployment.R')
+setwd("~/Documents/GitHub/stateio")
+# source('CrosswalkGenerator.R')
+# source('CountyEmployment.R')
 source('../../stateio/R/UtilityFunctions.R')
 
 
-#' GetGeorgiaSummarySectorGDPRatio
+#' calculateStateSummarySectorGDPRatio
 #' 
 #' It returns the state ratio of subsector level GDP to GDP of the sector which 
-#' the subsector belongs to. All ratios from one sector sums up to 1.0  
+#' the subsector belongs to. All ratios from one sector sums up to 1.0. For instance,
+#' Sector-level A is made up of A1 and A2, A1 makes up of 40% and A2 other 60%.  
 #' 
-#' 
-#' @param year A numeric value between 2007 and 2018 specifying the year of interest.
-GetGeorgiaSummarySectorGDPRatio = function(year) {
-  load("../data/extdata/State_GDP_2007_2019.rda")
-  cw = unique(readr::read_csv('../data/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv') %>% select(1:4))
+#' @param year numeric, A numeric value between 2007 and 2017 specifying the year of interest. (2018/2019 data not available now)
+#' @param state character string, the state of interest, full name with first letter capitalized, 'Georgia'. 
+calculateStateSummarySectorGDPRatio = function(year, state) {
+  #load raw state gdp data from stateio
+  State_GDP_2007_2019 = stateio::State_GDP_2007_2019
+  # load crosswalk file
+  cw = utils::read.table('inst/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv', 
+                         sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
+  # obtain sector/summary linecode
   sector_linecode = unique(cw$LineCodeSec)
   summary_linecode = unique(cw$LineCodeSum)
+  # specify state and year
+  GDPRatio = State_GDP_2007_2019[State_GDP_2007_2019$GeoName == state, c('LineCode', as.character(year))] 
+  # drop redundant line code 
+  GDPRatio = GDPRatio[GDPRatio$LineCode %in% combine(sector_linecode, summary_linecode), ]
+  # crosswalk by left join
+  GDPRatio = GDPRatio %>%
+                      left_join(., cw, by = c('LineCode' = 'LineCodeSum')) %>%
+                      mutate(GDPRatio = 0) %>%
+                      select(-DescriptionSec, -DescriptionSum, -BEA_2012_Summary_Name)
   
-  GA_GDP = State_GDP_2007_2019 %>% 
-    filter(GeoName == 'Georgia') %>%
-    select(2,3,year - 2003) %>%
-    filter(LineCode %in% combine(sector_linecode, summary_linecode)) %>% 
-    left_join(., cw, by = c('LineCode' = 'LineCodeSum')) %>%
-    mutate(GDPRatio = 0)
-  colnames(GA_GDP)[3] = 'GDP'
-  
-  for (i in 1:nrow(GA_GDP)) {
-    if (!is.na(GA_GDP$LineCodeSec[i])) {
-      GA_GDP$GDPRatio[i] = GA_GDP$GDP[i] / GA_GDP$GDP[which(GA_GDP$LineCode==GA_GDP$LineCodeSec[i])]
+  # assign ratio to each subsector
+  for (i in 1:nrow(GDPRatio)) {
+    if (!is.na(GDPRatio$LineCodeSec[i])) {
+      GDPRatio$GDPRatio[i] = GDPRatio[[as.character(year)]][i] / GDPRatio[[as.character(year)]][which(GDPRatio$LineCode == GDPRatio$LineCodeSec[i])]
     }
   }
-  GA_GDP$GDPRatio[is.na(GA_GDP$LineCodeSec)] = 1.0
-  return(GA_GDP %>% select(-6) %>% na.omit())
+  # drop na, which is the row for sector
+  GDPRatio = na.omit(GDPRatio[,c('LineCode', 'LineCodeSec', 'GDPRatio')])
+  return(GDPRatio)
 }
 
 
-#' GetCountyOriginalSectorGDP
-#' 
-#' It returns the original county GDP at BEA-sector level with NAs. 
-#' 
-#' 
-#' @param year A numeric value between 2007 and 2018 specifying the year of interest.
-#' @param county A string character specifying the county of interest, or 'all' for all data
-#' @param axis A numeric value, 0,1. if 0, each geographical unit will be a col, if 1, row
-#' @return A data frame contains selected county GDP by BEA sector industries at a specific year.
-GetCountyOriginalSectorGDP = function(year, county, axis) {
-  filename = '../data/extdata/BEA_County/CAGDP2_GA_2001_2018.csv'
-  SectorLevelLineCode = c(3,6,10,11,12,34,35,36,45,50,59,68,75,82,83) # sector level and total 
-  total = readr::read_csv(filename) %>% filter(!is.na(LineCode))
-  colnum = which(colnames(total) == paste0('gdp',as.character(year)))
-  
-  total = total %>% select(2,5, which(colnames(total) == paste0('gdp',as.character(year)))) %>% filter(LineCode %in% SectorLevelLineCode) # filter by sepecific year
-  colnames(total)[ncol(total)] = 'GDP'
-  if (county == 'all'){
-    total = total %>%  # retain only sector-level lines
-      mutate(GDP = as.numeric(GDP) * 1000) %>% arrange(GeoName)# NA if not available
-    totalCol = total %>% spread(GeoName, GDP) %>% relocate(Georgia, .after = LineCode) # transpose the table and put total to the front
-    if (axis == 0){return(totalCol)} else if (axis ==1) {return(total)}
-    
-  } else {
-    geoname = paste0(county,', GA')
-    total = total %>%  # retain only sector-level lines
-      mutate(GDP = as.numeric(GDP) * 1000) %>% # NA if not available
-      filter(GeoName == geoname)
-    totalCol = total %>% spread(GeoName, GDP) # transpose the table and put total to the front
-    if (axis == 0){return(totalCol)} else if (axis ==1) {return(total)}
-  }
-}
+
 
 
 
@@ -232,5 +210,50 @@ EstimateCountySummaryGDP = function(year, iteration = 1000) {
   #write_csv(gdp, filename)
 #}
 
+
+
+
+
+
+#####################################################################################
+################## DEPRECATED FUNCTIONS, PLEASE DO NOT USE THEM  ####################
+#####################################################################################                                  
+
+
+#' GetCountyOriginalSectorGDP (This function has been deprecated. New function is in /data-raw/BEAData.R)
+#' 
+#' It returns the original county GDP at BEA-sector level with NAs. 
+#' 
+#' 
+#' @param year A numeric value between 2007 and 2018 specifying the year of interest.
+#' @param county A string character specifying the county of interest, or 'all' for all data
+#' @param axis A numeric value, 0,1. if 0, each geographical unit will be a col, if 1, row
+#' @return A data frame contains selected county GDP by BEA sector industries at a specific year.
+GetCountyOriginalSectorGDP = function(year, county, axis) {
+  filename = '../data/extdata/BEA_County/CAGDP2_GA_2001_2018.csv'
+  SectorLevelLineCode = c(3,6,10,11,12,34,35,36,45,50,59,68,75,82,83) # sector level and total 
+  total = readr::read_csv(filename) %>% filter(!is.na(LineCode))
+  colnum = which(colnames(total) == paste0('gdp',as.character(year)))
+  
+  total = total %>% 
+    select(2,5, which(colnames(total) == paste0('gdp',as.character(year)))) %>% 
+    filter(LineCode %in% SectorLevelLineCode) # filter by sepecific year
+  
+  colnames(total)[ncol(total)] = 'GDP'
+  if (county == 'all'){
+    total = total %>%  # retain only sector-level lines
+      mutate(GDP = as.numeric(GDP) * 1000) %>% arrange(GeoName)# NA if not available
+    totalCol = total %>% spread(GeoName, GDP) %>% relocate(Georgia, .after = LineCode) # transpose the table and put total to the front
+    if (axis == 0){return(totalCol)} else if (axis ==1) {return(total)}
+    
+  } else {
+    geoname = paste0(county,', GA')
+    total = total %>%  # retain only sector-level lines
+      mutate(GDP = as.numeric(GDP) * 1000) %>% # NA if not available
+      filter(GeoName == geoname)
+    totalCol = total %>% spread(GeoName, GDP) # transpose the table and put total to the front
+    if (axis == 0){return(totalCol)} else if (axis ==1) {return(total)}
+  }
+}
 
 
