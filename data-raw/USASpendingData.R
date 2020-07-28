@@ -1,9 +1,6 @@
 #' Download Federal Government Spending data by 6-digit NAICS code
 #' By state and zipcode from USASpending.gov.
-#' @param year Integer, A numeric value between 2008-2018 specifying the year of interest
-#' @param scope String, "GAcounty" or "state"
 #' @param sector String, "intermediate", "equipment", "ip", or "structure"
-#' @param Defense A boolean variable indicating whether to get defense of non-defense data.
 #' @return A data frame of Federal Government Spending data by 6-digit NAICS
 #' by state and zipcode from 2008 to 2019.
 getFedGovSpending <- function(sector) {
@@ -31,12 +28,6 @@ getFedGovSpending <- function(sector) {
   }
   return(FedGovSpending)
 }
-
-USASpending_Intermediate <- getFedGovSpending("intermediate")
-FedGovExp_IntermediateDefense_2012 <- USASpending_Intermediate[["Defense"]][["2012"]]
-usethis::use_data(FedGovExp_IntermediateDefense_2012, overwrite = TRUE)
-FedGovExp_IntermediateNonDefense_2012 <- USASpending_Intermediate[["NonDefense"]][["2012"]]
-usethis::use_data(FedGovExp_IntermediateNonDefense_2012, overwrite = TRUE)
 
 USASpending_Equipment <- getFedGovSpending("equipment")
 FedGovExp_EquipmentDefense_2012 <- USASpending_Equipment[["Defense"]][["2012"]]

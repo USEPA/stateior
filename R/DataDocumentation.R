@@ -624,3 +624,87 @@
 #' }
 #' @source \url{https://faf.ornl.gov/fafweb/}
 "FAF_2018"
+
+#' Federal government expenditure on defense equipment final demand in 2012.
+#' Categorized by 6-digit NAICS, by state (including District of Columbia) and
+#' by zipcode.
+#' @format A data frame with 3286 obs. and 5 variables:
+#' \describe{
+#'  \item{NAICS}{integer}
+#'  \item{Year}{integer}
+#'  \item{State}{text}
+#'  \item{Zipcode}{integer}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://fedspendingtransparency.github.io/}
+"FedGovExp_EquipmentDefense_2012"
+
+#' Federal government expenditure on non-defense equipment final demand in 2012.
+#' Categorized by 6-digit NAICS, by state (including District of Columbia) and
+#' by zipcode.
+#' @format A data frame with 820 obs. and 5 variables:
+#' \describe{
+#'  \item{NAICS}{integer}
+#'  \item{Year}{integer}
+#'  \item{State}{text}
+#'  \item{Zipcode}{integer}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://fedspendingtransparency.github.io/}
+"FedGovExp_EquipmentNonDefense_2012"
+
+#' Federal government expenditure on defense intellectual property (IP) products
+#' final demand in 2012. Categorized by 6-digit NAICS, by state
+#' (including District of Columbia) and by zipcode.
+#' @format A data frame with 294 obs. and 5 variables:
+#' \describe{
+#'  \item{NAICS}{integer}
+#'  \item{Year}{integer}
+#'  \item{State}{text}
+#'  \item{Zipcode}{integer}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://fedspendingtransparency.github.io/}
+"FedGovExp_IPDefense_2012"
+
+#' Federal government expenditure on non-defense intellectual property (IP) products
+#' final demand in 2012. Categorized by 6-digit NAICS, by state
+#' (including District of Columbia) and by zipcode.
+#' @format A data frame with 241 obs. and 5 variables:
+#' \describe{
+#'  \item{NAICS}{integer}
+#'  \item{Year}{integer}
+#'  \item{State}{text}
+#'  \item{Zipcode}{integer}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://fedspendingtransparency.github.io/}
+"FedGovExp_IPNonDefense_2012"
+
+#' Federal government expenditure on defense structure final demand in 2012.
+#' Categorized by 6-digit NAICS, by state (including District of Columbia) and
+#' by zipcode.
+#' @format A data frame with 1085 obs. and 5 variables:
+#' \describe{
+#'  \item{NAICS}{integer}
+#'  \item{Year}{integer}
+#'  \item{State}{text}
+#'  \item{Zipcode}{integer}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://fedspendingtransparency.github.io/}
+"FedGovExp_StructureDefense_2012"
+
+#' Federal government expenditure on non-defense structure final demand in 2012.
+#' Categorized by 6-digit NAICS, by state (including District of Columbia) and
+#' by zipcode.
+#' @format A data frame with 708 obs. and 5 variables:
+#' \describe{
+#'  \item{NAICS}{integer}
+#'  \item{Year}{integer}
+#'  \item{State}{text}
+#'  \item{Zipcode}{integer}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://fedspendingtransparency.github.io/}
+"FedGovExp_StructureNonDefense_2012"
