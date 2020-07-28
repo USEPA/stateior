@@ -2,6 +2,7 @@ library(tidyverse)
 source('CrosswalkGenerator.R')
 source('supporter.R')
 source('../../stateio/R/UtilityFunctions.R')
+source('data-raw/BEAData.R')
 #' GetGeorgiaEmploymentData
 #' 
 #' This function is to return dataframes containing Georgia employement data from
@@ -23,7 +24,6 @@ GetGeorgiaEmploymentData = function(year) {
   
   return(GAlevel)
 }
-
 
 
 #' GetCountyEmploymentData

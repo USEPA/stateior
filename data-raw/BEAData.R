@@ -204,15 +204,17 @@ getBEACountyGDP = function(year, state = 'GA', axis = 0) {
   # filter for specified state
   fileName = paste0('inst/extdata/CAGDP2/CAGDP2_', paste0(state,'_2001_2018.csv'))
   # read data 
-  countyData = utils::read.table(fileName, sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
+  countyData = utils::read.table(fileName, 
+                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
   # drop last four rows (notes in original file)
   countyData = countyData[!is.na(countyData$Region), ]
   # select only BEA-sector-level rows
-  sectorLevelLineCode = c(3,6,10,11,12,34,35,36,45,50,59,68,75,82,83) #######TODO: have a crosswalk file in extdata and read from it, instead of hardcoding? 
+  sectorLevelLineCode = c(3,6,10,11,12,34,35,36,45,50,59,68,75,82,83)  #######TODO: have a crosswalk file in extdata and read from it, instead of hardcoding? 
   countyData = countyData[countyData$LineCode %in% sectorLevelLineCode, ]
   # convert data type (string to numeric) Note: NAs introduced by coercion, which is ok
   year_range = seq(2001,2018,1)
-  countyData[, as.character(year_range)]  =  sapply(countyData[, as.character(year_range)], as.numeric)
+  countyData[, as.character(year_range)]  =  sapply(countyData[, as.character(year_range)], 
+                                                    as.numeric)
   
   # Decision1: return all-year table or one-year table
   if (year == 0) {
@@ -244,6 +246,10 @@ getBEACountyGDP = function(year, state = 'GA', axis = 0) {
     return(countyDataOneYear)
   }
 }
+
+CountyGA_BEASectorGDP_2001_2018 = getBEACountyGDP(year = 0, state = 'GA', axis = 1)
+usethis::use_data(CountyGA_BEASectorGDP_2001_2018, overwrite = TRUE)
+
 
 
 
