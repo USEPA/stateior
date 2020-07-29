@@ -220,11 +220,16 @@ getBEACountyGDP = function(year, state = 'GA', axis = 0) {
   if (year == 0) {
     # retain all year columns
     countyDataAllYear = countyData[, c('GeoFIPS', 'GeoName', 'LineCode', as.character(year_range))]
+    # convert unit
+    for (yr in as.character(year_range)) {
+      countyDataAllYear[[yr]] = 1000 * countyDataAllYear[[yr]]
+    }
     
     return(countyDataAllYear)
   } else {
     # retain specified year only
     countyDataOneYear = countyData[, c('GeoName', 'LineCode', year)]
+    countyDataOneYear[[as.character(year)]] = 1000 * countyDataOneYear[[as.character(year)]]
   }
   
   # Decision2: transpose the table? (county as column or as row)
@@ -253,6 +258,6 @@ usethis::use_data(CountyGA_BEASectorGDP_2001_2018, overwrite = TRUE)
 
 
 
-
+test = getBEACountyGDP(year = 2015, state = 'GA', axis = 0)
 
 
