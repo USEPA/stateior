@@ -498,6 +498,50 @@ calculateUSGovExpenditureWeightFactor <- function(year, defense) {
   return(WeightFactor)
 }
 
+#' Calculate state fed government expenditure ratio at BEA Summary level.
+#' @param year A numeric value between 2008 and 2019 specifying the year of interest.
+#' @return A data frame contains state fed government expenditure ratio for all states at a specific year at BEA Summary level.
+calculateStateFedGovExpenditureRatio <- function(year) {
+  # Load state and local government expenditure
+  GovExpRatio <- data.frame()
+  sectors <- paste0(c("Structure", "Equipment", "IP"),
+                    rep(c("Defense", "NonDefense"), each = 3))
+  mapping <- unique(useeior::MasterCrosswalk2012[, c("BEA_2012_Summary_Code",
+                                                     "NAICS_2012_Code")])
+  for(sector in sectors) {
+    GovExp <- get(paste("FedGovExp", sector, year, sep = "_"),
+                  as.environment("package:stateio"))
+    # Map to BEA Summary sectors
+    
+    GovExpBEA <- merge(mapping, GovExp, by.x = "NAICS_2012_Code", by.y = "NAICS")
+    # Aggregate by BEA
+    GovExpBEA <- stats::aggregate(Amount ~ BEA_2012_Summary_Code + Year + State,
+                                  GovExpBEA, sum)
+    # Transform table from long to wide
+    GovExpBEA <- reshape2::dcast(GovExpBEA, BEA_2012_Summary_Code ~ State,
+                                 value.var = "Amount")
+    GovExpBEA[is.na(GovExpBEA)] <- 0
+    # Calculate ratios
+    GovExpBEA[, -1] <- GovExpBEA[, -1]/rowSums(GovExpBEA[, -1])
+    # Add missing states
+    GovExpBEA[, c(setdiff(state.name, colnames(GovExpBEA[, -1])), "Overseas")] <- 0
+    # Transform table from wide to long
+    GovExpBEA <- reshape2::melt(GovExpBEA, id.vars = "BEA_2012_Summary_Code",
+                                variable.name = "State", value.name = "Ratio")
+    # Add Sector column
+    GovExpBEA$Sector <- sector
+    GovExpRatio <- rbind(GovExpRatio, GovExpBEA)
+  }
+  # Transform table from long to wide
+  GovExpRatio <- reshape2::dcast(GovExpRatio, BEA_2012_Summary_Code + State ~ Sector,
+                                 value.var = "Ratio")
+  # Replace NA with 0
+  GovExpRatio[is.na(GovExpRatio)] <- 0
+  # Rename columns
+  colnames(GovExpRatio)[3:8] <- c("F06E", "F07E", "F06N", "F07N", "F06S", "F07S")
+  return(GovExpRatio)
+}
+
 #' Estimate state fed government expenditure at BEA Summary level.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state fed government expenditure for all states
