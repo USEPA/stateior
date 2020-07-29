@@ -10,7 +10,8 @@ estimateStateSLGovExpenditure(year)
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 }
 \value{
-A data frame contains state S&L government expenditure for all states at a specific year at BEA Summary level.
+A data frame contains state S&L government expenditure for all states
+at a specific year at BEA Summary level.
 }
 \description{
 Estimate state S&L government expenditure at BEA Summary level.

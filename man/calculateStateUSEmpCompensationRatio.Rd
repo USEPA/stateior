@@ -10,7 +10,8 @@ calculateStateUSEmpCompensationRatio(year)
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 }
 \value{
-A data frame contains state-US employment compensation ratios for all states at a specific year at BEA Summary level.
+A data frame contains state-US employment compensation ratios
+for all states at a specific year at BEA Summary level.
 }
 \description{
 Calculate state-US employee compensation ratios at BEA Summary level.
