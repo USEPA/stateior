@@ -258,6 +258,6 @@ usethis::use_data(CountyGA_BEASectorGDP_2001_2018, overwrite = TRUE)
 
 
 
-test = getBEACountyGDP(year = 2015, state = 'GA', axis = 0)
+# test = getBEACountyGDP(year = 2015, state = 'GA', axis = 0)
 
 
