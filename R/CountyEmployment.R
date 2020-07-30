@@ -7,13 +7,13 @@ source('data-raw/BEAData.R')
 #' 
 #' This function is to return dataframes containing establishment count data at 
 #' NAICS 6-digit level from the year of 2007 to 2019, during which QCEW data is available. 
-#' WARNING: 
 #' 
+#' @source CountyGA_QCEWEmployment_2007_2019.rda  (WARNING: THIS DATA SOURCE IS FOR GA ONLY NOW.)
 #' @param state A string character specifying the state of interest, default 'Georgia' 
 #' WARNING: only 'Georgia' is supported now, please do not attempt to give input other than that
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
 #' @return A data frame containing data asked for at a specific year.
-getStateEstablishmentData = function(state = 'Georgia', year) {
+getStateEstablishmentCount = function(state = 'Georgia', year) {
   # load total data (now GA only)
   ####TODO: find a way to load total df without having too much time and memory cost
   load('data/CountyGA_QCEWEmployment_2007_2019.rda')
@@ -36,45 +36,108 @@ getStateEstablishmentData = function(state = 'Georgia', year) {
 }
 
 
-
-
-#' GetCountyEmploymentData
+#' getCountyEmploymentData (MODIFIED)
 #' 
-#' This function is to return dataframes binding employement data of each county from
-#' the year of 2007 to 2019, during which QCEW data is available, into one data frame. 
+#' This function is to return dataframes containing Establishment data of each county in
+#' NAICS 6 from the year of 2007 to 2019, during which QCEW data is available. 
 #' 
-#' 
+#' @source CountyGA_QCEWEmployment_2007_2019.rda (WARNING: THIS DATA SOURCE IS FOR GA ONLY NOW.)
+#' @param state A string character specifying the state of interest, default 'Georgia' 
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
 #' @return A data frame containing data asked for at a specific year.
-GetCountyEmploymentData = function(state = 'Georgia', year) {
+getCountyEstablishmentCount = function(state = 'Georgia', year) {
   # load total data (now GA only)
   load('data/CountyGA_QCEWEmployment_2007_2019.rda')
-  # load County FIPS yellow page (now GA only)
-  GAcountyFIPS = getGACountyFIPS() %>% arrange(Name)
-  
-  
-  
-  
-  
-  allcounty = data.frame() # blank data frame
-  
-  for (fips in unique(GAcountyFIPS$fips)) {
-    filename = paste0(GAcountyFIPS[GAcountyFIPS$fips == fips,]$Name,paste0(year,'.csv'))
-    url = paste0('../data/extdata/QCEW_County_Emp/', paste0(paste0(year,"/"), filename))
-    countyraw = readr::read_csv(url) 
-    countytotal = countyraw %>% filter(own_code == '0') %>% select(area_fips, own_code, industry_code, year, annual_avg_estabs, annual_avg_emplvl, total_annual_wages) 
-    countydetail = countyraw %>% 
-      select(area_fips, own_code, industry_code, year, annual_avg_estabs, annual_avg_emplvl, total_annual_wages) %>%
-      filter(own_code %in% c("1","2","3","5"), industry_code %in% NAICS2) %>% rbind(., countytotal)
-    allcounty = rbind(allcounty, countydetail)
-  }
-  ##filename = paste0('../data/GACounty_Emp_Raw_', paste0(year,'.csv'))
-  ##readr::write_csv(allcounty, filename)
-  return(allcounty)
+  # load County FIPS yellow page
+  countyFIPS = getCountyFIPS(state = 'GA')
+  yr = year
+  countyEmp = CountyGA_QCEWEmployment_2007_2019 %>%
+                                                filter(year == yr, area_fips %in% countyFIPS$fips) %>%
+                                                mutate(industry_code = as.numeric(industry_code)) %>%
+                                                filter(industry_code >= 1e+5) %>%  # only retain NAICS6
+                                                select(area_fips, own_code, industry_code, year, annual_avg_estabs_count) %>%
+                                                group_by(area_fips, industry_code, own_code) %>%
+                                                summarise(estabs_count = sum(annual_avg_estabs_count))  %>%
+                                                select(-own_code)
+  return(countyEmp)
 }
 
 
 
+
+
+
+
+#' ComputeEstabLocationQuotient
+#' 
+#' Compute Establishment count LQ for each industry of each county
+#' 
+#' 
+#' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
+#' @return A data frame containing data asked for at a specific year.
+#' @export GACounty_SummaryEstabsLQ_xxxx.csv
+ComputeEstabLocationQuotient = function(year) {
+  CW = getCrosswalk('bea_summary','naics')
+  colnames(CW) = c('BEA','BEA_DES','NAICS','NAICS_DES')
+  CW = CW %>% filter(NAICS >= 1e+5)
+  CW2 = readr::read_csv('../data/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv')
+  GAcountyFIPS = getGACountyFIPS() 
+  GAcountyName = sort(GAcountyFIPS$Name)
+  
+  for (name in GAcountyName) {
+    filename = paste0(name,paste0(year,'.csv'))
+    url = paste0('../data/extdata/QCEW_County_Emp/', paste0(paste0(year,"/"), filename))
+    countyraw = readr::read_csv(url) 
+    countydetail = countyraw %>% 
+      select(area_fips, own_code, industry_code, year, annual_avg_estabs) %>%
+      mutate(industry_code = as.numeric(industry_code)) %>%
+      filter(own_code %in% c("1","2","3","5"), industry_code >= 1e+5) %>%
+      group_by(industry_code) %>% summarise(estab = sum(annual_avg_estabs))
+    colnames(countydetail)[2] = paste0(name, ', GA')
+    CW = CW %>% left_join(., countydetail, by = c('NAICS' = 'industry_code'))
+    CW[is.na(CW)] = 0
+    
+  }
+  
+  CountyEstab = CW %>% 
+    group_by(BEA,BEA_DES) %>% 
+    summarise_if(is.numeric, sum) %>% 
+    select(-3) %>% 
+    full_join(.,CW2, by = c('BEA'= 'BEA_2012_Summary_Code')) %>%
+    relocate(LineCodeSec, DescriptionSec, LineCodeSum, DescriptionSum, BEA_2012_Summary_Name, .after = BEA_DES) %>%
+    select(-2,-4,-7) %>% arrange(LineCodeSum) %>% mutate(LineCodeSec = as.character(LineCodeSec))
+  CountyEstab = CountyEstab[!is.na(CountyEstab$LineCodeSec),]
+  CountyEstab[is.na(CountyEstab)] = 0
+  CountyEstab  = CountyEstab %>% group_by(LineCodeSum) %>% summarise_if(is.numeric, sum)
+  
+  CountyLQ = CountyEstab
+  
+  CountyTotal = colSums(CountyLQ[,2:ncol(CountyLQ)])
+  GATotal = sum(CountyTotal)
+  for (row in (1:nrow(CountyLQ))) {
+    GAIndtotal = sum(CountyLQ[row,2:ncol(CountyLQ)])
+    for (col in (2:ncol(CountyLQ))) {
+      if (GAIndtotal ==0) {
+        CountyLQ[row,col] = 0
+      } else {
+        CountyLQ[row,col] = (CountyLQ[row,col] / CountyTotal[col-1]) / (GAIndtotal / GATotal)
+      }
+    }
+  }
+    
+  return(CountyLQ)
+}
+
+
+
+
+
+
+
+
+#####################################################################################
+################## DEPRECATED FUNCTIONS, PLEASE DO NOT USE THEM  ####################
+#####################################################################################    
 #' EstimateCountyEmploymentData
 #' 
 #' This function is to return dataframes containing county-level employement data from
@@ -118,7 +181,7 @@ EstimateCountyEmploymentData = function(year, type) {
   ##filename = paste0('../data/GACounty_estabs_', paste0(year,'.csv'))
   ##readr::write_csv(output, filename)
   
-
+  
   ### EMPLOYMENT/EMP COMP 
   if (type %in% c('emp','comp')) { 
     empcompTable = raw %>% 
@@ -185,70 +248,5 @@ EstimateCountyEmploymentData = function(year, type) {
 
 
 
-#' ComputeEstabLocationQuotient
-#' 
-#' Compute Establishment count LQ for each industry of each county
-#' 
-#' 
-#' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
-#' @return A data frame containing data asked for at a specific year.
-#' @export GACounty_SummaryEstabsLQ_xxxx.csv
-ComputeEstabLocationQuotient = function(year) {
-  CW = getCrosswalk('bea_summary','naics')
-  colnames(CW) = c('BEA','BEA_DES','NAICS','NAICS_DES')
-  CW = CW %>% filter(NAICS >= 1e+5)
-  CW2 = readr::read_csv('../data/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv')
-  GAcountyFIPS = getGACountyFIPS() 
-  GAcountyName = sort(GAcountyFIPS$Name)
-  
-  for (name in GAcountyName) {
-    filename = paste0(name,paste0(year,'.csv'))
-    url = paste0('../data/extdata/QCEW_County_Emp/', paste0(paste0(year,"/"), filename))
-    countyraw = readr::read_csv(url) 
-    countydetail = countyraw %>% 
-      select(area_fips, own_code, industry_code, year, annual_avg_estabs) %>%
-      mutate(industry_code = as.numeric(industry_code)) %>%
-      filter(own_code %in% c("1","2","3","5"), industry_code >= 1e+5) %>%
-      group_by(industry_code) %>% summarise(estab = sum(annual_avg_estabs))
-    colnames(countydetail)[2] = paste0(name, ', GA')
-    CW = CW %>% left_join(., countydetail, by = c('NAICS' = 'industry_code'))
-    CW[is.na(CW)] = 0
-    
-  }
-  
-  CountyEstab = CW %>% 
-    group_by(BEA,BEA_DES) %>% 
-    summarise_if(is.numeric, sum) %>% 
-    select(-3) %>% 
-    full_join(.,CW2, by = c('BEA'= 'BEA_2012_Summary_Code')) %>%
-    relocate(LineCodeSec, DescriptionSec, LineCodeSum, DescriptionSum, BEA_2012_Summary_Name, .after = BEA_DES) %>%
-    select(-2,-4,-7) %>% arrange(LineCodeSum) %>% mutate(LineCodeSec = as.character(LineCodeSec))
-  CountyEstab = CountyEstab[!is.na(CountyEstab$LineCodeSec),]
-  CountyEstab[is.na(CountyEstab)] = 0
-  CountyEstab  = CountyEstab %>% group_by(LineCodeSum) %>% summarise_if(is.numeric, sum)
-  
-  CountyLQ = CountyEstab
-  
-  CountyTotal = colSums(CountyLQ[,2:ncol(CountyLQ)])
-  GATotal = sum(CountyTotal)
-  for (row in (1:nrow(CountyLQ))) {
-    GAIndtotal = sum(CountyLQ[row,2:ncol(CountyLQ)])
-    for (col in (2:ncol(CountyLQ))) {
-      if (GAIndtotal ==0) {
-        CountyLQ[row,col] = 0
-      } else {
-        CountyLQ[row,col] = (CountyLQ[row,col] / CountyTotal[col-1]) / (GAIndtotal / GATotal)
-      }
-    }
-  }
-    
-  return(CountyLQ)
-}
 
-
-#for (year in seq(2016,2018,1)) {
-#filename = paste0("../data/GACounty_SummaryEstabsLQ_", paste0(year,'.csv'))
-#lq = ComputeEstabLocationQuotient(year)
-#write_csv(lq, filename)
-#}
 
