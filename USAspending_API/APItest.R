@@ -6,12 +6,18 @@ url = modify_url(base_url, path = path)
 
 
 # query 
+filterObject = list(award_type_codes = 
+                      c('A', 'B', 'C', 'D')
+                    )
 
-###### FILTER OBJECT FORMAT NOT CORRECT: SEE PY CODE FOR CORRECT FORMAT ######
-filterObjectJSON = jsonlite::toJSON(list(time_period = 
-                                           c(list(start_date = '2008-01-01', end_date = '2018-12-31'))))
-
+queryObject = list(filters = filterObject,
+                   fields = c("Award ID", "Recipient Name", "Start Date", "End Date", "Award Amount", "Awarding Agency", "Funding Agency", "Contract Award Type", "Place of Performance State Code", "Place of Performance Zip5"),
+                   limit = 100,
+                   page = 1)
 
 # get response
-resp = POST(url, body = filterObjectJSON, encode = 'raw')
-jsonlite::fromJSON(content(resp,'text'), simplifyVector = FALSE)
+resp = POST(url, 
+            body = queryObject, 
+            encode = 'json')
+
+gresp = jsonlite::fromJSON(content(resp,'text'), simplifyVector = FALSE)
