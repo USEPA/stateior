@@ -1,9 +1,9 @@
 library(tidyverse)
 source('CrosswalkGenerator.R')
-source('supporter.R')
+source('R/supporter.R')
 source('../../stateio/R/UtilityFunctions.R')
 source('data-raw/BEAData.R')
-#' getGeorgiaEmploymentData
+#' getGeorgiaEmploymentData (MODIFIED)
 #' 
 #' This function is to return dataframes containing establishment count data at 
 #' NAICS 6-digit level from the year of 2007 to 2019, during which QCEW data is available. 
@@ -16,7 +16,7 @@ source('data-raw/BEAData.R')
 getStateEstablishmentData = function(state = 'Georgia', year) {
   # load total data (now GA only)
   ####TODO: find a way to load total df without having too much time and memory cost
-  CountyEmp = load('data/CountyGA_QCEWEmployment_2007_2019.rda')
+  load('data/CountyGA_QCEWEmployment_2007_2019.rda')
   # load State FIPS yellow page
   StateFIPS = utils::read.table('inst/extdata/StateFIPS.csv', 
                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
@@ -36,6 +36,8 @@ getStateEstablishmentData = function(state = 'Georgia', year) {
 }
 
 
+
+
 #' GetCountyEmploymentData
 #' 
 #' This function is to return dataframes binding employement data of each county from
@@ -45,7 +47,15 @@ getStateEstablishmentData = function(state = 'Georgia', year) {
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
 #' @return A data frame containing data asked for at a specific year.
 GetCountyEmploymentData = function(state = 'Georgia', year) {
-  GAcountyFIPS = getGACountyFIPS() %>% arrange(Name) # county fips
+  # load total data (now GA only)
+  load('data/CountyGA_QCEWEmployment_2007_2019.rda')
+  # load County FIPS yellow page (now GA only)
+  GAcountyFIPS = getGACountyFIPS() %>% arrange(Name)
+  
+  
+  
+  
+  
   allcounty = data.frame() # blank data frame
   
   for (fips in unique(GAcountyFIPS$fips)) {

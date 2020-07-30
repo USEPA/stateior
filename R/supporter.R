@@ -1,17 +1,16 @@
 library(tidyverse)
-#' getGACountyFIPS
+#' getCountyFIPS (MODIFIED)
 #' 
 #' This function is to return a dataframe containing name and fips of each county in 
-#' Georgia in support of later data wrangling operations
+#' selected state in support of later data wrangling operations
 #' 
-#' 
-#' @return A data frame contains all 159 names and FIPS for all counties in Georgia
-getGACountyFIPS = function() {
-  CountyCodes = readr::read_csv('../data/extdata/GA_County_FIPS.csv')
+#' @param state A string character specifying the state of interest, default 'GA' 
+#' @return A data frame contains all 159 names and FIPS for all counties in specified state
+getCountyFIPS = function(state = 'GA') {
+  CountyFIPS = readr::read_csv('inst/extdata/CountyFIPS.csv')
+  CountyCodes = CountyFIPS[CountyFIPS$State == state, c('fips', 'Name')] %>% arrange(Name)
   return(CountyCodes)
 } 
-
-
 
 #' getIndustryCodes
 #' 
