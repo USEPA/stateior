@@ -88,9 +88,9 @@ def USASpending_search_by_award(PSCObject):
     for naics in NAICStoPull:  #loop through all NAICS sectors
 
         NAICSCodeObject = {'require':[str(naics)]}
-        filterObject = {'time_period': [TimePeriodObject],
+        filterObject = {'naics_codes': NAICSCodeObject,
+                        'time_period': [TimePeriodObject],
                         'place_of_performance_locations': [LocationObject],
-                        'naics_codes': NAICSCodeObject,
                         'award_type_codes': AwardTypesObject,
                         'psc_codes': PSCObject,
                         }  # filterObject
@@ -132,3 +132,14 @@ df_structure.to_csv('../output/fedspending_structure.csv')
 df_equip = USASpending_search_by_award(psclist_equip)
 df_equip.to_csv('../output/fedspending_equipment_0724.csv')
 
+'''
+For intermediate demand, we split the intermediate psc list into 2 sublists as the query since USASpending API does not accept psc list of 1000+ size
+'''
+psclist_intermediate_A = {'require':psclist_intermediate['require'][0:700]}
+psclist_intermediate_B = {'require':psclist_intermediate['require'][700:]}
+
+df_intermediate_A = USASpending_search_by_award(psclist_intermediate_A)
+df_intermediate_A.to_csv('../output/fedspending_intermediate_A.csv')
+
+df_intermediate_B = USASpending_search_by_award(psclist_intermediate_B)
+df_intermediate_B.to_csv('../output/fedspending_intermediate_B.csv')
