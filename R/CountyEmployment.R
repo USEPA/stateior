@@ -3,39 +3,48 @@ source('CrosswalkGenerator.R')
 source('supporter.R')
 source('../../stateio/R/UtilityFunctions.R')
 source('data-raw/BEAData.R')
-#' GetGeorgiaEmploymentData
+#' getGeorgiaEmploymentData
 #' 
-#' This function is to return dataframes containing Georgia employement data from
-#' the year of 2015 to 2018, during which QCEW data is available. There are five types 
-#' of employment data returned: employment count, emp compensation, and establishment counts,
-#' average employment per estab, and average comp per estab.
+#' This function is to return dataframes containing establishment count data at 
+#' NAICS 6-digit level from the year of 2007 to 2019, during which QCEW data is available. 
+#' WARNING: 
 #' 
-#' 
+#' @param state A string character specifying the state of interest, default 'Georgia' 
+#' WARNING: only 'Georgia' is supported now, please do not attempt to give input other than that
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
 #' @return A data frame containing data asked for at a specific year.
-GetGeorgiaEmploymentData = function(year) {
+getStateEstablishmentData = function(state = 'Georgia', year) {
+  # load total data (now GA only)
+  ####TODO: find a way to load total df without having too much time and memory cost
+  CountyEmp = load('data/CountyGA_QCEWEmployment_2007_2019.rda')
+  # load State FIPS yellow page
+  StateFIPS = utils::read.table('inst/extdata/StateFIPS.csv', 
+                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
+  # filter statewide only
+  fips = paste0(StateFIPS$State_FIPS[which(StateFIPS$State == state)], '000')
+  yr = year # to avoid confusion in 'filter' operation below
+  StateEmp = CountyGA_QCEWEmployment_2007_2019 %>% 
+                         filter(area_fips == fips, year == yr) %>% # filter for area and time 
+                         mutate(industry_code = as.numeric(industry_code)) %>% # NA coerced for industry codes like '44-45'
+                         filter(industry_code >= 1e+5) %>%  # only retain NAICS6
+                         select(area_fips, own_code, industry_code, year, annual_avg_estabs_count) %>%
+                         group_by(industry_code, own_code) %>%
+                         summarise(estabs_count = sum(annual_avg_estabs_count)) %>%
+                         select(-own_code)
   
-  GAlevel = readr::read_csv(paste0("../data/extdata/QCEW_County_Emp/", paste0(year,"/13000.csv"))) %>% 
-    filter(industry_code %in% NAICS2) %>% 
-    select(area_fips, own_code, industry_code, year, annual_avg_estabs, annual_avg_emplvl, total_annual_wages) %>%
-    filter(annual_avg_emplvl != total_annual_wages) %>%
-    group_by(industry_code) %>%
-    summarise(estabs = sum(annual_avg_estabs), emp = sum(annual_avg_emplvl), comp = sum(total_annual_wages), empPerEstab = emp / estabs, compPerEstab = comp / estabs)
-  
-  return(GAlevel)
+  return(StateEmp)
 }
 
 
 #' GetCountyEmploymentData
 #' 
 #' This function is to return dataframes binding employement data of each county from
-#' the year of 2015 to 2018, during which QCEW data is available, into one data frame. 
+#' the year of 2007 to 2019, during which QCEW data is available, into one data frame. 
 #' 
 #' 
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
 #' @return A data frame containing data asked for at a specific year.
-#' @export GACounty_Emp_Raw_xxxx.csv
-GetCountyEmploymentData = function(year) {
+GetCountyEmploymentData = function(state = 'Georgia', year) {
   GAcountyFIPS = getGACountyFIPS() %>% arrange(Name) # county fips
   allcounty = data.frame() # blank data frame
   
