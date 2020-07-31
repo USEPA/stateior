@@ -15,9 +15,11 @@ getStateEstablishmentCount = function(state = 'Georgia', year) {
   # load total data (now GA only)
   ####TODO: find a way to load total df without having too much time and memory cost
   load('data/CountyGA_QCEWEmployment_2007_2019.rda')
+  
   # load State FIPS yellow page
   StateFIPS = utils::read.table('inst/extdata/StateFIPS.csv', 
                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
+  
   # filter statewide only
   fips = paste0(StateFIPS$State_FIPS[which(StateFIPS$State == state)], '000')
   yr = year # to avoid confusion in 'filter' operation below
@@ -29,6 +31,7 @@ getStateEstablishmentCount = function(state = 'Georgia', year) {
                          group_by(industry_code, own_code) %>%
                          summarise(estabs_count = sum(annual_avg_estabs_count)) %>%
                          select(-own_code)
+  
   
   return(StateEmp)
 }
@@ -47,9 +50,11 @@ getStateEstablishmentCount = function(state = 'Georgia', year) {
 getCountyEstablishmentCount = function(state = 'Georgia', year) {
   # load total data (now GA only)
   load('data/CountyGA_QCEWEmployment_2007_2019.rda')
+  
   # load County FIPS yellow page
   countyFIPS = getCountyFIPS(state = 'GA')
   yr = year
+  
   # data wrangling
   countyEmp = CountyGA_QCEWEmployment_2007_2019 %>%
                                                 filter(year == yr, area_fips %in% countyFIPS$fips) %>%
@@ -59,11 +64,12 @@ getCountyEstablishmentCount = function(state = 'Georgia', year) {
                                                 group_by(area_fips, industry_code, own_code) %>%
                                                 summarise(estabs_count = sum(annual_avg_estabs_count))  %>%
                                                 select(-own_code)
+  
   return(countyEmp)
 }
 
 
-#' calculateEstabLocationQuotient
+#' calculateEstabLocationQuotient (MODIFIED)
 #' 
 #' Compute Establishment count LQ for each industry of each county
 #' @source getCountyEstablishmentCount, getStateEstablishmentCount, mapEstablishmentCountFromNAICStoBEA
@@ -81,17 +87,22 @@ calculateEstabLocationQuotient = function(state = 'Georgia', year) {
                             left_join(., countyFIPS, by = c('area_fips' = 'fips')) %>%
                             mutate(Name = paste0(Name, paste0('/',as.character(area_fips)))) %>%
                             arrange(Name)
+  
   # spread countyEstab 
   countyEstabColumn = countyEstab[, c('Name', 'BEA_2012_Summary_Code', 'estabs_count')] %>%
                             spread(Name, estabs_count)
+  
   # fill NA with 0 
   countyEstabColumn[is.na(countyEstabColumn)] = 0
+  
   # calculate state industry ratio
   stateRatio = stateEstab$estabs_count / sum(stateEstab$estabs_count)
+  
   # calculate county industry ratio
   for (ct in (2:ncol(countyEstabColumn))) {
     countyEstabColumn[, ct] = as.vector(countyEstabColumn[, ct] / sum(countyEstabColumn[, ct]) / stateRatio)
   }
+  
   return(countyEstabColumn)
 }
 

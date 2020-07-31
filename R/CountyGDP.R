@@ -1,7 +1,5 @@
 if (!require(tidyverse)) { install.packages(tidyverse) }
 library(tidyverse)
-setwd("~/Documents/GitHub/stateio")
-# source('CrosswalkGenerator.R')
 # source('CountyEmployment.R')
 source('../../stateio/R/UtilityFunctions.R')
 
@@ -17,29 +15,37 @@ source('../../stateio/R/UtilityFunctions.R')
 calculateStateSummarySectorGDPRatio = function(year, state) {
   #load raw state gdp data from stateio
   State_GDP_2007_2019 = stateio::State_GDP_2007_2019
+  
   # load crosswalk file
   cw = utils::read.table('inst/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv', 
                          sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
+  
   # obtain sector/summary linecode
   sector_linecode = unique(cw$LineCodeSec)
   summary_linecode = unique(cw$LineCodeSum)
+  
   # specify state and year
   GDPRatio = State_GDP_2007_2019[State_GDP_2007_2019$GeoName == state, c('LineCode', as.character(year))] 
+  
   # drop redundant line code 
   GDPRatio = GDPRatio[GDPRatio$LineCode %in% combine(sector_linecode, summary_linecode), ]
+  
   # crosswalk by left join
   GDPRatio = GDPRatio %>%
                       left_join(., cw, by = c('LineCode' = 'LineCodeSum')) %>%
                       mutate(GDPRatio = 0) %>%
                       select(-DescriptionSec, -DescriptionSum, -BEA_2012_Summary_Name)
+  
   # assign GDPratio to each subsector
   for (i in 1:nrow(GDPRatio)) {
     if (!is.na(GDPRatio$LineCodeSec[i])) {
       GDPRatio$GDPRatio[i] = GDPRatio[[as.character(year)]][i] / GDPRatio[[as.character(year)]][which(GDPRatio$LineCode == GDPRatio$LineCodeSec[i])]
     }
   }
+  
   # drop NA, which only exists in rows for sectors
   GDPRatio = na.omit(GDPRatio[,c('LineCode', 'LineCodeSec', 'GDPRatio')])
+  
   return(GDPRatio)
 }
 
