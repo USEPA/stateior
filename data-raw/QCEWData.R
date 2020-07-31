@@ -48,6 +48,6 @@ CountyGA_QCEWEmployment_2007_2019 = data.frame()
 for (yr in seq(2007,2019,1)) {
   temp = getQCEWCountyEmployment(yr, state = 'Georgia', type = 'all')
   CountyGA_QCEWEmployment_2007_2019 = rbind(CountyGA_QCEWEmployment_2007_2019, temp)
-  print('AHA!')
+  # print('AHA!')
 }
 usethis::use_data(CountyGA_QCEWEmployment_2007_2019, overwrite = TRUE)
