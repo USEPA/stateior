@@ -14,7 +14,7 @@ downloadFedGovSpending <- function(category) {
   # Generate desired psc tables and NAICS vector
   if (category=="intermediate") {
     psc <- PSC[PSC$Purchase_Type=="Intermediate", ]
-    # ! need more code here
+    NAICS <- unique(NAICStoPull$NAICS_2012_Code)
   } else if (category=="equipment") {
     psc <- PSC[PSC$Final_Demand_Category=="Equipment", ]
     NAICS <- unique(NAICStoPull[NAICStoPull$F06E00!=0 | NAICStoPull$F07E00!=0, "NAICS_2012_Code"])
@@ -45,7 +45,6 @@ downloadFedGovSpending <- function(category) {
     }
   }
   FedGovSpending <- data.frame()
-  columns <- c("Start Date", "Awarding Agency")
   for (i in 1:length(NAICS)) {
     # Generate filterObject
     filterObject <- list(naics_codes = list(require = array(NAICS[i])),
@@ -61,19 +60,36 @@ downloadFedGovSpending <- function(category) {
                                    "Place of Performance Zip5"),
                         limit = 100,
                         page = 1)
-    # Get response
-    resp <- POST(url, body = queryObject, encode = "json")
-    # Download data
-    gresp <- jsonlite::fromJSON(content(resp, "text", encoding = "UTF-8"))
-    df <- gresp$results
-    while(gresp$page_metadata$hasNext) {
-      queryObject$page <- queryObject$page + 1
+    # Split psc_list, so that each list contains < 1000 elements
+    splits <- ceiling(length(psc_list)/1000)
+    psc_list_split <- list()
+    # Download and process
+    df <- data.frame()
+    for (j in 1:splits) {
+      if (j < splits) {
+        psc_list_split[[j]] <- psc_list[c(1:1000) + (j-1)*1000]
+      } else {
+        psc_list_split[[j]] <- psc_list[c((1+(j-1)*1000):length(psc_list))]
+      }
+      queryObject$filters$psc_codes <- list(require = psc_list_split[[j]])
+      # Get response
       resp <- POST(url, body = queryObject, encode = "json")
+      # Download data
       gresp <- jsonlite::fromJSON(content(resp, "text", encoding = "UTF-8"))
-      df <- rbind(df, gresp$results)
+      df_split <- gresp$results
+      while(length(filterObject$psc_codes$require) - 1000 >1000) {
+        queryObject$page <- queryObject$page + 1
+        resp <- POST(url, body = queryObject, encode = "json")
+        gresp <- jsonlite::fromJSON(content(resp, "text", encoding = "UTF-8"))
+        df_split <- rbind(df_split, gresp$results)
+      }
+      df <- rbind(df, df_split)
+    }
+    # Add NAICS column
+    if (nrow(df)!=0) {
+      df$NAICS <- NAICS[i]
     }
     FedGovSpending <- rbind(FedGovSpending, df)
-    print(NAICS[i])
   }
   return(FedGovSpending)
 }
