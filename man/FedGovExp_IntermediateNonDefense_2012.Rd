@@ -7,7 +7,7 @@
 Categorized by 6-digit NAICS, by state (including District of Columbia) and
 by zipcode.}
 \format{
-A data frame with 25814 obs. and 5 variables:
+A data frame with 1308 obs. and 5 variables:
 \describe{
  \item{NAICS}{integer}
  \item{Year}{integer}

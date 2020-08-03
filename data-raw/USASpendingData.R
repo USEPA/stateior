@@ -90,6 +90,7 @@ downloadFedGovSpending <- function(category) {
       df$NAICS <- NAICS[i]
     }
     FedGovSpending <- rbind(FedGovSpending, df)
+    print( NAICS[i])
   }
   return(FedGovSpending)
 }
@@ -103,7 +104,7 @@ getFedGovSpending <- function(category) {
   # Download USA Spending data
   df <- downloadFedGovSpending(category)
   # Assign year, state and zipcode
-  df$Year <- as.integer(substr(as.character(as.Date(df$`Start Date`, "%m/%d/%y")), 1, 4))
+  df$Year <- as.integer(substr(df$`Start Date`, 1, 4))
   df <- df[df$`Place of Performance State Code`%in%c(state.abb, "DC"), ]
   df$State <- state.name[match(df$`Place of Performance State Code`, state.abb)]
   df[df$`Place of Performance State Code`=="DC", "State"] <- "District of Columbia"
