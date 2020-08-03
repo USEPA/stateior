@@ -121,6 +121,12 @@ getFedGovSpending <- function(category) {
   return(FedGovSpending)
 }
 
+USASpending_Intermediate <- getFedGovSpending("intermediate")
+FedGovExp_IntermediateDefense_2012 <- USASpending_Intermediate[["Defense"]][["2012"]]
+usethis::use_data(FedGovExp_IntermediateDefense_2012, overwrite = TRUE)
+FedGovExp_IntermediateNonDefense_2012 <- USASpending_Intermediate[["NonDefense"]][["2012"]]
+usethis::use_data(FedGovExp_IntermediateNonDefense_2012, overwrite = TRUE)
+
 USASpending_Equipment <- getFedGovSpending("equipment")
 FedGovExp_EquipmentDefense_2012 <- USASpending_Equipment[["Defense"]][["2012"]]
 usethis::use_data(FedGovExp_EquipmentDefense_2012, overwrite = TRUE)
