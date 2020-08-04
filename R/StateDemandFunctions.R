@@ -466,8 +466,10 @@ calculateStateUSEmpCompensationRatio <- function(year) {
   StateUSEmpCompensation <- rbind(StateUSEmpCompensation, OverseasEmpCompensation[, colnames(StateUSEmpCompensation)])
   # Calculate the state-US Employee Compensation ratios
   StateUSEmpCompensation$Ratio <- StateUSEmpCompensation[, paste0(year, ".x")]/StateUSEmpCompensation[, paste0(year, ".y")]
+  StateUSEmpCompensation$State <- StateUSEmpCompensation$GeoName
   StateUSEmpCompensation <- StateUSEmpCompensation[order(StateUSEmpCompensation$GeoName, StateUSEmpCompensation$BEA_2012_Summary_Code),
-                                         c("BEA_2012_Summary_Code", "GeoName", "Ratio")]
+                                         c("BEA_2012_Summary_Code", "State", "Ratio")]
+  StateUSEmpCompensation[is.na(StateUSEmpCompensation)] <- 0
   rownames(StateUSEmpCompensation) <- NULL
   return(StateUSEmpCompensation)
 }
@@ -478,14 +480,14 @@ calculateStateUSEmpCompensationRatio <- function(year) {
 #' @return A data frame contains weighting factor of each expenditure component over US total gov expenditure.
 calculateUSGovExpenditureWeightFactor <- function(year, defense) {
   # Load data
-  GovInvestment <- stateio::GovInvestment_2007_2019
   GovConsumption <- stateio::GovConsumption_2007_2019
+  GovInvestment <- stateio::GovInvestment_2007_2019
   # Keep rows by line code
   if (defense) {
-    GovConsumption <- GovConsumption[GovConsumption$Line%in%c(26:28), ]
+    GovConsumption <- GovConsumption[GovConsumption$Line%in%c(26, 28), ]
     GovInvestment <- GovInvestment[GovInvestment$Line%in%c(20:21, 23:24), ]
   } else {
-    GovConsumption <- GovConsumption[GovConsumption$Line%in%c(37:39), ]
+    GovConsumption <- GovConsumption[GovConsumption$Line%in%c(37, 39), ]
     GovInvestment <- GovInvestment[GovInvestment$Line%in%c(28:29, 31:32), ]
   }
   # Calculate weight factors and stack dfs together
@@ -504,15 +506,14 @@ calculateUSGovExpenditureWeightFactor <- function(year, defense) {
 calculateStateFedGovExpenditureRatio <- function(year) {
   # Load state and local government expenditure
   GovExpRatio <- data.frame()
-  sectors <- paste0(c("Structure", "Equipment", "IP"),
-                    rep(c("Defense", "NonDefense"), each = 3))
+  sectors <- paste0(c("Intermediate", "Structure", "Equipment", "IP"),
+                    rep(c("Defense", "NonDefense"), each = 4))
   mapping <- unique(useeior::MasterCrosswalk2012[, c("BEA_2012_Summary_Code",
                                                      "NAICS_2012_Code")])
   for(sector in sectors) {
     GovExp <- get(paste("FedGovExp", sector, year, sep = "_"),
                   as.environment("package:stateio"))
     # Map to BEA Summary sectors
-    
     GovExpBEA <- merge(mapping, GovExp, by.x = "NAICS_2012_Code", by.y = "NAICS")
     # Aggregate by BEA
     GovExpBEA <- stats::aggregate(Amount ~ BEA_2012_Summary_Code + Year + State,
@@ -538,7 +539,29 @@ calculateStateFedGovExpenditureRatio <- function(year) {
   # Replace NA with 0
   GovExpRatio[is.na(GovExpRatio)] <- 0
   # Rename columns
-  colnames(GovExpRatio)[3:8] <- c("F06E", "F07E", "F06N", "F07N", "F06S", "F07S")
+  colnames(GovExpRatio)[c(3:4, 7:10)] <- c("F06E", "F07E", "F06N", "F07N", "F06S", "F07S")
+  # Calculate ratios for Consumption expenditures (F06C and F07C)
+  # A_C <- X_E * W_E + X_IC * W_IC
+  # where X_E is EmpCompensationRatio, X_IC is Fed Gov Intermediate Consumption ratio
+  # W_E is GovExpWeightFactor of employment, W_IC is GovExpWeightFactor of IC
+  # Generate state-US employment compensation ratios (X_E)
+  EmpCompensationRatio <- calculateStateUSEmpCompensationRatio(year)
+  # Merge with GovExpRatio
+  GovExpRatio <- merge(GovExpRatio, EmpCompensationRatio,
+                       by = c("BEA_2012_Summary_Code", "State"), all.x = TRUE)
+  # Generate GovExpWeightFactor (W_E and W_IC)
+  WeightFactor_D <- calculateUSGovExpenditureWeightFactor(year, defense = TRUE)
+  WeightFactor_NonD <- calculateUSGovExpenditureWeightFactor(year, defense = FALSE)
+  # Calculate Defense ratios
+  W_E_D <- WeightFactor_D[WeightFactor_D$Line==26, as.character(year)]
+  W_IC_D <- WeightFactor_D[WeightFactor_D$Line==28, as.character(year)]
+  GovExpRatio[, "F06C"] <- GovExpRatio$Ratio * W_E_D + GovExpRatio$IntermediateDefense * W_IC_D
+  # Calculate Non-Defense ratios
+  W_E_NonD <- WeightFactor_NonD[WeightFactor_NonD$Line==37, as.character(year)]
+  W_IC_NonD <- WeightFactor_NonD[WeightFactor_NonD$Line==39, as.character(year)]
+  GovExpRatio[, "F07C"] <- GovExpRatio$Ratio * W_E_NonD + GovExpRatio$IntermediateDefense * W_IC_NonD
+  # Drop unwanted columns
+  GovExpRatio <- GovExpRatio[, c("BEA_2012_Summary_Code", "State", FedGovDemandCodes)]
   return(GovExpRatio)
 }
 
@@ -564,8 +587,10 @@ estimateStateFedGovExpenditure <- function(year) {
     State_FedGovExp_state$State <- state
     # Repalce NA with 0
     State_FedGovExp_state[is.na(State_FedGovExp_state)] <- 0
-    State_FedGovExp_state[, FedGovDemandCodes] <- State_FedGovExp_state[, paste0(FedGovDemandCodes, ".x")] *
-      State_FedGovExp_state[, paste0(FedGovDemandCodes, ".y")]
+    # Multiply national final demand by state-US ratio
+    ratio <- State_FedGovExp_state[, paste0(FedGovDemandCodes, ".x")]
+    US_value <- State_FedGovExp_state[, paste0(FedGovDemandCodes, ".y")]
+    State_FedGovExp_state[, FedGovDemandCodes] <- ratio * US_value
     # Modify rownames
     rownames(State_FedGovExp_state) <- State_FedGovExp_state$BEA_2012_Summary_Code
     State_FedGovExp_state <- State_FedGovExp_state[rownames(US_FedGovExp), ]
