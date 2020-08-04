@@ -73,8 +73,8 @@ def USASpending_search_by_award(PSCObject):
     base_url = 'https://api.usaspending.gov'
     search_url = '/api/v2/search/spending_by_award/'
 
-    startDate = '2008-01-01'  # manual time setting
-    endDate = '2018-12-31'
+    startDate = '2012-01-01'  # manual time setting
+    endDate = '2012-12-31'
     TimePeriodObject = {'start_date': startDate, 'end_date': endDate}
     ## AwardTypesObject = [['A','B','C','D'], ['02', '03', '04', '05']] # contract A-D and grant 02-05 only , '02', '03', '04', '05'
     AwardTypesObject = ['A', 'B', 'C', 'D']  # contract only
@@ -123,23 +123,23 @@ def USASpending_search_by_award(PSCObject):
 '''
 OUTPUT
 '''
-df_ip = USASpending_search_by_award(psclist_ip)
-df_ip.to_csv('../output/fedspending_ip.csv')
+## df_ip = USASpending_search_by_award(psclist_ip)
+## df_ip.to_csv('../output/fedspending_ip.csv')
 
-df_structure = USASpending_search_by_award(psclist_structure)
-df_structure.to_csv('../output/fedspending_structure.csv')
+## df_structure = USASpending_search_by_award(psclist_structure)
+## df_structure.to_csv('../output/fedspending_structure.csv')
 
 df_equip = USASpending_search_by_award(psclist_equip)
-df_equip.to_csv('../output/fedspending_equipment_0724.csv')
+## df_equip.to_csv('../output/fedspending_equipment_0724.csv')
 
 '''
 For intermediate demand, we split the intermediate psc list into 2 sublists as the query since USASpending API does not accept psc list of 1000+ size
 '''
-psclist_intermediate_A = {'require':psclist_intermediate['require'][0:700]}
-psclist_intermediate_B = {'require':psclist_intermediate['require'][700:]}
+## psclist_intermediate_A = {'require':psclist_intermediate['require'][0:700]}
+## psclist_intermediate_B = {'require':psclist_intermediate['require'][700:]}
 
-df_intermediate_A = USASpending_search_by_award(psclist_intermediate_A)
-df_intermediate_A.to_csv('../output/fedspending_intermediate_A.csv')
+## df_intermediate_A = USASpending_search_by_award(psclist_intermediate_A)
+## df_intermediate_A.to_csv('../output/fedspending_intermediate_A.csv')
 
-df_intermediate_B = USASpending_search_by_award(psclist_intermediate_B)
-df_intermediate_B.to_csv('../output/fedspending_intermediate_B.csv')
+## df_intermediate_B = USASpending_search_by_award(psclist_intermediate_B)
+## df_intermediate_B.to_csv('../output/fedspending_intermediate_B.csv')
