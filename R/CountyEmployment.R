@@ -1,5 +1,4 @@
 library(tidyverse)
-source('R/supporter.R')
 #source('data-raw/BEAData.R')
 #' getStateEstablishmentCount (MODIFIED)
 #' 
@@ -7,11 +6,11 @@ source('R/supporter.R')
 #' NAICS 6-digit level from the year of 2007 to 2019, during which QCEW data is available. 
 #' 
 #' @source CountyGA_QCEWEmployment_2007_2019.rda  (WARNING: THIS DATA SOURCE IS FOR GA ONLY NOW.)
-#' @param state A string character specifying the state of interest, default 'Georgia' 
+#' @param state A string character specifying the state of interest, 'Georgia' 
 #' WARNING: only 'Georgia' is supported now, please do not attempt to give input other than that
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
 #' @return A data frame containing data asked for at a specific year.
-getStateEstablishmentCount = function(state = 'Georgia', year) {
+getStateEstablishmentCount = function(state, year) {
   # load total data (now GA only)
   ####TODO: find a way to load total df without having too much time and memory cost
   load('data/CountyGA_QCEWEmployment_2007_2019.rda')
@@ -47,12 +46,12 @@ getStateEstablishmentCount = function(state = 'Georgia', year) {
 #' @param state A string character specifying the state of interest, default 'Georgia' 
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
 #' @return A data frame containing data asked for at a specific year.
-getCountyEstablishmentCount = function(state = 'Georgia', year) {
+getCountyEstablishmentCount = function(state, year) {
   # load total data (now GA only)
   load('data/CountyGA_QCEWEmployment_2007_2019.rda')
   
   # load County FIPS yellow page
-  countyFIPS = getCountyFIPS(state = 'GA')
+  countyFIPS = getCountyFIPS(state)
   yr = year
   
   # data wrangling

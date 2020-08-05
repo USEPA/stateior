@@ -1,58 +1,9 @@
-if (!require(tidyverse)) { install.packages(tidyverse) }
 library(tidyverse)
-# source('CountyEmployment.R')
-source('../../stateio/R/UtilityFunctions.R')
-
-
-#' calculateStateSummarySectorGDPRatio (MODIFIED)
-#' 
-#' It returns the state ratio of subsector level GDP to GDP of the sector which 
-#' the subsector belongs to. All ratios from one sector sums up to 1.0. For instance,
-#' Sector-level A is made up of A1 and A2, A1 makes up of 40% and A2 other 60%.  
-#' 
-#' @param year numeric, A numeric value between 2007 and 2017 specifying the year of interest. (2018/2019 data not available now)
-#' @param state character string, the state of interest, full name with first letter capitalized, 'Georgia'. 
-calculateStateSummarySectorGDPRatio = function(year, state) {
-  #load raw state gdp data from stateio
-  State_GDP_2007_2019 = stateio::State_GDP_2007_2019
-  
-  # load crosswalk file
-  cw = utils::read.table('inst/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv', 
-                         sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
-  
-  # obtain sector/summary linecode
-  sector_linecode = unique(cw$LineCodeSec)
-  summary_linecode = unique(cw$LineCodeSum)
-  
-  # specify state and year
-  GDPRatio = State_GDP_2007_2019[State_GDP_2007_2019$GeoName == state, c('LineCode', as.character(year))] 
-  
-  # drop redundant line code 
-  GDPRatio = GDPRatio[GDPRatio$LineCode %in% combine(sector_linecode, summary_linecode), ]
-  
-  # crosswalk by left join
-  GDPRatio = GDPRatio %>%
-                      left_join(., cw, by = c('LineCode' = 'LineCodeSum')) %>%
-                      mutate(GDPRatio = 0) %>%
-                      select(-DescriptionSec, -DescriptionSum, -BEA_2012_Summary_Name)
-  
-  # assign GDPratio to each subsector
-  for (i in 1:nrow(GDPRatio)) {
-    if (!is.na(GDPRatio$LineCodeSec[i])) {
-      GDPRatio$GDPRatio[i] = GDPRatio[[as.character(year)]][i] / GDPRatio[[as.character(year)]][which(GDPRatio$LineCode == GDPRatio$LineCodeSec[i])]
-    }
-  }
-  
-  # drop NA, which only exists in rows for sectors
-  GDPRatio = na.omit(GDPRatio[,c('LineCode', 'LineCodeSec', 'GDPRatio')])
-  
-  return(GDPRatio)
-}
+source('R/UtilityFunctions.R')
 
 
 
-
-#' EstimateCountySectorGDP
+#' estimateCountySectorGDP
 #' 
 #' Make estimation of blank rows from what GetCountyOriginalSectorGDP returned by c
 #' ounty-state establishment ratio
@@ -60,8 +11,7 @@ calculateStateSummarySectorGDPRatio = function(year, state) {
 #' 
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
 #' @return A data frame containing data asked for at a specific year.
-#' @export GACounty_SectorGDP_xxxx.csv
-EstimateCountySectorGDP = function(year) {
+estimateCountySectorGDP = function(year) {
   # CrossWalk to BEA sector
   cw = readr::read_csv('../data/extdata/CrossWalk_NAICS2ToLineCode.csv')
   filename = paste0("../data/GACounty_estabs_", paste0(year,'.csv'))
@@ -127,11 +77,52 @@ EstimateCountySectorGDP = function(year) {
   CountyGDP = cbind(GetCountyOriginalSectorGDP(year, 'all', 0) %>% select(1), CountyGDP)
   return(CountyGDP)
 }
-#for (year in seq(2015,2018,1)) {
-  #filename = paste0("../data/County_SectorGDP_", paste0(year,'.csv'))
-  #gdp = EstimateCountySectorGDP(year)
-  #write_csv(gdp, filename)
-#}
+
+
+#' calculateStateSummarySectorGDPRatio
+#' 
+#' It returns the state ratio of subsector level GDP to GDP of the sector which 
+#' the subsector belongs to. All ratios from one sector sums up to 1.0. For instance,
+#' Sector-level A is made up of A1 and A2, A1 makes up of 40% and A2 other 60%.  
+#' 
+#' @param year numeric, A numeric value between 2007 and 2017 specifying the year of interest. (2018/2019 data not available now)
+#' @param state character string, the state of interest, full name with first letter capitalized, 'Georgia'. 
+calculateStateSummarySectorGDPRatio = function(year, state) {
+  #load raw state gdp data from stateio
+  State_GDP_2007_2019 = stateio::State_GDP_2007_2019
+  
+  # load crosswalk file
+  cw = utils::read.table('inst/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv', 
+                         sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
+  
+  # obtain sector/summary linecode
+  sector_linecode = unique(cw$LineCodeSec)
+  summary_linecode = unique(cw$LineCodeSum)
+  
+  # specify state and year
+  GDPRatio = State_GDP_2007_2019[State_GDP_2007_2019$GeoName == state, c('LineCode', as.character(year))] 
+  
+  # drop redundant line code 
+  GDPRatio = GDPRatio[GDPRatio$LineCode %in% combine(sector_linecode, summary_linecode), ]
+  
+  # crosswalk by left join
+  GDPRatio = GDPRatio %>%
+    left_join(., cw, by = c('LineCode' = 'LineCodeSum')) %>%
+    mutate(GDPRatio = 0) %>%
+    select(-DescriptionSec, -DescriptionSum, -BEA_2012_Summary_Name)
+  
+  # assign GDPratio to each subsector
+  for (i in 1:nrow(GDPRatio)) {
+    if (!is.na(GDPRatio$LineCodeSec[i])) {
+      GDPRatio$GDPRatio[i] = GDPRatio[[as.character(year)]][i] / GDPRatio[[as.character(year)]][which(GDPRatio$LineCode == GDPRatio$LineCodeSec[i])]
+    }
+  }
+  
+  # drop NA, which only exists in rows for sectors
+  GDPRatio = na.omit(GDPRatio[,c('LineCode', 'LineCodeSec', 'GDPRatio')])
+  
+  return(GDPRatio)
+}
 
 
 

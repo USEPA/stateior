@@ -187,10 +187,10 @@ usethis::use_data(GovConsumption_2007_2019, overwrite = TRUE)
 #' level with NAs. 
 #' 
 #' @param year A numeric value between 2001 and 2018 specifying the year of interest. If 0 ,return a dataframe with data from all years available
-#' @param state A string character specifying the state of interest, default 'GA' 
+#' @param state A string character specifying the state of interest, 'GA' 
 #' @param axis A numeric value, 0,1. if 0, each county will be a col, if 1, row, default 0. This parameter only works when you specify one year
 #' @return A data frame contains selected county GDP by BEA sector industries at a specific year.
-getBEACountyGDP = function(year, state = 'GA', axis = 0) {
+getBEACountyGDP = function(year, state, axis = 0) {
   # Create the placeholder file
   CountyGDPzip = "inst/extdata/CAGDP2.zip"
   # Download all BEA IO tables into the placeholder file
@@ -257,7 +257,23 @@ usethis::use_data(CountyGA_BEASectorGDP_2001_2018, overwrite = TRUE)
 
 
 
+#' getBEACountyTotalGDP
+#' 
+#' It returns the original county total GDP of one specified state 
+#' 
+#' @param year A numeric value between 2001 and 2018 specifying the year of interest. If 0 ,return a dataframe with data from all years available
+#' @param state A string character specifying the state of interest, 'Georgia' 
+#' @return A data frame contains selected county GDP by BEA sector industries at a specific year.
+getBEACountyTotalGDP = function(year, state) {
+  # filter for specified state
+  fileName = paste0('inst/extdata/CAGDP2/CAGDP2_', paste0(getStateAbbreviation(state),'_2001_2018.csv'))
+  # read data 
+  countyData = utils::read.table(fileName, 
+                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE) %>% filter(LineCode == 1)
+  countyTotal = countyData[-1, c('GeoFIPS','GeoName', as.character(year))] %>% arrange(GeoName)
 
-# test = getBEACountyGDP(year = 2015, state = 'GA', axis = 0)
+  return(getBEACountyTotalGDP)
+  
+}
 
 
