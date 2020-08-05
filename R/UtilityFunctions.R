@@ -82,3 +82,126 @@ applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
   m <- RAS(m0, t_r, t_c, t, max_itr)
   return(m)
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#' getStateAbbreviation (MODIFIED)
+#' 
+#' This function is to return the two-character abbreviation of a US state. For example, 'GA'
+#' 
+#' @param state A string character specifying the full name of a US state , 'Georgia'
+#' @return two-character abbreviation of a US state
+getStateAbbreviation = function(state) {
+  stateCode = readr::read_csv('inst/extdata/StateAbbreviation.csv')
+  state = stateCode[which(stateCode$State == state),]$Code
+  return(state)
+}
+
+
+
+#' getCountyFIPS (MODIFIED)
+#' 
+#' This function is to return a dataframe containing name and fips of each county in 
+#' selected state in support of later data wrangling operations
+#' 
+#' @param state A string character specifying the state of interest 'Georgia' 
+#' @return A data frame contains all 159 names and FIPS for all counties in specified state
+getCountyFIPS = function(state) {
+  CountyCodes = readr::read_csv('inst/extdata/CountyFIPS.csv') %>% 
+    filter(State == getStateAbbreviation(state)) %>% 
+    select(fips, Name) %>% na.omit() %>% 
+    arrange(Name)
+  return(CountyCodes)
+} 
+
+
+
+#' getCrossWalk (MODIFIED)
+#' 
+#' This function is to return a dataframe containing the crosswalk of two different industry
+#' classification system ('bea_sector', 'bea_summary', 'bea_detail', 'naics2007', 'naics2012', 'naics2017')
+#' 
+#' @param start A string character specifying the start point 
+#' @param end A string character specifying the end point 
+#' @return A data frame contains the croswalk table
+getCrossWalk = function(start, end) {
+  CW = useeior::MasterCrosswalk2012
+  start_switch = switch (start,
+                         'bea_sector' = 1,
+                         'bea_summary' = 2,
+                         'bea_detail' = 3,
+                         'naics2012' = 4,
+                         'naics2007' = 5,
+                         'naics2017' = 6
+  )
+  end_switch = switch (end,
+                       'bea_sector' = 1,
+                       'bea_summary' = 2,
+                       'bea_detail' = 3,
+                       'naics2012' = 4,
+                       'naics2007' = 5,
+                       'naics2017' = 6
+  )
+  
+  CW = unique(CW[, c(start_switch, end_switch)])
+  return(CW)
+}
+
+
+
+#' calculateRowColumnDiffernce (MODIFIED)
+#' 
+#' This function is to return a list containing row difference and column difference of a 
+#' matrix with NA
+#' 
+#' @param matrix Matrix, matrix to be processed
+#' @param t_cs Vector, true column sum
+#' @param t_rs Vector, true row sum
+#' @return a list containing row difference and column difference
+calculateRowColumnDiffernce = function(matrix, t_cs, t_rs) {
+  matrix[is.na(matrix)] = 0
+  row_difference = t_rs - rowSums(matrix)
+  column_difference = t_cs - colSums(matrix)
+  return(list(rowdiff = row_difference, coldiff = column_difference))
+}
+
+
+
+#' fillNAwithRatioMatrix (MODIFIED)
+#' 
+#' This function is to fill a matrix with NAs by another ratio matrix to neutralize
+#' row difference
+#' 
+#' @param matrix_to_fill Matrix, matrix to be processed
+#' @param ratio_matrix Matrix, ratio matrix
+#' @param row_difference Vector, row difference
+#' @return a matrix whose row sums equal trus row sum
+fillNAwithRatioMatrix = function(matrix_to_fill, ratio_matrix, row_difference) {
+  matrixKEY = is.na(matrix_to_fill)
+  for (row in (1:nrow(matrix_to_fill))) {
+    key = which(is.na(matrix_to_fill[row,]))
+    if (length(key) != 0 && sum(ratio_matrix[row,key]) != 0) {
+      ratio = ratio_matrix[row,key] / sum(ratio_matrix[row,key])
+      matrix_to_fill[row,key] = ratio * row_difference[row]
+    } else if (length(key) != 0 && sum(ratio_matrix[row,key]) == 0) {
+      matrix_to_fill[row,key] = row_difference[row] / length(key)
+    }
+  }
+  return(matrix_to_fill)
+}
+
+
+
+
