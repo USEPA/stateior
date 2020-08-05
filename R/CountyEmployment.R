@@ -1,5 +1,5 @@
 library(tidyverse)
-#source('data-raw/BEAData.R')
+source('R/UtilityFunctions.R')
 #' getStateEstablishmentCount (MODIFIED)
 #' 
 #' This function is to return dataframes containing establishment count data at 
@@ -34,7 +34,9 @@ getStateEstablishmentCount = function(state, year) {
   
   return(StateEmp)
 }
-#getStateEstablishmentCount(year = 2015, state = 'Georgia')
+#a = getStateEstablishmentCount(year = 2015, state = 'Georgia')
+
+
 
 #' getCountyEstablishmentCount (MODIFIED)
 #' 
@@ -66,6 +68,55 @@ getCountyEstablishmentCount = function(state, year) {
   
   return(countyEmp)
 }
+#a = getCountyEstablishmentCount(year = 2015, state = 'Georgia')
+
+
+
+#' mapEstablishmentCountFromNAICSToBEA (MODIFIED)
+#' 
+#' This function is to return dataframes containing establishment count data of each county at
+#' BEA sumamry or sector level from the year of 2007 to 2019, during which QCEW data is available 
+#' 
+#' @param state  character string specifying the state of interest, 'Georgia' 
+#' @param type  character string, 'state' or 'county'
+#' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
+#' @return A data frame containing data asked for at a specific year.
+mapEstablishmentCountFromNAICStoBEASummary = function(type, year, state) {
+  # load cw file and perform level filtering
+  cw = unique(getCrossWalk('bea_summary', 'naics2012') %>% 
+                                                mutate(NAICS_2012_Code = as.numeric(NAICS_2012_Code)) %>% 
+                                                na.omit() %>%
+                                                filter(NAICS_2012_Code >= 1e+4, NAICS_2012_Code < 1e+5)
+              )
+  # type choice
+  if (type == 'state') {
+    raw = getStateEstablishmentCount(state, year)
+    # Coerce 6-digit NAICS to 5-digit
+    raw$industry_code = floor(raw$industry_code / 10)
+    # CrossWalk
+    crossed = raw %>% 
+      left_join(., cw, by = c('industry_code' = 'NAICS_2012_Code')) %>%
+      group_by(BEA_2012_Summary_Code) %>%
+      summarise(estabs_count = sum(estabs_count)) %>%
+      na.omit()
+  }
+  raw = getCountyEstablishmentCount(state, year)
+  # Coerce 6-digit NAICS to 5-digit
+  raw$industry_code = floor(raw$industry_code / 10)
+  # CrossWalk
+  crossed = raw %>% 
+    left_join(., cw, by = c('industry_code' = 'NAICS_2012_Code')) %>%
+    group_by(BEA_2012_Summary_Code, area_fips) %>%
+    summarise(estabs_count = sum(estabs_count)) %>%
+    na.omit()
+  
+  return(crossed)
+}
+#a = mapEstablishmentCountFromNAICStoBEASummary('county', 2015, 'Georgia')
+
+
+
+
 
 
 #' calculateEstabLocationQuotient (MODIFIED)
@@ -113,116 +164,6 @@ calculateEstabLocationQuotient = function(state = 'Georgia', year) {
 
 
 
-#####################################################################################
-################## DEPRECATED FUNCTIONS, PLEASE DO NOT USE THEM  ####################
-#####################################################################################    
-#' EstimateCountyEmploymentData
-#' 
-#' This function is to return dataframes containing county-level employement data from
-#' the year of 2015 to 2018, during which QCEW data is available, using the export from 
-#' GetCountyEmployment Data. There are three types of employment data returned: employment count, 
-#' emp compensation, and establishment counts, among which emp count and emp compensation.
-#' 
-#' 
-#' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
-#' @param type Character, types of employment data,  'emp', 'comp' 'estabs'
-#' @return A data frame containing data asked for at a specific year.
-#' @export GACounty_Emp/estabs/Comp_xxxx.csv
-EstimateCountyEmploymentData = function(year, type) {
-  
-  # preparation
-  filename = paste0('../data/GACounty_Emp_Raw_', paste0(year,'.csv')) #export from GetCountyEmploymentData
-  raw = readr::read_csv(filename) # raw county-lvl data
-  GAlevel = GetGeorgiaEmploymentData(year) # call GA emp data
-  NAICS2 = GAlevel$industry_code # industry codes
-  GAcountyFIPS = getGACountyFIPS() %>% arrange(Name) # county fips
-  Countytotal = raw %>% filter(own_code ==0) %>% left_join(., GAcountyFIPS, by = c('area_fips' = 'fips')) %>% arrange(Name) #call caounty total data
-  CountyTable = data.frame() %>% rbind(as.data.frame(NAICS2)) # blank df
-  
-  
-  
-  ### ESTABLISHMENT 
-  if (type == 'estabs') { # no estimation needed，true value output
-    estabsTable = raw %>% 
-      select(area_fips, industry_code, annual_avg_estabs) %>%
-      filter(industry_code %in% NAICS2) %>%
-      group_by(area_fips, industry_code) %>%
-      summarise(estabs = sum(annual_avg_estabs)) %>% left_join(., GAcountyFIPS, by = c('area_fips' = 'fips')) %>%
-      mutate(Name = paste0(Name, paste0('/',area_fips))) %>%
-      rename(NAICS2 = industry_code)
-    
-    output = estabsTable[,c(2,3,4)] %>% arrange(Name) %>% spread(Name, estabs) #spread rows to columns
-    output[is.na(output)] = 0  #set NA to 0 (no data loss here since NA appears when there is 0 estab in one industry of a county)
-    
-    return(output)
-  }
-  ##filename = paste0('../data/GACounty_estabs_', paste0(year,'.csv'))
-  ##readr::write_csv(output, filename)
-  
-  
-  ### EMPLOYMENT/EMP COMP 
-  if (type %in% c('emp','comp')) { 
-    empcompTable = raw %>% 
-      select(area_fips, industry_code, annual_avg_estabs, annual_avg_emplvl, total_annual_wages) %>%
-      filter(industry_code %in% NAICS2) %>% left_join(., GAlevel, by = 'industry_code')
-    
-    # Step1: use state average to fill in NAs
-    filter = which(empcompTable$annual_avg_emplvl == 0) # find non-zero estab with zero emp and comp
-    empcompTable$annual_avg_emplvl[filter] = empcompTable$annual_avg_estabs[filter] * empcompTable$empPerEstab[filter]
-    empcompTable$total_annual_wages[filter] = empcompTable$annual_avg_estabs[filter] * empcompTable$compPerEstab[filter]
-    empcompTable$isEst = 0
-    empcompTable$isEst[filter] = 1
-    
-    step1table = empcompTable %>% 
-      group_by(area_fips, industry_code) %>%
-      summarise(estabs = sum(annual_avg_estabs), empEST = sum(annual_avg_emplvl), compEST = sum(total_annual_wages), isEST = sum(isEst) ) %>% left_join(., GAcountyFIPS, by = c('area_fips' = 'fips')) %>%
-      mutate(Name = paste0(Name, paste0('/',area_fips))) %>%
-      rename(NAICS2 = industry_code) %>% arrange(Name)
-    
-  }
-  
-  # Step2: RAS
-  if (type == 'emp') {
-    # divide original data into two matrices: true matrix containing with all NA equal 0 and adjuested matrix with all true value equal 0
-    empstep1ADJ = step1table[step1table$isEST != 0, c(2,4,7)] %>% arrange(Name) %>% spread(Name, empEST)
-    empstep1ADJ[is.na(empstep1ADJ)] = 0
-    step1table$empEST[step1table$isEST != 0] = 0
-    empstep1TRUE = step1table[, c(2,4,7)] %>% arrange(Name) %>% spread(Name, empEST)
-    empstep1TRUE[is.na(empstep1TRUE)] = 0
-    
-    # apply RAS method
-    M0 = as.matrix(empstep1ADJ %>% select(-1))
-    rowDifference = GAlevel$emp - rowSums(empstep1TRUE %>% select(-1))
-    colDifference = Countytotal$annual_avg_emplvl - colSums(empstep1TRUE %>% select(-1))
-    M1 = applyRAS(M0, rowDifference, colDifference, relative_diff = NULL, absolute_diff = 100, max_itr = 10000)
-    
-    # add back and get final output
-    output = cbind(empstep1TRUE[,1],round(empstep1TRUE[,2:160] + M1,0))
-    
-    return(output)
-  }
-  
-  if (type == 'comp') {
-    # divide original data into two matrices: true matrix containing with all NA equal 0 and adjuested matrix with all true value equal 0
-    compstep1ADJ = step1table[step1table$isEST != 0, c(2,5,7)] %>% arrange(Name) %>% spread(Name, compEST)
-    compstep1ADJ[is.na(compstep1ADJ)] = 0
-    step1table$compEST[step1table$isEST != 0] = 0
-    compstep1TRUE = step1table[, c(2,5,7)] %>% arrange(Name) %>% spread(Name, compEST)
-    compstep1TRUE[is.na(compstep1TRUE)] = 0
-    
-    # apply RAS method
-    M0 = as.matrix(compstep1ADJ %>% select(-1))
-    rowDifference = GAlevel$comp - rowSums(compstep1TRUE %>% select(-1))
-    colDifference = Countytotal$total_annual_wages - colSums(compstep1TRUE %>% select(-1))
-    M1 = applyRAS(M0, rowDifference, colDifference, relative_diff = NULL, absolute_diff = 100, max_itr = 100000)
-    
-    # add back and get final output
-    output = cbind(compstep1TRUE[,1],round(compstep1TRUE[,2:160] + M1,0))
-    
-    return(output)
-  }
-  
-}
 
 
 
