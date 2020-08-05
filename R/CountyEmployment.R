@@ -99,23 +99,23 @@ mapEstablishmentCountFromNAICStoBEASummary = function(type, year, state) {
       group_by(BEA_2012_Summary_Code) %>%
       summarise(estabs_count = sum(estabs_count)) %>%
       na.omit()
+    
+    return(crossed)
+  } else {
+    raw = getCountyEstablishmentCount(state, year)
+    # Coerce 6-digit NAICS to 5-digit
+    raw$industry_code = floor(raw$industry_code / 10)
+    # CrossWalk
+    crossed = raw %>% 
+      left_join(., cw, by = c('industry_code' = 'NAICS_2012_Code')) %>%
+      group_by(BEA_2012_Summary_Code, area_fips) %>%
+      summarise(estabs_count = sum(estabs_count)) %>%
+      na.omit()
+    
+    return(crossed)
   }
-  raw = getCountyEstablishmentCount(state, year)
-  # Coerce 6-digit NAICS to 5-digit
-  raw$industry_code = floor(raw$industry_code / 10)
-  # CrossWalk
-  crossed = raw %>% 
-    left_join(., cw, by = c('industry_code' = 'NAICS_2012_Code')) %>%
-    group_by(BEA_2012_Summary_Code, area_fips) %>%
-    summarise(estabs_count = sum(estabs_count)) %>%
-    na.omit()
-  
-  return(crossed)
 }
 #a = mapEstablishmentCountFromNAICStoBEASummary('county', 2015, 'Georgia')
-
-
-
 
 
 
@@ -126,13 +126,13 @@ mapEstablishmentCountFromNAICStoBEASummary = function(type, year, state) {
 #' @param state A string character specifying the state of interest, default 'Georgia' 
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
 #' @return A data frame containing data asked for at a specific year.
-calculateEstabLocationQuotient = function(state = 'Georgia', year) {
+calculateEstabLocationQuotient = function(state, year) {
   # load state and county data
-  stateEstab = mapEstablishmentCountFromNAICStoBEA(state, year, 'state')
-  countyEstab = mapEstablishmentCountFromNAICStoBEA(state, year, 'county')  
+  stateEstab = mapEstablishmentCountFromNAICStoBEASummary('state', year, state)
+  countyEstab = mapEstablishmentCountFromNAICStoBEASummary('county', year, state)  
   
   # append county names to each row
-  countyFIPS = getCountyFIPS(state = 'GA') ## ONLY OBTAIN GA
+  countyFIPS = getCountyFIPS(state) ## ONLY OBTAIN GA
   countyEstab = countyEstab %>%
                             left_join(., countyFIPS, by = c('area_fips' = 'fips')) %>%
                             mutate(Name = paste0(Name, paste0('/',as.character(area_fips)))) %>%
@@ -155,7 +155,7 @@ calculateEstabLocationQuotient = function(state = 'Georgia', year) {
   
   return(countyEstabColumn)
 }
-
+#a = calculateEstabLocationQuotient(state, year)
 
 
 
