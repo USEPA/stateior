@@ -34,7 +34,7 @@ getStateEstablishmentCount = function(state, year) {
   
   return(StateEmp)
 }
-
+#getStateEstablishmentCount(year = 2015, state = 'Georgia')
 
 #' getCountyEstablishmentCount (MODIFIED)
 #' 
