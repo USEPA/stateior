@@ -2,9 +2,9 @@ library(tidyverse)
 source('R/UtilityFunctions.R')
 source('R/CountyEmployment.R')
 
-#' getCountyTotalGDP
+#' getCountyTotalGDP (MODIFIED)
 #' 
-#' It returns the original county total GDP of one specified state 
+#' It returns the original county total GDP of one state 
 #' 
 #' @param year A numeric value between 2001 and 2018 specifying the year of interest. If 0 ,return a dataframe with data from all years available
 #' @param state A string character specifying the state of interest, 'Georgia' 
@@ -15,7 +15,9 @@ getCountyTotalGDP = function(year, state) {
   # read data 
   countyData = utils::read.table(fileName, 
                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE) %>% filter(LineCode == 1)
+  # select year
   countyTotal = countyData[-1, c('GeoFIPS','GeoName', as.character(year))] %>% arrange(GeoName)
+  # change unit
   countyTotal[[as.character(year)]] = 1000 * as.numeric(countyTotal[[as.character(year)]])
   return(countyTotal)
   
@@ -24,9 +26,9 @@ getCountyTotalGDP = function(year, state) {
 
 
 
-#' getStateSectorGDP
+#' getStateSectorGDP (MODIFIED)
 #' 
-#' It returns the original BEA-sector level GDP of one specified state 
+#' It returns the original BEA-sector level GDP of one state 
 #' 
 #' @param year A numeric value between 2007 and 2019 specifying the year of interest. If 0 ,return a dataframe with data from all years available
 #' @param state A string character specifying the state of interest, 'Georgia' 
@@ -38,11 +40,11 @@ getStateSectorGDP = function(year, state) {
   stateGDP = stateGDP[, c('LineCode', as.character(year))]
   return(stateGDP)
 }
-#
+#b = getStateSectorGDP(year, state)
 
 
 
-#' getCountyRawSectorGDP
+#' getCountyRawSectorGDP (MODIFIED)
 #' 
 #' It returns the original county GDP at BEA sector level of one specified state 
 #' 
@@ -136,7 +138,7 @@ estimateCountySectorGDP = function(state, year) {
 
 
 
-#' calculateStateSummarySectorGDPRatio
+#' calculateStateSummarySectorGDPRatio (MODIFIED)
 #' 
 #' It returns the state ratio of subsector level GDP to GDP of the sector which 
 #' the subsector belongs to. All ratios from one sector sums up to 1.0. For instance,
@@ -171,89 +173,105 @@ calculateStateSummarySectorGDPRatio = function(year, state) {
   # drop NA, which only exists in rows for sectors
   GDPRatio = na.omit(GDPRatio[,c('LineCode', 'LineCodeSec', 'GDPRatio')])
   
-  return(GDPRatio)
+  # map line code to BEA summary
+  cw2 = unique(utils::read.table('inst/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv', 
+                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE) %>% select(LineCodeSum, BEA_2012_Summary_Code)
+              )
+  GDPRatio_Summary = GDPRatio %>% left_join(., cw2[,c('LineCodeSum', 'BEA_2012_Summary_Code')], by = c('LineCode' = 'LineCodeSum'))
+  # handle double count by even allocation
+  doubleCount = GDPRatio_Summary %>% count(LineCode) %>% filter(n > 1)
+  for (lc in doubleCount$LineCode) {
+    GDPRatio_Summary[GDPRatio_Summary$LineCode == lc,]$GDPRatio =  GDPRatio_Summary[GDPRatio_Summary$LineCode == lc,]$GDPRatio / doubleCount[doubleCount$LineCode == lc,]$n
+  }
+  
+  return(GDPRatio_Summary[, c('LineCodeSec', 'BEA_2012_Summary_Code', 'GDPRatio')] %>% arrange(BEA_2012_Summary_Code))
 }
 #a = calculateStateSummarySectorGDPRatio(2010, 'Georgia')
 
 
 
-#' estimateCountySummaryGDP
+#' estimateCountySummaryGDP (MODIFIED)
 #' 
-#' Break down sector-level GDP into summary-level GDP by state ratio and RAS
+#' Break down sector-level GDP into summary-level GDP by SummarySectorGDPRatio and RAS
 #' 
 #' 
 #' @param year Integer, A numeric value between 2015-2017 specifying the year of interest
-#' @param ite Integer, times of iteration for RAS data reconciliation, 10000 as default
-#' @return two data frames containing data asked for at a specific year: Column Error, Row Error
-estimateCountySummaryGDP = function(year, iteration = 1000) {
+#' @param state character string, the state of interest, full name with first letter capitalized, 'Georgia'. 
+#' @return A data frame containing data asked for at a specific year.
+estimateCountySummaryGDP = function(year, state) {
   
-  load("../data/extdata/State_GDP_2007_2019.rda")
-  ## step1: initial allocation based on LQ-weighted gdp ratio
-  rawratio = GetGeorgiaSummarySectorGDPRatio(year) %>% select(1,4,6)
-  filename = paste0("../data/GACounty_SectorGDP_", paste0(year,'.csv'))
-  sectorGDP = readr::read_csv(filename)
-  summaryGDP = data.frame(LineCode = unique(rawratio$LineCode))
-  
-  filename2 = paste0("../data/GACounty_SummaryEstabsLQ_", paste0(year,'.csv'))
-  LQ = readr::read_csv(filename2)
+  ## Step1: initial allocation based on LQ-weighted gdp ratio
+  # load ratio, gdp data
+  rawratio = calculateStateSummarySectorGDPRatio(year, state)
+  sectorGDP = estimateCountySectorGDP(state, year)
+  summaryGDP = data.frame(BEA_2012_Summary_Code = unique(rawratio$BEA_2012_Summary_Code))
+  # load LQ data
+  LQ = calculateEstabLocationQuotient(state, year)
   
   for (c in 2:ncol(sectorGDP)) {
     countysector = sectorGDP %>% select(1,c) %>% right_join(.,rawratio, by = c('LineCode'='LineCodeSec'))
-    colnames(countysector)[3] = 'LineCodeSum'
     countyLQ = LQ %>% select(1,c)
     colnames(countyLQ)[2] = "LQ"
-    county = countysector %>% left_join(., countyLQ, by = 'LineCodeSum') %>% mutate(weightedRatio = 0, normalizedRatio = 0, adjusted = 0)
+    county = countysector %>% left_join(., countyLQ, by = 'BEA_2012_Summary_Code') %>% mutate(weightedRatio = 0, normalizedRatio = 0, adjustedGDP = 0)
+    
+    if (length(county[is.na(county$LQ),]$LQ) != 0) {
+      county[is.na(county$LQ),]$LQ = 0
+    }
     
     for (sec in unique(county$LineCode)) {
-      sumcodelist = unique(county[county$LineCode == sec,]$LineCodeSum)
+      summaryCodeList = unique(county[county$LineCode == sec,]$BEA_2012_Summary_Code)
+      
       totalLQ = sum(county[county$LineCode == sec,]$LQ)
-      if (totalLQ == 0) { next } else {
-        for (sum in sumcodelist) {
-          county[county$LineCodeSum == sum,]$weightedRatio = county[county$LineCodeSum == sum,]$GDPRatio * (county[county$LineCodeSum == sum,]$LQ / totalLQ)
+      if (totalLQ == 0) { 
+        county[county$BEA_2012_Summary_Code %in% summaryCodeList,]$normalizedRatio = 0
+      } else {
+        for (sum in summaryCodeList) {
+          county[county$BEA_2012_Summary_Code == sum,]$weightedRatio = county[county$BEA_2012_Summary_Code == sum,]$GDPRatio * (county[county$BEA_2012_Summary_Code == sum,]$LQ / totalLQ)
         }
-        for (sum in sumcodelist) {
-          county[county$LineCodeSum == sum,]$normalizedRatio = county[county$LineCodeSum == sum,]$weightedRatio / sum (county[county$LineCode == sec,]$weightedRatio)
+        for (sum in summaryCodeList) {
+          county[county$BEA_2012_Summary_Code == sum,]$normalizedRatio = county[county$BEA_2012_Summary_Code == sum,]$weightedRatio / sum (county[county$LineCode == sec,]$weightedRatio)
         }
       }
     }
     
-    # compute new gdp ratio
-    county[,'adjusted'] = county[2] * county$normalizedRatio
-    # obtain original ratio for gov spending back becasue 85 is missing
-    county[county$LineCode =='83',]$adjusted = as.numeric(county[county$LineCode =='83',][2,2]) * county[county$LineCode =='83',]$GDPRatio
-    county[2] = county[8]
-    summaryGDP = cbind(summaryGDP, county[2])
+    # compute adjusted gdp 
+    county[,'adjustedGDP'] = county[2] * county$normalizedRatio
+    summaryGDP = left_join(summaryGDP, county[, c('BEA_2012_Summary_Code', 'adjustedGDP')], by = 'BEA_2012_Summary_Code')
+    colnames(summaryGDP)[ncol(summaryGDP)] = colnames(county)[2]
   }
-  
   
   ### step2: RAS method to reconcile matrix (RAS based on sector)
   M2 = data.frame()
-  
+  # map state gdp from line code to summary code
+  yr = year
+  State_GDP_2007_2019 = stateio::State_GDP_2007_2019
+  stateGDP = State_GDP_2007_2019[State_GDP_2007_2019$GeoName == state,c('LineCode', as.character(year))]
+  cw = unique(utils::read.table('inst/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv', 
+                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE) %>% select(LineCodeSum, BEA_2012_Summary_Code)
+              )
+  stateGDP_summary = stateGDP %>% filter(LineCode %in% cw$LineCodeSum) %>% left_join(., cw, by = c('LineCode' = 'LineCodeSum'))
+  doubleCount = stateGDP_summary %>% count(LineCode) %>% filter(n > 1)
+  for (lc in doubleCount$LineCode) {
+    stateGDP_summary[stateGDP_summary$LineCode == lc,][[as.character(year)]] =  stateGDP_summary[stateGDP_summary$LineCode == lc,][[as.character(year)]] / doubleCount[doubleCount$LineCode == lc,]$n
+  }
+  # apply RAS to each sector
   for (code in unique(county$LineCode)) {
-    sumcode = county[county$LineCode == code, ]$LineCodeSum
-    M0 = as.matrix(summaryGDP[summaryGDP$LineCode %in% sumcode, 2:ncol(summaryGDP)])
-    t_rs = State_GDP_2007_2019 %>% filter(GeoName == 'Georgia', LineCode %in% sumcode) %>% select(year - 2003)
-    colnames(t_rs)[1] = 'sectorGDP'
-    t_rs = t_rs$sectorGDP
+    sumcode = county[county$LineCode == code, ]$BEA_2012_Summary_Code
+    M0 = as.matrix(summaryGDP[summaryGDP$BEA_2012_Summary_Code %in% sumcode, 2:ncol(summaryGDP)])
+    stateRow = stateGDP_summary[stateGDP_summary$BEA_2012_Summary_Code %in% sumcode, ] %>% arrange(BEA_2012_Summary_Code)
+    t_rs = stateRow[[as.character(year)]]
     t_cs = t(as.matrix(sectorGDP[sectorGDP$LineCode == code, 2:ncol(sectorGDP)]))
     t_cs = as.vector(t_cs[,1])
     
-    M1 = applyRAS(M0, t_rs, t_cs, relative_diff = NULL, absolute_diff = 0, max_itr = iteration)
+    M1 = round(applyRAS(M0, t_rs, t_cs, relative_diff = NULL, absolute_diff = 1e+4, max_itr = 1e+4), 1)
+    M1 = cbind(stateRow$BEA_2012_Summary_Code, M1)
     M2 = rbind(M2, M1)
   }
-  M2 = cbind(summaryGDP[,'LineCode'], M2)
-  colnames(M2)[1] = 'LineCode'
 
   return(M2)
 
 }
-
-
-#for (year in seq(2015,2017,1)) {
-  #filename = paste0("../data/GACounty_SummaryGDP_", paste0(year,'.csv'))
-  #gdp = EstimateCountySummaryGDP(year, iteration = 1000)
-  #write_csv(gdp, filename)
-#}
+#a = estimateCountySummaryGDP(2016,'Georgia')
 
 
 

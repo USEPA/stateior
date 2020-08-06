@@ -98,7 +98,10 @@ mapEstablishmentCountFromNAICStoBEASummary = function(type, year, state) {
       left_join(., cw, by = c('industry_code' = 'NAICS_2012_Code')) %>%
       group_by(BEA_2012_Summary_Code) %>%
       summarise(estabs_count = sum(estabs_count)) %>%
-      na.omit()
+      filter(!is.na(BEA_2012_Summary_Code))
+    
+    crossed = full_join(crossed, data.frame(BEA_2012_Summary_Code = unique(cw$BEA_2012_Summary_Code)), by = 'BEA_2012_Summary_Code') %>% arrange(BEA_2012_Summary_Code)
+    crossed[is.na(crossed$estabs_count),]$estabs_count = 0
     
     return(crossed)
   } else {
@@ -110,8 +113,8 @@ mapEstablishmentCountFromNAICStoBEASummary = function(type, year, state) {
       left_join(., cw, by = c('industry_code' = 'NAICS_2012_Code')) %>%
       group_by(BEA_2012_Summary_Code, area_fips) %>%
       summarise(estabs_count = sum(estabs_count)) %>%
-      na.omit()
-    
+      filter(!is.na(BEA_2012_Summary_Code))
+  
     return(crossed)
   }
 }
@@ -130,30 +133,31 @@ calculateEstabLocationQuotient = function(state, year) {
   # load state and county data
   stateEstab = mapEstablishmentCountFromNAICStoBEASummary('state', year, state)
   countyEstab = mapEstablishmentCountFromNAICStoBEASummary('county', year, state)  
-  
   # append county names to each row
   countyFIPS = getCountyFIPS(state) ## ONLY OBTAIN GA
   countyEstab = countyEstab %>%
                             left_join(., countyFIPS, by = c('area_fips' = 'fips')) %>%
                             mutate(Name = paste0(Name, paste0('/',as.character(area_fips)))) %>%
                             arrange(Name)
-  
   # spread countyEstab 
   countyEstabColumn = countyEstab[, c('Name', 'BEA_2012_Summary_Code', 'estabs_count')] %>%
                             spread(Name, estabs_count)
-  
   # fill NA with 0 
   countyEstabColumn[is.na(countyEstabColumn)] = 0
-  
   # calculate state industry ratio
   stateRatio = stateEstab$estabs_count / sum(stateEstab$estabs_count)
-  
   # calculate county industry ratio
   for (ct in (2:ncol(countyEstabColumn))) {
     countyEstabColumn[, ct] = as.vector(countyEstabColumn[, ct] / sum(countyEstabColumn[, ct]) / stateRatio)
+    countyEstabColumn[[ct]][is.na(countyEstabColumn[[ct]])] = 0
+    countyEstabColumn[[ct]][!is.finite(countyEstabColumn[[ct]])] = 0
+    
   }
+  # append row that have 0 estabs
+  LQ = countyEstabColumn %>% right_join(., stateEstab[,c('BEA_2012_Summary_Code')], by = 'BEA_2012_Summary_Code') %>% arrange(BEA_2012_Summary_Code)
+  LQ[is.na(LQ)] = 0
   
-  return(countyEstabColumn)
+  return(LQ)
 }
 #a = calculateEstabLocationQuotient(state, year)
 
