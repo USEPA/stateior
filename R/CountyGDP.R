@@ -1,57 +1,102 @@
 library(tidyverse)
 source('R/UtilityFunctions.R')
 
+#' getCountyTotalGDP
+#' 
+#' It returns the original county total GDP of one specified state 
+#' 
+#' @param year A numeric value between 2001 and 2018 specifying the year of interest. If 0 ,return a dataframe with data from all years available
+#' @param state A string character specifying the state of interest, 'Georgia' 
+#' @return A data frame contains selected county GDP by BEA sector industries at a specific year.
+getCountyTotalGDP = function(year, state) {
+  # filter for specified state
+  fileName = paste0('inst/extdata/CAGDP2/CAGDP2_', paste0(getStateAbbreviation(state),'_2001_2018.csv'))
+  # read data 
+  countyData = utils::read.table(fileName, 
+                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE) %>% filter(LineCode == 1)
+  countyTotal = countyData[-1, c('GeoFIPS','GeoName', as.character(year))] %>% arrange(GeoName)
+  
+  countyTotal[[as.character(year)]] = 1000 * as.numeric(countyTotal[[as.character(year)]])
+  
+  return(countyTotal)
+  
+}
+
+
+
+#' getCountyRawSectorGDP
+#' 
+#' It returns the original county GDP at BEA sector level of one specified state 
+#' 
+#' @param year A numeric value between 2001 and 2018 specifying the year of interest. If 0 ,return a dataframe with data from all years available
+#' @param state A string character specifying the state of interest, 'Georgia' 
+#' @return A data frame contains selected county GDP by BEA sector industries at a specific year.
+getCountyRawSectorGDP = function(year, state) {
+  load('data/CountyGA_BEASectorGDP_2001_2018.rda')
+  # filter for state and year
+  CountyRawGDP = CountyGA_BEASectorGDP_2001_2018[as.numeric(CountyGA_BEASectorGDP_2001_2018$GeoFIPS) %in% namelist$fips, c('GeoName', 'LineCode', as.character(year))]
+  colnames(CountyRawGDP)[ncol(CountyRawGDP)] = 'GDP'
+  # spread to column
+  CountyRawGDP_Column = CountyRawGDP %>% filter(LineCode != 1) %>%arrange(GeoName) %>% spread(GeoName, GDP)
+  
+  return(CountyRawGDP_Column)
+}
+
+
 
 
 #' estimateCountySectorGDP
 #' 
-#' Make estimation of blank rows from what GetCountyOriginalSectorGDP returned by c
+#' Make estimation of blank rows from what GetBEACountyGDP returned by c
 #' ounty-state establishment ratio
 #' 
-#' 
+#' @param state A string character specifying the state of interest, default 'Georgia' 
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
 #' @return A data frame containing data asked for at a specific year.
-estimateCountySectorGDP = function(year) {
-  # CrossWalk to BEA sector
-  cw = readr::read_csv('../data/extdata/CrossWalk_NAICS2ToLineCode.csv')
-  filename = paste0("../data/GACounty_estabs_", paste0(year,'.csv'))
-  CountyEstabCount = readr::read_csv(filename) %>% 
-    right_join(., cw, by = 'NAICS2') %>% 
-    relocate(LineCode,.after = NAICS2) %>% 
-    group_by(LineCode) %>%
-    summarise_if(is.numeric, sum) %>% select(-1)
+estimateCountySectorGDP = function(state, year) {
+  # CrossWalk estab count data to BEA sector
+  cw = unique(getCrossWalk('bea_sector', 'naics2012') %>% 
+                mutate(NAICS_2012_Code = as.numeric(NAICS_2012_Code)) %>% 
+                na.omit() %>%
+                filter(NAICS_2012_Code >= 1e+4, NAICS_2012_Code < 1e+5)
+             )
+  CountyEstabCount_Summary = getCountyEstablishmentCount(state, year)
+  CountyEstabCount_Sector = CountyEstabCount_Summary %>% 
+                                                     mutate(industry_code = floor(as.numeric(industry_code) / 10)) %>%
+                                                     left_join(., cw, by = c('industry_code' = 'NAICS_2012_Code')) %>% 
+                                                     group_by(area_fips, BEA_2012_Sector_Code) %>%
+                                                     summarise(estabs_count = sum(estabs_count))
   
+  # append county name to table, spread to column
+  namelist = getCountyFIPS(state)
+  CountyEstabCount_Sector = CountyEstabCount_Sector %>% 
+                                                    left_join(., namelist, by = c('area_fips' = 'fips')) %>%
+                                                    arrange(Name)
+  CountyEstabCount_Sector_Column = CountyEstabCount_Sector[,c('BEA_2012_Sector_Code', 
+                                                              'estabs_count', 
+                                                              'Name')] %>% 
+                                                                       spread(Name, estabs_count) %>%
+                                                                       filter(!is.na(BEA_2012_Sector_Code))
+  CountyEstabCount_Sector_Column[is.na(CountyEstabCount_Sector_Column)] = 0
+  
+  #load raw GDP
+  load('data/CountyGA_BEASectorGDP_2001_2018.rda')
+  CountyRawSectorGDP = getCountyRawSectorGDP(year,state)
+    
   # Calculate GDP difference
-  RawGDP = GetCountyOriginalSectorGDP(year, 'all', 0) %>% select(-1)
-  RawGDP[is.na(RawGDP)] = 0
-  GDPRowDifference = RawGDP$Georgia - rowSums(RawGDP[,2:ncol(RawGDP)])
-  
-  filename2 = '../data/extdata/BEA_County/CAGDP2_GA_2001_2018.csv'
-  SectorLevelLineCode = c(3,6,10,11,12,34,35,36,45,50,59,68,75,82,83) # sector level and total 
-  t_cs = readr::read_csv(filename2) %>% 
-    filter(!is.na(LineCode)) %>% 
-    filter(LineCode == 1, GeoName != 'Georgia') %>% 
-    arrange(GeoName) %>% select(year - (2001-9))
-  colnames(t_cs)[1] = 'countyGDP'
-  t_cs = as.numeric(t_cs$countyGDP) * 1000
-  GDPColDifference = t_cs - colSums(RawGDP[,2:ncol(RawGDP)])
-  
+  t_cs = getCountyTotalGDP(year, state)[[as.character(year)]]
+  stateTotal = CountyGA_BEASectorGDP_2001_2018 %>% filter(GeoName== state, LineCode != 1)
+  t_rs = stateTotal[[as.character(year)]]
+  diff = calculateRowColumnDiffernce(matrix = CountyRawSectorGDP[,2:ncol(CountyRawSectorGDP)], t_cs, t_rs)
+    
   # Replace NA by Estimated GDP
-  # 1. estimate by county/state raio for each subsector
-  CountyGDP = GetCountyOriginalSectorGDP(year, 'all', 0) %>% select(-1,-2)
-  matrixKEY = is.na(CountyGDP)
-  for (row in 1:(nrow(CountyGDP))) {
-    key = which(is.na(CountyGDP[row,]))
-    if (length(key) != 0 && sum(CountyEstabCount[row,key]) != 0) {
-      ratio = CountyEstabCount[row,key] / sum(CountyEstabCount[row,key])
-      CountyGDP[row,key] = ratio * GDPRowDifference[row]
-    } else if (length(key) != 0 && sum(CountyEstabCount[row,key]) == 0) {
-      CountyGDP[row,key] = GDPRowDifference[row] / length(key)
-    }
-  }
+  # Step 1. estimate by county/state raio for each subsector
+  matrixKEY = is.na(CountyRawSectorGDP[, 2:ncol(CountyRawSectorGDP)])
+  M0 = fillNAwithRatioMatrix(matrix_to_fill = as.matrix(CountyRawSectorGDP[, 2:ncol(CountyRawSectorGDP)]), 
+                        ratio_matrix = as.matrix(CountyEstabCount_Sector_Column[, 2:ncol(CountyEstabCount_Sector_Column)]), 
+                        row_difference = diff$rowdiff)
 
   # 2. RAS for data reconciliation
-  M0 = CountyGDP
   for (row in (1:nrow(M0))) {
     for (col in (1:ncol(M0))) {
       if (matrixKEY[row,col] == TRUE) {
@@ -61,9 +106,14 @@ estimateCountySectorGDP = function(year) {
       }
     }
   }
-  M1 = applyRAS(as.matrix(M0), GDPRowDifference, GDPColDifference, relative_diff = NULL, absolute_diff = 0, max_itr = 1000)
+  M1 = applyRAS(as.matrix(M0), rep(0.1,length(diff$rowdiff)), diff$coldiff, relative_diff = NULL, absolute_diff = 0, max_itr = 1000)
   
-  for (row in 1:(nrow(CountyGDP))) {
+  ############
+  ############
+  ##########TODO: step 1 not functional, check methodology.
+  #########
+  #####
+  for (row in 2:(nrow(CountyGDP))) {
     for (col in (1:ncol(CountyGDP))) {
       if (matrixKEY[row,col] == TRUE) {
         CountyGDP[row,col] = M1[row,col]
