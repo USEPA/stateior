@@ -181,7 +181,7 @@ usethis::use_data(GovConsumption_2007_2019, overwrite = TRUE)
 ################## BELOW ARE COUNTY MODEL DATA PROCESSING FUNCTIONS #################
 #####################################################################################                                  
 
-#' getBEACountyGDP
+#' getBEACountySectorGDP
 #' 
 #' It returns the original county GDP of one specified state at BEA-sector(Line Code) 
 #' level with NAs. 
@@ -190,7 +190,7 @@ usethis::use_data(GovConsumption_2007_2019, overwrite = TRUE)
 #' @param state A string character specifying the state of interest, 'GA' 
 #' @param axis A numeric value, 0,1. if 0, each county will be a col, if 1, row, default 0. This parameter only works when you specify one year
 #' @return A data frame contains selected county GDP by BEA sector industries at a specific year.
-getBEACountyGDP = function(year, state, axis = 0) {
+getBEACountySectorGDP = function(year, state, axis = 0) {
   # Create the placeholder file
   CountyGDPzip = "inst/extdata/CAGDP2.zip"
   # Download all BEA IO tables into the placeholder file
@@ -202,14 +202,14 @@ getBEACountyGDP = function(year, state, axis = 0) {
     unzip(CountyGDPzip, files = fname, exdir = "inst/extdata/CAGDP2", overwrite = TRUE)
   }
   # filter for specified state
-  fileName = paste0('inst/extdata/CAGDP2/CAGDP2_', paste0(state,'_2001_2018.csv'))
+  fileName = paste0('inst/extdata/CAGDP2/CAGDP2_', paste0(getStateAbbreviation(state),'_2001_2018.csv'))
   # read data 
   countyData = utils::read.table(fileName, 
                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
   # drop last four rows (notes in original file)
   countyData = countyData[!is.na(countyData$Region), ]
   # select only BEA-sector-level rows
-  sectorLevelLineCode = c(3,6,10,11,12,34,35,36,45,50,59,68,75,82,83)  #######TODO: have a crosswalk file in extdata and read from it, instead of hardcoding? 
+  sectorLevelLineCode = c(1,3,6,10,11,12,34,35,36,45,50,59,68,75,82,83)  #######TODO: have a crosswalk file in extdata and read from it, instead of hardcoding? 
   countyData = countyData[countyData$LineCode %in% sectorLevelLineCode, ]
   # convert data type (string to numeric) Note: NAs introduced by coercion, which is ok
   year_range = seq(2001,2018,1)
@@ -252,28 +252,11 @@ getBEACountyGDP = function(year, state, axis = 0) {
   }
 }
 
-CountyGA_BEASectorGDP_2001_2018 = getBEACountyGDP(year = 0, state = 'GA', axis = 1)
+CountyGA_BEASectorGDP_2001_2018 = getBEACountySectorGDP(year = 0, state = 'Georgia', axis = 1)
 usethis::use_data(CountyGA_BEASectorGDP_2001_2018, overwrite = TRUE)
 
 
 
-#' getBEACountyTotalGDP
-#' 
-#' It returns the original county total GDP of one specified state 
-#' 
-#' @param year A numeric value between 2001 and 2018 specifying the year of interest. If 0 ,return a dataframe with data from all years available
-#' @param state A string character specifying the state of interest, 'Georgia' 
-#' @return A data frame contains selected county GDP by BEA sector industries at a specific year.
-getBEACountyTotalGDP = function(year, state) {
-  # filter for specified state
-  fileName = paste0('inst/extdata/CAGDP2/CAGDP2_', paste0(getStateAbbreviation(state),'_2001_2018.csv'))
-  # read data 
-  countyData = utils::read.table(fileName, 
-                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE) %>% filter(LineCode == 1)
-  countyTotal = countyData[-1, c('GeoFIPS','GeoName', as.character(year))] %>% arrange(GeoName)
 
-  return(getBEACountyTotalGDP)
-  
-}
 
 
