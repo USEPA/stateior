@@ -34,7 +34,8 @@ getCountyTotalGDP = function(year, state) {
 getCountyRawSectorGDP = function(year, state) {
   load('data/CountyGA_BEASectorGDP_2001_2018.rda')
   # filter for state and year
-  CountyRawGDP = CountyGA_BEASectorGDP_2001_2018[as.numeric(CountyGA_BEASectorGDP_2001_2018$GeoFIPS) %in% namelist$fips, c('GeoName', 'LineCode', as.character(year))]
+  namelist = getCountyFIPS(state)
+  CountyRawGDP = CountyGA_BEASectorGDP_2001_2018[as.numeric(CountyGA_BEASectorGDP_2001_2018$GeoFIPS) %in% namelist$fips, c('GeoName', 'LineCode', as.character(year))] 
   colnames(CountyRawGDP)[ncol(CountyRawGDP)] = 'GDP'
   # spread to column
   CountyRawGDP_Column = CountyRawGDP %>% filter(LineCode != 1) %>%arrange(GeoName) %>% spread(GeoName, GDP)
@@ -48,7 +49,7 @@ getCountyRawSectorGDP = function(year, state) {
 #' estimateCountySectorGDP
 #' 
 #' Make estimation of blank rows from what GetBEACountyGDP returned by c
-#' ounty-state establishment ratio
+#' ounty-state establishment count ratio
 #' 
 #' @param state A string character specifying the state of interest, default 'Georgia' 
 #' @param year Integer, A numeric value between 2015-2018 specifying the year of interest
@@ -106,7 +107,7 @@ estimateCountySectorGDP = function(state, year) {
       }
     }
   }
-  M1 = applyRAS(as.matrix(M0), rep(0.1,length(diff$rowdiff)), diff$coldiff, relative_diff = NULL, absolute_diff = 0, max_itr = 1000)
+  M1 = applyRAS(as.matrix(M0), rep(0.1,length(diff$rowdiff)), diff$coldiff, relative_diff = NULL, absolute_diff = 0, max_itr = 1e+8)
   
   ############
   ############
