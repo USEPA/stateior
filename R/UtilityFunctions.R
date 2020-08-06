@@ -204,4 +204,23 @@ fillNAwithRatioMatrix = function(matrix_to_fill, ratio_matrix, row_difference) {
 
 
 
-
+#' createMatrixForRASM0 (MODIFIED)
+#' 
+#' This function is to create a matrix that with 0 value at positions with all known value
+#' and retains estimated value at positions with NA (M0 for RAS method)
+#' 
+#' @param matrix Matrix, matrix to be processed
+#' @param matrixKEY Matrix, a boolean matrix = is.na(matrix)
+#' @return a matrix M0 for RAS
+createMatrixForRASM0 = function(matrixKEY, matrix) {
+  for (row in (1:nrow(matrix))) {
+    for (col in (1:ncol(matrix))) {
+      if (matrixKEY[row,col] == TRUE) {
+        matrix[row,col] = matrix[row,col]
+      } else if (matrixKEY[row,col] == FALSE){
+        matrix[row,col] = 0
+      }
+    }
+  }
+  return(matrix)
+}
