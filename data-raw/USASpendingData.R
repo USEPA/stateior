@@ -1,147 +1,118 @@
 #' Download Federal Government Spending data by 6-digit NAICS code
-#' By state and zipcode from USASpending.gov.
-#' @param category String, can be "intermediate", "equipment", "ip", or "structure".
-#' @return A data frame of Federal Government Spending data by 6-digit NAICS
-#' by state and zipcode from 2008 to 2019.
-downloadFedGovSpending <- function(category) {
-  # Create url
-  url <- "https://api.usaspending.gov/api/v2/search/spending_by_award/"
-  # Load PSC and NAICS tables
+#' By state and county from USASpending.gov.
+#' @return A list of Federal Government Spending data by 6-digit NAICS
+#' by state and county from 2008 to 2019.
+getFedGovSpending <- function() {
+  # Load PSC table
   PSC <- utils::read.csv(system.file("extdata", "USASpending_PSC.csv", package = "stateio"),
                          stringsAsFactors = FALSE, check.names = FALSE)
+  # Prepare PSC codes by category
+  psc_list <- list(PSC[PSC$Purchase_Type=="Intermediate", "4_Digit_PSC"],
+                   PSC[PSC$Final_Demand_Category=="Equipment", "4_Digit_PSC"],
+                   PSC[PSC$Final_Demand_Category=="Intellectual_Property", "4_Digit_PSC"],
+                   PSC[PSC$Final_Demand_Category=="Structures", "4_Digit_PSC"])
+  names(psc_list) <- c("Intermediate", "Equipment", "IP", "Structure")
+  # Load NAICS table
   NAICStoPull <- utils::read.csv(system.file("extdata", "USASpending_NAICStoPull.csv", package = "stateio"),
                                  stringsAsFactors = FALSE, check.names = FALSE)
-  # Generate desired psc tables and NAICS vector
-  if (category=="intermediate") {
-    psc <- PSC[PSC$Purchase_Type=="Intermediate", ]
-    NAICS <- unique(NAICStoPull$NAICS_2012_Code)
-  } else if (category=="equipment") {
-    psc <- PSC[PSC$Final_Demand_Category=="Equipment", ]
-    NAICS <- unique(NAICStoPull[NAICStoPull$F06E00!=0 | NAICStoPull$F07E00!=0, "NAICS_2012_Code"])
-  } else if (category=="ip") {
-    psc <- PSC[PSC$Final_Demand_Category=="Intellectual_Property", ]
-    NAICS <- unique(NAICStoPull[NAICStoPull$F06N00!=0 | NAICStoPull$F07N00!=0, "NAICS_2012_Code"])
-  } else if (category=="structure") {
-    psc <- PSC[PSC$Final_Demand_Category=="Structures", ]
-    NAICS <- unique(NAICStoPull[NAICStoPull$F06S00!=0 | NAICStoPull$F07S00!=0, "NAICS_2012_Code"])
-  }
-  # Generate psc_list for API callings
-  psc_list <- list()
-  for (i in 1:nrow(psc)) {
-    if (psc[i, "Category0"]=="Product") {
-      psc_list[[i]] <- c(psc[i, "Category0"],
-                         substr(psc[i, "4_Digit_PSC"], 1, 2),
-                         psc[i, "4_Digit_PSC"])
-    } else if (psc[i, "Category0"]=="Service") {
-      psc_list[[i]] <- c(psc[i, "Category0"],
-                         substr(psc[i, "4_Digit_PSC"], 1, 1),
-                         substr(psc[i, "4_Digit_PSC"], 1, 2),
-                         psc[i, "4_Digit_PSC"])
-    } else if (psc[i, "Category0"]=="Research and Development") {
-      psc_list[[i]] <- c(psc[i, "Category0"],
-                         substr(psc[i, "4_Digit_PSC"], 1, 2),
-                         substr(psc[i, "4_Digit_PSC"], 1, 3),
-                         psc[i, "4_Digit_PSC"])
-    }
-  }
-  FedGovSpending <- data.frame()
-  for (i in 1:length(NAICS)) {
-    # Generate filterObject
-    filterObject <- list(naics_codes = list(require = array(NAICS[i])),
-                         time_period = list(list(start_date = "2008-01-01",
-                                                 end_date = "2018-12-31")),
-                         place_of_performance_locations = list(list(country = "USA")),
-                         award_type_codes = c("A", "B", "C", "D"),
-                         psc_codes = list(require = psc_list))
-    # Generate queryObject
-    queryObject <- list(filters = filterObject,
-                        fields = c("Start Date", "Award Amount", "Awarding Agency",
-                                   "Place of Performance State Code",
-                                   "Place of Performance Zip5"),
-                        limit = 100,
-                        page = 1)
-    # Split psc_list, so that each list contains < 1000 elements
-    splits <- ceiling(length(psc_list)/1000)
-    psc_list_split <- list()
-    # Download and process
-    df <- data.frame()
-    for (j in 1:splits) {
-      if (j < splits) {
-        psc_list_split[[j]] <- psc_list[c(1:1000) + (j-1)*1000]
-      } else {
-        psc_list_split[[j]] <- psc_list[c((1+(j-1)*1000):length(psc_list))]
-      }
-      queryObject$filters$psc_codes <- list(require = psc_list_split[[j]])
-      # Get response
-      resp <- POST(url, body = queryObject, encode = "json")
-      # Download data
-      gresp <- jsonlite::fromJSON(content(resp, "text", encoding = "UTF-8"))
-      df_split <- gresp$results
-      while(length(filterObject$psc_codes$require) - 1000 >1000) {
-        queryObject$page <- queryObject$page + 1
-        resp <- POST(url, body = queryObject, encode = "json")
-        gresp <- jsonlite::fromJSON(content(resp, "text", encoding = "UTF-8"))
-        df_split <- rbind(df_split, gresp$results)
-      }
-      df <- rbind(df, df_split)
-    }
-    # Add NAICS column
-    if (nrow(df)!=0) {
-      df$NAICS <- NAICS[i]
-    }
-    FedGovSpending <- rbind(FedGovSpending, df)
-    print( NAICS[i])
-  }
-  return(FedGovSpending)
-}
-
-#' Download Federal Government Spending data by 6-digit NAICS code
-#' By state and zipcode from USASpending.gov.
-#' @param category String, "intermediate", "equipment", "ip", or "structure"
-#' @return A data frame of Federal Government Spending data by 6-digit NAICS
-#' by state and zipcode from 2008 to 2019.
-getFedGovSpending <- function(category) {
-  # Download USA Spending data
-  df <- downloadFedGovSpending(category)
-  # Assign year, state and zipcode
-  df$Year <- as.integer(substr(df$`Start Date`, 1, 4))
-  df <- df[df$`Place of Performance State Code`%in%c(state.abb, "DC"), ]
-  df$State <- state.name[match(df$`Place of Performance State Code`, state.abb)]
-  df[df$`Place of Performance State Code`=="DC", "State"] <- "District of Columbia"
-  df$Zipcode <- df$`Place of Performance Zip5`
-  df$Amount <- df$`Award Amount`
-  # Separate and store dfs in list
-  FedGovSpending <- list()
-  columns <- c("NAICS", "Year", "State", "Zipcode", "Amount")
+  # Download data from all years
+  df_list <- list()
+  df_list[as.character(2008:2019)] <- data.frame()
+  FedGovExp_list <- list()
   for (year in 2008:2019) {
-    FedGovSpending[["Defense"]][[as.character(year)]] <- df[df$`Awarding Agency`=="Department of Defense" &
-                                                              df$Year==year, columns]
-    FedGovSpending[["NonDefense"]][[as.character(year)]] <- df[df$`Awarding Agency`!="Department of Defense" &
-                                                                 df$Year==year, columns]
+    # Create the placeholder file
+    FedGovExpzip <- paste0("inst/extdata/FY", year, "_All_Contracts_Full_20200713.zip")
+    if(!file.exists(FedGovExpzip)) {
+      download.file(paste0("https://files.usaspending.gov/award_data_archive/FY",
+                           year, "_All_Contracts_Full_20200713.zip"),
+                    FedGovExpzip, mode = "wb")
+      # Get the name of all files in the zip archive
+      fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
+      # Unzip the file to the designated directory
+      unzip(FedGovExpzip, files = fname, exdir = "inst/extdata/USAspending", overwrite = TRUE)
+    } else {
+      fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
+    }
+    df <- data.frame()
+    for (i in 1:length(fname)) {
+      # Specify desired columns
+      columns <- c("award_id_piid", "action_date", "awarding_agency_name",
+                   "federal_action_obligation",
+                   "primary_place_of_performance_country_code",
+                   "primary_place_of_performance_state_code",
+                   "primary_place_of_performance_county_name",
+                   "award_type_code", "naics_code", "product_or_service_code")
+      # Define filename
+      filename <- paste0("inst/extdata/USAspending/", fname[i])
+      # Load data
+      df_slice <- data.table::fread(filename, select = columns, stringsAsFactors = FALSE)
+      # Subset data
+      df_slice <- unique(df_slice[df_slice$primary_place_of_performance_country_code=="USA" &
+                                    df_slice$award_type_code%in%c("A", "B", "C", "D") &
+                                    df_slice$primary_place_of_performance_state_code%in%c(state.abb, "DC") &
+                                    !is.na(df_slice$federal_action_obligation) &
+                                    !is.na(df_slice$naics_code), ])
+      # Assign calendar Year column
+      df_slice$Year <- as.integer(substr(df_slice$action_date, 1, 4))
+      df <- rbind(df, df_slice)
+      rm(df_slice)
+    }
+    # Paste df in df_list
+    df_list[[as.character(year)]] <- rbind(df_list[[as.character(year)]],
+                                           df[df$Year==year, ])
+    df_list[[as.character(year-1)]] <- rbind(df_list[[as.character(year-1)]],
+                                             df[df$Year==(year-1), ])
+    for (category in names(psc_list)) {
+      # Load df for the year
+      df_year <- df_list[[as.character(year)]]
+      # Extract records for Defense (based on awarding agency and PSC code)
+      df_defense <- df_year[df_year$product_or_service_code%in%psc_list[[category]] &
+                              df_year$awarding_agency_name=="DEPARTMENT OF DEFENSE (DOD)" |
+                              df_year$product_or_service_code%in%PSC[grep("DEFENSE", PSC$PSC_Code), "4_Digit_PSC"], ]
+      # Aggregate
+      df_defense <- stats::aggregate(df_defense$federal_action_obligation,
+                                     by = list(df_defense$Year, df_defense$naics_code,
+                                               df_defense$primary_place_of_performance_state_code,
+                                               df_defense$primary_place_of_performance_county_name),
+                                     sum)
+      colnames(df_defense) <- c("Year", "NAICS", "State", "County", "Amount")
+      # Store in list
+      FedGovExp_list[[as.character(year)]][[category]][["Defense"]] <- df_defense
+      # Extract records for Non-Defense (based on awarding agency)
+      df_nondefense <- df_year[df_year$product_or_service_code%in%psc_list[[category]] &
+                                 df_year$awarding_agency_name!="DEPARTMENT OF DEFENSE (DOD)", ]
+      # Aggregate
+      df_nondefense <- stats::aggregate(df_nondefense$federal_action_obligation,
+                                     by = list(df_nondefense$Year, df_nondefense$naics_code,
+                                               df_nondefense$primary_place_of_performance_state_code,
+                                               df_nondefense$primary_place_of_performance_county_name),
+                                     sum)
+      colnames(df_nondefense) <- colnames(df_defense)
+      # Store in list
+      FedGovExp_list[[as.character(year)]][[category]][["NonDefense"]] <- df_nondefense
+    }
   }
-  return(FedGovSpending)
+  return(FedGovExp_list)
 }
 
-USASpending_Intermediate <- getFedGovSpending("intermediate")
-FedGovExp_IntermediateDefense_2012 <- USASpending_Intermediate[["Defense"]][["2012"]]
+USASpending <- getFedGovSpending()
+
+FedGovExp_IntermediateDefense_2012 <- USASpending[["2012"]][["Intermediate"]][["Defense"]]
 usethis::use_data(FedGovExp_IntermediateDefense_2012, overwrite = TRUE)
-FedGovExp_IntermediateNonDefense_2012 <- USASpending_Intermediate[["NonDefense"]][["2012"]]
+FedGovExp_IntermediateNonDefense_2012 <- USASpending[["2012"]][["Intermediate"]][["NonDefense"]]
 usethis::use_data(FedGovExp_IntermediateNonDefense_2012, overwrite = TRUE)
 
-USASpending_Equipment <- getFedGovSpending("equipment")
-FedGovExp_EquipmentDefense_2012 <- USASpending_Equipment[["Defense"]][["2012"]]
+FedGovExp_EquipmentDefense_2012 <- USASpending[["2012"]][["Equipment"]][["Defense"]]
 usethis::use_data(FedGovExp_EquipmentDefense_2012, overwrite = TRUE)
-FedGovExp_EquipmentNonDefense_2012 <- USASpending_Equipment[["NonDefense"]][["2012"]]
+FedGovExp_EquipmentNonDefense_2012 <- USASpending[["2012"]][["Equipment"]][["NonDefense"]]
 usethis::use_data(FedGovExp_EquipmentNonDefense_2012, overwrite = TRUE)
 
-USASpending_IP <- getFedGovSpending("ip")
-FedGovExp_IPDefense_2012 <- USASpending_IP[["Defense"]][["2012"]]
+FedGovExp_IPDefense_2012 <- USASpending[["2012"]][["IP"]][["Defense"]]
 usethis::use_data(FedGovExp_IPDefense_2012, overwrite = TRUE)
-FedGovExp_IPNonDefense_2012 <- USASpending_IP[["NonDefense"]][["2012"]]
+FedGovExp_IPNonDefense_2012 <- USASpending[["2012"]][["IP"]][["NonDefense"]]
 usethis::use_data(FedGovExp_IPNonDefense_2012, overwrite = TRUE)
 
-USASpending_Structure <- getFedGovSpending("structure")
-FedGovExp_StructureDefense_2012 <- USASpending_Structure[["Defense"]][["2012"]]
+FedGovExp_StructureDefense_2012 <- USASpending[["2012"]][["Structure"]][["Defense"]]
 usethis::use_data(FedGovExp_StructureDefense_2012, overwrite = TRUE)
-FedGovExp_StructureNonDefense_2012 <- USASpending_Structure[["NonDefense"]][["2012"]]
+FedGovExp_StructureNonDefense_2012 <- USASpending[["2012"]][["Structure"]][["NonDefense"]]
 usethis::use_data(FedGovExp_StructureNonDefense_2012, overwrite = TRUE)
