@@ -13,12 +13,12 @@ US_Summary_MakeTransaction <- US_Summary_Make[-which(rownames(US_Summary_Make)==
                                               -which(colnames(US_Summary_Make)=="Total Industry Output")]
 US_Summary_IndustryOutput <- rowSums(US_Summary_MakeTransaction)
 
-#' 3 - Load US Summary Use table for given year
-#' Generate US Summary Use Transaction
-US_Summary_Use <- get(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+#' 3 - Load and adjust US Summary Use table for given year
+US_Summary_Use <- adjustUseTablebyImportMatrix("Summary", year)
+# Generate US Summary Use Transaction
 US_Summary_UseTransaction <- US_Summary_Use[colnames(US_Summary_MakeTransaction),
                                             rownames(US_Summary_MakeTransaction)]
-FinalDemand_columns <- colnames(US_Summary_Use)[75:94]
+FinalDemand_columns <- colnames(US_Summary_Use)[72:91]
 
 #' 4 - Calculate state_US_IndustryOutput_ratio, for each state and each industry,
 #' Divide state IndustryOutput by US IndustryOutput.
@@ -84,7 +84,7 @@ StateFinalDemand <- cbind(State_PCE_balanced,
                           estimateStatePrivateInvestment(year)[row_names, ],
                           estimateStateExport(year)[row_names, , drop = FALSE],
                           State_Import[row_names, , drop = FALSE],
-                          estimateStateFedGovExpenditure(year)[row_names, ], # state fed gov expenditure using comm output ratio
+                          estimateStateFedGovExpenditure(year)[row_names, ],
                           estimateStateSLGovExpenditure(year))[row_names, ]
 State_Summary_Use <- cbind(State_Summary_UseTransaction,
                            StateFinalDemand[rownames(State_Summary_UseTransaction), FinalDemand_columns])
@@ -96,11 +96,13 @@ save(StateFinalDemand, file = paste0("data/State_Summary_FinalDemand_", year, ".
 #' For each state, StateDomesticUse = StateUse * NationalDomesticUseRatios
 #' StateImportColumn  = rowSums(StateUse) - rowSums(StateDomesticUse)
 #' Optional: StateImportMatrix = StateDomesticUse - StateUse
-Domestic_Use_ratios <- do.call("rbind", replicate(52, 1 - calculateUSImportRatioMatrix(year), simplify = FALSE))
+Domestic_Use_ratios <- 1 - calculateUSImportRatioMatrix(year)
+Domestic_Use_ratios <- do.call("rbind", replicate(52, Domestic_Use_ratios, simplify = FALSE))
 rownames(Domestic_Use_ratios) <- rownames(State_Summary_Use)
 State_Summary_Domestic_Use <- State_Summary_Use*Domestic_Use_ratios
 State_Summary_Domestic_Use[is.na(State_Summary_Domestic_Use)] <- 0
 State_Summary_Use$F050 <- rowSums(State_Summary_Domestic_Use) - rowSums(State_Summary_Use)
+State_Summary_Domestic_Use <- State_Summary_Use*Domestic_Use_ratios
 save(State_Summary_Use, file = paste0("data/State_Summary_Use_", year, ".rda"))
 save(State_Summary_Domestic_Use, file = paste0("data/State_Summary_Domestic_Use_", year, ".rda"))
 
@@ -114,6 +116,16 @@ State_Summary_Use_agg <- stats::aggregate(State_Summary_Use[, colnames(State_Sum
 rownames(State_Summary_Use_agg) <- State_Summary_Use_agg$Group.1
 State_Summary_Use_agg$Group.1 <- NULL
 test <- State_Summary_Use_agg - US_Summary_Use[rownames(State_Summary_Use_agg), colnames(State_Summary_Use_agg)]
+View(test[, FinalDemand_columns])
+
+#' 13 - Aggregate state Domestic Use tables to national level and check if == US Domestic Use table
+State_Summary_Domestic_Use$BEA <- gsub(".*\\.", "", rownames(State_Summary_Domestic_Use))
+State_Summary_Domestic_Use_agg <- stats::aggregate(State_Summary_Domestic_Use[, colnames(State_Summary_Domestic_Use)[1:91]],
+                                                   by = list(State_Summary_Use$BEA), sum)
+rownames(State_Summary_Domestic_Use_agg) <- State_Summary_Domestic_Use_agg$Group.1
+State_Summary_Domestic_Use_agg$Group.1 <- NULL
+US_Summary_Domestic_Use <- US_Summary_Use[1:73, colnames(State_Summary_Domestic_Use_agg)] * (1 - calculateUSImportRatioMatrix(year))
+test <- State_Summary_Domestic_Use_agg - US_Summary_Domestic_Use[rownames(State_Summary_Domestic_Use_agg), colnames(State_Summary_Domestic_Use_agg)]
 View(test[, FinalDemand_columns])
 
 #' Last step - For each state, append detailed Value Added to the end of Use table
