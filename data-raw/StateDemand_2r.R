@@ -6,13 +6,15 @@ year <- 2012
 state <- "Georgia"
 load(paste0("data/State_Summary_Domestic_Use_", year, ".rda"))
 SoI_Summary_Domestic_Use <- State_Summary_Domestic_Use[gsub("\\..*", "", rownames(State_Summary_Domestic_Use))==state, ]
+columns <- colnames(SoI_Summary_Domestic_Use)
 
 #' 2 - Generate 2-region ICFs
-ICF <- generateDomestic2RegionICFs(state, year, remove_scrap = FALSE, 2012, "Summary")
+ICF <- generateDomestic2RegionICFs(state, year, remove_scrap = FALSE,
+                                   ioschema = 2012, iolevel = "Summary")
 
 #' 3 - Generate SoI2SoI Use
-SoI2SoI_Summary_Use <- SoI_Summary_Domestic_Use * ICF$SoI2SoI
-columns <- colnames(SoI2SoI_Summary_Use)
+SoI2SoI_Summary_Use <- SoI_Summary_Domestic_Use
+SoI2SoI_Summary_Use[, columns[!columns%in%c("F040", "F050")]] <- SoI_Summary_Domestic_Use[, columns[!columns%in%c("F040", "F050")]] * ICF$SoI2SoI
 # Calculate Interregional Imports
 SoI2SoI_Summary_Use$InterregionalImports <- rowSums(SoI_Summary_Domestic_Use[, columns[!columns%in%c("F040", "F050")]]) - rowSums(SoI2SoI_Summary_Use[, columns[!columns%in%c("F040", "F050")]])
 # Calculate Interregional Exports
@@ -22,15 +24,43 @@ SoI2SoI_Summary_Use$InterregionalExports <- SoI_Commodity_Output$StateCommOutput
 # Calculate Net Exports
 SoI2SoI_Summary_Use$NetExports <- SoI2SoI_Summary_Use$InterregionalExports - SoI2SoI_Summary_Use$InterregionalImports
 
-#' 4 - Generate RoU2RoU Use
-RoU2RoU_Summary_Use <- SoI_Summary_Domestic_Use * ICF$RoUS2RoUS
+#' 4 - Generate RoUS domestic Use and commodity output
+# RoUS domestic Use
+US_Summary_Use <- get(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+FinalDemand_columns <- colnames(US_Summary_Use)[75:94]
+US_Summary_Domestic_Use <- US_Summary_Use[1:73, colnames(SoI_Summary_Domestic_Use)] * (1 - calculateUSImportRatioMatrix(year))
+RoUS_Summary_Domestic_Use <- US_Summary_Domestic_Use - SoI_Summary_Domestic_Use
+# RoUS Commodity Output
+US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
+US_Summary_MakeTransaction <- US_Summary_Make[-which(rownames(US_Summary_Make)=="Total Commodity Output"),
+                                              -which(colnames(US_Summary_Make)=="Total Industry Output")]
+US_Commodity_Output <- colSums(US_Summary_MakeTransaction)
+RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
+
+#' 5 - Generate RoUS2RoUS Use
+RoUS2RoUS_Summary_Use <- RoUS_Summary_Domestic_Use
+RoUS2RoUS_Summary_Use[, columns[!columns%in%c("F040", "F050")]] <- RoUS_Summary_Domestic_Use[, columns[!columns%in%c("F040", "F050")]] * ICF$RoUS2RoUS
+# Calculate Interregional Imports
+RoUS2RoUS_Summary_Use$InterregionalImports <- rowSums(RoUS_Summary_Domestic_Use[, columns[!columns%in%c("F040", "F050")]]) - rowSums(RoUS2RoUS_Summary_Use[, columns[!columns%in%c("F040", "F050")]])
+# Calculate Interregional Exports
+SoI_Commodity_Output <- State_Summary_CommodityOutput_list[[state]]
+RoUS2RoUS_Summary_Use$InterregionalExports <- RoUS_Commodity_Output$StateCommOutput - rowSums(RoUS2RoUS_Summary_Use[, columns[columns!="F050"]])
+# Calculate Net Exports
+RoUS2RoUS_Summary_Use$NetExports <- RoUS2RoUS_Summary_Use$InterregionalExports - RoUS2RoUS_Summary_Use$InterregionalImports
+
 
 # Write results to Excel
-GA_2r_list <- list("GA Domestic Use" = cbind(rownames(SoI_Summary_Domestic_Use),
+GA_2r_list <- list("US Domestic Use" = cbind(rownames(US_Summary_Domestic_Use),
+                                             US_Summary_Domestic_Use),
+                   "GA Domestic Use" = cbind(rownames(SoI_Summary_Domestic_Use),
                                              SoI_Summary_Domestic_Use),
-                   "GA Commodity Output" = cbind(rownames(State_Summary_CommodityOutput_list[["Georgia"]]),
-                                                 State_Summary_CommodityOutput_list[["Georgia"]]),
+                   "RoUS Domestic Use" = cbind(rownames(RoUS_Summary_Domestic_Use),
+                                               RoUS_Summary_Domestic_Use),
+                   "GA Commodity Output" = cbind(rownames(SoI_Commodity_Output),
+                                                 SoI_Commodity_Output),
+                   "RoUS Commodity Output" = cbind(rownames(RoUS_Commodity_Output),
+                                                   RoUS_Commodity_Output),
                    "GA ICF_2r" = ICF,
                    "GA2GA Use" = cbind(rownames(SoI2SoI_Summary_Use), SoI2SoI_Summary_Use),
-                   "RoU2RoU Use" = cbind(rownames(RoU2RoU_Summary_Use), RoU2RoU_Summary_Use))
-writexl::write_xlsx(GA_2r_list, "GA_2r_Use.xlsx")
+                   "RoUS2RoUS Use" = cbind(rownames(RoUS2RoUS_Summary_Use), RoUS2RoUS_Summary_Use))
+writexl::write_xlsx(GA_2r_list, "GA_2r_Use_new.xlsx")
