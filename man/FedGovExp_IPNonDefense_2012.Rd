@@ -5,19 +5,19 @@
 \alias{FedGovExp_IPNonDefense_2012}
 \title{Federal government expenditure on non-defense intellectual property (IP) products
 final demand in 2012. Categorized by 6-digit NAICS, by state
-(including District of Columbia) and by zipcode.}
+(including District of Columbia) and by county.}
 \format{
-A data frame with 241 obs. and 5 variables:
+A data frame with 2748 obs. and 5 variables:
 \describe{
- \item{NAICS}{integer}
  \item{Year}{integer}
+ \item{NAICS}{integer}
  \item{State}{text}
- \item{Zipcode}{integer}
+ \item{County}{text}
  \item{Amount}{numeric}
 }
 }
 \source{
-\url{https://fedspendingtransparency.github.io/}
+\url{https://www.usaspending.gov/#/download_center/award_data_archive}
 }
 \usage{
 FedGovExp_IPNonDefense_2012
@@ -25,6 +25,6 @@ FedGovExp_IPNonDefense_2012
 \description{
 Federal government expenditure on non-defense intellectual property (IP) products
 final demand in 2012. Categorized by 6-digit NAICS, by state
-(including District of Columbia) and by zipcode.
+(including District of Columbia) and by county.
 }
 \keyword{datasets}
