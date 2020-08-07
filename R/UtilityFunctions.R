@@ -83,8 +83,51 @@ applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
   return(m)
 }
 
-
-
+#' Adjust US Use table by Import matrix.
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param year A numeric value specifying the year of interest.
+#' @return A adjusted US Use table.
+adjustUseTablebyImportMatrix <- function(iolevel, year) {
+  # Load Use table and Import matrix
+  Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  Import <- get(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"))*1E6
+  # Load BEA schema_info based on model BEA
+  SchemaInfo <- utils::read.table(system.file("extdata",
+                                              paste0("2012_", iolevel, "_Schema_Info.csv"),
+                                              package = "useeior"),
+                                  sep = ",", header = TRUE,
+                                  stringsAsFactors = FALSE, check.names = FALSE)
+  # Specify rows and columns to use
+  getVectorOfCodes <- function(colName) {
+    return(as.vector(stats::na.omit(SchemaInfo[, c("Code", colName)])[, "Code"]))
+  }
+  Commodities <- getVectorOfCodes("Commodity")
+  Industries <- getVectorOfCodes("Industry")
+  FinalDemand_columns <- c(getVectorOfCodes("HouseholdDemand"),
+                           getVectorOfCodes("InvestmentDemand"),
+                           getVectorOfCodes("ChangeInventories"),
+                           getVectorOfCodes("Export"),
+                           getVectorOfCodes("Import"),
+                           getVectorOfCodes("GovernmentDemand"))
+  ExportCodes <- getVectorOfCodes("Export")
+  ImportCodes <- getVectorOfCodes("Import")
+  # Subset Use
+  Use <- Use[Commodities, c(Industries, FinalDemand_columns)]
+  # Sort rows and columns in Import to match those in Use
+  Import <- Import[rownames(Use), colnames(Use)]
+  # Calculate F050A
+  F050A <- Use[, ImportCodes] - Import[, ImportCodes]
+  # Allocate F050A to each Industry (column) in Use table, except for Export and Import
+  Use_adjusted <- Use
+  for (i in 1:nrow(Use)) {
+    row_sum <- rowSums(Use[i, ]) - (Use[i, ExportCodes] + Use[i, ImportCodes])
+    Use_adjusted[i, ] <- Use[i, ] + F050A[i] * (Use[i, ]/row_sum)
+  }
+  # Adjust Export and Import columns
+  Use_adjusted[, ExportCodes] <- Use[, ExportCodes]
+  Use_adjusted[, ImportCodes] <- 0
+  return(Use_adjusted)
+}
 
 
 
