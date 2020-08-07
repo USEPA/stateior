@@ -9,8 +9,7 @@ SoI_Summary_Domestic_Use <- State_Summary_Domestic_Use[gsub("\\..*", "", rowname
 columns <- colnames(SoI_Summary_Domestic_Use)
 
 #' 2 - Generate 2-region ICFs
-ICF <- generateDomestic2RegionICFs(state, year, remove_scrap = FALSE,
-                                   ioschema = 2012, iolevel = "Summary")
+ICF <- generateDomestic2RegionICFs(state, year, remove_scrap = FALSE, ioschema = 2012, iolevel = "Summary")
 
 #' 3 - Generate SoI2SoI Use
 SoI2SoI_Summary_Use <- SoI_Summary_Domestic_Use
@@ -26,7 +25,7 @@ SoI2SoI_Summary_Use$NetExports <- SoI2SoI_Summary_Use$InterregionalExports - SoI
 
 #' 4 - Generate RoUS domestic Use and commodity output
 # RoUS domestic Use
-US_Summary_Use <- get(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+US_Summary_Use <- adjustUseTablebyImportMatrix("Summary", year)
 FinalDemand_columns <- colnames(US_Summary_Use)[75:94]
 US_Summary_Domestic_Use <- US_Summary_Use[1:73, colnames(SoI_Summary_Domestic_Use)] * (1 - calculateUSImportRatioMatrix(year))
 RoUS_Summary_Domestic_Use <- US_Summary_Domestic_Use - SoI_Summary_Domestic_Use
@@ -43,7 +42,6 @@ RoUS2RoUS_Summary_Use[, columns[!columns%in%c("F040", "F050")]] <- RoUS_Summary_
 # Calculate Interregional Imports
 RoUS2RoUS_Summary_Use$InterregionalImports <- rowSums(RoUS_Summary_Domestic_Use[, columns[!columns%in%c("F040", "F050")]]) - rowSums(RoUS2RoUS_Summary_Use[, columns[!columns%in%c("F040", "F050")]])
 # Calculate Interregional Exports
-SoI_Commodity_Output <- State_Summary_CommodityOutput_list[[state]]
 RoUS2RoUS_Summary_Use$InterregionalExports <- RoUS_Commodity_Output$StateCommOutput - rowSums(RoUS2RoUS_Summary_Use[, columns[columns!="F050"]])
 # Calculate Net Exports
 RoUS2RoUS_Summary_Use$NetExports <- RoUS2RoUS_Summary_Use$InterregionalExports - RoUS2RoUS_Summary_Use$InterregionalImports
