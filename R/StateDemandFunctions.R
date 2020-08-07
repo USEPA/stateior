@@ -194,10 +194,10 @@ calculateStateTotalPCE <- function(year) {
 calculateStateUSPCERatio <- function(year) {
   # Load state and US PCE
   PCE <- getStatePCE(year)
+  # Extract State PCE
+  StatePCE <- PCE[PCE$GeoName!="United States", ]
   # Generate sum of state PCE
-  StatePCE_sum <- stats::aggregate(PCE[PCE$GeoName!="United States", as.character(year)],
-                                   by = list(PCE[StatePCE$GeoName!="United States", "Line"]),
-                                   sum)
+  StatePCE_sum <- stats::aggregate(StatePCE[, as.character(year)], by = list(StatePCE$Line), sum)
   colnames(StatePCE_sum) <- c("Line", as.character(year))
   # Extract US PCE
   USPCE <- PCE[PCE$GeoName=="United States", c("Line", as.character(year))]
@@ -238,7 +238,7 @@ calculateStateUSPCERatio <- function(year) {
 #' @return A data frame contains state household demand for all states at a specific year at BEA Summary level.
 estimateStateHouseholdDemand <- function(year) {
   # Load US Summary Use table
-  US_Summary_Use <- get(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  US_Summary_Use <- adjustUseTablebyImportMatrix("Summary", year)
   # Extract US Household Demand
   US_HouseholdDemand <- US_Summary_Use[Commodities, HouseholdDemandCodes, drop = FALSE]
   # Generate State_PCE_ratio
@@ -270,7 +270,7 @@ estimateStateHouseholdDemand <- function(year) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state household demand for all states at a specific year at BEA Summary level.
 estimateStatePrivateInvestment <- function(year) {
-  US_Summary_Use <- get(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  US_Summary_Use <- adjustUseTablebyImportMatrix("Summary", year)
   US_PrivateInvestment <- US_Summary_Use[Commodities, c(InvestmentDemandCodes, ChangeInventories), drop = FALSE]
   # Separate US_PrivateInvestment into Residential (F02R) and NonResidential (F02S, F02E, F02N, and F030)
   US_ResidentialInvestment <- US_PrivateInvestment[Commodities, "F02R", drop = FALSE]
@@ -317,7 +317,7 @@ estimateStatePrivateInvestment <- function(year) {
 #' @return A data frame contains state export for all states at a specific year at BEA Summary level.
 estimateStateExport <- function(year) {
   # Load US Summary Use table
-  US_Summary_Use <- get(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  US_Summary_Use <- adjustUseTablebyImportMatrix("Summary", year)
   # Extract US Export
   US_Export <- US_Summary_Use[Commodities, ExportCodes, drop = FALSE]
   # Generate state Commodity Output ratio
@@ -355,6 +355,7 @@ calculateUSImportRatioMatrix <- function(year) {
   # Calculate state Import ratios
   Import_Ratio <- US_Summary_Import[rows, columns]/US_Summary_Use
   Import_Ratio[is.na(Import_Ratio)] <- 0
+  Import_Ratio$F050 <- 0
   return(Import_Ratio)
 }
 
@@ -393,7 +394,7 @@ calculateStateSLGovExpenditureRatio <- function(year) {
 #' at a specific year at BEA Summary level.
 estimateStateSLGovExpenditure <- function(year) {
   # Load US Summary Use table
-  US_Summary_Use <- get(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  US_Summary_Use <- adjustUseTablebyImportMatrix("Summary", year)
   # Extract US S&L Gov Expenditure
   US_SLGovExp <- US_Summary_Use[Commodities, SLGovDemandCodes, drop = FALSE]
   # Generate SLGovExp_ratio
@@ -509,6 +510,11 @@ calculateStateFedGovExpenditureRatio <- function(year) {
   for(sector in sectors) {
     GovExp <- get(paste("FedGovExp", sector, year, sep = "_"),
                   as.environment("package:stateio"))
+    # Change State to full state name
+    for (state in unique(GovExp$State)) {
+      GovExp[GovExp$State==state, "State"] <- ifelse(state=="DC", "District of Columbia",
+                                                     state.name[which(state.abb==state)])
+    }
     # Map to BEA Summary sectors
     GovExpBEA <- merge(mapping, GovExp, by.x = "NAICS_2012_Code", by.y = "NAICS")
     # Aggregate by BEA
@@ -521,7 +527,7 @@ calculateStateFedGovExpenditureRatio <- function(year) {
     # Calculate ratios
     GovExpBEA[, -1] <- GovExpBEA[, -1]/rowSums(GovExpBEA[, -1])
     # Add missing states
-    GovExpBEA[, c(setdiff(state.name, colnames(GovExpBEA[, -1])), "Overseas")] <- 0
+    GovExpBEA[, c(setdiff(state.abb, colnames(GovExpBEA[, -1])), "Overseas")] <- 0
     # Transform table from wide to long
     GovExpBEA <- reshape2::melt(GovExpBEA, id.vars = "BEA_2012_Summary_Code",
                                 variable.name = "State", value.name = "Ratio")
@@ -558,6 +564,12 @@ calculateStateFedGovExpenditureRatio <- function(year) {
   GovExpRatio[, "F07C"] <- GovExpRatio$Ratio * W_E_NonD + GovExpRatio$IntermediateDefense * W_IC_NonD
   # Drop unwanted columns
   GovExpRatio <- GovExpRatio[, c("BEA_2012_Summary_Code", "State", FedGovDemandCodes)]
+  # # Add Overseas ratios as zero
+  # Overseas_ratio <- cbind.data.frame(unique(GovExpRatio$BEA_2012_Summary_Code),
+  #                                    "Overseas")
+  # Overseas_ratio[, FedGovDemandCodes] <- 0
+  # colnames(Overseas_ratio) <- colnames(GovExpRatio)
+  # GovExpRatio <- rbind.data.frame(GovExpRatio, Overseas_ratio)
   return(GovExpRatio)
 }
 
@@ -568,27 +580,26 @@ calculateStateFedGovExpenditureRatio <- function(year) {
 estimateStateFedGovExpenditure <- function(year) {
   # Load FedGovExp data
   # Load US Summary Use table
-  US_Summary_Use <- get(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  US_Summary_Use <- adjustUseTablebyImportMatrix("Summary", year)
   # Extract US S&L Gov Expenditure
   US_FedGovExp <- US_Summary_Use[Commodities, FedGovDemandCodes, drop = FALSE]
   # Generate FedGovExp_ratio
-  FedGovExp_ratio <- calculateStateCommodityOutputRatio(year)
-  #FedGovExp_ratio <- calculateStateFedGovExpenditureRatio(year)
+  FedGovExp_ratio <- calculateStateFedGovExpenditureRatio(year)
   # Calculate State_FedGovExp
   State_FedGovExp <- data.frame()
   for (state in unique(FedGovExp_ratio$State)) {
     # Merge US_FedGovExp and FedGovExp_ratio
     State_FedGovExp_state <- merge(FedGovExp_ratio[FedGovExp_ratio$State==state, ],
-                                   US_FedGovExp, by.x = "BEA_2012_Summary_Code", by.y = 0, all.y = TRUE)
-    State_FedGovExp_state[, FedGovDemandCodes] <- State_FedGovExp_state[, FedGovDemandCodes] * State_FedGovExp_state$Ratio
-    # # Modify State column
-    # State_FedGovExp_state$State <- state
-    # # Repalce NA with 0
-    # State_FedGovExp_state[is.na(State_FedGovExp_state)] <- 0
-    # # Multiply national final demand by state-US ratio
-    # ratio <- State_FedGovExp_state[, paste0(FedGovDemandCodes, ".x")]
-    # US_value <- State_FedGovExp_state[, paste0(FedGovDemandCodes, ".y")]
-    # State_FedGovExp_state[, FedGovDemandCodes] <- ratio * US_value
+                                   US_FedGovExp, by.x = "BEA_2012_Summary_Code",
+                                   by.y = 0, all.y = TRUE)
+    # Modify State column
+    State_FedGovExp_state$State <- state
+    # Repalce NA with 0
+    State_FedGovExp_state[is.na(State_FedGovExp_state)] <- 0
+    # Multiply national final demand by state-US ratio
+    ratio <- State_FedGovExp_state[, paste0(FedGovDemandCodes, ".x")]
+    US_value <- State_FedGovExp_state[, paste0(FedGovDemandCodes, ".y")]
+    State_FedGovExp_state[, FedGovDemandCodes] <- ratio * US_value
     # Modify rownames
     rownames(State_FedGovExp_state) <- State_FedGovExp_state$BEA_2012_Summary_Code
     State_FedGovExp_state <- State_FedGovExp_state[rownames(US_FedGovExp), ]
