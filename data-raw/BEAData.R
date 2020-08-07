@@ -109,7 +109,7 @@ getBEAStatePCE <- function () {
   # Convert values to current US $
   StatePCE[, as.character(2007:2018)] <- StatePCE[, as.character(2007:2018)]*1E6
   # Keep state-level data
-  StatePCE <- StatePCE[StatePCE$GeoName %in% c(state.name, "District of Columbia"),
+  StatePCE <- StatePCE[StatePCE$GeoName %in% c(state.name, "District of Columbia", "United States"),
                        c("GeoName", "Line", "Description", as.character(2007:2018))]
   return(StatePCE)
 }
