@@ -22,6 +22,7 @@ FinalDemand_columns <- colnames(US_Summary_Use)[72:91]
 
 #' 4 - Calculate state_US_IndustryOutput_ratio, for each state and each industry,
 #' Divide state IndustryOutput by US IndustryOutput.
+#' Multiply US_Summary_UseTransaction by state_US_IndustryOutput_ratio 
 State_Summary_UseTransaction_list <- list()
 for (state in states) {
   IndustryOutputRatio <- State_Summary_IndustryOutput_list[[state]]/US_Summary_IndustryOutput
@@ -73,6 +74,13 @@ State_PCE_balanced <- State_PCE_balanced[, "value", drop = FALSE]
 colnames(State_PCE_balanced) <- "F010"
 
 #' 8 - Apply RAS to federal gov expenditure
+# State_FedGovExp <- estimateStateFedGovExpenditure(year)
+# State_FedGovExp[, "BEA_2012_Summary_Code"] <- gsub(".*\\.", "", rownames(State_FedGovExp))
+# State_FedGovExp[, "State"] <- gsub("\\..*", "", rownames(State_FedGovExp))
+# State_FedGovExp <- reshape2::dcast(State_FedGovExp, BEA_2012_Summary_Code ~ State, value.var = "F06C")
+# rownames(State_FedGovExp) <- State_FedGovExp$BEA_2012_Summary_Code
+# t_r <- US_Summary_Use[rownames(US_Summary_UseTransaction), "F06C"]
+# t_c <- as.numeric(calculateStateTotalPCE(year)[colnames(m0), ])
 
 #' 9 - Assemble final demand columns
 #' Create a placeholding State_Import
