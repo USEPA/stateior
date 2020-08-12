@@ -527,7 +527,7 @@ calculateStateFedGovExpenditureRatio <- function(year) {
     # Calculate ratios
     GovExpBEA[, -1] <- GovExpBEA[, -1]/rowSums(GovExpBEA[, -1])
     # Add missing states
-    GovExpBEA[, c(setdiff(state.abb, colnames(GovExpBEA[, -1])), "Overseas")] <- 0
+    GovExpBEA[, c(setdiff(state.name, colnames(GovExpBEA[, -1])), "Overseas")] <- 0
     # Transform table from wide to long
     GovExpBEA <- reshape2::melt(GovExpBEA, id.vars = "BEA_2012_Summary_Code",
                                 variable.name = "State", value.name = "Ratio")
@@ -585,6 +585,15 @@ estimateStateFedGovExpenditure <- function(year) {
   US_FedGovExp <- US_Summary_Use[Commodities, FedGovDemandCodes, drop = FALSE]
   # Generate FedGovExp_ratio
   FedGovExp_ratio <- calculateStateFedGovExpenditureRatio(year)
+  # Generate state Commodity Output ratio
+  CommOutput_ratio <- calculateStateCommodityOutputRatio(year)
+  # Determine commodities that not in FedGovExp_ratio
+  commodities <- unique(setdiff(CommOutput_ratio$BEA_2012_Summary_Code,
+                                FedGovExp_ratio$BEA_2012_Summary_Code))
+  # Add CommOutput_ratio of commodities to FedGovExp_ratio
+  tmp <- CommOutput_ratio[CommOutput_ratio$BEA_2012_Summary_Code%in%commodities, ]
+  tmp[, FedGovDemandCodes] <- tmp$Ratio
+  FedGovExp_ratio <- rbind(FedGovExp_ratio, tmp[, colnames(FedGovExp_ratio)])
   # Calculate State_FedGovExp
   State_FedGovExp <- data.frame()
   for (state in unique(FedGovExp_ratio$State)) {
