@@ -8,7 +8,6 @@ load(paste0("data/State_Summary_Domestic_Use_", year, ".rda"))
 SoI_Summary_Domestic_Use <- State_Summary_Domestic_Use[gsub("\\..*", "", rownames(State_Summary_Domestic_Use))==state, ]
 columns <- colnames(SoI_Summary_Domestic_Use)[!colnames(SoI_Summary_Domestic_Use)%in%c("F040", "F050")]
 
-
 #' 2 - Generate 2-region ICFs
 ICF <- generateDomestic2RegionICFs(state, year, remove_scrap = FALSE, ioschema = 2012, iolevel = "Summary")
 
@@ -36,6 +35,10 @@ US_Summary_MakeTransaction <- US_Summary_Make[-which(rownames(US_Summary_Make)==
                                               -which(colnames(US_Summary_Make)=="Total Industry Output")]
 US_Commodity_Output <- colSums(US_Summary_MakeTransaction)
 RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
+colnames(RoUS_Commodity_Output) <- "RoUSCommOutput"
+# Adjust RoUS_Commodity_Output
+MakeUseDiff <- US_Commodity_Output - rowSums(US_Summary_Domestic_Use[, c(columns, "F040")])
+RoUS_Commodity_Output$RoUSCommOutput <- RoUS_Commodity_Output$RoUSCommOutput - MakeUseDiff
 
 #' 5 - Generate RoUS2RoUS Use
 RoUS2RoUS_Summary_Use <- RoUS_Summary_Domestic_Use
@@ -43,7 +46,7 @@ RoUS2RoUS_Summary_Use[, columns] <- RoUS_Summary_Domestic_Use[, columns] * ICF$R
 # Calculate Interregional Imports
 RoUS2RoUS_Summary_Use$InterregionalImports <- rowSums(RoUS_Summary_Domestic_Use[, columns]) - rowSums(RoUS2RoUS_Summary_Use[, columns])
 # Calculate Interregional Exports
-RoUS2RoUS_Summary_Use$InterregionalExports <- RoUS_Commodity_Output$StateCommOutput - rowSums(RoUS2RoUS_Summary_Use[, c(columns, "F040")])
+RoUS2RoUS_Summary_Use$InterregionalExports <- RoUS_Commodity_Output$RoUSCommOutput - rowSums(RoUS2RoUS_Summary_Use[, c(columns, "F040")])
 # Calculate Net Exports
 RoUS2RoUS_Summary_Use$NetExports <- RoUS2RoUS_Summary_Use$InterregionalExports - RoUS2RoUS_Summary_Use$InterregionalImports
 
@@ -69,21 +72,24 @@ for (i in 1:nrow(SoI2SoI_Summary_Use)) {
 SoI2SoI_Summary_Use$InterregionalImports <- rowSums(SoI_Summary_Domestic_Use[, columns]) - rowSums(SoI2SoI_Summary_Use[, columns])
 SoI2SoI_Summary_Use$InterregionalExports <- SoI_Commodity_Output$StateCommOutput - rowSums(SoI2SoI_Summary_Use[, c(columns, "F040")])
 RoUS2RoUS_Summary_Use$InterregionalImports <- rowSums(RoUS_Summary_Domestic_Use[, columns]) - rowSums(RoUS2RoUS_Summary_Use[, columns])
-RoUS2RoUS_Summary_Use$InterregionalExports <- RoUS_Commodity_Output$StateCommOutput - rowSums(RoUS2RoUS_Summary_Use[, c(columns, "F040")])
+RoUS2RoUS_Summary_Use$InterregionalExports <- RoUS_Commodity_Output$RoUSCommOutput - rowSums(RoUS2RoUS_Summary_Use[, c(columns, "F040")])
 
-#' 7 - Calculate residues for SoI and RoUS
-residue <- SoI2SoI_Summary_Use$InterregionalImports - RoUS2RoUS_Summary_Use$InterregionalExports
-SoIresidue <- residue*(SoI_Commodity_Output$StateCommOutput/US_Commodity_Output)
-RoUSresidue <- residue - SoIresidue
+#' 7 - Calculate errors for SoI and RoUS
+error <- SoI2SoI_Summary_Use$InterregionalImports - RoUS2RoUS_Summary_Use$InterregionalExports
+SoIerror <- error*(SoI_Commodity_Output$StateCommOutput/US_Commodity_Output)
+RoUSerror <- error - SoIerror
+SoIerror_1 <-SoIerror_2 <- SoIerror
 
-#' 8 - Allocate the residues across columns in SoI2SoI Use and RoUS2RoUS Use
+#' 8 - Allocate the errors across columns in SoI2SoI Use and RoUS2RoUS Use
 for (i in 1:nrow(SoI2SoI_Summary_Use)) {
-  # SoI2SoI
-  weight <- SoI2SoI_Summary_Use[i, columns]
-  SoI2SoI_Summary_Use[i, columns] <- weight + SoIresidue[i]*(weight/sum(weight))
-  # RoUS2RoUS
-  weight <- RoUS2RoUS_Summary_Use[i, columns]
-  RoUS2RoUS_Summary_Use[i, columns] <- weight + RoUSresidue[i]*(weight/sum(weight))
+  SoIweight <- SoI2SoI_Summary_Use[i, columns]
+  RoUSweight <- RoUS2RoUS_Summary_Use[i, columns]
+  SoIerror_1[i] <- ifelse(abs(SoIerror[i])<sum(SoIweight), SoIerror[i],
+                          ifelse(SoIerror[i]<0, sum(SoIweight)*-1, sum(SoIweight)))
+  SoIerror_2[i] <- ifelse(SoIerror_1[i]!=SoIerror[i], SoIerror_1[i]/2, SoIerror[i])
+  RoUSerror[i] <- error[i] - SoIerror_2[i]
+  SoI2SoI_Summary_Use[i, columns] <- SoIweight + SoIerror_2[i]*(SoIweight/sum(SoIweight))
+  RoUS2RoUS_Summary_Use[i, columns] <- RoUSweight - RoUSerror[i]*(RoUSweight/sum(RoUSweight))
 }
 
 #' 9 - Re-calculate InterregionalImports, InterregionalExports and NetExports
@@ -92,7 +98,7 @@ SoI2SoI_Summary_Use$InterregionalExports <- SoI_Commodity_Output$StateCommOutput
 SoI2SoI_Summary_Use$NetExports <- SoI2SoI_Summary_Use$InterregionalExports - SoI2SoI_Summary_Use$InterregionalImports
 
 RoUS2RoUS_Summary_Use$InterregionalImports <- rowSums(RoUS_Summary_Domestic_Use[, columns]) - rowSums(RoUS2RoUS_Summary_Use[, columns])
-RoUS2RoUS_Summary_Use$InterregionalExports <- RoUS_Commodity_Output$StateCommOutput - rowSums(RoUS2RoUS_Summary_Use[, c(columns, "F040")])
+RoUS2RoUS_Summary_Use$InterregionalExports <- RoUS_Commodity_Output$RoUSCommOutput - rowSums(RoUS2RoUS_Summary_Use[, c(columns, "F040")])
 RoUS2RoUS_Summary_Use$NetExports <- RoUS2RoUS_Summary_Use$InterregionalExports - RoUS2RoUS_Summary_Use$InterregionalImports
 
 #'10 - Validation
@@ -100,6 +106,9 @@ validation <- cbind.data.frame(SoI2SoI_Summary_Use$InterregionalImports - RoUS2R
                                SoI2SoI_Summary_Use$InterregionalExports - RoUS2RoUS_Summary_Use$InterregionalImports,
                                SoI2SoI_Summary_Use$NetExports + RoUS2RoUS_Summary_Use$NetExports)
 rownames(validation) <- rownames(RoUS2RoUS_Summary_Use)
+colnames(validation) <- c("GA2GA$InterregionalImports - RoUS2RoUS$InterregionalExports",
+                          "GA2GA$InterregionalExports - RoUS2RoUS$InterregionalImports",
+                          "GA2GA$NetExports + RoUS2RoUS$NetExports")
 
 # Write results to Excel
 GA_2r_list <- list("US Domestic Use" = cbind(rownames(US_Summary_Domestic_Use),
@@ -119,3 +128,4 @@ GA_2r_list <- list("US Domestic Use" = cbind(rownames(US_Summary_Domestic_Use),
                    "RoUS2RoUS Use" = cbind(rownames(RoUS2RoUS_Summary_Use), RoUS2RoUS_Summary_Use),
                    "Validation" = cbind(rownames(validation), validation))
 writexl::write_xlsx(GA_2r_list, "GA_2r_Use_new.xlsx", format_headers = FALSE)
+
