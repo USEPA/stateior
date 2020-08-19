@@ -564,12 +564,6 @@ calculateStateFedGovExpenditureRatio <- function(year) {
   GovExpRatio[, "F07C"] <- GovExpRatio$Ratio * W_E_NonD + GovExpRatio$IntermediateDefense * W_IC_NonD
   # Drop unwanted columns
   GovExpRatio <- GovExpRatio[, c("BEA_2012_Summary_Code", "State", FedGovDemandCodes)]
-  # # Add Overseas ratios as zero
-  # Overseas_ratio <- cbind.data.frame(unique(GovExpRatio$BEA_2012_Summary_Code),
-  #                                    "Overseas")
-  # Overseas_ratio[, FedGovDemandCodes] <- 0
-  # colnames(Overseas_ratio) <- colnames(GovExpRatio)
-  # GovExpRatio <- rbind.data.frame(GovExpRatio, Overseas_ratio)
   return(GovExpRatio)
 }
 
