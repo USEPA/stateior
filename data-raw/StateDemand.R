@@ -73,16 +73,7 @@ rownames(State_PCE_balanced) <- paste(State_PCE_balanced$variable,
 State_PCE_balanced <- State_PCE_balanced[, "value", drop = FALSE]
 colnames(State_PCE_balanced) <- "F010"
 
-#' 8 - Apply RAS to federal gov expenditure
-# State_FedGovExp <- estimateStateFedGovExpenditure(year)
-# State_FedGovExp[, "BEA_2012_Summary_Code"] <- gsub(".*\\.", "", rownames(State_FedGovExp))
-# State_FedGovExp[, "State"] <- gsub("\\..*", "", rownames(State_FedGovExp))
-# State_FedGovExp <- reshape2::dcast(State_FedGovExp, BEA_2012_Summary_Code ~ State, value.var = "F06C")
-# rownames(State_FedGovExp) <- State_FedGovExp$BEA_2012_Summary_Code
-# t_r <- US_Summary_Use[rownames(US_Summary_UseTransaction), "F06C"]
-# t_c <- as.numeric(calculateStateTotalPCE(year)[colnames(m0), ])
-
-#' 9 - Assemble final demand columns
+#' 8 - Assemble final demand columns
 #' Create a placeholding State_Import
 State_Import <- State_PCE_balanced
 colnames(State_Import) <- "F050"
@@ -98,7 +89,7 @@ State_Summary_Use <- cbind(State_Summary_UseTransaction,
                            StateFinalDemand[rownames(State_Summary_UseTransaction), FinalDemand_columns])
 save(StateFinalDemand, file = paste0("data/State_Summary_FinalDemand_", year, ".rda"))
 
-#' 10 - Estimate state imports following these steps:
+#' 9 - Estimate state imports following these steps:
 #' NationalDomesticUse = NationalUse - NationalImportMatrix
 #' NationalDomesticUseRatios = NationalDomesticUse/NationalUse
 #' For each state, StateDomesticUse = StateUse * NationalDomesticUseRatios
@@ -114,10 +105,10 @@ State_Summary_Domestic_Use <- State_Summary_Use*Domestic_Use_ratios
 save(State_Summary_Use, file = paste0("data/State_Summary_Use_", year, ".rda"))
 save(State_Summary_Domestic_Use, file = paste0("data/State_Summary_Domestic_Use_", year, ".rda"))
 
-#' 11 - Calculate imports by industry
+#' 10 - Calculate imports by industry
 ImportByIndustry <- colSums(State_Summary_Use) - colSums(State_Summary_Domestic_Use)
 
-#' 12 - Aggregate state Use tables to national level and check if == US Use table
+#' 11 - Aggregate state Use tables to national level and check if == US Use table
 State_Summary_Use$BEA <- gsub(".*\\.", "", rownames(State_Summary_Use))
 State_Summary_Use_agg <- stats::aggregate(State_Summary_Use[, colnames(State_Summary_Use)[1:91]],
                                           by = list(State_Summary_Use$BEA), sum)
@@ -126,7 +117,7 @@ State_Summary_Use_agg$Group.1 <- NULL
 test <- State_Summary_Use_agg - US_Summary_Use[rownames(State_Summary_Use_agg), colnames(State_Summary_Use_agg)]
 View(test[, FinalDemand_columns])
 
-#' 13 - Aggregate state Domestic Use tables to national level and check if == US Domestic Use table
+#' 12 - Aggregate state Domestic Use tables to national level and check if == US Domestic Use table
 State_Summary_Domestic_Use$BEA <- gsub(".*\\.", "", rownames(State_Summary_Domestic_Use))
 State_Summary_Domestic_Use_agg <- stats::aggregate(State_Summary_Domestic_Use[, colnames(State_Summary_Domestic_Use)[1:91]],
                                                    by = list(State_Summary_Use$BEA), sum)
