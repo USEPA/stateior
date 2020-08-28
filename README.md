@@ -1,9 +1,9 @@
-# stateio
-`stateio` is an R package that generates and provides US state Make and Use tables for building regionalized input-output models and other purposes
+# stateior
+`stateior` is an R package that generates and provides US state Make and Use tables for building regionalized input-output models and other purposes
 
-`stateio` is in a pre-alpha development state. Look for Releases for working and tested versions.
+`stateior` is in a pre-alpha development state. Look for Releases for working and tested versions.
  
-See the [Wiki](https://github.com/USEPA/stateio/wiki) for installation instructions for users and developers and contribution guidelines.
+See the [Wiki](https://github.com/USEPA/stateior/wiki) for installation instructions for users and developers and contribution guidelines.
 
 ## Disclaimer
 The United States Environmental Protection Agency (EPA) GitHub project code is provided on an "as is" basis
