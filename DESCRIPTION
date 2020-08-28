@@ -1,6 +1,6 @@
-Package: stateio
+Package: stateior
 Type: Package
-Title: USEEIO R modeling software
+Title: US State Input-Output (stateio) R modeling software
 Version: 0.0.1
 Date: 2020-07-13
 Authors@R: c(
@@ -11,10 +11,10 @@ Authors@R: c(
   person("David", "Meyer", email="meyer.david@epa.gov", role= c("aut")),
   person("Wesley", "Ingwersen", email="ingwersen.wesley@epa.gov", role= c("aut", "cre")))
 Description:
-  stateio is an R package that generates and provides US state Make and Use tables
+  stateior is an R package that generates and provides US state Make and Use tables
   for building regionalized input-output models and other purposes.
-URL: https://github.com/USEPA/stateio
-BugReports: https://github.com/USEPA/stateio/issues
+URL: https://github.com/USEPA/stateior
+BugReports: https://github.com/USEPA/stateior/issues
 Imports:
     configr (>= 0.3.4),
     dplyr (>= 0.8.5),
