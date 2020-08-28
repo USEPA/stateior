@@ -159,4 +159,3 @@ writexl::write_xlsx(list("WA2WA" = cbind(rownames(WA_2r$WA2WA), WA_2r$WA2WA),
                          "WA2RoUS" = cbind(rownames(WA_2r$WA2RoUS), WA_2r$WA2RoUS),
                          "Validation" = cbind(rownames(WA_2r$Validation), WA_2r$Validation)),
                     "WA_2r_Use.xlsx", format_headers = FALSE)
-
