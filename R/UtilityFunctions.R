@@ -129,8 +129,12 @@ adjustUseTablebyImportMatrix <- function(iolevel, year) {
   return(Use_adjusted)
 }
 
-
-
+#' Extract desired columns from SchemaInfo, return vectors with strings of codes
+#' @param colName A text value specifying desired column name.
+#' @return A vector of codes.
+getVectorOfCodes <- function(colName) {
+  return(as.vector(stats::na.omit(SchemaInfo[, c("Code", colName)])[, "Code"]))
+}
 
 
 
