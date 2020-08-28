@@ -5,7 +5,7 @@
 \alias{State_PCE_2007_2018}
 \title{BEA State PCE table (2007-2018)}
 \format{
-A data frame with 1224 obs. and 15 variables
+A data frame with 1248 obs. and 15 variables
 \describe{
  \item{GeoName}{text code}
  \item{Line}{integer}

@@ -105,7 +105,7 @@
 "State_Employment_2009_2018"
 
 #' BEA State PCE table (2007-2018)
-#' @format A data frame with 1224 obs. and 15 variables
+#' @format A data frame with 1248 obs. and 15 variables
 #' \describe{
 #'  \item{GeoName}{text code}
 #'  \item{Line}{integer}
@@ -624,3 +624,115 @@
 #' }
 #' @source \url{https://faf.ornl.gov/fafweb/}
 "FAF_2018"
+
+#' Federal government expenditure on defense intermediate consumption in 2012.
+#' Categorized by 6-digit NAICS, by state (including District of Columbia) and
+#' by county.
+#' @format A data frame with 51337 obs. and 5 variables:
+#' \describe{
+#'  \item{Year}{integer}
+#'  \item{NAICS}{integer}
+#'  \item{State}{text}
+#'  \item{County}{text}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://www.usaspending.gov/#/download_center/award_data_archive}
+"FedGovExp_IntermediateDefense_2012"
+
+#' Federal government expenditure on non-defense intermediate consumption in 2012.
+#' Categorized by 6-digit NAICS, by state (including District of Columbia) and
+#' by county.
+#' @format A data frame with 64461 obs. and 5 variables:
+#' \describe{
+#'  \item{Year}{integer}
+#'  \item{NAICS}{integer}
+#'  \item{State}{text}
+#'  \item{County}{text}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://www.usaspending.gov/#/download_center/award_data_archive}
+"FedGovExp_IntermediateNonDefense_2012"
+
+#' Federal government expenditure on defense equipment final demand in 2012.
+#' Categorized by 6-digit NAICS, by state (including District of Columbia) and
+#' by county.
+#' @format A data frame with 42997 obs. and 5 variables:
+#' \describe{
+#'  \item{Year}{integer}
+#'  \item{NAICS}{integer}
+#'  \item{State}{text}
+#'  \item{County}{text}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://www.usaspending.gov/#/download_center/award_data_archive}
+"FedGovExp_EquipmentDefense_2012"
+
+#' Federal government expenditure on non-defense equipment final demand in 2012.
+#' Categorized by 6-digit NAICS, by state (including District of Columbia) and
+#' by county.
+#' @format A data frame with 34895 obs. and 5 variables:
+#' \describe{
+#'  \item{Year}{integer}
+#'  \item{NAICS}{integer}
+#'  \item{State}{text}
+#'  \item{County}{text}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://www.usaspending.gov/#/download_center/award_data_archive}
+"FedGovExp_EquipmentNonDefense_2012"
+
+#' Federal government expenditure on defense intellectual property (IP) products
+#' final demand in 2012. Categorized by 6-digit NAICS, by state
+#' (including District of Columbia) and by county.
+#' @format A data frame with 3654 obs. and 5 variables:
+#' \describe{
+#'  \item{Year}{integer}
+#'  \item{NAICS}{integer}
+#'  \item{State}{text}
+#'  \item{County}{text}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://www.usaspending.gov/#/download_center/award_data_archive}
+"FedGovExp_IPDefense_2012"
+
+#' Federal government expenditure on non-defense intellectual property (IP) products
+#' final demand in 2012. Categorized by 6-digit NAICS, by state
+#' (including District of Columbia) and by county.
+#' @format A data frame with 2748 obs. and 5 variables:
+#' \describe{
+#'  \item{Year}{integer}
+#'  \item{NAICS}{integer}
+#'  \item{State}{text}
+#'  \item{County}{text}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://www.usaspending.gov/#/download_center/award_data_archive}
+"FedGovExp_IPNonDefense_2012"
+
+#' Federal government expenditure on defense structure final demand in 2012.
+#' Categorized by 6-digit NAICS, by state (including District of Columbia) and
+#' by county.
+#' @format A data frame with 8537 obs. and 5 variables:
+#' \describe{
+#'  \item{Year}{integer}
+#'  \item{NAICS}{integer}
+#'  \item{State}{text}
+#'  \item{County}{text}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://www.usaspending.gov/#/download_center/award_data_archive}
+"FedGovExp_StructureDefense_2012"
+
+#' Federal government expenditure on non-defense structure final demand in 2012.
+#' Categorized by 6-digit NAICS, by state (including District of Columbia) and
+#' by county.
+#' @format A data frame with 8216 obs. and 5 variables:
+#' \describe{
+#'  \item{Year}{integer}
+#'  \item{NAICS}{integer}
+#'  \item{State}{text}
+#'  \item{County}{text}
+#'  \item{Amount}{numeric}
+#' }
+#' @source \url{https://www.usaspending.gov/#/download_center/award_data_archive}
+"FedGovExp_StructureNonDefense_2012"
