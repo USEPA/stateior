@@ -11,7 +11,7 @@ calculateLocalandTradedRatios(state, year, SoI = TRUE, ioschema, iolevel)
 
 \item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
 
-\item{SoI}{A boolean variable indicating whether to calculate local and traded ratios for SoI or RoU.}
+\item{SoI}{A boolean variable indicating whether to calculate local and traded ratios for SoI or RoUS.}
 
 \item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
 

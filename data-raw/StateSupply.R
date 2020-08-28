@@ -152,6 +152,21 @@ t_c <- as.numeric(colSums(US_Summary_MakeTransaction))
 State_Summary_MakeTransaction_balanced <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1E6, max_itr = 1E6)
 colnames(State_Summary_MakeTransaction_balanced) <- colnames(m0)
 
+#' Consistency and reality check
+#' Sum of each cell across all states must equal the same cell in national table
+State_Summary_MakeTransaction <- as.data.frame(State_Summary_MakeTransaction_balanced)
+State_Summary_MakeTransaction$BEA <- gsub(".*\\.", "", rownames(State_Summary_MakeTransaction))
+State_Summary_MakeTransaction_agg <- stats::aggregate(State_Summary_MakeTransaction[, colnames(State_Summary_MakeTransaction)[1:73]],
+                                                      by = list(State_Summary_MakeTransaction$BEA), sum)
+rownames(State_Summary_MakeTransaction_agg) <- State_Summary_MakeTransaction_agg$Group.1
+State_Summary_MakeTransaction_agg$Group.1 <- NULL
+StateUSMakeDiff <- US_Summary_MakeTransaction - State_Summary_MakeTransaction_agg[rownames(US_Summary_MakeTransaction), ]
+#' There should not be any negative values (only exception being Overseas, which isn’t used for further calculations)
+#' Sum of each industry’s output across all states must equal national industry output.
+#' Sum of each commodity’s output across all states must equal national commodity output in Supply Table.
+#' Sum of each commodity’s output across all states must equal national commodity output in Use Table minus International Imports (commodity specific).
+#' All cells that are zero in the national Supply Table must remain zeros in the state supply tables.
+
 #' 9 - Generae MarketShare matrix for US and each state
 # US MS
 US_Summary_MarketShare <- useeior::normalizeIOTransactions(US_Summary_MakeTransaction, US_Summary_CommodityOutput)

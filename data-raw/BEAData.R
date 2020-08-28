@@ -109,7 +109,7 @@ getBEAStatePCE <- function () {
   # Convert values to current US $
   StatePCE[, as.character(2007:2018)] <- StatePCE[, as.character(2007:2018)]*1E6
   # Keep state-level data
-  StatePCE <- StatePCE[StatePCE$GeoName %in% c(state.name, "District of Columbia"),
+  StatePCE <- StatePCE[StatePCE$GeoName %in% c(state.name, "District of Columbia", "United States"),
                        c("GeoName", "Line", "Description", as.character(2007:2018))]
   return(StatePCE)
 }
@@ -171,4 +171,92 @@ getBEAGovConsumption <- function() {
 }
 GovConsumption_2007_2019 <- getBEAGovConsumption()
 usethis::use_data(GovConsumption_2007_2019, overwrite = TRUE)
+
+
+
+
+
+
+#####################################################################################
+################## BELOW ARE COUNTY MODEL DATA PROCESSING FUNCTIONS #################
+#####################################################################################                                  
+
+#' getBEACountySectorGDP
+#' 
+#' It returns the original county GDP of one specified state at BEA-sector(Line Code) 
+#' level with NAs. 
+#' 
+#' @param year A numeric value between 2001 and 2018 specifying the year of interest. If 0 ,return a dataframe with data from all years available
+#' @param state A string character specifying the state of interest, 'GA' 
+#' @param axis A numeric value, 0,1. if 0, each county will be a col, if 1, row, default 0. This parameter only works when you specify one year
+#' @return A data frame contains selected county GDP by BEA sector industries at a specific year.
+getBEACountySectorGDP = function(year, state, axis = 0) {
+  # Create the placeholder file
+  CountyGDPzip = "inst/extdata/CAGDP2.zip"
+  # Download all BEA IO tables into the placeholder file
+  if(!file.exists(CountyGDPzip)) {
+    download.file("https://apps.bea.gov/regional/zip/CAGDP2.zip", CountyGDPzip, mode = "wb")
+    # Get the name of all files in the zip archive
+    fname = unzip(CountyGDPzip, list = TRUE)[unzip(CountyGDPzip, list = TRUE)$Length > 0, ]$Name
+    # Unzip the file to the designated directory
+    unzip(CountyGDPzip, files = fname, exdir = "inst/extdata/CAGDP2", overwrite = TRUE)
+  }
+  # filter for specified state
+  fileName = paste0('inst/extdata/CAGDP2/CAGDP2_', paste0(getStateAbbreviation(state),'_2001_2018.csv'))
+  # read data 
+  countyData = utils::read.table(fileName, 
+                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
+  # drop last four rows (notes in original file)
+  countyData = countyData[!is.na(countyData$Region), ]
+  # select only BEA-sector-level rows
+  sectorLevelLineCode = c(1,3,6,10,11,12,34,35,36,45,50,59,68,75,82,83)  #######TODO: have a crosswalk file in extdata and read from it, instead of hardcoding? 
+  countyData = countyData[countyData$LineCode %in% sectorLevelLineCode, ]
+  # convert data type (string to numeric) Note: NAs introduced by coercion, which is ok
+  year_range = seq(2001,2018,1)
+  countyData[, as.character(year_range)]  =  sapply(countyData[, as.character(year_range)], 
+                                                    as.numeric)
+  
+  # Decision1: return all-year table or one-year table
+  if (year == 0) {
+    # retain all year columns
+    countyDataAllYear = countyData[, c('GeoFIPS', 'GeoName', 'LineCode', as.character(year_range))]
+    # convert unit
+    for (yr in as.character(year_range)) {
+      countyDataAllYear[[yr]] = 1000 * countyDataAllYear[[yr]]
+    }
+    
+    return(countyDataAllYear)
+  } else {
+    # retain specified year only
+    countyDataOneYear = countyData[, c('GeoName', 'LineCode', year)]
+    countyDataOneYear[[as.character(year)]] = 1000 * countyDataOneYear[[as.character(year)]]
+  }
+  
+  # Decision2: transpose the table? (county as column or as row)
+  if (axis == 0) {
+    countyDataOneYearColumn = countyDataOneYear
+    colnames(countyDataOneYearColumn)[ncol(countyDataOneYearColumn)] = 'GDP'
+    # drop State Total Rows (you can still find it in row table)
+    dropStateFilter = sapply(attributes(countyDataOneYearColumn)$row.names, as.numeric) >= 36 # because state total always takes the first 35 rows(indices) of each table
+    countyDataOneYearColumn = countyDataOneYearColumn[dropStateFilter, ]
+    # WHY ARRANGE? It is because there is a discrepancy between rank by FIPS (default) and Name. 
+    # We decide to stick with character string ranking (For instance: in Georgia, we arrange 'Macon' before 'McIntosh' while Macon in fact has a larger fips than McIntosh) 
+    countyDataOneYearColumn = countyDataOneYearColumn %>% 
+                                                      arrange(GeoName) %>%
+                                                                       spread(GeoName, GDP)
+    
+    return(countyDataOneYearColumn)
+    
+  } else {
+    return(countyDataOneYear)
+  }
+}
+
+CountyGA_BEASectorGDP_2001_2018 = getBEACountySectorGDP(year = 0, state = 'Georgia', axis = 1)
+usethis::use_data(CountyGA_BEASectorGDP_2001_2018, overwrite = TRUE)
+
+
+
+
+
 
