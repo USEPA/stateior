@@ -334,6 +334,8 @@ estimateStateExport <- function(year) {
   State_export_ratio <- merge(State_export_ratio, CommOutput_ratio,
                               by = c("BEA_2012_Summary_Code", "State"), all.y = TRUE)
   State_export_ratio[is.na(State_export_ratio$SoITradeRatio), "SoITradeRatio"] <- State_export_ratio[is.na(State_export_ratio$SoITradeRatio), "Ratio"]
+  # Adjust SoITradeRatio of oil and gas products
+  State_export_ratio[State_export_ratio$BEA_2012_Summary_Code==211, "SoITradeRatio"] <- State_export_ratio[State_export_ratio$BEA_2012_Summary_Code==211, "Ratio"]
   # Calculate state export
   State_Export <- merge(US_Export, State_export_ratio, by.x = 0, by.y = "BEA_2012_Summary_Code")
   State_Export$F040 <- State_Export$F040 * State_Export$SoITradeRatio
@@ -342,21 +344,21 @@ estimateStateExport <- function(year) {
   return(State_Export)
 }
 
-#' Calculate US Import Ratio (matrix) at BEA Summary level.
+#' Calculate US Domestic Use Ratio (matrix) at BEA Summary level.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains US Import Ratio (matrix) at a specific year at BEA Summary level.
-calculateUSImportRatioMatrix <- function(year) {
+#' @return A data frame contains US Domestic Use Ratio (matrix) at a specific year at BEA Summary level.
+calculateUSDomesticUseRatioMatrix <- function(year) {
   # Load US Summary Use and Import table
   US_Summary_Use <- adjustUseTablebyImportMatrix("Summary", year)
   US_Summary_Import <- get(paste("Summary_Import", year, "BeforeRedef", sep = "_"))*1E6
   # Specify rows and columns to use
   rows <- rownames(US_Summary_Use)
   columns <- colnames(US_Summary_Use)
-  # Calculate state Import ratios
-  Import_Ratio <- US_Summary_Import[rows, columns]/US_Summary_Use
-  Import_Ratio[is.na(Import_Ratio)] <- 0
-  Import_Ratio$F050 <- 0
-  return(Import_Ratio)
+  # Calculate state Domestic Use ratios
+  Ratio <- (US_Summary_Use - US_Summary_Import[rows, columns])/US_Summary_Use
+  Ratio[is.na(Ratio)] <- 0
+  Ratio$F050 <- 0
+  return(Ratio)
 }
 
 #' Calculate state S&L government expenditure ratio at BEA Summary level.
