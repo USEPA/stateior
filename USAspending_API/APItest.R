@@ -7,9 +7,9 @@ downloadFedGovSpending <- function(category) {
   # Create url
   url <- "https://api.usaspending.gov/api/v2/search/spending_by_award/"
   # Load PSC and NAICS tables
-  PSC <- utils::read.csv(system.file("extdata", "USASpending_PSC.csv", package = "stateio"),
+  PSC <- utils::read.csv(system.file("extdata", "USASpending_PSC.csv", package = "stateior"),
                          stringsAsFactors = FALSE, check.names = FALSE)
-  NAICStoPull <- utils::read.csv(system.file("extdata", "USASpending_NAICStoPull.csv", package = "stateio"),
+  NAICStoPull <- utils::read.csv(system.file("extdata", "USASpending_NAICStoPull.csv", package = "stateior"),
                                  stringsAsFactors = FALSE, check.names = FALSE)
   # Generate desired psc tables and NAICS vector
   if (category=="intermediate") {

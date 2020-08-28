@@ -1,5 +1,5 @@
 #'Creates Combined Supply Table (in Make Table form) for all 52 states (including DC and Overseas) for a given year
-#'Stores table by year .rda files in stateio package
+#'Stores table by year .rda files in stateior package
 
 #' 1 - Load state GDP/value added (VA) by industry for the given year.
 #' Map to BEA Summary level
@@ -48,10 +48,11 @@ for (state in c(states, "Overseas")) {
 
 #' Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors (retail, real estate, gov)
 #' RAS converged after 1000001, 6, 911, and 6 iterations.
+# Load State GDP to BEA Summary mapping table
+BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
+                                             sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
 for (linecode in c("35", "57", "84", "86")) {
   # Determine BEA sectors that need allocation
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateio"),
-                                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   allocation_sectors <- BEAStateGDPtoBEASummary[duplicated(BEAStateGDPtoBEASummary$LineCode) |
                                                   duplicated(BEAStateGDPtoBEASummary$LineCode, fromLast = TRUE), ]
   BEA_sectors <- allocation_sectors[allocation_sectors$LineCode==linecode, "BEA_2012_Summary_Code"]
@@ -61,9 +62,6 @@ for (linecode in c("35", "57", "84", "86")) {
   StateIndustryOutputbyLineCode <- calculateStateIndustryOutputbyLineCode(year)
   t_c <- StateIndustryOutputbyLineCode[StateIndustryOutputbyLineCode$LineCode==linecode, as.character(year)]
   # Generate another vector of US industry output for the LineCode by BEA Summary
-  # Load State GDP to BEA Summary sector-mapping table
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateio"),
-                                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Create m0
   EstimatedStateIndustryOutput <- do.call(cbind.data.frame, State_Summary_IndustryOutput_list)
   colnames(EstimatedStateIndustryOutput) <- names(State_Summary_IndustryOutput_list)
@@ -154,13 +152,13 @@ colnames(State_Summary_MakeTransaction_balanced) <- colnames(m0)
 
 #' Consistency and reality check
 #' Sum of each cell across all states must equal the same cell in national table
-State_Summary_MakeTransaction <- as.data.frame(State_Summary_MakeTransaction_balanced)
-State_Summary_MakeTransaction$BEA <- gsub(".*\\.", "", rownames(State_Summary_MakeTransaction))
-State_Summary_MakeTransaction_agg <- stats::aggregate(State_Summary_MakeTransaction[, colnames(State_Summary_MakeTransaction)[1:73]],
-                                                      by = list(State_Summary_MakeTransaction$BEA), sum)
-rownames(State_Summary_MakeTransaction_agg) <- State_Summary_MakeTransaction_agg$Group.1
-State_Summary_MakeTransaction_agg$Group.1 <- NULL
-StateUSMakeDiff <- US_Summary_MakeTransaction - State_Summary_MakeTransaction_agg[rownames(US_Summary_MakeTransaction), ]
+StateMakeTransaction <- as.data.frame(State_Summary_MakeTransaction_balanced)
+StateMakeTransaction$BEA <- gsub(".*\\.", "", rownames(StateMakeTransaction))
+StateMakeTransaction_agg <- stats::aggregate(StateMakeTransaction[, colnames(StateMakeTransaction)[1:73]],
+                                             by = list(StateMakeTransaction$BEA), sum)
+rownames(StateMakeTransaction_agg) <- StateMakeTransaction_agg$Group.1
+StateMakeTransaction_agg$Group.1 <- NULL
+StateUSMakeDiff <- US_Summary_MakeTransaction - StateMakeTransaction_agg[rownames(US_Summary_MakeTransaction), ]
 #' There should not be any negative values (only exception being Overseas, which isn’t used for further calculations)
 #' Sum of each industry’s output across all states must equal national industry output.
 #' Sum of each commodity’s output across all states must equal national commodity output in Supply Table.

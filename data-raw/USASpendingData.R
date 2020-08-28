@@ -4,7 +4,7 @@
 #' by state and county from 2008 to 2019.
 getFedGovSpending <- function() {
   # Load PSC table
-  PSC <- utils::read.csv(system.file("extdata", "USASpending_PSC.csv", package = "stateio"),
+  PSC <- utils::read.csv(system.file("extdata", "USASpending_PSC.csv", package = "stateior"),
                          stringsAsFactors = FALSE, check.names = FALSE)
   # Prepare PSC codes by category
   psc_list <- list(PSC[PSC$Purchase_Type=="Intermediate", "4_Digit_PSC"],
@@ -13,7 +13,7 @@ getFedGovSpending <- function() {
                    PSC[PSC$Final_Demand_Category=="Structures", "4_Digit_PSC"])
   names(psc_list) <- c("Intermediate", "Equipment", "IP", "Structure")
   # Load NAICS table
-  NAICStoPull <- utils::read.csv(system.file("extdata", "USASpending_NAICStoPull.csv", package = "stateio"),
+  NAICStoPull <- utils::read.csv(system.file("extdata", "USASpending_NAICStoPull.csv", package = "stateior"),
                                  stringsAsFactors = FALSE, check.names = FALSE)
   # Download data from all years
   df_list <- list()

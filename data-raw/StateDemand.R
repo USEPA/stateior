@@ -1,5 +1,5 @@
 #'Creates Combined Demand Table (in Use Table form) for all 52 states (including DC and Overseas) for a given year
-#'Stores table by year .rda files in stateio package
+#'Stores table by year .rda files in stateior package
 
 #' 1 - Load state industry output for the given year.
 year <- 2012

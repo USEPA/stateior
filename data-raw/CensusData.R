@@ -5,7 +5,7 @@
 getCensusUSATradebyNAICS <- function (year, flow_ratio_type) {
   # Load the downloaded table from usatrade.census.gov
   filename <- paste0("Census_USATrade", Hmisc::capitalize(flow_ratio_type), "_", year, ".csv")
-  table <- utils::read.table(system.file("extdata", filename, package = "stateio"),
+  table <- utils::read.table(system.file("extdata", filename, package = "stateior"),
                              sep = ",", header = FALSE, stringsAsFactors = FALSE, check.names = FALSE, skip = 4,
                              col.names = c("Commodity", "State", "Country", "Year", "Value"))
   # Keep rows for the specified year and drop "All Commodities"

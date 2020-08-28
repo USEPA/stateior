@@ -3,7 +3,7 @@
 #' @return A data frame contains state GDP for all states at a specific year.
 getStateGDP <- function(year) {
   # Load pre-saved state GDP 2007-2019
-  StateGDP <- stateio::State_GDP_2007_2019
+  StateGDP <- stateior::State_GDP_2007_2019
   StateGDP <- StateGDP[, c("GeoName", "LineCode", as.character(year))]
   return(StateGDP)
 }
@@ -16,7 +16,7 @@ mapStateTabletoBEASummary <- function(statetablename, year) {
   # Load and adjust State tables
   StateTable <- AdjustGDPComponent(year, statetablename)
   # Load State GDP to BEA Summary sector-mapping table
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateio"),
+  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Merge state table with BEA Summary sector code and name
   StateTableBEA <- merge(StateTable, BEAStateGDPtoBEASummary, by = "LineCode")
@@ -29,7 +29,7 @@ mapStateTabletoBEASummary <- function(statetablename, year) {
 #' @return A data frame contains allocation factors for all states with row names being BEA sector code.
 calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsource) {
   # Load State GDP to BEA Summary sector-mapping table
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateio"),
+  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Determine BEA sectors that need allocation
   allocation_sectors <- BEAStateGDPtoBEASummary[duplicated(BEAStateGDPtoBEASummary$LineCode) | duplicated(BEAStateGDPtoBEASummary$LineCode, fromLast = TRUE), ]
@@ -39,7 +39,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   # Generate allocation_weight df based on pre-saved data
   if (allocationweightsource=="Employment") {
     # Load BEA State Emp to BEA Summary mapping
-    BEAStateEmptoBEAmapping <- utils::read.table(system.file("extdata", "Crosswalk_StateEmploymenttoBEASummaryIO2012Schema.csv", package = "stateio"),
+    BEAStateEmptoBEAmapping <- utils::read.table(system.file("extdata", "Crosswalk_StateEmploymenttoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
     BEAStateEmptoBEAmapping <- BEAStateEmptoBEAmapping[BEAStateEmptoBEAmapping$BEA_2012_Summary_Code%in%
                                                          crosswalk[crosswalk$BEA_2012_Sector_Code%in%c("44RT", "FIRE", "G"), "BEA_2012_Summary_Code"], ]
@@ -52,7 +52,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
       allocation_factors[allocation_factors$LineCode==linecode, "factor"] <- weight_vector/sum(weight_vector)
     }
     # Load BEA state Emp
-    BEAStateEmployment <- stateio::State_Employment_2009_2018[, c("GeoName", "LineCode", as.character(year))]
+    BEAStateEmployment <- stateior::State_Employment_2009_2018[, c("GeoName", "LineCode", as.character(year))]
     # Map BEA state Emp (from LineCode) to BEA Summary
     BEAStateEmployment <- merge(BEAStateEmployment[BEAStateEmployment$GeoName %in% c(state.name, "District of Columbia"), ],
                                 allocation_factors[, c("BEA_2012_Summary_Code", "LineCode", "factor")],
@@ -178,7 +178,7 @@ calculateStateIndustryOutputbyLineCode <- function(year) {
   USGrossOutput <- as.data.frame(rowSums(US_Summary_MakeTrasaction))
   colnames(USGrossOutput) <- as.character(year)
   # Load State GDP to BEA Summary sector-mapping table
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateio"),
+  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Generate LineCode-coded US Gross Output
   USGrossOutput <- merge(USGrossOutput, BEAStateGDPtoBEASummary, by.x = 0, by.y = "BEA_2012_Summary_Code")
@@ -227,8 +227,8 @@ loadDatafromFLOWSA <- function(flowclass, year, datasource) {
 #' @return A data frame contains State Emp by BEA Summary.
 getStateEmploymentbyBEASummary <- function(year) {
   # BEA State Emp
-  BEAStateEmployment <- stateio::State_Employment_2009_2018[, c("GeoName", "LineCode", as.character(year))]
-  BEAStateEmptoBEAmapping <- utils::read.table(system.file("extdata", "Crosswalk_StateEmploymenttoBEASummaryIO2012Schema.csv", package = "stateio"),
+  BEAStateEmployment <- stateior::State_Employment_2009_2018[, c("GeoName", "LineCode", as.character(year))]
+  BEAStateEmptoBEAmapping <- utils::read.table(system.file("extdata", "Crosswalk_StateEmploymenttoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   BEAStateEmployment <- merge(BEAStateEmployment, BEAStateEmptoBEAmapping, by = "LineCode")
   # Aggregate StateEmployment by BEA
@@ -240,7 +240,7 @@ getStateEmploymentbyBEASummary <- function(year) {
   BLS_QCEW <- loadDatafromFLOWSA("Employment", year, "BLS_QCEW")
   BLS_QCEW <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Summary")
   BLS_QCEW$FIPS <- as.numeric(substr(BLS_QCEW$FIPS, 1, 2))
-  FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateio"),
+  FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
                                   sep = ",", header = TRUE, check.names = FALSE)
   BLS_QCEW <- merge(BLS_QCEW, FIPS_STATE, by.x = "FIPS", by.y = "State_FIPS")
   # Prioritize BEAStateEmployment, replace NAs in Emp with values from BLS_QCEW
@@ -257,7 +257,7 @@ getStateEmploymentbyBEASummary <- function(year) {
 #' for specified state with row names being BEA sector code.
 getAgFisheryForestryCommodityOutput <- function(year) {
   # Load state FIPS
-  FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateio"),
+  FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
                                   sep = ",", header = TRUE, check.names = FALSE)
   # Load USDA_ERS_FIWS data from flowsa
   USDA_ERS_FIWS <- loadDatafromFLOWSA("Money", year, "USDA_ERS_FIWS")
@@ -305,7 +305,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
 #' for specified state with row names being BEA sector code.
 getFAFCommodityOutput <- function(year) {
   # Load state FIPS
-  FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateio"),
+  FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
                                   sep = ",", header = TRUE, check.names = FALSE)
   # Load pre-saved FAF4 commodity flow data
   FAF <- get(paste("FAF", year, sep = "_"))
@@ -318,7 +318,7 @@ getFAFCommodityOutput <- function(year) {
   colnames(FAF) <- c("SCTG", "State", "Value")
   # Map FAF from SCTG to BEA Summary commodities
   # Load SCTGtoBEA mapping table
-  SCTGtoBEA <- utils::read.table(system.file("extdata", "Crosswalk_SCTGtoBEA.csv", package = "stateio"),
+  SCTGtoBEA <- utils::read.table(system.file("extdata", "Crosswalk_SCTGtoBEA.csv", package = "stateior"),
                                  sep = ",", header = TRUE, check.names = FALSE)
   SCTGtoBEASummary <- unique(SCTGtoBEA[, c("SCTG", "BEA_2012_Summary_Code")])
   FAF <- merge(FAF, SCTGtoBEASummary, by = "SCTG")

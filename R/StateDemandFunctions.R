@@ -21,7 +21,7 @@ FedGovDemandCodes <- c("F06C", "F06E", "F06N", "F06S", "F07C", "F07E", "F07N", "
 #' @return A data frame contains state Compensation for all states at a specific year.
 getStateEmpCompensation <- function(year) {
   # Load pre-saved state Compensation 2007-2017
-  StateEmpCompensation <- stateio::State_Compensation_2007_2017
+  StateEmpCompensation <- stateior::State_Compensation_2007_2017
   StateEmpCompensation <- StateEmpCompensation[, c("GeoName", "LineCode", as.character(year))]
   return(StateEmpCompensation)
 }
@@ -31,7 +31,7 @@ getStateEmpCompensation <- function(year) {
 #' @return A data frame contains state Tax for all states at a specific year.
 getStateTax <- function(year) {
   # Load pre-saved state Tax 2007-2017
-  StateTax <- stateio::State_Tax_2007_2017
+  StateTax <- stateior::State_Tax_2007_2017
   StateTax <- StateTax[, c("GeoName", "LineCode", as.character(year))]
   return(StateTax)
 }
@@ -41,7 +41,7 @@ getStateTax <- function(year) {
 #' @return A data frame contains state GOS for all states at a specific year.
 getStateGOS <- function(year) {
   # Load pre-saved state GOS 2007-2017
-  StateGOS <- stateio::State_GOS_2007_2017
+  StateGOS <- stateior::State_GOS_2007_2017
   StateGOS <- StateGOS[, c("GeoName", "LineCode", as.character(year))]
   return(StateGOS)
 }
@@ -51,7 +51,7 @@ getStateGOS <- function(year) {
 #' @return A data frame contains state PCE for all states at a specific year.
 getStatePCE <- function(year) {
   # Load pre-saved state PCE 2007-2018
-  StatePCE <- stateio::State_PCE_2007_2018
+  StatePCE <- stateior::State_PCE_2007_2018
   StatePCE <- StatePCE[, c("GeoName", "Line", as.character(year))]
   return(StatePCE)
 }
@@ -212,7 +212,7 @@ calculateStateUSPCERatio <- function(year) {
   # Calculate the state-US PCE ratios by LineCode
   StateUSPCE$Ratio <- StateUSPCE[, paste0(year, ".x")]/StateUSPCE[, paste0(year, ".y")]
   # Map to BEA Summary
-  StatePCEtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StatePCEtoBEASummaryIO2012Schema.csv", package = "stateio"),
+  StatePCEtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StatePCEtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                             sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   StateUSPCE <- merge(StatePCEtoBEASummary[!StatePCEtoBEASummary$BEA_2012_Summary_Code=="", ],
                       StateUSPCE, by = "Line")
@@ -366,10 +366,10 @@ calculateUSDomesticUseRatioMatrix <- function(year) {
 #' @return A data frame contains state S&L government expenditure ratio for all states at a specific year at BEA Summary level.
 calculateStateSLGovExpenditureRatio <- function(year) {
   # Load state and local government expenditure
-  GovExp <- get(paste0("Census_StateLocalGovExpenditure_", year), as.environment("package:stateio"))
+  GovExp <- get(paste0("Census_StateLocalGovExpenditure_", year), as.environment("package:stateior"))
   GovExp[, "Overseas"] <- GovExp[, "United States Total"] - rowSums(GovExp[, c(state.name, "District of Columbia")])
   # Map to BEA Summary sectors
-  mapping <- utils::read.table(system.file("extdata", "Crosswalk_StateLocalGovExptoBEASummaryIO2012Schema.csv", package = "stateio"),
+  mapping <- utils::read.table(system.file("extdata", "Crosswalk_StateLocalGovExptoBEASummaryIO2012Schema.csv", package = "stateior"),
                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   GovExpBEA <- merge(mapping, GovExp, by = c("Line", "Description"))
   # Calculate ratios
@@ -434,7 +434,7 @@ calculateStateUSEmpCompensationRatio <- function(year) {
   # Map US Employee Compensation to BEA
   USEmpCompensation <- getStateEmpCompensation(year)
   USEmpCompensation <- USEmpCompensation[USEmpCompensation$GeoName=="United States *", ]
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateio"),
+  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   allocation_sectors <- BEAStateGDPtoBEASummary[duplicated(BEAStateGDPtoBEASummary$LineCode) | duplicated(BEAStateGDPtoBEASummary$LineCode, fromLast = TRUE), ]
   USEmpCompensation <- merge(USEmpCompensation, BEAStateGDPtoBEASummary, by = "LineCode")
@@ -479,8 +479,8 @@ calculateStateUSEmpCompensationRatio <- function(year) {
 #' @return A data frame contains weighting factor of each expenditure component over US total gov expenditure.
 calculateUSGovExpenditureWeightFactor <- function(year, defense) {
   # Load data
-  GovConsumption <- stateio::GovConsumption_2007_2019
-  GovInvestment <- stateio::GovInvestment_2007_2019
+  GovConsumption <- stateior::GovConsumption_2007_2019
+  GovInvestment <- stateior::GovInvestment_2007_2019
   # Keep rows by line code
   if (defense) {
     GovConsumption <- GovConsumption[GovConsumption$Line%in%c(26, 28), ]
@@ -511,7 +511,7 @@ calculateStateFedGovExpenditureRatio <- function(year) {
                                                      "NAICS_2012_Code")])
   for(sector in sectors) {
     GovExp <- get(paste("FedGovExp", sector, year, sep = "_"),
-                  as.environment("package:stateio"))
+                  as.environment("package:stateior"))
     # Change State to full state name
     for (state in unique(GovExp$State)) {
       GovExp[GovExp$State==state, "State"] <- ifelse(state=="DC", "District of Columbia",

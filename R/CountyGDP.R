@@ -1,6 +1,6 @@
 library(tidyverse)
-source('R/UtilityFunctions.R')
-source('R/CountyEmployment.R')
+#source('R/UtilityFunctions.R')
+#source('R/CountyEmployment.R')
 
 #' getCountyTotalGDP (MODIFIED)
 #' 
@@ -147,8 +147,8 @@ estimateCountySectorGDP = function(state, year) {
 #' @param year numeric, A numeric value between 2007 and 2017 specifying the year of interest. (2018/2019 data not available now)
 #' @param state character string, the state of interest, full name with first letter capitalized, 'Georgia'. 
 calculateStateSummarySectorGDPRatio = function(year, state) {
-  #load raw state gdp data from stateio
-  State_GDP_2007_2019 = stateio::State_GDP_2007_2019
+  #load raw state gdp data from stateior
+  State_GDP_2007_2019 = stateior::State_GDP_2007_2019
   # load crosswalk file
   cw = unique(utils::read.table('inst/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv', 
                          sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE) %>% select(LineCodeSec, LineCodeSum)
@@ -244,7 +244,7 @@ estimateCountySummaryGDP = function(year, state) {
   M2 = data.frame()
   # map state gdp from line code to summary code
   yr = year
-  State_GDP_2007_2019 = stateio::State_GDP_2007_2019
+  State_GDP_2007_2019 = stateior::State_GDP_2007_2019
   stateGDP = State_GDP_2007_2019[State_GDP_2007_2019$GeoName == state,c('LineCode', as.character(year))]
   cw = unique(utils::read.table('inst/extdata/Crosswalk_CountyGDPtoBEASummaryIO2012Schema.csv', 
                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE) %>% select(LineCodeSum, BEA_2012_Summary_Code)
