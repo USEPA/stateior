@@ -93,66 +93,79 @@ for (state in states) {
   rownames(VA_ratio) <- VA_ratio$BEA_2012_Summary_Code
   VA_ratio <- VA_ratio[rownames(US_Summary_MakeTransaction), ]
   # Calculate State_Summary_MakeTransaction by multiplying US_Summary_MakeTransaction with VA_ratio
-  State_Summary_MakeTransaction_list[[state]] <- diag(VA_ratio$Ratio, names = TRUE) %*% as.matrix(US_Summary_MakeTransaction)
-  rownames(State_Summary_MakeTransaction_list[[state]]) <- rownames(US_Summary_MakeTransaction)
+  State_Summary_Make_Transaction <- diag(VA_ratio$Ratio, names = TRUE) %*% as.matrix(US_Summary_MakeTransaction)
+  rownames(State_Summary_Make_Transaction) <- rownames(US_Summary_MakeTransaction)
+  State_Summary_MakeTransaction_list[[state]] <- State_Summary_Make_Transaction
   # Calculate State_Summary_IndustryOutput by multiplying US_Summary_IndustryOutput with VA_ratio
   State_Summary_IndustryOutput_list[[state]] <- US_Summary_IndustryOutput*VA_ratio$Ratio
   # Calculate State_Summary_CommodityOutput by colSumming State_Summary_MakeTransaction
-  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(colSums(State_Summary_MakeTransaction_list[[state]]))
+  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(colSums(State_Summary_Make_Transaction))
   # Calculate State_Summary_CommodityOutputRatio_list
-  State_Summary_CommodityOutputRatio_list[[state]] <- as.data.frame(State_Summary_CommodityOutput_list[[state]]/US_Summary_CommodityOutput)
+  State_Summary_CommodityOutputRatio_list[[state]] <- as.data.frame(colSums(State_Summary_Make_Transaction)/US_Summary_CommodityOutput)
   colnames(State_Summary_CommodityOutputRatio_list[[state]]) <- "OutputRatio"
 }
 
 #' 5 - Load available state commodity output data from alternative sources for a given year.
 #' Use these data to estimate state-US commodity output ratios.
-StateCommodityOutputRatioAlternative <- getStateCommodityOutputRatioEstimates(year)
+AlternativeStateCommodityOutputRatio <- getStateCommodityOutputRatioEstimates(year)
 
 #' 6 - Adjust estimated state commodity output and calculcate state commodity adjustment ratio
 #' Based on reported state commodity output from alternative sources.
 for (state in states) {
-  #' Adjust estimated state commodity output
+  # Adjust estimated state commodity output
   # Calculate state/US commodit output ratio * US Summary Comm Output
-  AdjustedCommodityOutput <- merge(US_Summary_CommodityOutput,
-                                   StateCommodityOutputRatioAlternative[StateCommodityOutputRatioAlternative$State==state, ],
-                                   by.x = 0, by.y = "BEA_2012_Summary_Code")
-  AdjustedCommodityOutput$Output <- AdjustedCommodityOutput$x*AdjustedCommodityOutput$Ratio
+  AdjustedStateCommodityOutput <- merge(US_Summary_CommodityOutput,
+                                        AlternativeStateCommodityOutputRatio[AlternativeStateCommodityOutputRatio$State==state, ],
+                                        by.x = 0, by.y = "BEA_2012_Summary_Code")
+  AdjustedStateCommodityOutput$Output <- AdjustedStateCommodityOutput$x*AdjustedStateCommodityOutput$Ratio
   # Replace commodity output value in State_Summary_CommodityOutput_list
-  commodities <- AdjustedCommodityOutput$Row.names
-  State_Summary_CommodityOutput_list[[state]][commodities, ] <- AdjustedCommodityOutput[AdjustedCommodityOutput$Row.names%in%commodities, "Output"]
-  #' Calculate state commodity adjustment ratio.
-  #' Divide current state commodity output ratio by state commodity output ratio from alternative sources.
+  commodities <- AdjustedStateCommodityOutput$Row.names
+  State_Summary_CommodityOutput_list[[state]][commodities, ] <- AdjustedStateCommodityOutput[AdjustedStateCommodityOutput$Row.names%in%commodities, "Output"]
+  
+  # Calculate state commodity adjustment ratio
+  # Divide current state commodity output ratio by state commodity output ratio from alternative sources.
   # Merge two sets of state-US commodity output ratio
-  commodity_ratios <- merge(State_Summary_CommodityOutputRatio_list[[state]],
-                            StateCommodityOutputRatioAlternative[StateCommodityOutputRatioAlternative$State==state, ],
-                            by.x = 0, by.y = "BEA_2012_Summary_Code", all.x = TRUE)
+  CommodityOutputRatios_df <- merge(State_Summary_CommodityOutputRatio_list[[state]],
+                                    AlternativeStateCommodityOutputRatio[AlternativeStateCommodityOutputRatio$State==state, ],
+                                    by.x = 0, by.y = "BEA_2012_Summary_Code", all.x = TRUE)
   # Replace NA in Ratio with values in OutputRatio
-  commodity_ratios[is.na(commodity_ratios$Ratio), "Ratio"] <- commodity_ratios[is.na(commodity_ratios$Ratio), "OutputRatio"]
-  # Adjust state Make transactions based on commodity ratios
-  State_Summary_MakeTransaction_list[[state]] <- State_Summary_MakeTransaction_list[[state]]%*%diag(commodity_ratios$Ratio/commodity_ratios$OutputRatio)
+  CommodityOutputRatios_df[is.na(CommodityOutputRatios_df$Ratio), "Ratio"] <- CommodityOutputRatios_df[is.na(CommodityOutputRatios_df$Ratio), "OutputRatio"]
+  rownames(CommodityOutputRatios_df) <- CommodityOutputRatios_df$Row.names
+  CommodityOutputRatios_df <- CommodityOutputRatios_df[colnames(State_Summary_MakeTransaction_list[[state]]), ]
+  # Adjust state Make transactions based on adjusted commodity ratios
+  CommodityAdjustmentRatio <- CommodityOutputRatios_df$Ratio/CommodityOutputRatios_df$OutputRatio
+  State_Summary_MakeTransaction_list[[state]] <- State_Summary_MakeTransaction_list[[state]]%*%diag(CommodityAdjustmentRatio)
+  colnames(State_Summary_MakeTransaction_list[[state]]) <- rownames(CommodityOutputRatios_df)
 }
 
-#' 7 - Vertically stack all state Make trascation tables.
-State_Summary_MakeTransaction <- do.call(rbind, State_Summary_MakeTransaction_list)
+#' 7 - Generate a diagonalized matrix where state Make trascation tables are on the diagonal.
+#State_Summary_MakeTransaction <- do.call(rbind, State_Summary_MakeTransaction_list)
+# generate a diagonalized matrix
+State_Summary_MakeTransaction <- as.matrix(Matrix::bdiag(State_Summary_MakeTransaction_list))
 rownames(State_Summary_MakeTransaction) <- paste(rep(names(State_Summary_MakeTransaction_list),
                                                      each = nrow(State_Summary_MakeTransaction_list[[1]])),
                                                  rep(rownames(State_Summary_MakeTransaction_list[[1]]),
                                                      time = length(names(State_Summary_MakeTransaction_list))),
                                                  sep = ".")
-colnames(State_Summary_MakeTransaction) <- colnames(US_Summary_MakeTransaction)
+colnames(State_Summary_MakeTransaction) <- paste(rep(names(State_Summary_MakeTransaction_list),
+                                                     each = ncol(State_Summary_MakeTransaction_list[[1]])),
+                                                 rep(colnames(State_Summary_MakeTransaction_list[[1]]),
+                                                     time = length(names(State_Summary_MakeTransaction_list))),
+                                                 sep = ".")
 
 #' 8 - Perform RAS until model is balanced
 #' Apply RAS balancing to the entire Make table
-#' RAS converged after 386 iterations.
+#' RAS converged after  iterations.
 m0 <- State_Summary_MakeTransaction
 t_r <- as.numeric(unlist(State_Summary_IndustryOutput_list))
-t_c <- as.numeric(colSums(US_Summary_MakeTransaction))
+t_c <- as.numeric(unlist(State_Summary_CommodityOutput_list))
 State_Summary_MakeTransaction_balanced <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1E6, max_itr = 1E6)
 colnames(State_Summary_MakeTransaction_balanced) <- colnames(m0)
 
 #' Consistency and reality check
 #' Sum of each cell across all states must equal the same cell in national table
 StateMakeTransaction <- as.data.frame(State_Summary_MakeTransaction_balanced)
+#StateMakeTransaction <- as.data.frame(State_Summary_MakeTransaction)
 StateMakeTransaction$BEA <- gsub(".*\\.", "", rownames(StateMakeTransaction))
 StateMakeTransaction_agg <- stats::aggregate(StateMakeTransaction[, colnames(StateMakeTransaction)[1:73]],
                                              by = list(StateMakeTransaction$BEA), sum)
@@ -165,7 +178,23 @@ StateUSMakeDiff <- US_Summary_MakeTransaction - StateMakeTransaction_agg[rowname
 #' Sum of each commodity’s output across all states must equal national commodity output in Use Table minus International Imports (commodity specific).
 #' All cells that are zero in the national Supply Table must remain zeros in the state supply tables.
 
-#' 9 - Generae MarketShare matrix for US and each state
+#' 9 - Update state industry and commodity output
+State_Summary_CommodityOutput_list <- list()
+for (state in states) {
+  StateMake <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
+  State_Summary_IndustryOutput_list[[state]] <- as.data.frame(rowSums(StateMake))
+  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(colSums(StateMake))
+}
+
+#' 10 - Save state industry output estimates and balanced Make table to .rda
+save(State_Summary_MakeTransaction_balanced,
+     file = paste0("data/State_Summary_Make_", year, ".rda"))
+save(State_Summary_IndustryOutput_list,
+     file = paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
+save(State_Summary_CommodityOutput_list,
+     file = paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
+
+#' 11 - Generae MarketShare matrix for US and each state
 # US MS
 US_Summary_MarketShare <- useeior::normalizeIOTransactions(US_Summary_MakeTransaction, US_Summary_CommodityOutput)
 # State MS
@@ -176,7 +205,6 @@ for (state in states) {
   StateMS <- useeior::normalizeIOTransactions(StateMake, StateCommOutput)
   State_Summary_MarketShare_list[[state]] <- cbind.data.frame(rownames(StateMS), StateMS)
   colnames(State_Summary_MarketShare_list[[state]])[1] <- ""
-  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(StateCommOutput)
 }
 
 # Compare state MS to US MS
@@ -185,11 +213,3 @@ for (state in states) {
   State_US_MS_Comparison_list[[state]] <- compareMatrices(US_Summary_MarketShare,
                                                           State_Summary_MarketShare_list[[state]])
 }
-
-#' 10 - Save state industry output estimates and balanced Make table to .rda
-save(State_Summary_MakeTransaction_balanced,
-     file = paste0("data/State_Summary_Make_", year, ".rda"))
-save(State_Summary_IndustryOutput_list,
-     file = paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
-save(State_Summary_CommodityOutput_list,
-     file = paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
