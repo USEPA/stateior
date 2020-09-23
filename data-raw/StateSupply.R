@@ -178,15 +178,7 @@ StateUSMakeDiff <- US_Summary_MakeTransaction - StateMakeTransaction_agg[rowname
 #' Sum of each commodity’s output across all states must equal national commodity output in Use Table minus International Imports (commodity specific).
 #' All cells that are zero in the national Supply Table must remain zeros in the state supply tables.
 
-#' 9 - Update state industry and commodity output
-State_Summary_CommodityOutput_list <- list()
-for (state in states) {
-  StateMake <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
-  State_Summary_IndustryOutput_list[[state]] <- as.data.frame(rowSums(StateMake))
-  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(colSums(StateMake))
-}
-
-#' 10 - Save state industry output estimates and balanced Make table to .rda
+#' 9 - Save state industry output estimates and balanced Make table to .rda
 save(State_Summary_MakeTransaction_balanced,
      file = paste0("data/State_Summary_Make_", year, ".rda"))
 save(State_Summary_IndustryOutput_list,
@@ -194,7 +186,7 @@ save(State_Summary_IndustryOutput_list,
 save(State_Summary_CommodityOutput_list,
      file = paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
 
-#' 11 - Generae MarketShare matrix for US and each state
+#' 10 - Generae MarketShare matrix for US and each state
 # US MS
 US_Summary_MarketShare <- useeior::normalizeIOTransactions(US_Summary_MakeTransaction, US_Summary_CommodityOutput)
 # State MS
