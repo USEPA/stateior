@@ -141,31 +141,26 @@ for (state in states) {
 #' 7 - Generate a diagonalized matrix where state Make trascation tables are on the diagonal.
 #State_Summary_MakeTransaction <- do.call(rbind, State_Summary_MakeTransaction_list)
 # generate a diagonalized matrix
-State_Summary_MakeTransaction <- as.matrix(Matrix::bdiag(State_Summary_MakeTransaction_list))
+State_Summary_MakeTransaction <- do.call(rbind, State_Summary_MakeTransaction_list)
 rownames(State_Summary_MakeTransaction) <- paste(rep(names(State_Summary_MakeTransaction_list),
                                                      each = nrow(State_Summary_MakeTransaction_list[[1]])),
                                                  rep(rownames(State_Summary_MakeTransaction_list[[1]]),
                                                      time = length(names(State_Summary_MakeTransaction_list))),
                                                  sep = ".")
-colnames(State_Summary_MakeTransaction) <- paste(rep(names(State_Summary_MakeTransaction_list),
-                                                     each = ncol(State_Summary_MakeTransaction_list[[1]])),
-                                                 rep(colnames(State_Summary_MakeTransaction_list[[1]]),
-                                                     time = length(names(State_Summary_MakeTransaction_list))),
-                                                 sep = ".")
+colnames(State_Summary_MakeTransaction) <- colnames(US_Summary_MakeTransaction)
 
 #' 8 - Perform RAS until model is balanced
 #' Apply RAS balancing to the entire Make table
-#' RAS converged after  iterations.
+#' RAS converged after 802 iterations.
 m0 <- State_Summary_MakeTransaction
 t_r <- as.numeric(unlist(State_Summary_IndustryOutput_list))
-t_c <- as.numeric(unlist(State_Summary_CommodityOutput_list))
+t_c <- as.numeric(colSums(US_Summary_MakeTransaction))
 State_Summary_MakeTransaction_balanced <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1E6, max_itr = 1E6)
 colnames(State_Summary_MakeTransaction_balanced) <- colnames(m0)
 
 #' Consistency and reality check
 #' Sum of each cell across all states must equal the same cell in national table
 StateMakeTransaction <- as.data.frame(State_Summary_MakeTransaction_balanced)
-#StateMakeTransaction <- as.data.frame(State_Summary_MakeTransaction)
 StateMakeTransaction$BEA <- gsub(".*\\.", "", rownames(StateMakeTransaction))
 StateMakeTransaction_agg <- stats::aggregate(StateMakeTransaction[, colnames(StateMakeTransaction)[1:73]],
                                              by = list(StateMakeTransaction$BEA), sum)
