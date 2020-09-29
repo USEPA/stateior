@@ -24,16 +24,23 @@ SoI2SoI_Use$InterregionalExports <- SoI_Commodity_Output$StateCommOutput - rowSu
 # Calculate Net Exports
 SoI2SoI_Use$NetExports <- SoI2SoI_Use$InterregionalExports - SoI2SoI_Use$InterregionalImports
 
-#' 4 - Generate RoUS domestic Use and commodity output
+#' 4 - Generate RoUS Make, domestic Use and commodity output
+# US Make
+US_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
+US_MakeTransaction <- US_Make[-which(rownames(US_Make)=="Total Commodity Output"),
+                              -which(colnames(US_Make)=="Total Industry Output")]
+# SoI Make
+load(paste0("data/State_Summary_Make_", year, ".rda"))
+SoI_Make <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
+# RoUS Make
+RoUS_Make <- US_MakeTransaction - SoI_Make
+
 # RoUS domestic Use
 US_Use <- adjustUseTablebyImportMatrix("Summary", year)
 FinalDemand_columns <- colnames(US_Use)[75:94]
 US_Domestic_Use <- US_Use[1:73, colnames(SoI_Domestic_Use)] * calculateUSDomesticUseRatioMatrix(year)
 RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
 # RoUS Commodity Output
-US_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
-US_MakeTransaction <- US_Make[-which(rownames(US_Make)=="Total Commodity Output"),
-                              -which(colnames(US_Make)=="Total Industry Output")]
 US_Commodity_Output <- colSums(US_MakeTransaction)
 RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
 colnames(RoUS_Commodity_Output) <- "RoUSCommOutput"
