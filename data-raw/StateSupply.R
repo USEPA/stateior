@@ -152,11 +152,29 @@ colnames(State_Summary_MakeTransaction) <- colnames(US_Summary_MakeTransaction)
 #' 8 - Perform RAS until model is balanced
 #' Apply RAS balancing to the entire Make table
 #' RAS converged after 802 iterations.
-m0 <- State_Summary_MakeTransaction
-t_r <- as.numeric(unlist(State_Summary_IndustryOutput_list))
-t_c <- as.numeric(colSums(US_Summary_MakeTransaction))
-State_Summary_MakeTransaction_balanced <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1E6, max_itr = 1E6)
-colnames(State_Summary_MakeTransaction_balanced) <- colnames(m0)
+# m0 <- State_Summary_MakeTransaction
+# t_r <- as.numeric(unlist(State_Summary_IndustryOutput_list))
+# t_c <- as.numeric(colSums(US_Summary_MakeTransaction))
+# State_Summary_MakeTransaction_balanced <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1E6, max_itr = 1E6)
+# colnames(State_Summary_MakeTransaction_balanced) <- colnames(m0)
+
+m1_list <- list()
+for (industry in rownames(US_Summary_MakeTransaction)) {
+  m0 <- State_Summary_MakeTransaction[gsub(".*\\.", "", rownames(State_Summary_MakeTransaction))==industry, ]
+  t_r <- as.numeric(do.call(cbind, State_Summary_IndustryOutput_list)[industry, ])
+  t_c <- as.numeric(US_Summary_MakeTransaction[industry, ])
+  print(industry)
+  m1 <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1E6, max_itr = 1E6)
+  m1_list[[industry]] <- m1
+}
+names(m1_list) <- NULL
+State_Summary_MakeTransaction_balanced <- do.call(rbind.data.frame, m1_list)
+State_Summary_MakeTransaction_balanced <- State_Summary_MakeTransaction_balanced[rownames(State_Summary_MakeTransaction), ]
+
+for (state in states) {
+  State_Summary_Make_Transaction <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
+  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(colSums(State_Summary_Make_Transaction))
+}
 
 #' Consistency and reality check
 #' Sum of each cell across all states must equal the same cell in national table
