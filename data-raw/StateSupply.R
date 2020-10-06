@@ -138,9 +138,7 @@ for (state in states) {
   colnames(State_Summary_MakeTransaction_list[[state]]) <- rownames(CommodityOutputRatios_df)
 }
 
-#' 7 - Generate a diagonalized matrix where state Make trascation tables are on the diagonal.
-#State_Summary_MakeTransaction <- do.call(rbind, State_Summary_MakeTransaction_list)
-# generate a diagonalized matrix
+#' 7 - Vertically stack all state Make trascation tables.
 State_Summary_MakeTransaction <- do.call(rbind, State_Summary_MakeTransaction_list)
 rownames(State_Summary_MakeTransaction) <- paste(rep(names(State_Summary_MakeTransaction_list),
                                                      each = nrow(State_Summary_MakeTransaction_list[[1]])),
@@ -149,32 +147,24 @@ rownames(State_Summary_MakeTransaction) <- paste(rep(names(State_Summary_MakeTra
                                                  sep = ".")
 colnames(State_Summary_MakeTransaction) <- colnames(US_Summary_MakeTransaction)
 
-#' 8 - Perform RAS until model is balanced
-#' Apply RAS balancing to the entire Make table
-#' RAS converged after 802 iterations.
-# m0 <- State_Summary_MakeTransaction
-# t_r <- as.numeric(unlist(State_Summary_IndustryOutput_list))
-# t_c <- as.numeric(colSums(US_Summary_MakeTransaction))
-# State_Summary_MakeTransaction_balanced <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1E6, max_itr = 1E6)
-# colnames(State_Summary_MakeTransaction_balanced) <- colnames(m0)
-
+#' 8 - Perform RAS to balance state Make trascation table.
+#' Separate the state Make trascation table by industry (row) into 71 matrices.
+#' Each matrix, m0, has dimensions of 52x73.
+#' The rows are individual industry in all states, while the columns are all commodities.
+#' Apply RAS till m0 is balanced subject to t_r and t_c and becomes m1.
 m1_list <- list()
 for (industry in rownames(US_Summary_MakeTransaction)) {
   m0 <- State_Summary_MakeTransaction[gsub(".*\\.", "", rownames(State_Summary_MakeTransaction))==industry, ]
   t_r <- as.numeric(do.call(cbind, State_Summary_IndustryOutput_list)[industry, ])
   t_c <- as.numeric(US_Summary_MakeTransaction[industry, ])
   print(industry)
-  m1 <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1E6, max_itr = 1E6)
+  m1 <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1E4, max_itr = 1E6)
   m1_list[[industry]] <- m1
 }
+# Vertically stack all m1 matrices to form a balanced state Make transaction table
 names(m1_list) <- NULL
 State_Summary_MakeTransaction_balanced <- do.call(rbind.data.frame, m1_list)
 State_Summary_MakeTransaction_balanced <- State_Summary_MakeTransaction_balanced[rownames(State_Summary_MakeTransaction), ]
-
-for (state in states) {
-  State_Summary_Make_Transaction <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
-  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(colSums(State_Summary_Make_Transaction))
-}
 
 #' Consistency and reality check
 #' Sum of each cell across all states must equal the same cell in national table
@@ -191,11 +181,22 @@ StateUSMakeDiff <- US_Summary_MakeTransaction - StateMakeTransaction_agg[rowname
 #' Sum of each commodity’s output across all states must equal national commodity output in Use Table minus International Imports (commodity specific).
 #' All cells that are zero in the national Supply Table must remain zeros in the state supply tables.
 
-#' 9 - Save state industry output estimates and balanced Make table to .rda
+#' 9 - Save state balanced Make table to .rda
+#' Re-calculate and save state industry and commodity output estimates to .rda
 save(State_Summary_MakeTransaction_balanced,
      file = paste0("data/State_Summary_Make_", year, ".rda"))
+# Industry output
+for (state in states) {
+  State_Summary_Make_Transaction <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
+  State_Summary_IndustryOutput_list[[state]] <- as.data.frame(rowSums(State_Summary_Make_Transaction))
+}
 save(State_Summary_IndustryOutput_list,
      file = paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
+# Commodity output
+for (state in states) {
+  State_Summary_Make_Transaction <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
+  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(colSums(State_Summary_Make_Transaction))
+}
 save(State_Summary_CommodityOutput_list,
      file = paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
 
