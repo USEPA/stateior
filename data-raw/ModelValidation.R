@@ -85,3 +85,21 @@ rownames(validation) <- rownames(validate::as.data.frame(confrontation))
 failures <- extractValidationResult(confrontation, failure = TRUE)
 colnames(failures) <- c("Industry", "Commodity")
 
+#' 6. All cells that are zero in the US Make Table must remain zero in state Make tables.
+rules <- validate::validator(US_Summary_MakeTransaction == 0)
+confrontation <- validate::confront(US_Summary_MakeTransaction, rules)
+baseline <- extractValidationResult(confrontation, failure = FALSE)
+
+failure_list <- list()
+for (state in states) {
+  rules <- validate::validator(StateMake_list[[state]] == 0)
+  confrontation <- validate::confront(StateMake_list[[state]], rules)
+  pass <- extractValidationResult(confrontation, failure = FALSE)
+  failures <- setdiff(paste(baseline$rownames, baseline$variable),
+                      paste(pass$rownames, pass$variable))
+  failures <- do.call(rbind.data.frame, strsplit(failures, " "))
+  if (nrow(failures) > 0) {
+    colnames(failures) <- c("Industry", "Commodity")
+  }
+  failure_list[[state]] <- failures
+}
