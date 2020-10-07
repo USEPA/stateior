@@ -10,14 +10,18 @@ load(paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
 load(paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
 states <- names(State_Summary_IndustryOutput_list)
 
-# Create a function to extract validation failures
-extractFailtures <- function(confrontation) {
+# Create a function to extract validation passes or failures
+extractValidationResult <- function(confrontation, failure = TRUE) {
   confrontation <- validate::as.data.frame(confrontation)
   confrontation$rownames <- rownames(confrontation)
   df <- reshape2::melt(confrontation, id.vars = c("rownames", "name", "expression"))
-  failures <- df[df$value==FALSE, c("rownames", "variable")]
-  failures <- as.data.frame(lapply(failures, function(x) gsub(".*\\.", "", x)))
-  return(failures)
+  if (failure) {
+    result <- df[df$value==FALSE, c("rownames", "variable")]
+  } else {
+    result <- df[df$value==TRUE, c("rownames", "variable")]
+  }
+  result <- as.data.frame(lapply(result, function(x) gsub(".*\\.", "", x)))
+  return(result)
 }
 
 #' 1. Sum of each cell across all state Make tables must almost equal (tolerance is 1E-3)
@@ -39,7 +43,7 @@ validation <- merge(validate::as.data.frame(confrontation), validate::as.data.fr
 rownames(validation) <- rownames(validate::as.data.frame(confrontation))
 validation$name <- NULL
 # Extract failures
-failures <- extractFailtures(confrontation)
+failures <- extractValidationResult(confrontation, failure = TRUE)
 colnames(failures) <- c("Industry", "Commodity")
 
 #' 2. There should not be any negative values in state Make table
@@ -50,7 +54,7 @@ for (state in states) {
   rules <- validate::validator(df1 >= 0)
   df1 <- as.data.frame(StateMake_list[[state]])
   confrontation <- validate::confront(df1, rules)
-  failures <- extractFailtures(confrontation)
+  failures <- extractValidationResult(confrontation, failure = TRUE)
   colnames(failures) <- c("Industry", "Commodity")
   failure_list[[state]] <- failures
 }
@@ -65,7 +69,7 @@ confrontation <- validate::confront(df1, rules, ref = list(df0 = rowSums(US_Summ
 validation <- merge(validate::as.data.frame(confrontation), validate::as.data.frame(rules))
 rownames(validation) <- rownames(validate::as.data.frame(confrontation))
 # Extract failures
-failures <- extractFailtures(confrontation)
+failures <- extractValidationResult(confrontation, failure = TRUE)
 colnames(failures) <- c("Industry", "Commodity")
 
 #' 4. Sum of each commodity’s output across all states must almost equal (tolerance is 1E-3)
@@ -78,6 +82,6 @@ confrontation <- validate::confront(df1, rules, ref = list(df0 = colSums(US_Summ
 validation <- merge(validate::as.data.frame(confrontation), validate::as.data.frame(rules))
 rownames(validation) <- rownames(validate::as.data.frame(confrontation))
 # Extract failures
-failures <- extractFailtures(confrontation)
+failures <- extractValidationResult(confrontation, failure = TRUE)
 colnames(failures) <- c("Industry", "Commodity")
 
