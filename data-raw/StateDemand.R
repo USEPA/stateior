@@ -13,31 +13,31 @@ US_Summary_MakeTransaction <- US_Summary_Make[-which(rownames(US_Summary_Make)==
                                               -which(colnames(US_Summary_Make)=="Total Industry Output")]
 US_Summary_IndustryOutput <- rowSums(US_Summary_MakeTransaction)
 
-#' 3 - Load and adjust US Summary Use table for given year
-US_Summary_Use <- adjustUseTablebyImportMatrix("Summary", year)
+#' 3 - Load US Summary Use table for given year
+US_Summary_Use <- getNationalUse("Summary", year)
 # Generate US Summary Use Transaction
-US_Summary_UseTransaction <- US_Summary_Use[colnames(US_Summary_MakeTransaction),
-                                            rownames(US_Summary_MakeTransaction)]
-FinalDemand_columns <- colnames(US_Summary_Use)[72:91]
+US_Summary_Use_Intermediate <- US_Summary_Use[getVectorOfCodes("Summary", "Commodity"),
+                                              getVectorOfCodes("Summary", "Industry")]
+FinalDemand_columns <- getFinalDemandCodes("Summary")
 
 #' 4 - Calculate state_US_IndustryOutput_ratio, for each state and each industry,
 #' Divide state IndustryOutput by US IndustryOutput.
-#' Multiply US_Summary_UseTransaction by state_US_IndustryOutput_ratio 
-State_Summary_UseTransaction_list <- list()
+#' Multiply US_Summary_Use_Intermediate by state_US_IndustryOutput_ratio 
+State_Summary_Use_Intermediate_list <- list()
 for (state in states) {
-  IndustryOutputRatio <- State_Summary_IndustryOutput_list[[state]]/US_Summary_IndustryOutput
-  State_Summary_UseTransaction_list[[state]] <- as.matrix(US_Summary_UseTransaction) %*% diag(IndustryOutputRatio)
-  colnames(State_Summary_UseTransaction_list[[state]]) <- colnames(US_Summary_UseTransaction)
+  IndustryOutputRatio <- State_Summary_IndustryOutput_list[[state]][, 1]/US_Summary_IndustryOutput
+  State_Summary_Use_Intermediate_list[[state]] <- as.matrix(US_Summary_Use_Intermediate) %*% diag(IndustryOutputRatio)
+  colnames(State_Summary_Use_Intermediate_list[[state]]) <- colnames(US_Summary_Use_Intermediate)
 }
 
 #' 5 - Vertically stack all state Use trascation tables.
-State_Summary_UseTransaction <- do.call(rbind, State_Summary_UseTransaction_list)
-rownames(State_Summary_UseTransaction) <- paste(rep(names(State_Summary_UseTransaction_list),
-                                                    each = nrow(State_Summary_UseTransaction_list[[1]])),
-                                                rep(rownames(State_Summary_UseTransaction_list[[1]]),
-                                                    time = length(names(State_Summary_UseTransaction_list))),
-                                                sep = ".")
-colnames(State_Summary_UseTransaction) <- colnames(US_Summary_UseTransaction)
+State_Summary_Use_Intermediate <- do.call(rbind, State_Summary_Use_Intermediate_list)
+rownames(State_Summary_Use_Intermediate) <- paste(rep(names(State_Summary_Use_Intermediate_list),
+                                                      each = nrow(State_Summary_Use_Intermediate_list[[1]])),
+                                                  rep(rownames(State_Summary_Use_Intermediate_list[[1]]),
+                                                      time = length(names(State_Summary_Use_Intermediate_list))),
+                                                  sep = ".")
+colnames(State_Summary_Use_Intermediate) <- colnames(US_Summary_Use_Intermediate)
 
 #' 6 - Apply RAS to PCE
 State_PCE <- estimateStateHouseholdDemand(year)
@@ -46,12 +46,12 @@ State_PCE[, "State"] <- gsub("\\..*", "", rownames(State_PCE))
 State_PCE <- reshape2::dcast(State_PCE, BEA_2012_Summary_Code ~ State, value.var = "F010")
 rownames(State_PCE) <- State_PCE$BEA_2012_Summary_Code
 # Set m0, t_r and t_c
-m0 <- as.matrix(State_PCE[rownames(US_Summary_UseTransaction), -1])
-t_r <- US_Summary_Use[rownames(US_Summary_UseTransaction), "F010"]
+m0 <- as.matrix(State_PCE[rownames(US_Summary_Use_Intermediate), -1])
+t_r <- US_Summary_Use[rownames(US_Summary_Use_Intermediate), "F010"]
 t_c <- as.numeric(calculateStateTotalPCE(year)[colnames(m0), ])
 # Apply RAS, RAS converged after 1000001 iterations.
 State_PCE_balanced <- as.data.frame(applyRAS(m0, t_r, t_c, relative_diff = NULL,
-                                             absolute_diff = 0, max_itr = 1E6))
+                                             absolute_diff = 10, max_itr = 1E6))
 colnames(State_PCE_balanced) <- colnames(m0)
 save(State_PCE_balanced, file = paste0("data/State_PCE_", year, "_afterRAS.rda"))
 
@@ -76,17 +76,17 @@ StateFinalDemand <- cbind(State_PCE_balanced,
                           State_Import[row_names, , drop = FALSE],
                           estimateStateFedGovExpenditure(year)[row_names, ],
                           estimateStateSLGovExpenditure(year))[row_names, ]
-State_Summary_Use <- cbind(State_Summary_UseTransaction,
-                           StateFinalDemand[rownames(State_Summary_UseTransaction), FinalDemand_columns])
+State_Summary_Use <- cbind(State_Summary_Use_Intermediate,
+                           StateFinalDemand[rownames(State_Summary_Use_Intermediate), FinalDemand_columns])
 save(StateFinalDemand, file = paste0("data/State_Summary_FinalDemand_", year, ".rda"))
 
 #' 8 - Estimate state imports following these steps:
-#' NationalDomesticUse = NationalUse - NationalImportMatrix
-#' NationalDomesticUseRatios = NationalDomesticUse/NationalUse
+#' NationalDomesticUse (i.e. adjusted table) = NationalUse (i.e. original table) - NationalImportMatrix + the distribution of F050A
+#' NationalDomesticUseRatios = NationalDomesticUse (i.e. adjusted table)/NationalUse (i.e. original table)
 #' For each state, StateDomesticUse = StateUse * NationalDomesticUseRatios
-#' StateImportColumn  = rowSums(StateUse) - rowSums(StateDomesticUse)
+#' StateImportColumn = rowSums(StateUse) - rowSums(StateDomesticUse)
 #' Optional: StateImportMatrix = StateDomesticUse - StateUse
-Domestic_Use_ratios <- calculateUSDomesticUseRatioMatrix(year)
+Domestic_Use_ratios <- calculateUSDomesticUseRatioMatrix("Summary", year)
 Domestic_Use_ratios <- do.call("rbind", replicate(52, Domestic_Use_ratios, simplify = FALSE))
 rownames(Domestic_Use_ratios) <- rownames(State_Summary_Use)
 State_Summary_Domestic_Use <- State_Summary_Use*Domestic_Use_ratios
@@ -112,19 +112,19 @@ State_Summary_Domestic_Use_agg <- stats::aggregate(State_Summary_Domestic_Use[, 
                                                    by = list(State_Summary_Use$BEA), sum)
 rownames(State_Summary_Domestic_Use_agg) <- State_Summary_Domestic_Use_agg$Group.1
 State_Summary_Domestic_Use_agg$Group.1 <- NULL
-US_Summary_Domestic_Use <- US_Summary_Use[1:73, colnames(State_Summary_Domestic_Use_agg)] * calculateUSDomesticUseRatioMatrix(year)
+US_Summary_Domestic_Use <- US_Summary_Use[1:73, colnames(State_Summary_Domestic_Use_agg)] * calculateUSDomesticUseRatioMatrix("Summary", year)
 test <- State_Summary_Domestic_Use_agg - US_Summary_Domestic_Use[rownames(State_Summary_Domestic_Use_agg), colnames(State_Summary_Domestic_Use_agg)]
 View(test[, FinalDemand_columns])
 
 #' 12 - Validate total state demand == US demand
 # Row sum
-rowsum_validation <- rowSums(State_Summary_UseTransaction) - rowSums(US_Summary_UseTransaction)
+rowsum_validation <- rowSums(State_Summary_Use_Intermediate) - rowSums(US_Summary_Use_Intermediate)
 # Column sum
 State_CommInputTotal_list <- list()
-for (industry in colnames(US_Summary_UseTransaction)) {
-  State_CommInputTotal_list[[industry]] <- sum(State_Summary_UseTransaction[paste(states, industry, sep = "."), ])
+for (industry in colnames(US_Summary_Use_Intermediate)) {
+  State_CommInputTotal_list[[industry]] <- sum(State_Summary_Use_Intermediate[paste(states, industry, sep = "."), ])
 }
-colsum_validation <- unlist(State_CommInputTotal_list) - colSums(US_Summary_UseTransaction)
+colsum_validation <- unlist(State_CommInputTotal_list) - colSums(US_Summary_Use_Intermediate)
 
 #' Last step - For each state, append detailed Value Added to the end of Use table
 State_Value_Added <- assembleStateValueAdded(year)
