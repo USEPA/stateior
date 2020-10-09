@@ -85,6 +85,16 @@ rownames(validation) <- rownames(validate::as.data.frame(confrontation))
 failures <- extractValidationResult(confrontation, failure = TRUE)
 colnames(failures) <- c("Industry", "Commodity")
 
+#' 5. Sum of each commodity’s output across all states must almost equal (tolerance is 1E-3)
+#' commodity output in US Use Table minus International Imports (commodity specific).
+rules <- validate::validator(abs(df1 - df0) <= 1E7)
+df1 <- Reduce("+", State_Summary_CommodityOutput_list)
+rownames(df1) <- gsub(".*\\.", "", rownames(df1))
+# Prepare US domestic Use table
+US_DomesticUse <- estimateUSDomesticUse("Summary", year)
+confrontation <- validate::confront(df1, rules, ref = list(df0 = rowSums(US_DomesticUse)))
+validation <- merge(validate::as.data.frame(confrontation), validate::as.data.frame(rules))
+
 #' 6. All cells that are zero in the US Make Table must remain zero in state Make tables.
 rules <- validate::validator(US_Summary_MakeTransaction == 0)
 confrontation <- validate::confront(US_Summary_MakeTransaction, rules)
@@ -94,9 +104,9 @@ failure_list <- list()
 for (state in states) {
   rules <- validate::validator(StateMake_list[[state]] == 0)
   confrontation <- validate::confront(StateMake_list[[state]], rules)
-  pass <- extractValidationResult(confrontation, failure = FALSE)
+  passes <- extractValidationResult(confrontation, failure = FALSE)
   failures <- setdiff(paste(baseline$rownames, baseline$variable),
-                      paste(pass$rownames, pass$variable))
+                      paste(passes$rownames, passes$variable))
   failures <- do.call(rbind.data.frame, strsplit(failures, " "))
   if (nrow(failures) > 0) {
     colnames(failures) <- c("Industry", "Commodity")
