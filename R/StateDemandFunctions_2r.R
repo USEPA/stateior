@@ -34,9 +34,7 @@ generateDomestic2RegionUse <- function(state, year, ioschema, iolevel) {
   
   # 4 - Generate RoUS domestic Use and commodity output
   # RoUS domestic Use
-  US_Use <- adjustUseTablebyImportMatrix("Summary", year)
-  FinalDemand_columns <- colnames(US_Use)[75:94] # modify columns for flexible model level
-  US_Domestic_Use <- US_Use[1:73, colnames(SoI_Domestic_Use)] * calculateUSDomesticUseRatioMatrix(year)
+  US_Domestic_Use <- estimateUSDomesticUse("Summary", year)
   RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
   # RoUS Commodity Output
   US_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6

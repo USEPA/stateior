@@ -36,9 +36,7 @@ SoI_Make <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(St
 RoUS_Make <- US_MakeTransaction - SoI_Make
 
 # RoUS domestic Use
-US_Use <- adjustUseTablebyImportMatrix("Summary", year)
-FinalDemand_columns <- colnames(US_Use)[75:94]
-US_Domestic_Use <- US_Use[1:73, colnames(SoI_Domestic_Use)] * calculateUSDomesticUseRatioMatrix(year)
+US_Domestic_Use <- estimateUSDomesticUse("Summary", year)
 RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
 # RoUS Commodity Output
 US_Commodity_Output <- colSums(US_MakeTransaction)
