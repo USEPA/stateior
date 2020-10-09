@@ -83,63 +83,79 @@ applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
   return(m)
 }
 
-#' Adjust US Use table by Import matrix.
+#' Estimate US domestic Use table by adjusting US Use table based on Import matrix.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param year A numeric value specifying the year of interest.
-#' @return A adjusted US Use table.
-adjustUseTablebyImportMatrix <- function(iolevel, year) {
+#' @return A US Domestic Use table.
+estimateUSDomesticUse <- function(iolevel, year) {
   # Load Use table and Import matrix
-  Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  Use <- getNationalUse(iolevel, year)
   Import <- get(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"))*1E6
-  # Load BEA schema_info based on model BEA
+  # Sort rows and columns in Import to match those in Use
+  Import <- Import[rownames(Use), colnames(Use)]
+  # Define Export and Import codes
+  ExportCode <- getVectorOfCodes(iolevel, "Export")
+  ImportCode <- getVectorOfCodes(iolevel, "Import")
+  # Calculate ImportCost.
+  # The imports column in the Import matrix is in foreign port value.
+  # But in the Use table it is in domestic port value.
+  # domestic port value = foreign port value + value of all transportation and insurance services to import + customs duties
+  # See documentation of the Import matrix (https://apps.bea.gov/industry/xls/io-annual/ImportMatrices_Before_Redefinitions_SUM_1997-2019.xlsx)
+  # So, ImportCost <- Use$Imports - Import$Imports
+  ImportCost <- Use[, ImportCode] - Import[, ImportCode]
+  # Estimate DomesticUse
+  DomesticUse <- Use
+  for (i in 1:nrow(Use)) {
+    # Calculate row_sum of Use, except for Export and Import, for allocating ImportCost
+    row_sum <- rowSums(Use[i, ]) - (Use[i, ExportCode] + Use[i, ImportCode])
+    # Subtract Import from Use, then allocate ImportCost to each Industry (column), except for Export and Import
+    DomesticUse[i, ] <- Use[i, ] - Import[i, ] + ImportCost[i] * (Use[i, ]/row_sum)
+  }
+  # Adjust Export and Import columns
+  DomesticUse[, ExportCode] <- Use[, ExportCode]
+  DomesticUse[, ImportCode] <- 0
+  return(DomesticUse)
+}
+
+#' Calculate US Domestic Use Ratio (matrix).
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @return A data frame contains US Domestic Use Ratio (matrix) at a specific year at BEA Summary level.
+calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
+  # Load US Use table
+  Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  # Load US domestic Use table
+  Domestic_Use <- estimateUSDomesticUse(iolevel, year)
+  # Calculate state Domestic Use ratios
+  Ratio <- Domestic_Use/Use[rownames(Domestic_Use), colnames(Domestic_Use)]
+  Ratio[is.na(Ratio)] <- 0
+  Ratio$F050 <- 0
+  return(Ratio)
+}
+
+#' Extract desired columns from SchemaInfo, return vectors with strings of codes.
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param colName A text value specifying desired column name.
+#' @return A vector of codes.
+getVectorOfCodes <- function(iolevel, colName) {
   SchemaInfo <- utils::read.table(system.file("extdata",
                                               paste0("2012_", iolevel, "_Schema_Info.csv"),
                                               package = "useeior"),
                                   sep = ",", header = TRUE,
                                   stringsAsFactors = FALSE, check.names = FALSE)
-  # Specify rows and columns to use
-  getVectorOfCodes <- function(colName) {
-    return(as.vector(stats::na.omit(SchemaInfo[, c("Code", colName)])[, "Code"]))
-  }
-  Commodities <- getVectorOfCodes("Commodity")
-  Industries <- getVectorOfCodes("Industry")
-  FinalDemand_columns <- c(getVectorOfCodes("HouseholdDemand"),
-                           getVectorOfCodes("InvestmentDemand"),
-                           getVectorOfCodes("ChangeInventories"),
-                           getVectorOfCodes("Export"),
-                           getVectorOfCodes("Import"),
-                           getVectorOfCodes("GovernmentDemand"))
-  ExportCodes <- getVectorOfCodes("Export")
-  ImportCodes <- getVectorOfCodes("Import")
-  # Subset Use
-  Use <- Use[Commodities, c(Industries, FinalDemand_columns)]
-  # Sort rows and columns in Import to match those in Use
-  Import <- Import[rownames(Use), colnames(Use)]
-  # Calculate F050A
-  F050A <- Use[, ImportCodes] - Import[, ImportCodes]
-  # Allocate F050A to each Industry (column) in Use table, except for Export and Import
-  Use_adjusted <- Use
-  for (i in 1:nrow(Use)) {
-    row_sum <- rowSums(Use[i, ]) - (Use[i, ExportCodes] + Use[i, ImportCodes])
-    Use_adjusted[i, ] <- Use[i, ] + F050A[i] * (Use[i, ]/row_sum)
-  }
-  # Adjust Export and Import columns
-  Use_adjusted[, ExportCodes] <- Use[, ExportCodes]
-  Use_adjusted[, ImportCodes] <- 0
-  return(Use_adjusted)
-}
-
-#' Extract desired columns from SchemaInfo, return vectors with strings of codes
-#' @param colName A text value specifying desired column name.
-#' @return A vector of codes.
-getVectorOfCodes <- function(colName) {
   return(as.vector(stats::na.omit(SchemaInfo[, c("Code", colName)])[, "Code"]))
 }
 
-
-
-
-
+#' Get codes of final demand.
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @return A vector of final demand codes.
+getFinalDemandCodes <- function(iolevel) {
+  FinalDemandCodes <- unlist(sapply(list("HouseholdDemand", "InvestmentDemand",
+                                         "ChangeInventories", "Export", "Import",
+                                         "GovernmentDemand"),
+                                    getVectorOfCodes, iolevel = iolevel))
+  return(FinalDemandCodes)
+}
 
 
 
