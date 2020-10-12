@@ -97,37 +97,7 @@ save(State_Summary_Domestic_Use, file = paste0("data/State_Summary_Domestic_Use_
 #' 9 - Calculate imports by industry
 ImportByIndustry <- colSums(State_Summary_Use) - colSums(State_Summary_Domestic_Use)
 
-#' 10 - Aggregate state Use tables to national level and check if == US Use table
-State_Summary_Use$BEA <- gsub(".*\\.", "", rownames(State_Summary_Use))
-State_Summary_Use_agg <- stats::aggregate(State_Summary_Use[, colnames(State_Summary_Use)[1:91]],
-                                          by = list(State_Summary_Use$BEA), sum)
-rownames(State_Summary_Use_agg) <- State_Summary_Use_agg$Group.1
-State_Summary_Use_agg$Group.1 <- NULL
-test <- State_Summary_Use_agg - US_Summary_Use[rownames(State_Summary_Use_agg), colnames(State_Summary_Use_agg)]
-View(test[, FinalDemand_columns])
-
-#' 11 - Aggregate state Domestic Use tables to national level and check if == US Domestic Use table
-State_Summary_Domestic_Use$BEA <- gsub(".*\\.", "", rownames(State_Summary_Domestic_Use))
-State_Summary_Domestic_Use_agg <- stats::aggregate(State_Summary_Domestic_Use[, colnames(State_Summary_Domestic_Use)[1:91]],
-                                                   by = list(State_Summary_Use$BEA), sum)
-rownames(State_Summary_Domestic_Use_agg) <- State_Summary_Domestic_Use_agg$Group.1
-State_Summary_Domestic_Use_agg$Group.1 <- NULL
-US_Summary_Domestic_Use <- US_Summary_Use[1:73, colnames(State_Summary_Domestic_Use_agg)] * calculateUSDomesticUseRatioMatrix("Summary", year)
-test <- State_Summary_Domestic_Use_agg - US_Summary_Domestic_Use[rownames(State_Summary_Domestic_Use_agg), colnames(State_Summary_Domestic_Use_agg)]
-View(test[, FinalDemand_columns])
-
-#' 12 - Validate total state demand == US demand
-# Row sum
-rowsum_validation <- rowSums(State_Summary_Use_Intermediate) - rowSums(US_Summary_Use_Intermediate)
-# Column sum
-State_CommInputTotal_list <- list()
-for (industry in colnames(US_Summary_Use_Intermediate)) {
-  State_CommInputTotal_list[[industry]] <- sum(State_Summary_Use_Intermediate[paste(states, industry, sep = "."), ])
-}
-colsum_validation <- unlist(State_CommInputTotal_list) - colSums(US_Summary_Use_Intermediate)
-
 #' Last step - For each state, append detailed Value Added to the end of Use table
 State_Value_Added <- assembleStateValueAdded(year)
 State_Summary_Use <- rbind(State_Summary_Use, State_Value_Added)
 State_Summary_Use <- State_Summary_Use[order(rownames(State_Summary_Use)), ]
-
