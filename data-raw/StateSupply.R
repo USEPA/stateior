@@ -190,6 +190,7 @@ for (state in states) {
   State_Summary_Make_Transaction <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
   State_Summary_IndustryOutput_list[[state]] <- as.data.frame(rowSums(State_Summary_Make_Transaction))
 }
+State_Summary_IndustryOutput_list <- lapply(State_Summary_IndustryOutput_list, setNames, "Output")
 save(State_Summary_IndustryOutput_list,
      file = paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
 # Commodity output
@@ -197,6 +198,7 @@ for (state in states) {
   State_Summary_Make_Transaction <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
   State_Summary_CommodityOutput_list[[state]] <- as.data.frame(colSums(State_Summary_Make_Transaction))
 }
+State_Summary_CommodityOutput_list <- lapply(State_Summary_CommodityOutput_list, setNames, "Output")
 save(State_Summary_CommodityOutput_list,
      file = paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
 

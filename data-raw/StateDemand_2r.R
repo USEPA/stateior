@@ -3,7 +3,7 @@
 
 #' 1 - Load state domestic Use for the given year and state
 year <- 2012
-state <- "Minnesota"
+state <- "Georgia"
 state_abb <- state.abb[which(state.name==state)]
 load(paste0("data/State_Summary_Domestic_Use_", year, ".rda"))
 SoI_Domestic_Use <- State_Summary_Domestic_Use[gsub("\\..*", "", rownames(State_Summary_Domestic_Use))==state, ]
@@ -20,7 +20,7 @@ SoI2SoI_Use$InterregionalImports <- rowSums(SoI_Domestic_Use[, columns]) - rowSu
 # Calculate Interregional Exports
 load(paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
 SoI_Commodity_Output <- State_Summary_CommodityOutput_list[[state]]
-SoI2SoI_Use$InterregionalExports <- SoI_Commodity_Output$StateCommOutput - rowSums(SoI2SoI_Use[, c(columns, "F040")])
+SoI2SoI_Use$InterregionalExports <- SoI_Commodity_Output[, 1] - rowSums(SoI2SoI_Use[, c(columns, "F040")])
 # Calculate Net Exports
 SoI2SoI_Use$NetExports <- SoI2SoI_Use$InterregionalExports - SoI2SoI_Use$InterregionalImports
 
@@ -44,7 +44,7 @@ RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
 colnames(RoUS_Commodity_Output) <- "RoUSCommOutput"
 # Adjust RoUS_Commodity_Output
 MakeUseDiff <- US_Commodity_Output - rowSums(US_Domestic_Use[, c(columns, "F040")])
-RoUS_Commodity_Output$RoUSCommOutput <- RoUS_Commodity_Output$RoUSCommOutput - MakeUseDiff
+RoUS_Commodity_Output$Output <- RoUS_Commodity_Output$Output - MakeUseDiff
 
 #' 5 - Generate RoUS2RoUS Use
 RoUS2RoUS_Use <- RoUS_Domestic_Use
@@ -52,7 +52,7 @@ RoUS2RoUS_Use[, columns] <- RoUS_Domestic_Use[, columns] * ICF$RoUS2RoUS
 # Calculate Interregional Imports
 RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_Domestic_Use[, columns]) - rowSums(RoUS2RoUS_Use[, columns])
 # Calculate Interregional Exports
-RoUS2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$RoUSCommOutput - rowSums(RoUS2RoUS_Use[, c(columns, "F040")])
+RoUS2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$Output - rowSums(RoUS2RoUS_Use[, c(columns, "F040")])
 # Calculate Net Exports
 RoUS2RoUS_Use$NetExports <- RoUS2RoUS_Use$InterregionalExports - RoUS2RoUS_Use$InterregionalImports
 
@@ -76,13 +76,13 @@ for (i in 1:nrow(SoI2SoI_Use)) {
   }
 }
 SoI2SoI_Use$InterregionalImports <- rowSums(SoI_Domestic_Use[, columns]) - rowSums(SoI2SoI_Use[, columns])
-SoI2SoI_Use$InterregionalExports <- SoI_Commodity_Output$StateCommOutput - rowSums(SoI2SoI_Use[, c(columns, "F040")])
+SoI2SoI_Use$InterregionalExports <- SoI_Commodity_Output[, 1] - rowSums(SoI2SoI_Use[, c(columns, "F040")])
 RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_Domestic_Use[, columns]) - rowSums(RoUS2RoUS_Use[, columns])
-RoUS2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$RoUSCommOutput - rowSums(RoUS2RoUS_Use[, c(columns, "F040")])
+RoUS2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$Output - rowSums(RoUS2RoUS_Use[, c(columns, "F040")])
 
 #' 7 - Calculate errors for SoI and RoUS
 error <- SoI2SoI_Use$InterregionalImports - RoUS2RoUS_Use$InterregionalExports
-SoIerror <- error*(SoI_Commodity_Output$StateCommOutput/US_Commodity_Output)
+SoIerror <- error*(SoI_Commodity_Output[, 1]/US_Commodity_Output)
 RoUSerror <- error - SoIerror
 SoIerror_1 <-SoIerror_2 <- SoIerror
 
@@ -100,11 +100,11 @@ for (i in 1:nrow(SoI2SoI_Use)) {
 
 #' 9 - Re-calculate InterregionalImports, InterregionalExports and NetExports
 SoI2SoI_Use$InterregionalImports <- rowSums(SoI_Domestic_Use[, columns]) - rowSums(SoI2SoI_Use[, columns])
-SoI2SoI_Use$InterregionalExports <- SoI_Commodity_Output$StateCommOutput - rowSums(SoI2SoI_Use[, c(columns, "F040")])
+SoI2SoI_Use$InterregionalExports <- SoI_Commodity_Output[, 1] - rowSums(SoI2SoI_Use[, c(columns, "F040")])
 SoI2SoI_Use$NetExports <- SoI2SoI_Use$InterregionalExports - SoI2SoI_Use$InterregionalImports
 
 RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_Domestic_Use[, columns]) - rowSums(RoUS2RoUS_Use[, columns])
-RoUS2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$RoUSCommOutput - rowSums(RoUS2RoUS_Use[, c(columns, "F040")])
+RoUS2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$Output - rowSums(RoUS2RoUS_Use[, c(columns, "F040")])
 RoUS2RoUS_Use$NetExports <- RoUS2RoUS_Use$InterregionalExports - RoUS2RoUS_Use$InterregionalImports
 
 #'10 - Validation
@@ -140,27 +140,27 @@ MN_2r <- generateDomestic2RegionUse("Minnesota", 2012, 2012, "Summary")
 OR_2r <- generateDomestic2RegionUse("Oregon", 2012, 2012, "Summary")
 WA_2r <- generateDomestic2RegionUse("Washington", 2012, 2012, "Summary")
 
-writexl::write_xlsx(list("GA2GA" = cbind(rownames(GA_2r$GA2GA), GA_2r$GA2GA),
+writexl::write_xlsx(list("GA2GA" = cbind(rownames(GA_2r$SoI2SoI), GA_2r$SoI2SoI),
                          "RoUS2RoUS" = cbind(rownames(GA_2r$RoUS2RoUS), GA_2r$RoUS2RoUS),
-                         "RoUS2GA" = cbind(rownames(GA_2r$RoUS2GA), GA_2r$RoUS2GA),
-                         "GA2RoUS" = cbind(rownames(GA_2r$GA2RoUS), GA_2r$GA2RoUS),
+                         "RoUS2GA" = cbind(rownames(GA_2r$RoUS2SoI), GA_2r$RoUS2SoI),
+                         "GA2RoUS" = cbind(rownames(GA_2r$SoI2RoUS), GA_2r$SoI2RoUS),
                          "Validation" = cbind(rownames(GA_2r$Validation), GA_2r$Validation)),
                     "GA_2r_Use.xlsx", format_headers = FALSE)
-writexl::write_xlsx(list("MN2MN" = cbind(rownames(MN_2r$MN2MN), MN_2r$MN2MN),
+writexl::write_xlsx(list("MN2MN" = cbind(rownames(MN_2r$SoI2SoI), MN_2r$SoI2SoI),
                          "RoUS2RoUS" = cbind(rownames(MN_2r$RoUS2RoUS), MN_2r$RoUS2RoUS),
-                         "MN2RoUS" = cbind(rownames(MN_2r$RoUS2MN), MN_2r$RoUS2MN),
-                         "RoUS2MN" = cbind(rownames(MN_2r$MN2RoUS), MN_2r$MN2RoUS),
+                         "MN2RoUS" = cbind(rownames(MN_2r$RoUS2SoI), MN_2r$RoUS2SoI),
+                         "RoUS2MN" = cbind(rownames(MN_2r$SoI2RoUS), MN_2r$SoI2RoUS),
                          "Validation" = cbind(rownames(MN_2r$Validation), MN_2r$Validation)),
                     "MN_2r_Use.xlsx", format_headers = FALSE)
-writexl::write_xlsx(list("OR2OR" = cbind(rownames(OR_2r$OR2OR), OR_2r$OR2OR),
+writexl::write_xlsx(list("OR2OR" = cbind(rownames(OR_2r$SoI2SoI), OR_2r$SoI2SoI),
                          "RoUS2RoUS" = cbind(rownames(OR_2r$RoUS2RoUS), OR_2r$RoUS2RoUS),
-                         "RoUS2OR" = cbind(rownames(OR_2r$RoUS2OR), OR_2r$RoUS2OR),
-                         "OR2RoUS" = cbind(rownames(OR_2r$OR2RoUS), OR_2r$OR2RoUS),
+                         "RoUS2OR" = cbind(rownames(OR_2r$RoUS2SoI), OR_2r$RoUS2SoI),
+                         "OR2RoUS" = cbind(rownames(OR_2r$SoI2RoUS), OR_2r$SoI2RoUS),
                          "Validation" = cbind(rownames(OR_2r$Validation), OR_2r$Validation)),
                     "OR_2r_Use.xlsx", format_headers = FALSE)
-writexl::write_xlsx(list("WA2WA" = cbind(rownames(WA_2r$WA2WA), WA_2r$WA2WA),
+writexl::write_xlsx(list("WA2WA" = cbind(rownames(WA_2r$SoI2SoI), WA_2r$SoI2SoI),
                          "RoUS2RoUS" = cbind(rownames(WA_2r$RoUS2RoUS), WA_2r$RoUS2RoUS),
-                         "RoUS2WA" = cbind(rownames(WA_2r$RoUS2WA), WA_2r$RoUS2WA),
-                         "WA2RoUS" = cbind(rownames(WA_2r$WA2RoUS), WA_2r$WA2RoUS),
+                         "RoUS2WA" = cbind(rownames(WA_2r$RoUS2SoI), WA_2r$RoUS2SoI),
+                         "WA2RoUS" = cbind(rownames(WA_2r$SoI2RoUS), WA_2r$SoI2RoUS),
                          "Validation" = cbind(rownames(WA_2r$Validation), WA_2r$Validation)),
                     "WA_2r_Use.xlsx", format_headers = FALSE)
