@@ -6,8 +6,8 @@
 #' @return A list of domestic 2-region use tables.
 generateDomestic2RegionUse <- function(state, year, ioschema, iolevel) {
   # 1 - Load state domestic Use for the specified year
-  load(paste0("data/State_Summary_Domestic_Use_", year, ".rda"))
-  SoI_Domestic_Use <- State_Summary_Domestic_Use[gsub("\\..*", "", rownames(State_Summary_Domestic_Use))==state, ]
+  load(paste0("data/State_Summary_DomesticUse_", year, ".rda"))
+  SoI_Domestic_Use <- State_Summary_DomesticUse[gsub("\\..*", "", rownames(State_Summary_DomesticUse))==state, ]
   # Load BEA schema_info based on iolevel
   SchemaInfoFile <- paste0(ioschema, "_", iolevel, "_Schema_Info.csv")
   SchemaInfo <- utils::read.table(system.file("extdata", SchemaInfoFile, package = "useeior"),

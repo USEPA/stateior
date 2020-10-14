@@ -89,13 +89,13 @@ save(StateFinalDemand, file = paste0("data/State_Summary_FinalDemand_", year, ".
 Domestic_Use_ratios <- calculateUSDomesticUseRatioMatrix("Summary", year)
 Domestic_Use_ratios <- do.call("rbind", replicate(52, Domestic_Use_ratios, simplify = FALSE))
 rownames(Domestic_Use_ratios) <- rownames(State_Summary_Use)
-State_Summary_Domestic_Use <- State_Summary_Use*Domestic_Use_ratios
-State_Summary_Use$F050 <- rowSums(State_Summary_Domestic_Use) - rowSums(State_Summary_Use)
+State_Summary_DomesticUse <- State_Summary_Use*Domestic_Use_ratios
+State_Summary_Use$F050 <- rowSums(State_Summary_DomesticUse) - rowSums(State_Summary_Use)
 save(State_Summary_Use, file = paste0("data/State_Summary_Use_", year, ".rda"))
-save(State_Summary_Domestic_Use, file = paste0("data/State_Summary_Domestic_Use_", year, ".rda"))
+save(State_Summary_DomesticUse, file = paste0("data/State_Summary_DomesticUse_", year, ".rda"))
 
 #' 9 - Calculate imports by industry
-ImportByIndustry <- colSums(State_Summary_Use) - colSums(State_Summary_Domestic_Use)
+ImportByIndustry <- colSums(State_Summary_Use) - colSums(State_Summary_DomesticUse)
 
 #' Last step - For each state, append detailed Value Added to the end of Use table
 State_Value_Added <- assembleStateValueAdded(year)

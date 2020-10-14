@@ -5,8 +5,8 @@
 year <- 2012
 state <- "Georgia"
 state_abb <- state.abb[which(state.name==state)]
-load(paste0("data/State_Summary_Domestic_Use_", year, ".rda"))
-SoI_Domestic_Use <- State_Summary_Domestic_Use[gsub("\\..*", "", rownames(State_Summary_Domestic_Use))==state, ]
+load(paste0("data/State_Summary_DomesticUse_", year, ".rda"))
+SoI_Domestic_Use <- State_Summary_DomesticUse[gsub("\\..*", "", rownames(State_Summary_DomesticUse))==state, ]
 columns <- colnames(SoI_Domestic_Use)[!colnames(SoI_Domestic_Use)%in%c("F040", "F050")]
 
 #' 2 - Generate 2-region ICFs
