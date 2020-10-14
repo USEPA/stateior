@@ -23,7 +23,8 @@ extractValidationResult <- function(confrontation, failure = TRUE) {
   } else {
     result <- df[df$value==TRUE, c("rownames", "variable")]
   }
-  result <- as.data.frame(lapply(result, function(x) gsub(".*\\.", "", x)))
+  result <- as.data.frame(lapply(result, function(x) gsub("value.", "", x)))
+  result[] <- sapply(result, as.character)
   return(result)
 }
 
@@ -53,8 +54,8 @@ colnames(failures) <- c("Industry", "Commodity")
 # Validate Make table and extract failures for each state
 failure_list <- list()
 for (state in states) {
-  rules <- validate::validator(df1 >= 0)
-  df1 <- as.data.frame(StateMake_list[[state]])
+  rules <- validate::validator(df >= 0)
+  df <- as.data.frame(StateMake_list[[state]])
   confrontation <- validate::confront(df1, rules)
   failures <- extractValidationResult(confrontation, failure = TRUE)
   colnames(failures) <- c("Industry", "Commodity")
@@ -125,6 +126,7 @@ for (state in states) {
 
 #' 7. Sum of each cell across all state Use tables must almost equal (tolerance is 1E-2)
 #' the same cell in US Use table.
+#' This validates that Total state demand == Total national demand.
 #' Create a function to implement the validation
 validateStateUseAgainstNationlUse <- function(domestic = FALSE) {
   if (domestic) {
@@ -155,4 +157,94 @@ validateStateUseAgainstNationlUse <- function(domestic = FALSE) {
 }
 StateUseValidation <- validateStateUseAgainstNationlUse(domestic = FALSE)
 StateDomesticUseValidation <- validateStateUseAgainstNationlUse(domestic = TRUE)
+
+#' 8. If SoI commodity == 0, SoI2SoI ICF ratio == 0
+failure_list <- list()
+for (state in states) {
+  # Prepare SoI_CommodityOutputRatio
+  SoI_CommodityOutput <- State_Summary_CommodityOutput_list[[state]]
+  US_CommodityOutput <- Reduce("+", State_Summary_CommodityOutput_list)
+  SoI_CommodityOutputRatio <- SoI_CommodityOutput/US_CommodityOutput
+  rules <- validate::validator(SoI_CommodityOutputRatio == 0)
+  confrontation <- validate::confront(SoI_CommodityOutputRatio, rules)
+  baseline <- extractValidationResult(confrontation, failure = FALSE)
+  # Prepare ICF
+  ICF <- generateDomestic2RegionICFs(state, year, remove_scrap = FALSE, ioschema = 2012, iolevel = "Summary")
+  df <- ICF[, "SoI2SoI", drop = FALSE]
+  rules <- validate::validator(df == 0)
+  confrontation <- validate::confront(d1, rules)
+  passes <- extractValidationResult(confrontation, failure = FALSE)
+  failures <- setdiff(paste(baseline$rownames, baseline$variable),
+                      paste(passes$rownames, passes$variable))
+  failures <- do.call(rbind.data.frame, strsplit(failures, " "))
+  if (nrow(failures) > 0) {
+    colnames(failures) <- "Commodity"
+  }
+  failure_list[[state]] <- failures
+}
+
+#' 9. SoI and RoUS interregional exports >= 0, interregional imports >= 0
+failure_list <- list()
+for (state in states) {
+  # Prepare domestic 2-region Use tables
+  ls <- generateDomestic2RegionUse(state, 2012, 2012, "Summary")
+  df <- cbind(ls[["SoI2SoI"]][, c("InterregionalImports", "InterregionalExports")],
+              ls[["RoUS2RoUS"]][, c("InterregionalImports", "InterregionalExports")])
+  df <- as.data.frame(sapply(df, round, 1))
+  colnames(df) <- paste(rep(c("SoI2SoI", "RoUS2RoUS"), each = 2), colnames(dff), sep = "$")
+  rules <- validate::validator(df >= 0)
+  confrontation <- validate::confront(df, rules)
+  validation <- merge(validate::as.data.frame(confrontation), validate::as.data.frame(rules))
+  rownames(validation) <- rownames(validate::as.data.frame(confrontation))
+  failures <- extractValidationResult(confrontation, failure = TRUE)
+  failure_list[[state]] <- failures
+}
+
+#' 10. SoI net exports + RoUS net exports == 0
+failure_list <- list()
+for (state in states) {
+  # Prepare domestic 2-region Use tables
+  ls <- generateDomestic2RegionUse(state, 2012, 2012, "Summary")
+  df <- ls[["SoI2SoI"]][, "NetExports", drop = FALSE] + ls[["RoUS2RoUS"]][, "NetExports", drop = FALSE]
+  df <- as.data.frame(sapply(df, round, 1))
+  rules <- validate::validator(df >= 0)
+  confrontation <- validate::confront(df, rules)
+  validation <- merge(validate::as.data.frame(confrontation), validate::as.data.frame(rules))
+  rownames(validation) <- rownames(validate::as.data.frame(confrontation))
+  failures <- extractValidationResult(confrontation, failure = TRUE)
+  failure_list[[state]] <- failures
+}
+
+#' 11. Check row sum of SoI2SoI <= state commodity supply, or diff <= 1E-3
+#' Row sum of RoUS2RoUS <= national commodity supply, or diff <= 1E-3
+failure_list <- list()
+for (state in states) {
+  # Prepare domestic 2-region Use tables
+  ls <- generateDomestic2RegionUse(state, 2012, 2012, "Summary")
+  columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
+  df <- cbind.data.frame(rowSums(ls[["SoI2SoI"]][, columns]),
+                         rowSums(ls[["RoUS2RoUS"]][, columns]))
+  colnames(df) <- c("SoI", "RoUS")
+  rules <- validate::validator(SoI - State_Summary_CommodityOutput_list[[state]][, "Output"] <= 1E-3,
+                               RoUS - colSums(US_Summary_MakeTransaction) <= 1E-3)
+  confrontation <- validate::confront(df, rules)
+  validation <- merge(validate::as.data.frame(confrontation), validate::as.data.frame(rules))
+  rownames(validation) <- c(rownames(df), gsub(paste0(state, "."), "RoUS.", rownames(df)))
+  # Calcualte difference between checked objects
+  Difference <- as.data.frame(c(df$SoI - State_Summary_CommodityOutput_list[[state]][, "Output"],
+                                df$RoUS - colSums(US_Summary_MakeTransaction)))
+  colnames(Difference) <- "Difference"
+  validation <- cbind(validation, Difference)
+  # Extract failures
+  failures <- extractValidationResult(confrontation, failure = TRUE)
+  # Add difference to failures
+  rows <- cbind.data.frame(rownames(validate::as.data.frame(confrontation)),
+                           rownames(validation))
+  rows[] <- sapply(rows, as.character)
+  failures[failures$rownames%in%rows[, 1], "rownames"] <- rows[rows[, 1]%in%failures$rownames, 2]
+  failures[, "Difference"] <- validation[failures$rownames, "Difference"]
+  failure_list[[state]] <- failures
+}
+
+
 
