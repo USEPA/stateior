@@ -1,9 +1,12 @@
 ### State Supply Model
-# Load US make
+# Define year
 year <- 2012
+# Load US Make and Use
 US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
 US_Summary_MakeTransaction <- US_Summary_Make[-which(rownames(US_Summary_Make)=="Total Commodity Output"),
                                               -which(colnames(US_Summary_Make)=="Total Industry Output")]
+US_Summary_Use <- getNationalUse("Summary", year)
+US_Summary_DomesticUse <- estimateUSDomesticUse("Summary", year)
 # Load state Make, industry and commodity output
 load(paste0("data/State_Summary_Make_", year, ".rda"))
 load(paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
@@ -11,7 +14,7 @@ load(paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
 states <- names(State_Summary_IndustryOutput_list)
 # Load state total Use and domestic Use
 load(paste0("data/State_Summary_Use_", year, ".rda"))
-load(paste0("data/State_Summary_Domestic_Use_", year, ".rda"))
+load(paste0("data/State_Summary_DomesticUse_", year, ".rda"))
 
 # Create a function to extract validation passes or failures
 extractValidationResult <- function(confrontation, failure = TRUE) {
@@ -91,8 +94,6 @@ colnames(failures) <- c("Industry", "Commodity")
 #' 5. Sum of each commodity’s output across all states must almost equal (tolerance is 1E7, or $10 million by commodity)
 #' commodity output in US Use Table minus International Imports (commodity specific).
 #' Even if the threshold is met, track the difference for each commodity as a type of quality control check.
-# Prepare US domestic Use table
-US_DomesticUse <- estimateUSDomesticUse("Summary", year)
 # Validate aggregated state commodity output against row sum of US domestic Use
 rules <- validate::validator(abs(df1 - df0) <= 1E7)
 df1 <- Reduce("+", State_Summary_CommodityOutput_list)
@@ -130,11 +131,11 @@ for (state in states) {
 #' Create a function to implement the validation
 validateStateUseAgainstNationlUse <- function(domestic = FALSE) {
   if (domestic) {
-    Use <- State_Summary_Domestic_Use
-    df0 <- estimateUSDomesticUse("Summary", year)
+    Use <- State_Summary_DomesticUse
+    df0 <- US_Summary_DomesticUse
   } else {
     Use <- State_Summary_Use
-    df0 <- getNationalUse("Summary", year)
+    df0 <- US_Summary_Use
   }
   StateUse_list <- list()
   for (state in states) {
@@ -246,5 +247,62 @@ for (state in states) {
   failure_list[[state]] <- failures
 }
 
+#' 12. Value in SoI2SoI and RoUS2RoUS can be negative only when the same cell is negative in national Use table
+rules <- validate::validator(US_Summary_DomesticUse < 0)
+confrontation <- validate::confront(US_Summary_DomesticUse, rules)
+baseline <- extractValidationResult(confrontation, failure = FALSE)
+# Validate the position of zero values in state Make tables
+failure_list <- list()
+for (state in states) {
+  # Prepare domestic 2-region Use tables
+  ls <- generateDomestic2RegionUse(state, 2012, 2012, "Summary")
+  columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
+  # SoI
+  df_SoI <- ls[["SoI2SoI"]][, columns]
+  rownames(df_SoI) <- gsub(".*\\.", "", rownames(df_SoI))
+  rules_SoI <- validate::validator(df_SoI < 0)
+  confrontation_SoI <- validate::confront(df_SoI, rules_SoI)
+  passes_SoI <- extractValidationResult(confrontation_SoI, failure = FALSE)
+  failures_SoI <- setdiff(paste(baseline$rownames, baseline$variable),
+                          paste(passes_SoI$rownames, passes_SoI$variable))
+  failures_SoI <- do.call(rbind.data.frame, strsplit(failures_SoI, " "))
+  if (nrow(failures_SoI) > 0) {
+    colnames(failures_SoI) <- c("Commodity", "Industry")
+  }
+  failure_list[[state]] <- failures_SoI
+  # RoUS
+  df_RoUS <- ls[["RoUS2RoUS"]][, columns]
+  rownames(df_RoUS) <- gsub(".*\\.", "", rownames(df_RoUS))
+  rules_RoUS <- validate::validator(df_RoUS < 0)
+  confrontation_RoUS <- validate::confront(df_RoUS, rules_RoUS)
+  passes_RoUS <- extractValidationResult(confrontation_RoUS, failure = FALSE)
+  failures_RoUS <- setdiff(paste(baseline$rownames, baseline$variable),
+                           paste(passes_RoUS$rownames, passes_RoUS$variable))
+  failures_RoUS <- do.call(rbind.data.frame, strsplit(failures_RoUS, " "))
+  if (nrow(failures_RoUS) > 0) {
+    colnames(failures_RoUS) <- c("Commodity", "Industry")
+  }
+  failure_list[[paste("RoUS of", state)]] <- failures_RoUS
+}
 
-
+#' 13. SoI interregional imports == RoUS interregional exports, or difference <= 1E-3
+failure_list <- list()
+for (state in states) {
+  # Prepare domestic 2-region Use tables
+  ls <- generateDomestic2RegionUse(state, 2012, 2012, "Summary")
+  df0 <- ls[["SoI2SoI"]][, "InterregionalImports", drop = FALSE]
+  df1 <- ls[["RoUS2RoUS"]][, "InterregionalExports", drop = FALSE]
+  rules <- validate::validator(abs(df1-df0) <= 1E-3)
+  confrontation <- validate::confront(df1, rules, ref = list(df0 = df0))
+  validation <- merge(validate::as.data.frame(confrontation), validate::as.data.frame(rules))
+  rownames(validation) <- rownames(validate::as.data.frame(confrontation))
+  # Calcualte difference between checked objects
+  Difference <- df0 - df1
+  colnames(Difference) <- "df0-df1"
+  validation <- cbind(validation, Difference)
+  # Extract failures
+  failures <- extractValidationResult(confrontation, failure = FALSE)
+  # Add difference to failures
+  failures[, "df0-df1"] <- validation[failures$rownames, "df0-df1"]
+  failure_list[[state]] <- failures
+}
