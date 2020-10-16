@@ -301,8 +301,57 @@ for (state in states) {
   colnames(Difference) <- "df0-df1"
   validation <- cbind(validation, Difference)
   # Extract failures
-  failures <- extractValidationResult(confrontation, failure = FALSE)
+  failures <- extractValidationResult(confrontation, failure = TRUE)
   # Add difference to failures
   failures[, "df0-df1"] <- validation[failures$rownames, "df0-df1"]
   failure_list[[state]] <- failures
+}
+
+#' 14. Total state commodity supply == state demand by intermediate consumption,
+#' plus final demand (except imports) + Interregional Exports
+failure_list <- list()
+for (state in states) {
+  # Prepare domestic 2-region Use tables
+  ls <- generateDomestic2RegionUse(state, 2012, 2012, "Summary")
+  columns <- c(getVectorOfCodes("Summary", "Industry"),
+               setdiff(getFinalDemandCodes("Summary"),
+                       getVectorOfCodes("Summary", "Import")),
+               "InterregionalExports")
+  df0 <- State_Summary_CommodityOutput_list[[state]][, "Output"]
+  df1 <- as.data.frame(rowSums(ls[["SoI2SoI"]][, columns]))
+  rules <- validate::validator(abs(df1 - df0) <= 1E-3)
+  confrontation <- validate::confront(df1, rules, ref = list(df0 = df0))
+  validation <- merge(validate::as.data.frame(confrontation), validate::as.data.frame(rules))
+  rownames(validation) <- rownames(validate::as.data.frame(confrontation))
+  # Calcualte difference between checked objects
+  Difference <- df0 - df1
+  colnames(Difference) <- "df0-df1"
+  validation <- cbind(validation, Difference)
+  # Extract failures
+  failures <- extractValidationResult(confrontation, failure = TRUE)
+  # Add difference to failures
+  failures[, "df0-df1"] <- validation[failures$rownames, "df0-df1"]
+  failure_list[[state]] <- failures
+}
+
+#' 15. Number of negative cells in SoI2SoI, SoI2RoUS, RoUS2SoI and RoUS2RoUS <=
+#' Number of negative cells in national Use table
+rules <- validate::validator(US_Summary_DomesticUse < 0)
+confrontation <- validate::confront(US_Summary_DomesticUse, rules)
+baseline <- extractValidationResult(confrontation, failure = FALSE)
+failure_list <- list()
+for (state in states) {
+  # Prepare domestic 2-region Use tables
+  ls <- generateDomestic2RegionUse(state, 2012, 2012, "Summary")
+  columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
+  for (table in names(ls)[1:4]) {
+    df <- ls[[table]][, columns]
+    rules <- validate::validator(df < 0)
+    confrontation <- validate::confront(df, rules)
+    # Extract failures
+    failures <- extractValidationResult(confrontation, failure = FALSE)
+    # Keep failures that are not in baseline
+    failures <- failures[!paste(failures$rownames, failures$variable)%in%paste(baseline$rownames, baseline$variable), ]
+    failure_list[[paste(state, table, sep = ".")]] <- failures
+  }
 }
