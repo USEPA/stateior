@@ -116,3 +116,24 @@ FedGovExp_StructureDefense_2012 <- USASpending[["2012"]][["Structure"]][["Defens
 usethis::use_data(FedGovExp_StructureDefense_2012, overwrite = TRUE)
 FedGovExp_StructureNonDefense_2012 <- USASpending[["2012"]][["Structure"]][["NonDefense"]]
 usethis::use_data(FedGovExp_StructureNonDefense_2012, overwrite = TRUE)
+
+
+FedGovExp_IntermediateDefense_2017 <- USASpending[["2017"]][["Intermediate"]][["Defense"]]
+usethis::use_data(FedGovExp_IntermediateDefense_2017, overwrite = TRUE)
+FedGovExp_IntermediateNonDefense_2017 <- USASpending[["2017"]][["Intermediate"]][["NonDefense"]]
+usethis::use_data(FedGovExp_IntermediateNonDefense_2017, overwrite = TRUE)
+
+FedGovExp_EquipmentDefense_2017 <- USASpending[["2017"]][["Equipment"]][["Defense"]]
+usethis::use_data(FedGovExp_EquipmentDefense_2017, overwrite = TRUE)
+FedGovExp_EquipmentNonDefense_2017 <- USASpending[["2017"]][["Equipment"]][["NonDefense"]]
+usethis::use_data(FedGovExp_EquipmentNonDefense_2017, overwrite = TRUE)
+
+FedGovExp_IPDefense_2017 <- USASpending[["2017"]][["IP"]][["Defense"]]
+usethis::use_data(FedGovExp_IPDefense_2017, overwrite = TRUE)
+FedGovExp_IPNonDefense_2017 <- USASpending[["2017"]][["IP"]][["NonDefense"]]
+usethis::use_data(FedGovExp_IPNonDefense_2017, overwrite = TRUE)
+
+FedGovExp_StructureDefense_2017 <- USASpending[["2017"]][["Structure"]][["Defense"]]
+usethis::use_data(FedGovExp_StructureDefense_2017, overwrite = TRUE)
+FedGovExp_StructureNonDefense_2017 <- USASpending[["2017"]][["Structure"]][["NonDefense"]]
+usethis::use_data(FedGovExp_StructureNonDefense_2017, overwrite = TRUE)
