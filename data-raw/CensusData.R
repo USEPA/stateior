@@ -40,11 +40,12 @@ getCensusStateExportbyNAICS <- function(year) {
   # Download table and convert to dataframe
   export <- as.data.frame(jsonlite::fromJSON(baseurl), stringsAsFactors = FALSE)[-1, -6]
   # Add column names
-  colnames(export) <- c("NAICS", "CTY_NAME", "STATE", "ALL_VAL_YR", "YEAR")
+  colnames(export) <- c("NAICS", "CountryName", "State", "Value", "Year")
   # Convert specific columns to numeric format
-  export[, c("ALL_VAL_YR", "YEAR")] <- sapply(export[, c("ALL_VAL_YR", "YEAR")], as.numeric)
-  # Keep export by state (!STATE=="")
-  export_states <- export[!export$NAICS==""&!export$STATE=="", ]
+  export[, c("Value", "Year")] <- sapply(export[, c("Value", "Year")], as.numeric)
+  # Keep export by state (!STATE=="") and convert state abbreviation to state name
+  export_states <- export[!export$NAICS=="" & export$State %in% c(state.abb, "DC"), ]
+  export_states$State <- c(state.name, "District of Columbia")[match(export_states$State, c(state.abb, "DC"))]
   return (export_states)
 }
 Census_StateExport_2013 <- getCensusStateExportbyNAICS(2013)
@@ -72,11 +73,12 @@ getCensusStateImportbyNAICS <- function (year) {
   # Download table and convert to dataframe
   import <- as.data.frame(jsonlite::fromJSON(baseurl), stringsAsFactors = FALSE)[-1, -6]
   # Add column names
-  colnames(import) <- c("NAICS", "CTY_NAME", "STATE", "GEN_VAL_YR", "YEAR")
+  colnames(import) <- c("NAICS", "CountryName", "State", "Value", "Year")
   # Convert specific columns to numeric format
-  import[, c("GEN_VAL_YR", "YEAR")] <- sapply(import[, c("GEN_VAL_YR", "YEAR")], as.numeric)
-  # Keep import by state (!STATE=="")
-  import_states <- import[!import$NAICS==""&!import$STATE=="", ]
+  import[, c("Value", "Year")] <- sapply(import[, c("Value", "Year")], as.numeric)
+  # Keep import by state (!STATE=="") and convert state abbreviation to state name
+  import_states <- import[!import$NAICS=="" & import$State %in% c(state.abb, "DC"), ]
+  import_states$State <- c(state.name, "District of Columbia")[match(import_states$State, c(state.abb, "DC"))]
   return (import_states)
 }
 Census_StateImport_2013 <- getCensusStateImportbyNAICS(2013)
