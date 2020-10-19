@@ -1,10 +1,10 @@
-#' Generate domestic 2-region use tables.
+#' Generate two-region (SoI and RoUS) domestic use tables.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A list of domestic 2-region use tables.
-generateDomestic2RegionUse <- function(state, year, ioschema, iolevel) {
+generateTwoRegionDomesticUse <- function(state, year, ioschema, iolevel) {
   # 1 - Load state domestic Use for the specified year
   load(paste0("data/State_Summary_DomesticUse_", year, ".rda"))
   SoI_Domestic_Use <- State_Summary_DomesticUse[gsub("\\..*", "", rownames(State_Summary_DomesticUse))==state, ]
@@ -108,19 +108,17 @@ generateDomestic2RegionUse <- function(state, year, ioschema, iolevel) {
   
   # 10 - Generate SoI2RoUS and RoUS2SoI Use
   # SoI2RoUS
-  SoI2RoUS_Use <- RoUS_Domestic_Use - RoUS2RoUS_Use[rownames(RoUS_Domestic_Use),
-                                                    colnames(RoUS_Domestic_Use)]
+  SoI2RoUS_Use <- RoUS_Domestic_Use - RoUS2RoUS_Use[rownames(RoUS_Domestic_Use), colnames(RoUS_Domestic_Use)]
   SoI2RoUS_Use$InterregionalImports <- rowSums(RoUS_Domestic_Use[, columns]) - rowSums(SoI2RoUS_Use[, columns])
   SoI2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$Output - rowSums(SoI2RoUS_Use[, c(columns, ExportCodes)])
   SoI2RoUS_Use$NetExports <- SoI2RoUS_Use$InterregionalExports - SoI2RoUS_Use$InterregionalImports
   # RoUS2SoI
-  RoUS2SoI_Use <- SoI_Domestic_Use - SoI2SoI_Use[rownames(SoI_Domestic_Use),
-                                                 colnames(SoI_Domestic_Use)]
+  RoUS2SoI_Use <- SoI_Domestic_Use - SoI2SoI_Use[rownames(SoI_Domestic_Use), colnames(SoI_Domestic_Use)]
   RoUS2SoI_Use$InterregionalImports <- rowSums(SoI_Domestic_Use[, columns]) - rowSums(RoUS2SoI_Use[, columns])
   RoUS2SoI_Use$InterregionalExports <- SoI_Commodity_Output$Output - rowSums(RoUS2SoI_Use[, c(columns, ExportCodes)])
   RoUS2SoI_Use$NetExports <- RoUS2RoUS_Use$InterregionalExports - RoUS2SoI_Use$InterregionalImports
   
-  # 11 - Validation
+  # 11 - Create validation
   validation <- cbind.data.frame(SoI2SoI_Use$InterregionalImports - RoUS2RoUS_Use$InterregionalExports,
                                  SoI2SoI_Use$InterregionalExports - RoUS2RoUS_Use$InterregionalImports,
                                  SoI2SoI_Use$NetExports + RoUS2RoUS_Use$NetExports,
@@ -134,7 +132,6 @@ generateDomestic2RegionUse <- function(state, year, ioschema, iolevel) {
                             "SoI2RoUS$InterregionalImports - RoUS2SoI$InterregionalExports",
                             "SoI2RoUS$InterregionalExports - RoUS2SoI$InterregionalImports",
                             "SoI2RoUS$NetExports + RoUS2SoI$NetExports")
-  
   
   # 12 - Assemble SoI2SoI Use, RoUS2RoUS Use
   Domestic2RegionUse <- list()

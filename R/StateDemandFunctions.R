@@ -1,6 +1,7 @@
 #' Get US Use table (intermediaete + final demand) of specified iolevel and year.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param year A numeric value specifying the year of interest.
+#' #' @return The US Use table (intermediaete + final demand) of specified iolevel and year.
 getNationalUse <- function(iolevel, year) {
   # Load pre-saved US Use table
   Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
@@ -58,9 +59,7 @@ calculateStateCommodityOutputRatio <- function(year) {
   load(paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
   states <- names(State_Summary_CommodityOutput_list)
   # Load US Commodity output
-  US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"))*1E6
-  US_Summary_MakeTransaction <- US_Summary_Make[-which(rownames(US_Summary_Make)=="Total Commodity Output"),
-                                                -which(colnames(US_Summary_Make)=="Total Industry Output")]
+  US_Summary_MakeTransaction <- getNationalMake("Summary", year)
   US_Summary_CommodityOutput <- colSums(US_Summary_MakeTransaction)
   # Calculate state Commodity output ratio
   State_CommodityOutputRatio <- data.frame()
