@@ -8,9 +8,7 @@ states <- names(State_Summary_IndustryOutput_list)
 
 #' 2 - Load US Summary Make table for given year
 #' Generate US Summary Industry Output
-US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"))*1E6
-US_Summary_MakeTransaction <- US_Summary_Make[-which(rownames(US_Summary_Make)=="Total Commodity Output"),
-                                              -which(colnames(US_Summary_Make)=="Total Industry Output")]
+US_Summary_MakeTransaction <- getNationalMake("Summary", year)
 US_Summary_IndustryOutput <- rowSums(US_Summary_MakeTransaction)
 
 #' 3 - Load US Summary Use table for given year

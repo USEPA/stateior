@@ -17,9 +17,7 @@ StateValueAdded <- allocateStateTabletoBEASummary("GDP", year, allocationweights
 
 #' 3 - Load US Summary Make table for given year
 #' Generate US Summary Make Transaction and Industry and Commodity Output
-US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
-US_Summary_MakeTransaction <- US_Summary_Make[-which(rownames(US_Summary_Make)=="Total Commodity Output"),
-                                              -which(colnames(US_Summary_Make)=="Total Industry Output")]
+US_Summary_MakeTransaction <- getNationalMake("Summary", year)
 US_Summary_IndustryOutput <- rowSums(US_Summary_MakeTransaction)
 US_Summary_CommodityOutput <- colSums(US_Summary_MakeTransaction)
 
@@ -165,21 +163,6 @@ for (industry in rownames(US_Summary_MakeTransaction)) {
 names(m1_list) <- NULL
 State_Summary_MakeTransaction_balanced <- do.call(rbind.data.frame, m1_list)
 State_Summary_MakeTransaction_balanced <- State_Summary_MakeTransaction_balanced[rownames(State_Summary_MakeTransaction), ]
-
-#' Consistency and reality check
-#' Sum of each cell across all states must equal the same cell in national table
-StateMakeTransaction <- as.data.frame(State_Summary_MakeTransaction_balanced)
-StateMakeTransaction$BEA <- gsub(".*\\.", "", rownames(StateMakeTransaction))
-StateMakeTransaction_agg <- stats::aggregate(StateMakeTransaction[, colnames(StateMakeTransaction)[1:73]],
-                                             by = list(StateMakeTransaction$BEA), sum)
-rownames(StateMakeTransaction_agg) <- StateMakeTransaction_agg$Group.1
-StateMakeTransaction_agg$Group.1 <- NULL
-StateUSMakeDiff <- US_Summary_MakeTransaction - StateMakeTransaction_agg[rownames(US_Summary_MakeTransaction), ]
-#' There should not be any negative values (only exception being Overseas, which isn’t used for further calculations)
-#' Sum of each industry’s output across all states must equal national industry output.
-#' Sum of each commodity’s output across all states must equal national commodity output in Supply Table.
-#' Sum of each commodity’s output across all states must equal national commodity output in Use Table minus International Imports (commodity specific).
-#' All cells that are zero in the national Supply Table must remain zeros in the state supply tables.
 
 #' 9 - Save state balanced Make table to .rda
 #' Re-calculate and save state industry and commodity output estimates to .rda

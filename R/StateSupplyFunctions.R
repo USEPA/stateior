@@ -1,3 +1,15 @@
+#' Get US Make table of specified iolevel and year.
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param year A numeric value specifying the year of interest.
+#' @return The US make table of specified iolevel and year.
+getNationalMake <- function(iolevel, year) {
+  # Load pre-saved US Make table
+  Make <- get(paste(iolevel, "Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
+  # Keep industry and commodity
+  Make <- Make[getVectorOfCodes("Summary", "Industry"), getVectorOfCodes("Summary", "Commodity")]
+  return(Make)
+}
+
 #' Get industry-level GDP for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state GDP for all states at a specific year.
