@@ -9,7 +9,8 @@ getNationalUse(iolevel, year)
 \arguments{
 \item{iolevel}{Level of detail, can be "Sector", "Summary, "Detail".}
 
-\item{year}{A numeric value specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.
+#' @return The US Use table (intermediaete + final demand) of specified iolevel and year.}
 }
 \description{
 Get US Use table (intermediaete + final demand) of specified iolevel and year.
