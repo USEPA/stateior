@@ -166,22 +166,20 @@ State_Summary_MakeTransaction_balanced <- State_Summary_MakeTransaction_balanced
 
 #' 9 - Save state balanced Make table to .rda
 #' Re-calculate and save state industry and commodity output estimates to .rda
-save(State_Summary_MakeTransaction_balanced,
-     file = paste0("data/State_Summary_Make_", year, ".rda"))
-# Industry output
+State_Summary_Make_list <- list()
 for (state in states) {
-  State_Summary_Make_Transaction <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
-  State_Summary_IndustryOutput_list[[state]] <- as.data.frame(rowSums(State_Summary_Make_Transaction))
+  State_Summary_Make <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
+  rownames(State_Summary_Make) <- gsub(".*\\.", "", rownames(State_Summary_Make))
+  State_Summary_Make_list[[state]] <- State_Summary_Make
+  State_Summary_IndustryOutput_list[[state]] <- as.data.frame(rowSums(State_Summary_Make))
+  colnames(State_Summary_IndustryOutput_list[[state]]) <- "Output"
+  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(colSums(State_Summary_Make))
+  colnames(State_Summary_CommodityOutput_list[[state]]) <- "Output"
 }
-State_Summary_IndustryOutput_list <- lapply(State_Summary_IndustryOutput_list, setNames, "Output")
+save(State_Summary_Make_list,
+     file = paste0("data/State_Summary_Make_", year, ".rda"))
 save(State_Summary_IndustryOutput_list,
      file = paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
-# Commodity output
-for (state in states) {
-  State_Summary_Make_Transaction <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
-  State_Summary_CommodityOutput_list[[state]] <- as.data.frame(colSums(State_Summary_Make_Transaction))
-}
-State_Summary_CommodityOutput_list <- lapply(State_Summary_CommodityOutput_list, setNames, "Output")
 save(State_Summary_CommodityOutput_list,
      file = paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
 

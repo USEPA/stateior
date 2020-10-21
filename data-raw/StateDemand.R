@@ -76,7 +76,6 @@ StateFinalDemand <- cbind(State_PCE_balanced,
                           estimateStateSLGovExpenditure(year))[row_names, ]
 State_Summary_Use <- cbind(State_Summary_Use_Intermediate,
                            StateFinalDemand[rownames(State_Summary_Use_Intermediate), FinalDemand_columns])
-save(StateFinalDemand, file = paste0("data/State_Summary_FinalDemand_", year, ".rda"))
 
 #' 8 - Estimate state imports following these steps:
 #' NationalDomesticUse (i.e. adjusted table) = NationalUse (i.e. original table) - NationalImportMatrix + the distribution of F050A
@@ -89,8 +88,25 @@ Domestic_Use_ratios <- do.call("rbind", replicate(52, Domestic_Use_ratios, simpl
 rownames(Domestic_Use_ratios) <- rownames(State_Summary_Use)
 State_Summary_DomesticUse <- State_Summary_Use*Domestic_Use_ratios
 State_Summary_Use$F050 <- rowSums(State_Summary_DomesticUse) - rowSums(State_Summary_Use)
-save(State_Summary_Use, file = paste0("data/State_Summary_Use_", year, ".rda"))
-save(State_Summary_DomesticUse, file = paste0("data/State_Summary_DomesticUse_", year, ".rda"))
+
+# Save to .rda
+State_Summary_Use_list <- list()
+State_Summary_DomesticUse_list <- list()
+State_Summary_FinalDemand_list <- list()
+for (state in states) {
+  # State Use
+  State_Summary_Use_list[[state]] <- State_Summary_Use[gsub("\\..*", "", rownames(State_Summary_Use))==state, ]
+  rownames(State_Summary_Use_list[[state]]) <- gsub(".*\\.", "", rownames(State_Summary_Use_list[[state]]))
+  # State Domestic Use
+  State_Summary_DomesticUse_list[[state]] <- State_Summary_DomesticUse[gsub("\\..*", "", rownames(State_Summary_DomesticUse))==state, ]
+  rownames(State_Summary_DomesticUse_list[[state]]) <- gsub(".*\\.", "", rownames(State_Summary_DomesticUse_list[[state]]))
+  # State Final Demand
+  State_Summary_FinalDemand_list[[state]] <- StateFinalDemand[gsub("\\..*", "", rownames(StateFinalDemand))==state, ]
+  rownames(State_Summary_FinalDemand_list[[state]]) <- gsub(".*\\.", "", rownames(State_Summary_FinalDemand_list[[state]]))
+}
+save(State_Summary_Use_list, file = paste0("data/State_Summary_Use_", year, ".rda"))
+save(State_Summary_DomesticUse_list, file = paste0("data/State_Summary_DomesticUse_", year, ".rda"))
+save(State_Summary_FinalDemand_list, file = paste0("data/State_Summary_FinalDemand_", year, ".rda"))
 
 #' 9 - Calculate imports by industry
 ImportByIndustry <- colSums(State_Summary_Use) - colSums(State_Summary_DomesticUse)
