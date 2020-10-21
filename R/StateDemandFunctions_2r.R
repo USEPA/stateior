@@ -6,13 +6,8 @@
 #' @return A list of domestic 2-region use tables.
 generateTwoRegionDomesticUse <- function(state, year, ioschema, iolevel) {
   # 1 - Load state domestic Use for the specified year
-  load(paste0("data/State_Summary_DomesticUse_", year, ".rda"))
   SoI_Domestic_Use <- State_Summary_DomesticUse_list[[state]]
-  # Load BEA schema_info based on iolevel
-  SchemaInfoFile <- paste0(ioschema, "_", iolevel, "_Schema_Info.csv")
-  SchemaInfo <- utils::read.table(system.file("extdata", SchemaInfoFile, package = "useeior"),
-                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
-  # Extract desired columns from SchemaInfo, return vectors with strings of codes
+  # Define desired columns
   columns <- unlist(sapply(list("Industry", "HouseholdDemand", "InvestmentDemand",
                                 "ChangeInventories", "GovernmentDemand"),
                            getVectorOfCodes, iolevel = iolevel))
@@ -25,7 +20,6 @@ generateTwoRegionDomesticUse <- function(state, year, ioschema, iolevel) {
   SoI2SoI_Use <- SoI_Domestic_Use
   SoI2SoI_Use[, columns] <- SoI_Domestic_Use[, columns] * ICF$SoI2SoI
   # Load state commodity output
-  load(paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
   SoI_Commodity_Output <- State_Summary_CommodityOutput_list[[state]]
   # Calculate Interregional Imports, Exports, and Net Exports
   SoI2SoI_Use$InterregionalImports <- rowSums(SoI_Domestic_Use[, columns]) - rowSums(SoI2SoI_Use[, columns])
@@ -33,10 +27,10 @@ generateTwoRegionDomesticUse <- function(state, year, ioschema, iolevel) {
   SoI2SoI_Use$NetExports <- SoI2SoI_Use$InterregionalExports - SoI2SoI_Use$InterregionalImports
   
   # 4 - Generate RoUS domestic Use and commodity output
-  # RoUS domestic Use
+  # Generate RoUS domestic Use
   US_Domestic_Use <- estimateUSDomesticUse(iolevel, year)
   RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
-  # RoUS Commodity Output
+  # Calculate RoUS Commodity Output
   US_Make <- getNationalMake(iolevel, year)
   US_Commodity_Output <- colSums(US_Make)
   RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
@@ -77,7 +71,7 @@ generateTwoRegionDomesticUse <- function(state, year, ioschema, iolevel) {
   error <- SoI2SoI_Use$InterregionalImports - RoUS2RoUS_Use$InterregionalExports
   SoIerror <- error*(SoI_Commodity_Output$Output/US_Commodity_Output)
   RoUSerror <- error - SoIerror
-  SoIerror_1 <-SoIerror_2 <- SoIerror
+  SoIerror_1 <- SoIerror_2 <- SoIerror
   
   # 8 - Allocate the errors across columns in SoI2SoI Use and RoUS2RoUS Use
   for (i in 1:nrow(SoI2SoI_Use)) {
@@ -132,21 +126,20 @@ generateTwoRegionDomesticUse <- function(state, year, ioschema, iolevel) {
                             "SoI2RoUS$NetExports + RoUS2SoI$NetExports")
   
   # 12 - Assemble SoI2SoI Use, RoUS2RoUS Use
-  Domestic2RegionUse <- list()
-  Domestic2RegionUse[["SoI2SoI"]] <- SoI2SoI_Use
-  Domestic2RegionUse[["RoUS2RoUS"]] <- RoUS2RoUS_Use
-  Domestic2RegionUse[["RoUS2SoI"]] <- RoUS2SoI_Use
-  Domestic2RegionUse[["SoI2RoUS"]] <- SoI2RoUS_Use
-  Domestic2RegionUse[["Validation"]] <- validation
+  Domestic2RegionUse <- list("SoI2SoI"    = SoI2SoI_Use,
+                             "SoI2RoUS"   = SoI2RoUS_Use,
+                             "RoUS2SoI"   = RoUS2SoI_Use,
+                             "RoUS2RoUS"  = RoUS2RoUS_Use,
+                             "Validation" = validation)
   return(Domestic2RegionUse)
 }
 
 calcualteTwoRegionAmatrix <- function(state, year, ioschema, iolevel) {
-  # SoI Make
+  # Define industries and commodities
   industries <- getVectorOfCodes(iolevel, "Industry")
   commodities <- getVectorOfCodes(iolevel, "Commodity")
-  SoI_Make <- State_Summary_MakeTransaction_balanced[paste(state, industries, sep = "."),
-                                                     commodities]
+  # SoI Make
+  SoI_Make <- State_Summary_Make_list[[state]]
   # SoI commodity output
   SoI_Commodity_Output <- State_Summary_CommodityOutput_list[[state]]
   # SoI A matrix
@@ -156,7 +149,6 @@ calcualteTwoRegionAmatrix <- function(state, year, ioschema, iolevel) {
   US_Make <- getNationalMake(iolevel, year)
   RoUS_Make <- US_Make - SoI_Make
   # RoUS domestic Use
-  load(paste0("data/State_Summary_DomesticUse_", year, ".rda"))
   SoI_Domestic_Use <- State_Summary_DomesticUse_list[[state]]
   columns <- colnames(SoI_Domestic_Use)[!colnames(SoI_Domestic_Use)%in%c("F040", "F050")]
   US_Domestic_Use <- estimateUSDomesticUse("Summary", year)

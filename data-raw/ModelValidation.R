@@ -181,7 +181,7 @@ for (state in states) {
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, 2012, 2012, "Summary")
+  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
   df <- cbind(ls[["SoI2SoI"]][, c("InterregionalImports", "InterregionalExports")],
               ls[["RoUS2RoUS"]][, c("InterregionalImports", "InterregionalExports")])
   df <- as.data.frame(sapply(df, round, 1))
@@ -198,7 +198,7 @@ for (state in states) {
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, 2012, 2012, "Summary")
+  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
   df <- ls[["SoI2SoI"]][, "NetExports", drop = FALSE] + ls[["RoUS2RoUS"]][, "NetExports", drop = FALSE]
   df <- as.data.frame(sapply(df, round, 1))
   rule <- validate::validator(df == 0)
@@ -214,7 +214,7 @@ for (state in states) {
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, 2012, 2012, "Summary")
+  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
   columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
   df <- cbind.data.frame(rowSums(ls[["SoI2SoI"]][, columns]),
                          rowSums(ls[["RoUS2RoUS"]][, columns]))
@@ -248,7 +248,7 @@ baseline <- extractValidationResult(confrontation, failure = FALSE)
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, 2012, 2012, "Summary")
+  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
   columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
   # SoI
   df_SoI <- ls[["SoI2SoI"]][, columns]
@@ -282,7 +282,7 @@ for (state in states) {
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, 2012, 2012, "Summary")
+  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
   df0 <- ls[["SoI2SoI"]][, "InterregionalImports", drop = FALSE]
   df1 <- ls[["RoUS2RoUS"]][, "InterregionalExports", drop = FALSE]
   rule <- validate::validator(abs(df1-df0) <= 1E-3)
@@ -305,7 +305,7 @@ for (state in states) {
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, 2012, 2012, "Summary")
+  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
   columns <- c(getVectorOfCodes("Summary", "Industry"),
                setdiff(getFinalDemandCodes("Summary"),
                        getVectorOfCodes("Summary", "Import")),
@@ -335,7 +335,7 @@ baseline <- extractValidationResult(confrontation, failure = FALSE)
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, 2012, 2012, "Summary")
+  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
   columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
   for (table in names(ls)[1:4]) {
     df <- ls[[table]][, columns]

@@ -133,32 +133,32 @@ SoIRoUS_2r_list <- list("US Domestic Use" = cbind(rownames(US_Domestic_Use),
                         "Validation" = cbind(rownames(validation), validation))
 writexl::write_xlsx(SoIRoUS_2r_list, paste0(state_abb, "_2r_Use_new.xlsx"), format_headers = FALSE)
 
-GA_2r <- generateTwoRegionDomesticUse("Georgia", 2012, 2012, "Summary")
-MN_2r <- generateTwoRegionDomesticUse("Minnesota", 2012, 2012, "Summary")
-OR_2r <- generateTwoRegionDomesticUse("Oregon", 2012, 2012, "Summary")
-WA_2r <- generateTwoRegionDomesticUse("Washington", 2012, 2012, "Summary")
+GA_2r <- generateTwoRegionDomesticUse("Georgia", year = 2012, ioschema = 2012, "Summary")
+MN_2r <- generateTwoRegionDomesticUse("Minnesota", year = 2012, ioschema = 2012, "Summary")
+OR_2r <- generateTwoRegionDomesticUse("Oregon", year = 2012, ioschema = 2012, "Summary")
+WA_2r <- generateTwoRegionDomesticUse("Washington", year = 2012, ioschema = 2012, "Summary")
 
 writexl::write_xlsx(list("GA2GA" = cbind(rownames(GA_2r$SoI2SoI), GA_2r$SoI2SoI),
-                         "RoUS2RoUS" = cbind(rownames(GA_2r$RoUS2RoUS), GA_2r$RoUS2RoUS),
-                         "RoUS2GA" = cbind(rownames(GA_2r$RoUS2SoI), GA_2r$RoUS2SoI),
                          "GA2RoUS" = cbind(rownames(GA_2r$SoI2RoUS), GA_2r$SoI2RoUS),
+                         "RoUS2GA" = cbind(rownames(GA_2r$RoUS2SoI), GA_2r$RoUS2SoI),
+                         "RoUS2RoUS" = cbind(rownames(GA_2r$RoUS2RoUS), GA_2r$RoUS2RoUS),
                          "Validation" = cbind(rownames(GA_2r$Validation), GA_2r$Validation)),
                     "GA_2r_Use.xlsx", format_headers = FALSE)
 writexl::write_xlsx(list("MN2MN" = cbind(rownames(MN_2r$SoI2SoI), MN_2r$SoI2SoI),
-                         "RoUS2RoUS" = cbind(rownames(MN_2r$RoUS2RoUS), MN_2r$RoUS2RoUS),
-                         "MN2RoUS" = cbind(rownames(MN_2r$RoUS2SoI), MN_2r$RoUS2SoI),
                          "RoUS2MN" = cbind(rownames(MN_2r$SoI2RoUS), MN_2r$SoI2RoUS),
+                         "MN2RoUS" = cbind(rownames(MN_2r$RoUS2SoI), MN_2r$RoUS2SoI),
+                         "RoUS2RoUS" = cbind(rownames(MN_2r$RoUS2RoUS), MN_2r$RoUS2RoUS),
                          "Validation" = cbind(rownames(MN_2r$Validation), MN_2r$Validation)),
                     "MN_2r_Use.xlsx", format_headers = FALSE)
 writexl::write_xlsx(list("OR2OR" = cbind(rownames(OR_2r$SoI2SoI), OR_2r$SoI2SoI),
-                         "RoUS2RoUS" = cbind(rownames(OR_2r$RoUS2RoUS), OR_2r$RoUS2RoUS),
-                         "RoUS2OR" = cbind(rownames(OR_2r$RoUS2SoI), OR_2r$RoUS2SoI),
                          "OR2RoUS" = cbind(rownames(OR_2r$SoI2RoUS), OR_2r$SoI2RoUS),
+                         "RoUS2OR" = cbind(rownames(OR_2r$RoUS2SoI), OR_2r$RoUS2SoI),
+                         "RoUS2RoUS" = cbind(rownames(OR_2r$RoUS2RoUS), OR_2r$RoUS2RoUS),
                          "Validation" = cbind(rownames(OR_2r$Validation), OR_2r$Validation)),
                     "OR_2r_Use.xlsx", format_headers = FALSE)
 writexl::write_xlsx(list("WA2WA" = cbind(rownames(WA_2r$SoI2SoI), WA_2r$SoI2SoI),
-                         "RoUS2RoUS" = cbind(rownames(WA_2r$RoUS2RoUS), WA_2r$RoUS2RoUS),
-                         "RoUS2WA" = cbind(rownames(WA_2r$RoUS2SoI), WA_2r$RoUS2SoI),
                          "WA2RoUS" = cbind(rownames(WA_2r$SoI2RoUS), WA_2r$SoI2RoUS),
+                         "RoUS2WA" = cbind(rownames(WA_2r$RoUS2SoI), WA_2r$RoUS2SoI),
+                         "RoUS2RoUS" = cbind(rownames(WA_2r$RoUS2RoUS), WA_2r$RoUS2RoUS),
                          "Validation" = cbind(rownames(WA_2r$Validation), WA_2r$Validation)),
                     "WA_2r_Use.xlsx", format_headers = FALSE)

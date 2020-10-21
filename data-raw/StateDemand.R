@@ -3,7 +3,6 @@
 
 #' 1 - Load state industry output for the given year.
 year <- 2012
-load(paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
 states <- names(State_Summary_IndustryOutput_list)
 
 #' 2 - Load US Summary Make table for given year
