@@ -6,7 +6,7 @@ year <- 2012
 state <- "Georgia"
 state_abb <- state.abb[which(state.name==state)]
 load(paste0("data/State_Summary_DomesticUse_", year, ".rda"))
-SoI_Domestic_Use <- State_Summary_DomesticUse[gsub("\\..*", "", rownames(State_Summary_DomesticUse))==state, ]
+SoI_Domestic_Use <- State_Summary_DomesticUse_list[[state]]
 columns <- colnames(SoI_Domestic_Use)[!colnames(SoI_Domestic_Use)%in%c("F040", "F050")]
 
 #' 2 - Generate 2-region ICFs
@@ -26,22 +26,20 @@ SoI2SoI_Use$NetExports <- SoI2SoI_Use$InterregionalExports - SoI2SoI_Use$Interre
 
 #' 4 - Generate RoUS Make, domestic Use and commodity output
 # US Make
-US_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
-US_MakeTransaction <- US_Make[-which(rownames(US_Make)=="Total Commodity Output"),
-                              -which(colnames(US_Make)=="Total Industry Output")]
+US_Make <- getNationalMake("Summary", year)
 # SoI Make
 load(paste0("data/State_Summary_Make_", year, ".rda"))
-SoI_Make <- State_Summary_MakeTransaction_balanced[gsub("\\..*", "", rownames(State_Summary_MakeTransaction_balanced))==state, ]
+SoI_Make <- State_Summary_Make_list[[state]]
 # RoUS Make
-RoUS_Make <- US_MakeTransaction - SoI_Make
+RoUS_Make <- US_Make - SoI_Make
 
 # RoUS domestic Use
 US_Domestic_Use <- estimateUSDomesticUse("Summary", year)
 RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
 # RoUS Commodity Output
-US_Commodity_Output <- colSums(US_MakeTransaction)
+US_Commodity_Output <- colSums(US_Make)
 RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
-colnames(RoUS_Commodity_Output) <- "RoUSCommOutput"
+colnames(RoUS_Commodity_Output) <- "Output"
 # Adjust RoUS_Commodity_Output
 MakeUseDiff <- US_Commodity_Output - rowSums(US_Domestic_Use[, c(columns, "F040")])
 RoUS_Commodity_Output$Output <- RoUS_Commodity_Output$Output - MakeUseDiff
@@ -135,10 +133,10 @@ SoIRoUS_2r_list <- list("US Domestic Use" = cbind(rownames(US_Domestic_Use),
                         "Validation" = cbind(rownames(validation), validation))
 writexl::write_xlsx(SoIRoUS_2r_list, paste0(state_abb, "_2r_Use_new.xlsx"), format_headers = FALSE)
 
-GA_2r <- generateDomestic2RegionUse("Georgia", 2012, 2012, "Summary")
-MN_2r <- generateDomestic2RegionUse("Minnesota", 2012, 2012, "Summary")
-OR_2r <- generateDomestic2RegionUse("Oregon", 2012, 2012, "Summary")
-WA_2r <- generateDomestic2RegionUse("Washington", 2012, 2012, "Summary")
+GA_2r <- generateTwoRegionDomesticUse("Georgia", 2012, 2012, "Summary")
+MN_2r <- generateTwoRegionDomesticUse("Minnesota", 2012, 2012, "Summary")
+OR_2r <- generateTwoRegionDomesticUse("Oregon", 2012, 2012, "Summary")
+WA_2r <- generateTwoRegionDomesticUse("Washington", 2012, 2012, "Summary")
 
 writexl::write_xlsx(list("GA2GA" = cbind(rownames(GA_2r$SoI2SoI), GA_2r$SoI2SoI),
                          "RoUS2RoUS" = cbind(rownames(GA_2r$RoUS2RoUS), GA_2r$RoUS2RoUS),

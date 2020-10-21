@@ -7,7 +7,7 @@
 generateTwoRegionDomesticUse <- function(state, year, ioschema, iolevel) {
   # 1 - Load state domestic Use for the specified year
   load(paste0("data/State_Summary_DomesticUse_", year, ".rda"))
-  SoI_Domestic_Use <- State_Summary_DomesticUse[gsub("\\..*", "", rownames(State_Summary_DomesticUse))==state, ]
+  SoI_Domestic_Use <- State_Summary_DomesticUse_list[[state]]
   # Load BEA schema_info based on iolevel
   SchemaInfoFile <- paste0(ioschema, "_", iolevel, "_Schema_Info.csv")
   SchemaInfo <- utils::read.table(system.file("extdata", SchemaInfoFile, package = "useeior"),
@@ -19,7 +19,7 @@ generateTwoRegionDomesticUse <- function(state, year, ioschema, iolevel) {
   ExportCodes <- getVectorOfCodes(iolevel, "Export")
   
   # 2 - Generate 2-region ICFs
-  ICF <- generateDomestic2RegionICFs(state, year, remove_scrap = FALSE, ioschema = 2012, iolevel = "Summary")
+  ICF <- generateDomestic2RegionICFs(state, year, remove_scrap = FALSE, ioschema = 2012, iolevel = iolevel)
   
   # 3 - Generate SoI2SoI domestic Use
   SoI2SoI_Use <- SoI_Domestic_Use
@@ -34,13 +34,11 @@ generateTwoRegionDomesticUse <- function(state, year, ioschema, iolevel) {
   
   # 4 - Generate RoUS domestic Use and commodity output
   # RoUS domestic Use
-  US_Domestic_Use <- estimateUSDomesticUse("Summary", year)
+  US_Domestic_Use <- estimateUSDomesticUse(iolevel, year)
   RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
   # RoUS Commodity Output
-  US_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
-  US_MakeTransaction <- US_Make[-which(rownames(US_Make)=="Total Commodity Output"),
-                                -which(colnames(US_Make)=="Total Industry Output")]
-  US_Commodity_Output <- colSums(US_MakeTransaction)
+  US_Make <- getNationalMake(iolevel, year)
+  US_Commodity_Output <- colSums(US_Make)
   RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
   colnames(RoUS_Commodity_Output) <- "Output"
   # Adjust RoUS_Commodity_Output
@@ -142,4 +140,79 @@ generateTwoRegionDomesticUse <- function(state, year, ioschema, iolevel) {
   Domestic2RegionUse[["Validation"]] <- validation
   return(Domestic2RegionUse)
 }
+
+calcualteTwoRegionAmatrix <- function(state, year, ioschema, iolevel) {
+  # SoI Make
+  industries <- getVectorOfCodes(iolevel, "Industry")
+  commodities <- getVectorOfCodes(iolevel, "Commodity")
+  SoI_Make <- State_Summary_MakeTransaction_balanced[paste(state, industries, sep = "."),
+                                                     commodities]
+  # SoI commodity output
+  SoI_Commodity_Output <- State_Summary_CommodityOutput_list[[state]]
+  # SoI A matrix
+  SoI_A <- sweep(SoI_Make, 2, SoI_Commodity_Output$Output, `/`)
+  
+  # RoUS Make
+  US_Make <- getNationalMake(iolevel, year)
+  RoUS_Make <- US_Make - SoI_Make
+  # RoUS domestic Use
+  load(paste0("data/State_Summary_DomesticUse_", year, ".rda"))
+  SoI_Domestic_Use <- State_Summary_DomesticUse_list[[state]]
+  columns <- colnames(SoI_Domestic_Use)[!colnames(SoI_Domestic_Use)%in%c("F040", "F050")]
+  US_Domestic_Use <- estimateUSDomesticUse("Summary", year)
+  RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
+  # RoUS commodity output
+  US_Commodity_Output <- colSums(US_Make)
+  RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
+  colnames(RoUS_Commodity_Output) <- "Output"
+  # Adjust RoUS_Commodity_Output
+  MakeUseDiff <- US_Commodity_Output - rowSums(US_Domestic_Use[, c(columns, "F040")])
+  RoUS_Commodity_Output$Output <- RoUS_Commodity_Output$Output - MakeUseDiff
+  # SoI A matrix
+  RoUS_A <- sweep(RoUS_Make, 2, RoUS_Commodity_Output$Output, `/`)
+  
+  # Two-region A matrix
+  ls <- generateTwoRegionDomesticUse(state, year, ioschema, iolevel)
+  SoI_Industry_Output <- State_Summary_IndustryOutput_list[[state]]
+  RoUS_Industry_Output <- rowSums(US_Make) - SoI_Industry_Output
+  SoI2SoI_A <- sweep(ls[["SoI2SoI"]][, industries], 2, SoI_Industry_Output$Output, `/`)
+  RoUS2SoI_A <- sweep(ls[["RoUS2SoI"]][, industries], 2, SoI_Industry_Output$Output, `/`)
+  SoI2RoUS_A <- sweep(ls[["SoI2RoUS"]][, industries], 2, RoUS_Industry_Output$Output, `/`)
+  RoUS2RoUS_A <- sweep(ls[["RoUS2RoUS"]][, industries], 2, RoUS_Industry_Output$Output, `/`)
+  
+  # Assemble A matrix
+  A_top <- cbind(diag(rep(0, length(commodities)*2)),
+                 cbind(rbind(SoI2SoI_A, RoUS2SoI_A),
+                       rbind(SoI2RoUS_A, RoUS2RoUS_A)))
+  A_btm <- cbind.data.frame(as.matrix(Matrix::bdiag(list(as.matrix(SoI_A),
+                                              as.matrix(RoUS_A)))),
+                            diag(rep(0, length(industries)*2)))
+  A <- as.matrix(rbind(A_top, setNames(A_btm, colnames(A_top))))
+  rownames(A) <- paste(c(rep(c(state, "RoUS"), each = length(commodities)),
+                         rep(c(state, "RoUS"), each = length(industries))),
+                       c(rep(commodities, 2), rep(industries, 2)),
+                       c(rep("Commodity", length(commodities)*2),
+                         rep("Industry", length(industries)*2)),
+                       sep = ".")
+  colnames(A) <- rownames(A)
+  A[is.na(A)] <- 0
+  A[is.infinite(A)] <- 0
+  
+  # Calculate L matrix
+  I <- diag(nrow(A))
+  L <- solve(I - A)
+  
+  # Calculate Final Demand (y)
+  SoI_y <- rowSums(SoI_Domestic_Use[, getFinalDemandCodes("Summary")])
+  RoUS_y <- rowSums(RoUS_Domestic_Use[, getFinalDemandCodes("Summary")])
+  y <- c(SoI_y, RoUS_y, rep(0, length(industries)*2))
+  
+  # Validate L * y == Output
+  validation <- L %*% y - c(SoI_Commodity_Output$Output,
+                            RoUS_Commodity_Output$Output,
+                            SoI_Industry_Output$Output,
+                            RoUS_Industry_Output$Output)
+  colnames(validation) <- "L*y-output"
+}
+
 

@@ -183,11 +183,9 @@ calculateStateIndustryOutputbyLineCode <- function(year) {
   # Generate state_US_VA_ratio_LineCode
   state_US_VA_ratio_LineCode <- calculateStateUSVARatiobyLineCode(year)
   # Get US Industry Output from US Make table
-  US_Summary_Make <- get(paste("Summary_Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
-  US_Summary_MakeTrasaction <- US_Summary_Make[-which(rownames(US_Summary_Make)=="Total Commodity Output"),
-                                               -which(colnames(US_Summary_Make)=="Total Industry Output")]
-  # Sum US_Summary_MakeTrasaction by row to get US_Summary_IndustryOutput
-  USGrossOutput <- as.data.frame(rowSums(US_Summary_MakeTrasaction))
+  US_Summary_Make <- getNationalMake("Summary", year)
+  # Sum US_Summary_Make by row to get US_Summary_IndustryOutput
+  USGrossOutput <- as.data.frame(rowSums(US_Summary_Make))
   colnames(USGrossOutput) <- as.character(year)
   # Load State GDP to BEA Summary sector-mapping table
   BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
