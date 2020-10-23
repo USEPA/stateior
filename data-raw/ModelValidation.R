@@ -350,4 +350,144 @@ for (state in states) {
 }
 
 #' 16. Non-square model verification
-
+#' Validate L matrix of two-region model and final demand against SoI and RoUS output.
+#' @param state A text value specifying state of interest.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @return A list of validation components and result.
+validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
+  # Define industries and commodities
+  industries <- getVectorOfCodes(iolevel, "Industry")
+  commodities <- getVectorOfCodes(iolevel, "Commodity")
+  logging::loginfo("Generating A matrix of SoI Make table ...")
+  # SoI Make
+  load(paste0("data/State_", iolevel, "_Make_", year, ".rda"))
+  SoI_Make <- State_Summary_Make_list[[state]]
+  # SoI commodity output
+  load(paste0("data/State_", iolevel, "_CommodityOutput_", year, ".rda"))
+  SoI_Commodity_Output <- State_Summary_CommodityOutput_list[[state]]
+  # SoI A matrix
+  SoI_A <- useeior::normalizeIOTransactions(SoI_Make, SoI_Commodity_Output$Output)
+  # Check column sums of SoI_A
+  if (all(abs(colSums(SoI_A)-1)<1E-3)) {
+    logging::loginfo("FACT CHECK: column sums of A matrix of SoI Make table == 1.")
+  } else {
+    logging::logwarn("Column sums of A matrix of SoI Make table != 1")
+  }
+  
+  logging::loginfo("Generating A matrix of RoUS Make table ...")
+  # RoUS Make
+  US_Make <- getNationalMake(iolevel, year)
+  RoUS_Make <- US_Make - SoI_Make
+  # RoUS domestic Use
+  load(paste0("data/State_", iolevel, "_DomesticUse_", year, ".rda"))
+  SoI_Domestic_Use <- State_Summary_DomesticUse_list[[state]]
+  columns <- colnames(SoI_Domestic_Use)[!colnames(SoI_Domestic_Use)%in%c("F040", "F050")]
+  US_Domestic_Use <- estimateUSDomesticUse("Summary", year)
+  RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
+  # RoUS commodity output
+  US_Commodity_Output <- colSums(US_Make)
+  RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
+  colnames(RoUS_Commodity_Output) <- "Output"
+  # Adjust RoUS_Commodity_Output
+  MakeUseDiff <- US_Commodity_Output - rowSums(US_Domestic_Use[, c(columns, "F040")])
+  RoUS_Commodity_Output$Output <- RoUS_Commodity_Output$Output - MakeUseDiff
+  # SoI A matrix
+  RoUS_A <- useeior::normalizeIOTransactions(RoUS_Make, RoUS_Commodity_Output$Output)
+  # Check column sums of RoUS_A
+  if (all(abs(colSums(RoUS_A)-1)<1E-3)) {
+    logging::loginfo("FACT CHECK: column sums of A matrix of RoUS Make table == 1.")
+  } else {
+    logging::logwarn("Column sums of A matrix of RoUS Make table != 1")
+  }
+  
+  # Two-region A matrix
+  logging::loginfo("Generating two-region Domestic Use tables ...")
+  ls <- generateTwoRegionDomesticUse(state, year, ioschema, iolevel)
+  load(paste0("data/State_", iolevel, "_IndustryOutput_", year, ".rda"))
+  SoI_Industry_Output <- State_Summary_IndustryOutput_list[[state]]
+  RoUS_Industry_Output <- rowSums(US_Make) - SoI_Industry_Output
+  
+  logging::loginfo("Generating A matrix of SoI2SoI Domestic Use table ...")
+  SoI2SoI_A <- useeior::normalizeIOTransactions(ls[["SoI2SoI"]][, industries],
+                                                SoI_Industry_Output$Output)
+  # Check column sums of SoI2SoI_A
+  if (all(colSums(SoI2SoI_A)!=1)) {
+    logging::loginfo("FACT CHECK: column sums of A matrix of SoI2SoI Domestic Use table != 1.")
+  } else {
+    logging::logwarn("There are column sums of A matrix of SoI2SoI Domestic Use table == 1")
+  }
+  
+  logging::loginfo("Generating A matrix of RoUS2SoI Domestic Use table ...")
+  RoUS2SoI_A <- useeior::normalizeIOTransactions(ls[["RoUS2SoI"]][, industries],
+                                                 SoI_Industry_Output$Output)
+  # Check column sums of SoI2SoI_A
+  if (all(colSums(RoUS2SoI_A)!=1)) {
+    logging::loginfo("FACT CHECK: column sums of A matrix of RoUS2SoI Domestic Use table != 1.")
+  } else {
+    logging::logwarn("There are column sums of A matrix of RoUS2SoI Domestic Use table == 1")
+  }
+  
+  logging::loginfo("Generating A matrix of SoI2RoUS Domestic Use table ...")
+  SoI2RoUS_A <- useeior::normalizeIOTransactions(ls[["SoI2RoUS"]][, industries],
+                                                 RoUS_Industry_Output$Output)
+  # Check column sums of SoI2SoI_A
+  if (all(colSums(SoI2RoUS_A)!=1)) {
+    logging::loginfo("FACT CHECK: column sums of A matrix of SoI2RoUS Domestic Use table != 1.")
+  } else {
+    logging::logwarn("There are column sums of A matrix of SoI2RoUS Domestic Use table == 1")
+  }
+  
+  logging::loginfo("Generating A matrix of RoUS2RoUS Domestic Use table ...")
+  RoUS2RoUS_A <- useeior::normalizeIOTransactions(ls[["RoUS2RoUS"]][, industries],
+                                                  RoUS_Industry_Output$Output)
+  # Check column sums of SoI2SoI_A
+  if (all(colSums(RoUS2RoUS_A)!=1)) {
+    logging::loginfo("FACT CHECK: column sums of A matrix of RoUS2RoUS Domestic Use table != 1.")
+  } else {
+    logging::logwarn("There are column sums of A matrix of RoUS2RoUS Domestic Use table == 1")
+  }
+  
+  logging::loginfo("Assembling the complete A matrix ...")
+  # Assemble A matrix
+  A_top <- cbind(diag(rep(0, length(commodities)*2)),
+                 cbind(rbind(SoI2SoI_A, RoUS2SoI_A),
+                       rbind(SoI2RoUS_A, RoUS2RoUS_A)))
+  colnames(A_top) <- c(1:ncol(A_top))
+  A_btm <- cbind.data.frame(as.matrix(Matrix::bdiag(list(as.matrix(SoI_A),
+                                                         as.matrix(RoUS_A)))),
+                            diag(rep(0, length(industries)*2)))
+  A <- as.matrix(rbind(A_top, setNames(A_btm, colnames(A_top))))
+  rownames(A) <- paste(c(rep(c(state, "RoUS"), each = length(commodities)),
+                         rep(c(state, "RoUS"), each = length(industries))),
+                       c(rep(commodities, 2), rep(industries, 2)),
+                       c(rep("Commodity", length(commodities)*2),
+                         rep("Industry", length(industries)*2)),
+                       sep = ".")
+  colnames(A) <- rownames(A)
+  
+  logging::loginfo("Generating the L matrix ...")
+  # Calculate L matrix
+  I <- diag(nrow(A))
+  L <- solve(I - A)
+  
+  logging::loginfo("Calculating y (Final Dmand totals) of SoI and RoUS ...")
+  # Calculate Final Demand (y)
+  SoI_y <- rowSums(SoI_Domestic_Use[, getFinalDemandCodes("Summary")])
+  RoUS_y <- rowSums(RoUS_Domestic_Use[, getFinalDemandCodes("Summary")])
+  y <- c(SoI_y, RoUS_y, rep(0, length(industries)*2))
+  names(y) <- rownames(L)
+  
+  logging::loginfo("Validating L*y == industry and commodity output ...")
+  # Validate L * y == Output
+  validation <- as.data.frame(L %*% y - c(SoI_Commodity_Output$Output,
+                                          RoUS_Commodity_Output$Output,
+                                          SoI_Industry_Output$Output,
+                                          RoUS_Industry_Output$Output))
+  colnames(validation) <- "L*y-output"
+  
+  logging::loginfo("Validation complete.")
+  return(list(A = A, L = L, y = y, Validation = validation))
+}
+GA_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Georgia", year = 2012, ioschema = 2012, "Summary")
