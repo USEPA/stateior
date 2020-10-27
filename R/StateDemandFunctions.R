@@ -78,7 +78,7 @@ calculateStateCommodityOutputRatio <- function(year) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param return A character string showing which attribute to return. 'comp', 'tax', 'gos'
 #' @return A data frame contains adjusted EmpComp, Tax, GOS, and GDP
-AdjustGDPComponent <- function(year, return) {
+adjustGDPComponent <- function(year, return) {
   #load data
   gdp <- getStateGDP(year)
   comp <- getStateEmpCompensation(year)
@@ -109,7 +109,7 @@ AdjustGDPComponent <- function(year, return) {
     dplyr::group_by(LineCode) %>%
     dplyr::summarise(avgCompRatio = mean(compRatio), avgGOSRatio = mean(gosRatio))
   ## Step 2: assign new EmpComp and GOS value to NAs
-  position <- which(is.na(compareTable$comp) == TRUE)
+  position <- which(is.na(compareTable$EmpCompensation) == TRUE)
   for (i in position) {
     if (compareTable$GDP[i] != 0) {
       compareTable$EmpCompensation[i] <- compareTable$GDP[i] * ratioTable[ratioTable$LineCode == compareTable$LineCode[i],]$avgCompRatio
@@ -138,6 +138,8 @@ AdjustGDPComponent <- function(year, return) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains Summary-level value added (V001, V002, V003) for all states at a specific year.
 assembleStateValueAdded <- function(year) {
+  US_Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  industries <- getVectorOfCodes(iolevel, "Industry")
   StateValueAdded <- data.frame()
   for (sector in c("EmpCompensation", "Tax", "GOS")) {
     # Generate Value Added tables by BEA
@@ -153,13 +155,42 @@ assembleStateValueAdded <- function(year) {
     # Calculate Value Added for Overseas
     df["Overseas", ] <- df[rownames(df)=="United States *", ] - colSums(df[rownames(df)!="United States *", ])
     # Drop US values
-    df <- df[rownames(df)!="United States *", ]
+    df <- df[rownames(df)!="United States *", industries]
     # Modify row names
     sector_code <- ifelse(sector=="EmpCompensation", "V001",
                           ifelse(sector=="Tax", "V002",
                                  ifelse(sector=="GOS", "V003")))
-    rownames(df) <- paste(rownames(df), sector_code, sep = ".")
-    StateValueAdded <- rbind(StateValueAdded, df)
+    BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
+                                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+    # Determine BEA line codes and sectors where ratios need adjustment
+    allocation_sectors <- BEAStateGDPtoBEASummary[duplicated(BEAStateGDPtoBEASummary$LineCode) |
+                                                    duplicated(BEAStateGDPtoBEASummary$LineCode, fromLast = TRUE), ]
+    # Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors
+    for (linecode in unique(allocation_sectors$LineCode)) {
+      # Determine BEA sectors that need allocation
+      BEA_sectors <- allocation_sectors[allocation_sectors$LineCode==linecode, "BEA_2012_Summary_Code"]
+      # Create m0
+      m0 <- as.matrix(df[, BEA_sectors])
+      # Create t_r
+      GDPComponent <- adjustGDPComponent(year, sector)
+      GDPComponent <- reshape2::dcast(GDPComponent, GeoName ~ LineCode, value.var = as.character(year))
+      rownames(GDPComponent) <- GDPComponent$GeoName
+      GDPComponent$GeoName <- NULL
+      GDPComponent["Overseas", ] <- GDPComponent[rownames(GDPComponent)=="United States *", ] -
+        colSums(GDPComponent[rownames(GDPComponent)!="United States *", ])
+      t_r <- GDPComponent[rownames(m0), linecode]
+      # Create t_c
+      t_c <- as.numeric(US_Use[sector_code, BEA_sectors])
+      # Apply RAS
+      m <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1, max_itr = 1E6)
+      # Replace values in df with m
+      df[rownames(m), colnames(m)] <- m
+    }
+    # Allocate US value added to states by values in df
+    df_ratio <- sweep(df, 2, colSums(df), FUN = "/")
+    StateValueAdded_sector <- sweep(df_ratio, 2, as.numeric(US_Use[sector_code, industries]), FUN = "*")
+    rownames(StateValueAdded_sector) <- paste(rownames(StateValueAdded_sector), sector_code, sep = ".")
+    StateValueAdded <- rbind(StateValueAdded, StateValueAdded_sector)
   }
   return (StateValueAdded)
 }
