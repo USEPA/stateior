@@ -474,9 +474,12 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   
   logging::loginfo("Calculating y (Final Dmand totals) of SoI and RoUS ...")
   # Calculate Final Demand (y)
-  SoI_y <- rowSums(SoI_Domestic_Use[, getFinalDemandCodes("Summary")])
-  RoUS_y <- rowSums(RoUS_Domestic_Use[, getFinalDemandCodes("Summary")])
-  y <- c(SoI_y, RoUS_y, rep(0, length(industries)*2))
+  FD_columns <- getFinalDemandCodes("Summary")
+  SoI2SoI_y   <- rowSums(ls[["SoI2SoI"]][, FD_columns])
+  SoI2RoUS_y  <- rowSums(ls[["SoI2RoUS"]][, FD_columns])
+  RoUS2SoI_y  <- rowSums(ls[["RoUS2SoI"]][, FD_columns])
+  RoUS2RoUS_y <- rowSums(ls[["RoUS2RoUS"]][, FD_columns])
+  y <- c(SoI2SoI_y + SoI2RoUS_y, RoUS2SoI_y + RoUS2RoUS_y, rep(0, length(industries)*2))
   names(y) <- rownames(L)
   
   logging::loginfo("Validating L*y == industry and commodity output ...")
