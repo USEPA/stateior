@@ -2,7 +2,7 @@
 % Please edit documentation in R/BuildModel.R
 \name{buildStateDemandModel}
 \alias{buildStateDemandModel}
-\title{Build a state demand model for all 52 states/regions (including DC and Overseas) for a given year.}
+\title{Build a state demand model for all 52 states/regions (including DC and Overseas) for a given year}
 \usage{
 buildStateDemandModel(year)
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/BuildModel.R
 \name{buildStateSupplyModel}
 \alias{buildStateSupplyModel}
-\title{Build a state supply model for all 52 states/regions (including DC and Overseas) for a given year.}
+\title{Build a state supply model for all 52 states/regions (including DC and Overseas) for a given year}
 \usage{
 buildStateSupplyModel(year)
 }

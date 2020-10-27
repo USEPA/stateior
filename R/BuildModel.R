@@ -1,7 +1,8 @@
-#' Build a state supply model for all 52 states/regions (including DC and Overseas) for a given year.
+#' Build a state supply model for all 52 states/regions (including DC and Overseas) for a given year
+#' @description Build a state supply model for all 52 states/regions (including DC and Overseas) for a given year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @export
 #' @return A list of state supply model components: Make table, commodity and industry output.
+#' @export
 buildStateSupplyModel <- function(year) {
   logging::loginfo("Loading RAS-balanced state-to-US GDP ratios ...")
   load(paste0("data/StateUS_VAratio_", year, ".rda"))
@@ -112,10 +113,11 @@ buildStateSupplyModel <- function(year) {
   return(model)
 }
 
-#' Build a state demand model for all 52 states/regions (including DC and Overseas) for a given year.
+#' Build a state demand model for all 52 states/regions (including DC and Overseas) for a given year
+#' @description Build a state demand model for all 52 states/regions (including DC and Overseas) for a given year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @export
 #' @return A list of state demand model components: Use table and Domestic Use table.
+#' @export
 buildStateDemandModel <- function(year) {
   logging::loginfo("Loading state and US industry output ...")
   # State industry output
