@@ -181,7 +181,7 @@ for (state in states) {
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
+  ls <- buildTwoRegionStateDemandModel(state, year = 2012, ioschema = 2012, "Summary")
   df <- cbind(ls[["SoI2SoI"]][, c("InterregionalImports", "InterregionalExports")],
               ls[["RoUS2RoUS"]][, c("InterregionalImports", "InterregionalExports")])
   df <- as.data.frame(sapply(df, round, 1))
@@ -198,7 +198,7 @@ for (state in states) {
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
+  ls <- buildTwoRegionStateDemandModel(state, year = 2012, ioschema = 2012, "Summary")
   df <- ls[["SoI2SoI"]][, "NetExports", drop = FALSE] + ls[["RoUS2RoUS"]][, "NetExports", drop = FALSE]
   df <- as.data.frame(sapply(df, round, 1))
   rule <- validate::validator(df == 0)
@@ -214,7 +214,7 @@ for (state in states) {
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
+  ls <- buildTwoRegionStateDemandModel(state, year = 2012, ioschema = 2012, "Summary")
   columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
   df <- cbind.data.frame(rowSums(ls[["SoI2SoI"]][, columns]),
                          rowSums(ls[["RoUS2RoUS"]][, columns]))
@@ -248,7 +248,7 @@ baseline <- extractValidationResult(confrontation, failure = FALSE)
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
+  ls <- buildTwoRegionStateDemandModel(state, year = 2012, ioschema = 2012, "Summary")
   columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
   # SoI
   df_SoI <- ls[["SoI2SoI"]][, columns]
@@ -282,7 +282,7 @@ for (state in states) {
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
+  ls <- buildTwoRegionStateDemandModel(state, year = 2012, ioschema = 2012, "Summary")
   df0 <- ls[["SoI2SoI"]][, "InterregionalImports", drop = FALSE]
   df1 <- ls[["RoUS2RoUS"]][, "InterregionalExports", drop = FALSE]
   rule <- validate::validator(abs(df1-df0) <= 1E-3)
@@ -305,7 +305,7 @@ for (state in states) {
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
+  ls <- buildTwoRegionStateDemandModel(state, year = 2012, ioschema = 2012, "Summary")
   columns <- c(getVectorOfCodes("Summary", "Industry"),
                setdiff(getFinalDemandCodes("Summary"),
                        getVectorOfCodes("Summary", "Import")),
@@ -335,7 +335,7 @@ baseline <- extractValidationResult(confrontation, failure = FALSE)
 failure_list <- list()
 for (state in states) {
   # Prepare domestic 2-region Use tables
-  ls <- generateTwoRegionDomesticUse(state, year = 2012, ioschema = 2012, "Summary")
+  ls <- buildTwoRegionStateDemandModel(state, year = 2012, ioschema = 2012, "Summary")
   columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
   for (table in names(ls)[1:4]) {
     df <- ls[[table]][, columns]
@@ -404,7 +404,7 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   
   # Two-region A matrix
   logging::loginfo("Generating two-region Domestic Use tables ...")
-  ls <- generateTwoRegionDomesticUse(state, year, ioschema, iolevel)
+  ls <- buildTwoRegionStateDemandModel(state, year, ioschema, iolevel)
   load(paste0("data/State_", iolevel, "_IndustryOutput_", year, ".rda"))
   SoI_Industry_Output <- State_Summary_IndustryOutput_list[[state]]
   RoUS_Industry_Output <- rowSums(US_Make) - SoI_Industry_Output
@@ -494,3 +494,6 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   return(list(A = A, L = L, y = y, Validation = validation))
 }
 GA_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Georgia", year = 2012, ioschema = 2012, "Summary")
+MN_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Minnesota", year = 2012, ioschema = 2012, "Summary")
+OR_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Oregon", year = 2012, ioschema = 2012, "Summary")
+WA_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Washington", year = 2012, ioschema = 2012, "Summary")

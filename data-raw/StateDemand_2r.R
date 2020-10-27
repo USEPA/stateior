@@ -1,8 +1,8 @@
 # Create 2-region Use tables for specified state and year
-GA_2r <- generateTwoRegionDomesticUse("Georgia", year = 2012, ioschema = 2012, "Summary")
-MN_2r <- generateTwoRegionDomesticUse("Minnesota", year = 2012, ioschema = 2012, "Summary")
-OR_2r <- generateTwoRegionDomesticUse("Oregon", year = 2012, ioschema = 2012, "Summary")
-WA_2r <- generateTwoRegionDomesticUse("Washington", year = 2012, ioschema = 2012, "Summary")
+GA_2r <- buildTwoRegionStateDemandModel("Georgia", year = 2012, ioschema = 2012, "Summary")
+MN_2r <- buildTwoRegionStateDemandModel("Minnesota", year = 2012, ioschema = 2012, "Summary")
+OR_2r <- buildTwoRegionStateDemandModel("Oregon", year = 2012, ioschema = 2012, "Summary")
+WA_2r <- buildTwoRegionStateDemandModel("Washington", year = 2012, ioschema = 2012, "Summary")
 
 # Write 2-region Use tables to .xlsx file
 writexl::write_xlsx(list("GA2GA" = cbind(rownames(GA_2r$SoI2SoI), GA_2r$SoI2SoI),
