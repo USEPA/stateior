@@ -26,7 +26,7 @@ getStateGDP <- function(year) {
 #' @return A data frame contains state value for all states with row names being BEA sector code.
 mapStateTabletoBEASummary <- function(statetablename, year) {
   # Load and adjust State tables
-  StateTable <- AdjustGDPComponent(year, statetablename)
+  StateTable <- adjustGDPComponent(year, statetablename)
   # Load State GDP to BEA Summary sector-mapping table
   BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
@@ -465,11 +465,7 @@ finalizeStateUSValueAddedRatio <- function(year) {
     colnames(EstimatedStateIndustryOutput) <- names(State_Summary_IndustryOutput_list)
     m0 <- as.matrix(EstimatedStateIndustryOutput[BEA_sectors, ])
     # Apply RAS
-    if (linecode=="35") {
-      m <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 0, max_itr = 1E6)
-    } else {
-      m <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1, max_itr = 1E6)
-    }
+    m <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1, max_itr = 1E6)
     # Re-calculate state_US_VA_ratio for the disaggregated sectors
     state_US_VA_ratio_linecode <- m/rowSums(m)
     # Replace the ratio values in state_US_VA_ratio with the re-calculated ratio
