@@ -186,7 +186,9 @@ buildStateDemandModel <- function(year) {
   
   logging::loginfo("Assembling state use table (intermediate consumption + final demand) ...")
   logging::loginfo("Estimating state domestic use table ...")
+  logging::loginfo("Appending value added to state Use tables ...")
   Domestic_Use_ratios <- calculateUSDomesticUseRatioMatrix("Summary", year)
+  load(paste0("data/State_ValueAdded_", year, ".rda"))
   model <- list()
   for (state in states) {
     # Assemble state Use table
@@ -197,6 +199,10 @@ buildStateDemandModel <- function(year) {
     State_Summary_DomesticUse <- State_Summary_Use*Domestic_Use_ratios
     # Update Import in state Use table
     State_Summary_Use$F050 <- rowSums(State_Summary_DomesticUse) - rowSums(State_Summary_Use)
+    # Append value added rows to state Use tables
+    VA <- State_Value_Added[gsub("\\..*", "", rownames(State_Value_Added))==state, ]
+    rownames(VA) <- gsub(".*\\.", "", rownames(VA))
+    State_Summary_Use[rownames(VA), getVectorOfCodes("Summary", "Industry")] <- VA
     model[["Use"]][[state]] <- State_Summary_Use
     model[["DomesticUse"]][[state]] <- State_Summary_DomesticUse
   }
