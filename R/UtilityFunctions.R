@@ -105,12 +105,13 @@ estimateUSDomesticUse <- function(iolevel, year) {
   ImportCost <- Use[, ImportCode] - Import[, ImportCode]
   # Estimate DomesticUse
   DomesticUse <- Use
-  for (i in 1:nrow(Use)) {
-    # Calculate row_sum of Use, except for Export and Import, for allocating ImportCost
-    row_sum <- rowSums(Use[i, ]) - (Use[i, ExportCode] + Use[i, ImportCode])
-    # Subtract Import from Use, then allocate ImportCost to each Industry (column), except for Export and Import
-    DomesticUse[i, ] <- Use[i, ] - Import[i, ] + ImportCost[i] * (Use[i, ]/row_sum)
-  }
+  # Calculate row_sum of Use, except for Export and Import, for allocating ImportCost
+  row_sum <- rowSums(Use) - (Use[, ExportCode] + Use[, ImportCode])
+  # Calculate allocation ratios
+  ratio <- sweep(Use, 1, FUN = "/", row_sum)
+  ratio[is.na(ratio)] <- 0
+  # Subtract Import from Use, then allocate ImportCost to each Industry (column), except for Export and Import
+  DomesticUse <- Use - Import + sweep(ratio, 1, FUN = "*", ImportCost)
   # Adjust Export and Import columns
   DomesticUse[, ExportCode] <- Use[, ExportCode]
   DomesticUse[, ImportCode] <- 0
