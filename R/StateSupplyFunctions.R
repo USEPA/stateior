@@ -251,7 +251,7 @@ getStateEmploymentbyBEASummary <- function(year) {
   BLS_QCEW <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Summary")
   BLS_QCEW$FIPS <- as.numeric(substr(BLS_QCEW$FIPS, 1, 2))
   FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
-                                  sep = ",", header = TRUE, check.names = FALSE)
+                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   BLS_QCEW <- merge(BLS_QCEW, FIPS_STATE, by.x = "FIPS", by.y = "State_FIPS")
   # Prioritize BEAStateEmployment, replace NAs in Emp with values from BLS_QCEW
   StateEmployment <- merge(BEAStateEmployment, BLS_QCEW, by = c("State", "BEA_2012_Summary_Code"))
@@ -268,7 +268,7 @@ getStateEmploymentbyBEASummary <- function(year) {
 getAgFisheryForestryCommodityOutput <- function(year) {
   # Load state FIPS
   FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
-                                  sep = ",", header = TRUE, check.names = FALSE)
+                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Load USDA_ERS_FIWS data from flowsa
   USDA_ERS_FIWS <- loadDatafromFLOWSA("Money", year, "USDA_ERS_FIWS")
   # Select All Commodities as Ag products
@@ -316,7 +316,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
 getFAFCommodityOutput <- function(year) {
   # Load state FIPS
   FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
-                                  sep = ",", header = TRUE, check.names = FALSE)
+                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Load pre-saved FAF4 commodity flow data
   FAF <- get(paste("FAF", year, sep = "_"))
   # Keep domestic and export trade, keep useful columns, then rename
@@ -329,7 +329,7 @@ getFAFCommodityOutput <- function(year) {
   # Map FAF from SCTG to BEA Summary commodities
   # Load SCTGtoBEA mapping table
   SCTGtoBEA <- utils::read.table(system.file("extdata", "Crosswalk_SCTGtoBEA.csv", package = "stateior"),
-                                 sep = ",", header = TRUE, check.names = FALSE)
+                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   SCTGtoBEASummary <- unique(SCTGtoBEA[, c("SCTG", "BEA_2012_Summary_Code")])
   FAF <- merge(FAF, SCTGtoBEASummary, by = "SCTG")
   # Determine BEA sectors that need allocation
@@ -358,8 +358,10 @@ getFAFCommodityOutput <- function(year) {
     FAF_state_1 <- FAF_state[!FAF_state$SCTG%in%allocation_sectors$SCTG, ]
     FAF_state_2 <- FAF_state[FAF_state$SCTG%in%allocation_sectors$SCTG, ]
     # Step 2.1. Aggregate FAF_state_1 by BEA industries
-    FAF_state_1 <- stats::aggregate(FAF_state_1$Value,by = list(FAF_state_1$State,
-                                                                FAF_state_1$BEA_2012_Summary_Code), sum)
+    FAF_state_1 <- stats::aggregate(FAF_state_1$Value,
+                                    by = list(FAF_state_1$State,
+                                              FAF_state_1$BEA_2012_Summary_Code),
+                                    sum)
     colnames(FAF_state_1) <- c("State", "BEA_2012_Summary_Code", "Value")
     # Step 2.2. Allocate FAF_state_2 from SCTG to BEA using BEA state employment
     Emp <- StateEmp[StateEmp$State==state, ]
@@ -380,8 +382,10 @@ getFAFCommodityOutput <- function(year) {
     # Combine FAF_state_1 and FAF_state_2
     FAF_state_new <- rbind(FAF_state_1, FAF_state_2)
     # Aggregate by BEA
-    FAF_state_new <- aggregate(FAF_state_new$Value, by = list(FAF_state_new$State,
-                                                              FAF_state_new$BEA_2012_Summary_Code), sum)
+    FAF_state_new <- aggregate(FAF_state_new$Value,
+                               by = list(FAF_state_new$State,
+                                         FAF_state_new$BEA_2012_Summary_Code),
+                               sum)
     colnames(FAF_state_new) <- colnames(FAF_state_1)
     FAF_state_list[[state]] <- FAF_state_new
   }

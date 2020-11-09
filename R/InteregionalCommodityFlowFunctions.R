@@ -11,7 +11,7 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
   # Load the cluster mapping for NAICS to Traded/Local (from clustermapping.us)
   clustermapping <- "Crosswalk_ClusterMappingNAICStoTradedorLocal.csv"
   NAICStoTradedorLocal <- utils::read.table(system.file("extdata", clustermapping, package = "stateior"),
-                                            sep = ",", header = TRUE, check.names = FALSE)
+                                            sep = ",", header = TRUE, check.names = FALSE, stringsAsFactors = FALSE)
   # Map NAICStoTradedorLocal to BEA
   BEAtoTradedorLocal <- merge(unique(useeior::MasterCrosswalk2012[, c("NAICS_2012_Code", bea)]),
                               NAICStoTradedorLocal, by.x = "NAICS_2012_Code", by.y = "NAICS")
