@@ -134,13 +134,14 @@ adjustGDPComponent <- function(year, return) {
   return(output)
 }
 
-#' Assemble Summary-level value added sectors (V001, V002, V003) for all states at a specific year.
+#' Assemble Summary-level gross value added sectors (V001, V002, V003) for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains Summary-level value added (V001, V002, V003) for all states at a specific year.
-assembleStateValueAdded <- function(year) {
+#' #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @return A data frame contains Summary-level gross value added (V001, V002, V003) for all states at a specific year.
+assembleStateGrossValueAdded <- function(year, iolevel) {
   US_Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
   industries <- getVectorOfCodes(iolevel, "Industry")
-  StateValueAdded <- data.frame()
+  StateGVA <- data.frame()
   for (sector in c("EmpCompensation", "Tax", "GOS")) {
     # Generate Value Added tables by BEA
     df <- allocateStateTabletoBEASummary(sector, year, allocationweightsource = "Employment")
@@ -188,11 +189,11 @@ assembleStateValueAdded <- function(year) {
     }
     # Allocate US value added to states by values in df
     df_ratio <- sweep(df, 2, colSums(df), FUN = "/")
-    StateValueAdded_sector <- sweep(df_ratio, 2, as.numeric(US_Use[sector_code, industries]), FUN = "*")
-    rownames(StateValueAdded_sector) <- paste(rownames(StateValueAdded_sector), sector_code, sep = ".")
-    StateValueAdded <- rbind(StateValueAdded, StateValueAdded_sector)
+    StateGVA_sector <- sweep(df_ratio, 2, as.numeric(US_Use[sector_code, industries]), FUN = "*")
+    rownames(StateGVA_sector) <- paste(rownames(StateGVA_sector), sector_code, sep = ".")
+    StateGVA <- rbind(StateGVA, StateGVA_sector)
   }
-  return (StateValueAdded)
+  return (StateGVA)
 }
 
 #' Calculate state total PCE (personal consumption expenditures) at BEA Summary level.
