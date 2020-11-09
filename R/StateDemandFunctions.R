@@ -119,7 +119,7 @@ adjustGDPComponent <- function(year, return) {
       compareTable$GOS[i] <- 0
     }
   }
-  ## Step 3: check row rum and apply adjustment factor to estiamted rows 
+  ## Step 3: check row sum and apply adjustment factor to estiamted rows 
   compareTable <- compareTable %>% dplyr::mutate(dif = GDP - EmpCompensation - Tax - GOS, errorRate = abs(dif) / GDP)
   shrinkfactor <- 1.0 + compareTable$dif[position] / (compareTable$EmpCompensation[position] + compareTable$GOS[position])
   compareTable$EmpCompensation[position] <- compareTable$EmpCompensation[position]*shrinkfactor
