@@ -2,5 +2,3 @@
 
 export(buildStateDemandModel)
 export(buildStateSupplyModel)
-export(writeStateDemandModel)
-export(writeStateSupplyModel)
