@@ -5,7 +5,9 @@
 #' @export
 buildStateSupplyModel <- function(year) {
   logging::loginfo("Loading RAS-balanced state-to-US GDP ratios ...")
-  load(paste0("data/StateUS_VAratio_", year, ".rda"))
+  #load(paste0("data/StateUS_VAratio_", year, ".rda"))
+  StateUS_VA_Ratio <- get(paste0("StateUS_VA_Ratio_", year), as.environment("package:stateior"))
+  states <- unique(StateUS_VA_Ratio$GeoName)
   
   logging::loginfo("Estimating state Make table and commodity output ...")
   # Apply the adjusted VA_ratio to calculate State Summary MakeTransaction, IndustryOutput, and CommodityOutput
@@ -13,12 +15,15 @@ buildStateSupplyModel <- function(year) {
   State_Summary_IndustryOutput_list <- list()
   State_Summary_CommodityOutput_list <- list()
   State_Summary_CommodityOutputRatio_list <- list()
+  US_Summary_MakeTransaction <- getNationalMake("Summary", year)
+  US_Summary_IndustryOutput <- rowSums(US_Summary_MakeTransaction)
+  US_Summary_CommodityOutput <- colSums(US_Summary_MakeTransaction)
   for (state in states) {
-    # Subset the state_US_VA_ratio for specified state
-    VA_ratio <- state_US_VA_ratio[state_US_VA_ratio$GeoName==state, ]
+    # Subset the StateUS_VA_Ratio for specified state
+    VA_ratio <- StateUS_VA_Ratio[StateUS_VA_Ratio$GeoName==state, ]
     # Replace NA with zero
     VA_ratio[is.na(VA_ratio$Ratio), "Ratio"] <- 0
-    # Re-order state_US_VA_ratio
+    # Re-order StateUS_VA_Ratio
     rownames(VA_ratio) <- VA_ratio$BEA_2012_Summary_Code
     VA_ratio <- VA_ratio[rownames(US_Summary_MakeTransaction), ]
     # Calculate State_Summary_MakeTransaction by multiplying US_Summary_MakeTransaction with VA_ratio
@@ -35,7 +40,9 @@ buildStateSupplyModel <- function(year) {
   }
   
   logging::loginfo("Loading state commodity output ratios from alternative data ...")
-  load(paste0("data/AlternativeStateCommodityOutputRatio_", year, ".rda"))
+  #load(paste0("data/AlternativeStateCommodityOutputRatio_", year, ".rda"))
+  AlternativeStateCommodityOutputRatio <- get(paste("AlternativeStateCommodityOutputRatio_", year),
+                                              as.environment("package:stateior"))
   
   logging::loginfo("Adjusting state Make table ...")
   # Adjust estimated state commodity output and calculcate state commodity adjustment ratio
@@ -121,7 +128,9 @@ buildStateSupplyModel <- function(year) {
 buildStateDemandModel <- function(year) {
   logging::loginfo("Loading state and US industry output ...")
   # State industry output
-  load(paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
+  #load(paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
+  State_Summary_IndustryOutput_list <- get(paste0("State_Summary_IndustryOutput_", year),
+                                           as.environment("package:stateior"))
   states <- names(State_Summary_IndustryOutput_list)
   # US industry output
   US_Summary_MakeTransaction <- getNationalMake("Summary", year)
@@ -188,7 +197,8 @@ buildStateDemandModel <- function(year) {
   logging::loginfo("Estimating state domestic use table ...")
   logging::loginfo("Appending value added to state Use tables ...")
   Domestic_Use_ratios <- calculateUSDomesticUseRatioMatrix("Summary", year)
-  load(paste0("data/State_ValueAdded_", year, ".rda"))
+  #load(paste0("data/State_GrossValueAdded_", year, ".rda"))
+  StateGVA <- get(paste0("State_GrossValueAdded_", year), as.environment("package:stateior"))
   model <- list()
   for (state in states) {
     # Assemble state Use table
@@ -200,9 +210,9 @@ buildStateDemandModel <- function(year) {
     # Update Import in state Use table
     State_Summary_Use$F050 <- rowSums(State_Summary_DomesticUse) - rowSums(State_Summary_Use)
     # Append value added rows to state Use tables
-    VA <- State_Value_Added[gsub("\\..*", "", rownames(State_Value_Added))==state, ]
-    rownames(VA) <- gsub(".*\\.", "", rownames(VA))
-    State_Summary_Use[rownames(VA), getVectorOfCodes("Summary", "Industry")] <- VA
+    GVA <- StateGVA[gsub("\\..*", "", rownames(StateGVA))==state, ]
+    rownames(GVA) <- gsub(".*\\.", "", rownames(GVA))
+    State_Summary_Use[rownames(GVA), getVectorOfCodes("Summary", "Industry")] <- GVA
     model[["Use"]][[state]] <- State_Summary_Use
     model[["DomesticUse"]][[state]] <- State_Summary_DomesticUse
   }
@@ -221,7 +231,9 @@ buildStateDemandModel <- function(year) {
 buildTwoRegionStateDemandModel <- function(state, year, ioschema, iolevel) {
   # 1 - Load state domestic Use for the specified year
   logging::loginfo("Loading state Domestic Use table ...")
-  load(paste0("data/State_", iolevel, "_DomesticUse_", year, ".rda"))
+  #load(paste0("data/State_", iolevel, "_DomesticUse_", year, ".rda"))
+  State_Summary_DomesticUse_list <- get(paste0("State_", iolevel, "_DomesticUse_", year),
+                                        as.environment("package:stateior"))
   SoI_Domestic_Use <- State_Summary_DomesticUse_list[[state]]
   # Define desired columns
   columns <- unlist(sapply(list("Industry", "HouseholdDemand", "InvestmentDemand",
@@ -239,7 +251,9 @@ buildTwoRegionStateDemandModel <- function(state, year, ioschema, iolevel) {
   SoI2SoI_Use[, columns] <- SoI_Domestic_Use[, columns] * ICF$SoI2SoI
   # Load state commodity output
   logging::loginfo("Loading state commodity output ...")
-  load(paste0("data/State_", iolevel, "_CommodityOutput_", year, ".rda"))
+  #load(paste0("data/State_", iolevel, "_CommodityOutput_", year, ".rda"))
+  State_Summary_CommodityOutput_list <- get(paste0("State_", iolevel, "_CommodityOutput_", year),
+                                            as.environment("package:stateior"))
   SoI_Commodity_Output <- State_Summary_CommodityOutput_list[[state]]
   # Calculate Interregional Imports, Exports, and Net Exports
   logging::loginfo("Calculating SoI2SoI interregional imports and exports and net exports ...")
@@ -363,3 +377,4 @@ buildTwoRegionStateDemandModel <- function(state, year, ioschema, iolevel) {
   logging::loginfo("Domestic two-region Use complete ...")
   return(Domestic2RegionUse)
 }
+
