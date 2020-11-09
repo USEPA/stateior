@@ -1,11 +1,11 @@
 # Generate and save state-US value added ratios
-state_US_VA_ratio <- finalizeStateUSValueAddedRatio(2012)
-save(state_US_VA_ratio, file = "data/StateUS_VAratio_2012.rda")
-state_US_VA_ratio <- finalizeStateUSValueAddedRatio(2017)
-save(state_US_VA_ratio, file = "data/StateUS_VAratio_2017.rda")
+StateUS_VA_Ratio_2012 <- finalizeStateUSValueAddedRatio(2012)
+usethis::use_data(StateUS_VA_Ratio_2012, overwrite = TRUE)
+StateUS_VA_Ratio_2017 <- finalizeStateUSValueAddedRatio(2017)
+usethis::use_data(StateUS_VA_Ratio_2017, overwrite = TRUE)
 
 # Generate and save alternative state commodity output ratio
-AlternativeStateCommodityOutputRatio <- getStateCommodityOutputRatioEstimates(2012)
-save(AlternativeStateCommodityOutputRatio, file = "data/AlternativeStateCommodityOutputRatio_2012.rda")
-AlternativeStateCommodityOutputRatio <- getStateCommodityOutputRatioEstimates(2017)
-save(AlternativeStateCommodityOutputRatio, file = "data/AlternativeStateCommodityOutputRatio_2017.rda")
+AlternativeStateCommodityOutputRatio_2012 <- getStateCommodityOutputRatioEstimates(2012)
+usethis::use_data(AlternativeStateCommodityOutputRatio_2012, overwrite = TRUE)
+AlternativeStateCommodityOutputRatio_2017 <- getStateCommodityOutputRatioEstimates(2017)
+usethis::use_data(AlternativeStateCommodityOutputRatio_2017, overwrite = TRUE)

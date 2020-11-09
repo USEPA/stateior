@@ -736,3 +736,67 @@
 #' }
 #' @source \url{https://www.usaspending.gov/#/download_center/award_data_archive}
 "FedGovExp_StructureNonDefense_2012"
+
+#' State-US value addaed ratio 2012
+#' @format A dataframe with 3692 obs. and 3 variables
+#' \describe{
+#'  \item{BEA_2012_Summary_Code}{character}
+#'  \item{GeoName}{character}
+#'  \item{Ratio}{numeric}
+#' }
+"StateUS_VA_Ratio_2012"
+
+#' State commodity output ratios from alternative sources 2012
+#' @format A dataframe with 1198 obs. and 4 variables
+#' \describe{
+#'  \item{BEA_2012_Summary_Code}{character}
+#'  \item{State}{character}
+#'  \item{Value}{numeric}
+#'  \item{Ratio}{numeric}
+#' }
+"AlternativeStateCommodityOutputRatio_2012"
+
+#' State commodity output ratios from alternative sources 2017
+#' @format A dataframe with 1208 obs. and 4 variables
+#' \describe{
+#'  \item{BEA_2012_Summary_Code}{character}
+#'  \item{State}{character}
+#'  \item{Value}{numeric}
+#'  \item{Ratio}{numeric}
+#' }
+"AlternativeStateCommodityOutputRatio_2017"
+
+#' State gross value addaed 2012
+#' @format A dataframe with 156 obs. (representing Summary GVA sectors in 52 states/regions)
+#' and 71 variables (representing Summary industries)
+"State_GrossValueAdded_2012"
+
+#' State Summary 2012 Make (in a list format)
+#' @format A list with 52 elements:
+#' each element is a dataframe with 71 obs. (representing Summary industries)
+#' and 73 variables (representing Summary commodities)
+"State_Summary_Make_2012"
+
+#' State Summary 2012 Use (in a list format)
+#' @format A list with 52 elements:
+#' each element is a dataframe with 76 obs. (representing Summary commodities and VA sectors)
+#' and 91 variables (representing Summary industries and final demand sectors)
+"State_Summary_Use_2012"
+
+#' State Summary 2012 Domestic Use (in a list format)
+#' @format A list with 52 elements:
+#' each element is a dataframe with 73 obs. (representing Summary commodities)
+#' and 91 variables (representing Summary industries and final demand sectors)
+"State_Summary_DomesticUse_2012"
+
+#' State Summary 2012 Commodity Output (in a list format)
+#' @format A list with 52 elements:
+#' each element is a dataframe with 73 obs. (representing Summary commodities)
+#' and 1 variable (Commodity Output)
+"State_Summary_CommodityOutput_2012"
+
+#' State Summary 2012 Industry Output (in a list format)
+#' @format A list with 52 elements:
+#' each element is a dataframe with 71 obs. (representing Summary industries)
+#' and 1 variable (Industry Output)
+"State_Summary_IndustryOutput_2012"

@@ -1,3 +1,6 @@
-# Generate and save state value added
-State_Value_Added <- assembleStateValueAdded(2012)
-save(State_Value_Added, file = "data/State_ValueAdded_2012.rda")
+# Generate and save state gross value added
+State_GrossValueAdded_2012 <- assembleStateGrossValueAdded(2012, "Summary")
+usethis::use_data(State_GrossValueAdded_2012, overwrite = TRUE)
+
+State_GrossValueAdded_2017 <- assembleStateGrossValueAdded(2017, "Summary")
+usethis::use_data(State_GrossValueAdded_2017, overwrite = TRUE)
