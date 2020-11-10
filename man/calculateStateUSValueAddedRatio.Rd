@@ -2,7 +2,7 @@
 % Please edit documentation in R/StateSupplyFunctions.R
 \name{calculateStateUSValueAddedRatio}
 \alias{calculateStateUSValueAddedRatio}
-\title{Calculate state-US GDP (value added) ratios at BEA Summary level.}
+\title{Calculate state-US GVA (value added) ratios at BEA Summary level.}
 \usage{
 calculateStateUSValueAddedRatio(year)
 }
@@ -10,8 +10,8 @@ calculateStateUSValueAddedRatio(year)
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 }
 \value{
-A data frame contains ratios of state/US GDP (value added) for all states at a specific year at BEA Summary level.
+A data frame contains ratios of state/US GVA (value added) for all states at a specific year at BEA Summary level.
 }
 \description{
-Calculate state-US GDP (value added) ratios at BEA Summary level.
+Calculate state-US GVA (value added) ratios at BEA Summary level.
 }

@@ -1,20 +1,20 @@
 #' Get BEA state data from 2007-2018.
 #' @param dataname A text indicating what state data to get.
-#' Can be GDP, employee compensation, taxes, and gross operating surplus.
+#' Can be GVA, employee compensation, taxes, and gross operating surplus.
 #' @return A data frame of BEA state data from 2007-2018.
 getBEAStateData <- function (dataname) {
   # Create the placeholder file
-  StateGDPzip <- "inst/extdata/SAGDP.zip"
+  StateGVAzip <- "inst/extdata/SAGDP.zip"
   # Download all BEA IO tables into the placeholder file
-  if(!file.exists(StateGDPzip)) {
-    download.file("https://apps.bea.gov/regional/zip/SAGDP.zip", StateGDPzip, mode = "wb")
+  if(!file.exists(StateGVAzip)) {
+    download.file("https://apps.bea.gov/regional/zip/SAGDP.zip", StateGVAzip, mode = "wb")
     # Get the name of all files in the zip archive
-    fname <- unzip(StateGDPzip, list = TRUE)[unzip(StateGDPzip, list = TRUE)$Length > 0, ]$Name
+    fname <- unzip(StateGVAzip, list = TRUE)[unzip(StateGVAzip, list = TRUE)$Length > 0, ]$Name
     # Unzip the file to the designated directory
-    unzip(StateGDPzip, files = fname, exdir = "inst/extdata/SAGDP", overwrite = TRUE)
+    unzip(StateGVAzip, files = fname, exdir = "inst/extdata/SAGDP", overwrite = TRUE)
   }
   # Determine data filename
-  if (dataname=="GDP") {
+  if (dataname=="GVA") {
     FileName <- "inst/extdata/SAGDP/SAGDP2N__ALL_AREAS_1997_2019.csv"
   } else if (dataname=="Tax") {
     FileName <- "inst/extdata/SAGDP/SAGDP3N__ALL_AREAS_1997_2017.csv"
@@ -41,8 +41,8 @@ getBEAStateData <- function (dataname) {
                          c("GeoName", "LineCode", "Description", as.character(year_range))]
   return(StateData)
 }
-State_GDP_2007_2019 <- getBEAStateData("GDP")
-usethis::use_data(State_GDP_2007_2019, overwrite = TRUE)
+State_GVA_2007_2019 <- getBEAStateData("GVA")
+usethis::use_data(State_GVA_2007_2019, overwrite = TRUE)
 State_Tax_2007_2017 <- getBEAStateData("Tax")
 usethis::use_data(State_Tax_2007_2017, overwrite = TRUE)
 State_Compensation_2007_2017 <- getBEAStateData("Compensation")

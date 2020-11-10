@@ -1,4 +1,4 @@
-#' BEA State GDP table (2007-2019)
+#' BEA State GVA table (2007-2019)
 #' @format A data frame with 4736 obs. and 16 variables
 #' \describe{
 #'  \item{GeoName}{text code}
@@ -19,7 +19,7 @@
 #'  \item{2019}{current year USD}
 #' }
 #' @source \url{https://apps.bea.gov/regional/zip/SAGDP.zip}
-"State_GDP_2007_2019"
+"State_GVA_2007_2019"
 
 #' BEA State Employee Compensation table (2007-2017)
 #' @format A data frame with 4736 obs. and 14 variables

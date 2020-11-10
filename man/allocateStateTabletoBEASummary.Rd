@@ -2,12 +2,12 @@
 % Please edit documentation in R/StateSupplyFunctions.R
 \name{allocateStateTabletoBEASummary}
 \alias{allocateStateTabletoBEASummary}
-\title{Allocate state table (GDP, Tax, Employment Compensation, and GOS) to BEA Summary based on specified weight}
+\title{Allocate state table (GVA, Tax, Employment Compensation, and GOS) to BEA Summary based on specified weight}
 \usage{
 allocateStateTabletoBEASummary(statetablename, year, allocationweightsource)
 }
 \arguments{
-\item{statetablename}{Name of pre-saved state table, canbe GDP, Tax, Employment Compensation, and GOS.}
+\item{statetablename}{Name of pre-saved state table, canbe GVA, Tax, Employment Compensation, and GOS.}
 
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 
@@ -17,5 +17,5 @@ allocateStateTabletoBEASummary(statetablename, year, allocationweightsource)
 A data frame contains allocated state value for all states with row names being BEA sector code.
 }
 \description{
-Allocate state table (GDP, Tax, Employment Compensation, and GOS) to BEA Summary based on specified weight
+Allocate state table (GVA, Tax, Employment Compensation, and GOS) to BEA Summary based on specified weight
 }

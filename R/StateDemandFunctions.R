@@ -75,61 +75,61 @@ calculateStateCommodityOutputRatio <- function(year) {
   return(State_CommodityOutputRatio)
 }
 
-#' Adjust EmpComp, Tax, and GOS to fill NA and make them consistent with GDP
+#' Adjust EmpComp, Tax, and GOS to fill NA and make them consistent with GVA
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param return A character string showing which attribute to return. 'comp', 'tax', 'gos'
-#' @return A data frame contains adjusted EmpComp, Tax, GOS, and GDP
-adjustGDPComponent <- function(year, return) {
+#' @return A data frame contains adjusted EmpComp, Tax, GOS, and GVA
+adjustGVAComponent <- function(year, return) {
   #load data
-  gdp <- getStateGDP(year)
+  gva <- getStateGVA(year)
   comp <- getStateEmpCompensation(year)
   tax <- getStateTax(year)
   gos <- getStateGOS(year)
   
   #join into one table
-  compareTable <- gdp %>% 
+  compareTable <- gva %>% 
     dplyr::left_join(., comp, by=c('GeoName','LineCode')) %>% 
     dplyr::left_join(., tax, by=c('GeoName','LineCode')) %>%
     dplyr::left_join(., gos, by=c('GeoName','LineCode')) 
-  colnames(compareTable)[3:6] <- c('GDP','EmpCompensation','Tax','GOS')
+  colnames(compareTable)[3:6] <- c('GVA','EmpCompensation','Tax','GOS')
   
   #adjust NA in Tax (simple, add/subtract)
-  compareTable[is.na(compareTable$Tax),]$Tax <- compareTable[is.na(compareTable$Tax),]$GDP - 
+  compareTable[is.na(compareTable$Tax),]$Tax <- compareTable[is.na(compareTable$Tax),]$GVA - 
     compareTable[is.na(compareTable$Tax),]$EmpCompensation - 
     compareTable[is.na(compareTable$Tax),]$GOS
   
-  #adjust NA in gdp (simple, add/subtract)
-  compareTable[is.na(compareTable$GDP),]$GDP <- compareTable[is.na(compareTable$GDP),]$Tax +
-    compareTable[is.na(compareTable$GDP),]$EmpCompensation + 
-    compareTable[is.na(compareTable$GDP),]$GOS
+  #adjust NA in gva (simple, add/subtract)
+  compareTable[is.na(compareTable$GVA),]$GVA <- compareTable[is.na(compareTable$GVA),]$Tax +
+    compareTable[is.na(compareTable$GVA),]$EmpCompensation + 
+    compareTable[is.na(compareTable$GVA),]$GOS
   
   #adjust NA in EmpComp and GOS 
-  ## Step 1: calculate EmpComp-GDP ratio and GOS-GDP ratio for each LineCode
+  ## Step 1: calculate EmpComp-GVA ratio and GOS-GVA ratio for each LineCode
   ratioTable <- compareTable %>% na.omit() %>% 
-    dplyr::mutate(compRatio = EmpCompensation / GDP, gosRatio = GOS / GDP) %>% na.omit() %>%
+    dplyr::mutate(compRatio = EmpCompensation / GVA, gosRatio = GOS / GVA) %>% na.omit() %>%
     dplyr::group_by(LineCode) %>%
     dplyr::summarise(avgCompRatio = mean(compRatio), avgGOSRatio = mean(gosRatio))
   ## Step 2: assign new EmpComp and GOS value to NAs
   position <- which(is.na(compareTable$EmpCompensation) == TRUE)
   for (i in position) {
-    if (compareTable$GDP[i] != 0) {
-      compareTable$EmpCompensation[i] <- compareTable$GDP[i] * ratioTable[ratioTable$LineCode == compareTable$LineCode[i],]$avgCompRatio
-      compareTable$GOS[i] <- compareTable$GDP[i] * ratioTable[ratioTable$LineCode == compareTable$LineCode[i],]$avgGOSRatio
-    } else if (compareTable$GDP[i] == 0) {
+    if (compareTable$GVA[i] != 0) {
+      compareTable$EmpCompensation[i] <- compareTable$GVA[i] * ratioTable[ratioTable$LineCode == compareTable$LineCode[i],]$avgCompRatio
+      compareTable$GOS[i] <- compareTable$GVA[i] * ratioTable[ratioTable$LineCode == compareTable$LineCode[i],]$avgGOSRatio
+    } else if (compareTable$GVA[i] == 0) {
       compareTable$EmpCompensation[i] <- 0
       compareTable$GOS[i] <- 0
     }
   }
   ## Step 3: check row sum and apply adjustment factor to estiamted rows 
-  compareTable <- compareTable %>% dplyr::mutate(dif = GDP - EmpCompensation - Tax - GOS, errorRate = abs(dif) / GDP)
+  compareTable <- compareTable %>% dplyr::mutate(dif = GVA - EmpCompensation - Tax - GOS, errorRate = abs(dif) / GVA)
   shrinkfactor <- 1.0 + compareTable$dif[position] / (compareTable$EmpCompensation[position] + compareTable$GOS[position])
   compareTable$EmpCompensation[position] <- compareTable$EmpCompensation[position]*shrinkfactor
   compareTable$GOS[position] <- compareTable$GOS[position]*shrinkfactor
   
-  compareTable <- compareTable %>% dplyr::mutate(dif = GDP - EmpCompensation - Tax - GOS, errorRate = abs(dif) / GDP) # recompute errorRate
+  compareTable <- compareTable %>% dplyr::mutate(dif = GVA - EmpCompensation - Tax - GOS, errorRate = abs(dif) / GVA) # recompute errorRate
   
   #Output
-  switch_return <- switch(return, 'GDP'=1, 'EmpCompensation'=2, 'Tax'=3, 'GOS'=4)
+  switch_return <- switch(return, 'GVA'=1, 'EmpCompensation'=2, 'Tax'=3, 'GOS'=4)
   output <- compareTable %>% dplyr::select(1, 2, switch_return + 2)
   colnames(output)[3] <- as.character(year)
   return(output)
@@ -162,11 +162,11 @@ assembleStateGrossValueAdded <- function(year, iolevel) {
     sector_code <- ifelse(sector=="EmpCompensation", "V001",
                           ifelse(sector=="Tax", "V002",
                                  ifelse(sector=="GOS", "V003")))
-    BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
+    BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
     # Determine BEA line codes and sectors where ratios need adjustment
-    allocation_sectors <- BEAStateGDPtoBEASummary[duplicated(BEAStateGDPtoBEASummary$LineCode) |
-                                                    duplicated(BEAStateGDPtoBEASummary$LineCode, fromLast = TRUE), ]
+    allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) |
+                                                    duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
     # Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors
     for (linecode in unique(allocation_sectors$LineCode)) {
       # Determine BEA sectors that need allocation
@@ -174,13 +174,13 @@ assembleStateGrossValueAdded <- function(year, iolevel) {
       # Create m0
       m0 <- as.matrix(df[, BEA_sectors])
       # Create t_r
-      GDPComponent <- adjustGDPComponent(year, sector)
-      GDPComponent <- reshape2::dcast(GDPComponent, GeoName ~ LineCode, value.var = as.character(year))
-      rownames(GDPComponent) <- GDPComponent$GeoName
-      GDPComponent$GeoName <- NULL
-      GDPComponent["Overseas", ] <- GDPComponent[rownames(GDPComponent)=="United States *", ] -
-        colSums(GDPComponent[rownames(GDPComponent)!="United States *", ])
-      t_r <- GDPComponent[rownames(m0), linecode]
+      GVAComponent <- adjustGVAComponent(year, sector)
+      GVAComponent <- reshape2::dcast(GVAComponent, GeoName ~ LineCode, value.var = as.character(year))
+      rownames(GVAComponent) <- GVAComponent$GeoName
+      GVAComponent$GeoName <- NULL
+      GVAComponent["Overseas", ] <- GVAComponent[rownames(GVAComponent)=="United States *", ] -
+        colSums(GVAComponent[rownames(GVAComponent)!="United States *", ])
+      t_r <- GVAComponent[rownames(m0), linecode]
       # Create t_c
       t_c <- as.numeric(US_Use[sector_code, BEA_sectors])
       # Apply RAS
@@ -450,10 +450,10 @@ calculateStateUSEmpCompensationRatio <- function(year) {
   # Map US Employee Compensation to BEA
   USEmpCompensation <- getStateEmpCompensation(year)
   USEmpCompensation <- USEmpCompensation[USEmpCompensation$GeoName=="United States *", ]
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
+  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
-  allocation_sectors <- BEAStateGDPtoBEASummary[duplicated(BEAStateGDPtoBEASummary$LineCode) | duplicated(BEAStateGDPtoBEASummary$LineCode, fromLast = TRUE), ]
-  USEmpCompensation <- merge(USEmpCompensation, BEAStateGDPtoBEASummary, by = "LineCode")
+  allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) | duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
+  USEmpCompensation <- merge(USEmpCompensation, BEAStateGVAtoBEASummary, by = "LineCode")
   USEmpCompensation <- merge(USEmpCompensation, useeior::Summary_GrossOutput_IO[, as.character(year), drop = FALSE],
                              by.x = "BEA_2012_Summary_Code", by.y = 0)
   USEmpCompensation[, as.character(year)] <- USEmpCompensation[, paste0(year, ".x")]
@@ -475,7 +475,7 @@ calculateStateUSEmpCompensationRatio <- function(year) {
   OverseasEmpCompensation[, paste0(year, ".x")] <- OverseasEmpCompensation[, as.character(year)] - OverseasEmpCompensation$StateEmpCompensation_sum
   OverseasEmpCompensation[, paste0(year, ".y")] <- OverseasEmpCompensation[, as.character(year)]
   OverseasEmpCompensation$GeoName <- "Overseas"
-  # Merge state GDP and US Employee Compensation tables
+  # Merge state GVA and US Employee Compensation tables
   StateUSEmpCompensation <- merge(StateEmpCompensation, USEmpCompensation, by = "BEA_2012_Summary_Code")
   # Append Overseas EmpCompensation to StateUSEmpCompensation
   StateUSEmpCompensation <- rbind(StateUSEmpCompensation, OverseasEmpCompensation[, colnames(StateUSEmpCompensation)])

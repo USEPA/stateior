@@ -11,12 +11,12 @@ finalizeStateUSValueAddedRatio(year)
 }
 \value{
 A data frame contains RAS-balanced state-US value added ratios
-1 - Load state GDP/value added (VA) by industry for the given year.
+1 - Load state GVA/value added (VA) by industry for the given year.
 Map to BEA Summary level
 2 - Where VA must be allocated from a LineCode to BEA Summary industries,
 calculate allocation factors using specified allocationweightsource.
 When using state employment (from BEA) as source for allocation,
-introduce national GDP to disaggregate state employment in real estate and gov industries
+introduce national GVA to disaggregate state employment in real estate and gov industries
 from LineCode to BEA Summary.
 3 - Load US Summary Make table for given year
 Generate US Summary Make Transaction and Industry and Commodity Output

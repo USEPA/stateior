@@ -10,41 +10,41 @@ getNationalMake <- function(iolevel, year) {
   return(Make)
 }
 
-#' Get industry-level GDP for all states at a specific year.
+#' Get industry-level GVA for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains state GDP for all states at a specific year.
-getStateGDP <- function(year) {
-  # Load pre-saved state GDP 2007-2019
-  StateGDP <- stateior::State_GDP_2007_2019
-  StateGDP <- StateGDP[, c("GeoName", "LineCode", as.character(year))]
-  return(StateGDP)
+#' @return A data frame contains state GVA for all states at a specific year.
+getStateGVA <- function(year) {
+  # Load pre-saved state GVA 2007-2019
+  StateGVA <- stateior::State_GVA_2007_2019
+  StateGVA <- StateGVA[, c("GeoName", "LineCode", as.character(year))]
+  return(StateGVA)
 }
 
 #' Map state table to BEA Summary, mark sectors that need allocation
-#' @param statetablename Name of pre-saved state table, can be GDP, Tax, Employment Compensation, and GOS.
+#' @param statetablename Name of pre-saved state table, can be GVA, Tax, Employment Compensation, and GOS.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state value for all states with row names being BEA sector code.
 mapStateTabletoBEASummary <- function(statetablename, year) {
   # Load and adjust State tables
-  StateTable <- adjustGDPComponent(year, statetablename)
-  # Load State GDP to BEA Summary sector-mapping table
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
+  StateTable <- adjustGVAComponent(year, statetablename)
+  # Load State GVA to BEA Summary sector-mapping table
+  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Merge state table with BEA Summary sector code and name
-  StateTableBEA <- merge(StateTable, BEAStateGDPtoBEASummary, by = "LineCode")
+  StateTableBEA <- merge(StateTable, BEAStateGVAtoBEASummary, by = "LineCode")
   return(StateTableBEA)
 }
 
 #' Calculate allocation factors based on state-level data, such as employment
-#' @param statetablename Name of pre-saved state table, canbe GDP, Tax, Employment Compensation, and GOS.
+#' @param statetablename Name of pre-saved state table, canbe GVA, Tax, Employment Compensation, and GOS.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains allocation factors for all states with row names being BEA sector code.
 calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsource) {
-  # Load State GDP to BEA Summary sector-mapping table
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
+  # Load State GVA to BEA Summary sector-mapping table
+  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Determine BEA sectors that need allocation
-  allocation_sectors <- BEAStateGDPtoBEASummary[duplicated(BEAStateGDPtoBEASummary$LineCode) | duplicated(BEAStateGDPtoBEASummary$LineCode, fromLast = TRUE), ]
+  allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) | duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
   allocation_codes <- allocation_sectors$BEA_2012_Summary_Code
   # Generate a mapping table only for allocation_codes based on MasterCrosswalk2012
   crosswalk <- useeior::MasterCrosswalk2012[useeior::MasterCrosswalk2012$BEA_2012_Summary_Code%in%allocation_codes, ]
@@ -55,7 +55,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
                                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
     BEAStateEmptoBEAmapping <- BEAStateEmptoBEAmapping[BEAStateEmptoBEAmapping$BEA_2012_Summary_Code%in%
                                                          crosswalk[crosswalk$BEA_2012_Sector_Code%in%c("44RT", "FIRE", "G"), "BEA_2012_Summary_Code"], ]
-    # For real estate (FIRE) and gov (G) sectors, calculate allocation factors using US GDP by industry
+    # For real estate (FIRE) and gov (G) sectors, calculate allocation factors using US GVA by industry
     allocation_factors <- merge(BEAStateEmptoBEAmapping,
                                 useeior::Summary_ValueAdded_IO[, as.character(year), drop = FALSE],
                                 by.x = "BEA_2012_Summary_Code", by.y = 0)
@@ -92,8 +92,8 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   return(allocation_df)
 }
 
-#' Allocate state table (GDP, Tax, Employment Compensation, and GOS) to BEA Summary based on specified weight
-#' @param statetablename Name of pre-saved state table, canbe GDP, Tax, Employment Compensation, and GOS.
+#' Allocate state table (GVA, Tax, Employment Compensation, and GOS) to BEA Summary based on specified weight
+#' @param statetablename Name of pre-saved state table, canbe GVA, Tax, Employment Compensation, and GOS.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param allocationweightsource Source of allocatino weight, can be "Employment".
 #' @return A data frame contains allocated state value for all states with row names being BEA sector code.
@@ -117,30 +117,30 @@ allocateStateTabletoBEASummary <- function(statetablename, year, allocationweigh
   return(StateTableBEA)
 }
 
-#' Calculate state-US GDP (value added) ratios at BEA Summary level.
+#' Calculate state-US GVA (value added) ratios at BEA Summary level.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains ratios of state/US GDP (value added) for all states at a specific year at BEA Summary level.
+#' @return A data frame contains ratios of state/US GVA (value added) for all states at a specific year at BEA Summary level.
 calculateStateUSValueAddedRatio <- function(year) {
-  # Generate state GDP (value added) table
-  StateValueAdded <- allocateStateTabletoBEASummary("GDP", year, "Employment")
-  # Generate sum of state GDP (value added)
+  # Generate state GVA (value added) table
+  StateValueAdded <- allocateStateTabletoBEASummary("GVA", year, "Employment")
+  # Generate sum of state GVA (value added)
   StateValueAdded_sum <- stats::aggregate(StateValueAdded[StateValueAdded$GeoName!="United States *", as.character(year)],
                                           by = list(StateValueAdded[StateValueAdded$GeoName!="United States *", "BEA_2012_Summary_Code"]),
                                           sum)
   colnames(StateValueAdded_sum) <- c("BEA_2012_Summary_Code", "StateVA_sum")
   # Extract US value added
   USValueAdded <- StateValueAdded[StateValueAdded$GeoName=="United States *", ]
-  # Merge sum of state GDP with US VA to get VA of Overseas region
+  # Merge sum of state GVA with US VA to get VA of Overseas region
   OverseasValueAdded <- merge(StateValueAdded_sum, USValueAdded, by = "BEA_2012_Summary_Code")
   OverseasValueAdded[, paste0(year, ".x")] <- OverseasValueAdded[, as.character(year)] - OverseasValueAdded$StateVA_sum
   OverseasValueAdded[, paste0(year, ".y")] <- OverseasValueAdded[, as.character(year)]
   OverseasValueAdded$GeoName <- "Overseas"
-  # Merge state GDP and US value added tables
+  # Merge state GVA and US value added tables
   StateUSValueAdded <- merge(StateValueAdded[StateValueAdded$GeoName!="United States *", ],
                              USValueAdded[, -1], by = "BEA_2012_Summary_Code")
   # Append Overseas VA to StateUSValueAdded
   StateUSValueAdded <- rbind(StateUSValueAdded, OverseasValueAdded[, colnames(StateUSValueAdded)])
-  # Calculate the state-US GDP (value added) ratios
+  # Calculate the state-US GVA (value added) ratios
   StateUSValueAdded$Ratio <- StateUSValueAdded[, paste0(year, ".x")]/StateUSValueAdded[, paste0(year, ".y")]
   StateUSValueAdded <- StateUSValueAdded[order(StateUSValueAdded$GeoName, StateUSValueAdded$BEA_2012_Summary_Code),
                                          c("BEA_2012_Summary_Code", "GeoName", "Ratio")]
@@ -148,12 +148,12 @@ calculateStateUSValueAddedRatio <- function(year) {
   return(StateUSValueAdded)
 }
 
-#' Calculate state-US GDP (value added) ratios by BEA State LineCode.
+#' Calculate state-US GVA (value added) ratios by BEA State LineCode.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains ratios of state/US GDP (value added) for all states at a specific year by BEA State LineCode.
+#' @return A data frame contains ratios of state/US GVA (value added) for all states at a specific year by BEA State LineCode.
 calculateStateUSVARatiobyLineCode <- function(year) {
   # Load LineCode-coded State ValueAdded
-  ValueAdded <- getStateGDP(year)
+  ValueAdded <- getStateGVA(year)
   # Extract US value added
   USValueAdded <- ValueAdded[ValueAdded$GeoName=="United States *", ]
   # Generate sum of State ValueAdded table
@@ -161,7 +161,7 @@ calculateStateUSVARatiobyLineCode <- function(year) {
   StateValueAdded_sum <- stats::aggregate(StateValueAdded[, as.character(year)],
                                           by = list(StateValueAdded$LineCode), sum)
   colnames(StateValueAdded_sum) <- c("LineCode", as.character(year))
-  # Merge sum of state GDP with US VA to get VA of Overseas region
+  # Merge sum of state GVA with US VA to get VA of Overseas region
   OverseasValueAdded <- merge(StateValueAdded_sum, USValueAdded, by = "LineCode")
   OverseasValueAdded[, paste0(year, ".x")] <- OverseasValueAdded[, paste0(year, ".y")] - OverseasValueAdded[, paste0(year, ".x")]
   OverseasValueAdded$GeoName <- "Overseas"
@@ -187,11 +187,11 @@ calculateStateIndustryOutputbyLineCode <- function(year) {
   # Sum US_Summary_Make by row to get US_Summary_IndustryOutput
   USGrossOutput <- as.data.frame(rowSums(US_Summary_Make))
   colnames(USGrossOutput) <- as.character(year)
-  # Load State GDP to BEA Summary sector-mapping table
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
+  # Load State GVA to BEA Summary sector-mapping table
+  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Generate LineCode-coded US Gross Output
-  USGrossOutput <- merge(USGrossOutput, BEAStateGDPtoBEASummary, by.x = 0, by.y = "BEA_2012_Summary_Code")
+  USGrossOutput <- merge(USGrossOutput, BEAStateGVAtoBEASummary, by.x = 0, by.y = "BEA_2012_Summary_Code")
   USGrossOutput <- stats::aggregate(USGrossOutput[, as.character(year)], by = list(USGrossOutput$LineCode), sum)
   colnames(USGrossOutput) <- c("LineCode", as.character(year))
   # Calculate state industry output by LineCode
@@ -404,18 +404,18 @@ getFAFCommodityOutput <- function(year) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains RAS-balanced state-US value added ratios
 finalizeStateUSValueAddedRatio <- function(year) {
-  #' 1 - Load state GDP/value added (VA) by industry for the given year.
+  #' 1 - Load state GVA/value added (VA) by industry for the given year.
   #' Map to BEA Summary level
-  state_VA <- getStateGDP(year)
-  state_VA_BEA <- mapStateTabletoBEASummary("GDP", year)
+  state_VA <- getStateGVA(year)
+  state_VA_BEA <- mapStateTabletoBEASummary("GVA", year)
   
   #' 2 - Where VA must be allocated from a LineCode to BEA Summary industries,
   #' calculate allocation factors using specified allocationweightsource.
   #' When using state employment (from BEA) as source for allocation,
-  #' introduce national GDP to disaggregate state employment in real estate and gov industries
+  #' introduce national GVA to disaggregate state employment in real estate and gov industries
   #' from LineCode to BEA Summary.
   AllocationFactors <- calculateStatetoBEASummaryAllocationFactor(year, allocationweightsource = "Employment")
-  StateValueAdded <- allocateStateTabletoBEASummary("GDP", year, allocationweightsource = "Employment")
+  StateValueAdded <- allocateStateTabletoBEASummary("GVA", year, allocationweightsource = "Employment")
   
   #' 3 - Load US Summary Make table for given year
   #' Generate US Summary Make Transaction and Industry and Commodity Output
@@ -448,12 +448,12 @@ finalizeStateUSValueAddedRatio <- function(year) {
   
   #' Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors (retail, real estate, gov)
   #' RAS converged after 1000001, 6, 911, and 6 iterations.
-  # Load State GDP to BEA Summary mapping table
-  BEAStateGDPtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGDPtoBEASummaryIO2012Schema.csv", package = "stateior"),
+  # Load State GVA to BEA Summary mapping table
+  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
                                                sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Determine BEA line codes and sectors where ratios need adjustment
-  allocation_sectors <- BEAStateGDPtoBEASummary[duplicated(BEAStateGDPtoBEASummary$LineCode) |
-                                                  duplicated(BEAStateGDPtoBEASummary$LineCode, fromLast = TRUE), ]
+  allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) |
+                                                  duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
   # Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors
   for (linecode in unique(allocation_sectors$LineCode)) {
     # Determine BEA sectors that need allocation

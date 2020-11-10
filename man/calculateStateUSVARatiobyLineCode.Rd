@@ -2,7 +2,7 @@
 % Please edit documentation in R/StateSupplyFunctions.R
 \name{calculateStateUSVARatiobyLineCode}
 \alias{calculateStateUSVARatiobyLineCode}
-\title{Calculate state-US GDP (value added) ratios by BEA State LineCode.}
+\title{Calculate state-US GVA (value added) ratios by BEA State LineCode.}
 \usage{
 calculateStateUSVARatiobyLineCode(year)
 }
@@ -10,8 +10,8 @@ calculateStateUSVARatiobyLineCode(year)
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 }
 \value{
-A data frame contains ratios of state/US GDP (value added) for all states at a specific year by BEA State LineCode.
+A data frame contains ratios of state/US GVA (value added) for all states at a specific year by BEA State LineCode.
 }
 \description{
-Calculate state-US GDP (value added) ratios by BEA State LineCode.
+Calculate state-US GVA (value added) ratios by BEA State LineCode.
 }
