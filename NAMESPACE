@@ -2,3 +2,8 @@
 
 export(buildStateDemandModel)
 export(buildStateSupplyModel)
+export(loadStateCommodityOutput)
+export(loadStateDomesticUseTable)
+export(loadStateIndustryOutput)
+export(loadStateMakeTable)
+export(loadStateUseTable)
