@@ -16,8 +16,8 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
   BEAtoTradedorLocal <- merge(unique(useeior::MasterCrosswalk2012[, c("NAICS_2012_Code", bea)]),
                               NAICStoTradedorLocal, by.x = "NAICS_2012_Code", by.y = "NAICS")
   # Load pre-saved state commodity output data
-  filename <- load(paste0("data/State_", iolevel, "_CommodityOutput_", year, ".rda"))
-  StateCommOutput <- get(filename)[[state]]
+  StateCommOutput <- get(paste0("State_", iolevel, "_CommodityOutput_", year),
+                         as.environment("package:stateior"))[[state]]
   colnames(StateCommOutput) <- "CommodityOutput"
   # Merge with BEAtoTradedorLocal
   StateCommOutput <- merge(unique(BEAtoTradedorLocal[, c(bea, "Type")]),

@@ -6,13 +6,18 @@ US_Summary_Make <- getNationalMake("Summary", year)
 US_Summary_Use <- getNationalUse("Summary", year)
 US_Summary_DomesticUse <- estimateUSDomesticUse("Summary", year)
 # Load state Make, industry and commodity output
-load(paste0("data/State_Summary_Make_", year, ".rda"))
-load(paste0("data/State_Summary_IndustryOutput_", year, ".rda"))
-load(paste0("data/State_Summary_CommodityOutput_", year, ".rda"))
+State_Summary_Make_list <- get(paste0("State_Summary_Make_", year),
+                               as.environment("package:stateior"))
+State_Summary_IndustryOutput_list <- get(paste0("State_Summary_IndustryOutput_", year),
+                                         as.environment("package:stateior"))
+State_Summary_CommodityOutput_list <- get(paste0("State_Summary_CommodityOutput_", year),
+                                         as.environment("package:stateior"))
 states <- names(State_Summary_Make_list)
 # Load state total Use and domestic Use
-load(paste0("data/State_Summary_Use_", year, ".rda"))
-load(paste0("data/State_Summary_DomesticUse_", year, ".rda"))
+State_Summary_Use_list <- get(paste0("State_Summary_Use_", year),
+                              as.environment("package:stateior"))
+State_Summary_DomesticUse_list <- get(paste0("State_Summary_DomesticUse_", year),
+                                      as.environment("package:stateior"))
 
 # Validate df1 against df0 based on specified conditions
 compareModelResult <- function(df0, df1, abs_diff = TRUE, tolerance) {
@@ -362,11 +367,11 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   logging::loginfo("Generating A matrix of SoI Make table ...")
   # SoI Make
-  load(paste0("data/State_", iolevel, "_Make_", year, ".rda"))
-  SoI_Make <- State_Summary_Make_list[[state]]
+  SoI_Make <- get(paste0("State_Summary_Make_", year),
+                  as.environment("package:stateior"))[[state]]
   # SoI commodity output
-  load(paste0("data/State_", iolevel, "_CommodityOutput_", year, ".rda"))
-  SoI_Commodity_Output <- State_Summary_CommodityOutput_list[[state]]
+  SoI_Commodity_Output <- get(paste0("State_Summary_CommodityOutput_", year),
+                              as.environment("package:stateior"))[[state]]
   # SoI A matrix
   SoI_A <- useeior::normalizeIOTransactions(SoI_Make, SoI_Commodity_Output$Output)
   # Check column sums of SoI_A
@@ -381,8 +386,8 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   US_Make <- getNationalMake(iolevel, year)
   RoUS_Make <- US_Make - SoI_Make
   # RoUS domestic Use
-  load(paste0("data/State_", iolevel, "_DomesticUse_", year, ".rda"))
-  SoI_Domestic_Use <- State_Summary_DomesticUse_list[[state]]
+  SoI_Domestic_Use <- get(paste0("State_Summary_DomesticUse_", year),
+                          as.environment("package:stateior"))[[state]]
   columns <- colnames(SoI_Domestic_Use)[!colnames(SoI_Domestic_Use)%in%c("F040", "F050")]
   US_Domestic_Use <- estimateUSDomesticUse("Summary", year)
   RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
@@ -405,8 +410,8 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   # Two-region A matrix
   logging::loginfo("Generating two-region Domestic Use tables ...")
   ls <- buildTwoRegionStateDemandModel(state, year, ioschema, iolevel)
-  load(paste0("data/State_", iolevel, "_IndustryOutput_", year, ".rda"))
-  SoI_Industry_Output <- State_Summary_IndustryOutput_list[[state]]
+  SoI_Industry_Output <- get(paste0("State_Summary_IndustryOutput_", year),
+                             as.environment("package:stateior"))[[state]]
   RoUS_Industry_Output <- rowSums(US_Make) - SoI_Industry_Output
   
   logging::loginfo("Generating A matrix of SoI2SoI Domestic Use table ...")
