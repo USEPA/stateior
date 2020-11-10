@@ -318,7 +318,7 @@ getFAFCommodityOutput <- function(year) {
   FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
                                   sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Load pre-saved FAF4 commodity flow data
-  FAF <- get(paste("FAF", year, sep = "_"))
+  FAF <- get(paste("FAF", year, sep = "_"), ironment("package:stateior"))
   # Keep domestic and export trade, keep useful columns, then rename
   FAF <- FAF[FAF$trade_type%in%c(1, 3), c("dms_origst", "sctg2", paste0("value_", year))]
   colnames(FAF) <- c("State_FIPS", "SCTG", "Value")

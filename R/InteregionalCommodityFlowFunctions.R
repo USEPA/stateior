@@ -23,7 +23,8 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
   StateCommOutput <- merge(unique(BEAtoTradedorLocal[, c(bea, "Type")]),
                            StateCommOutput, by.x = bea, by.y = 0)
   if (SoI == FALSE) {
-    US_Make <- get(paste(iolevel, "Make", year, "BeforeRedef", sep = "_"))*1E6
+    US_Make <- get(paste(iolevel, "Make", year, "BeforeRedef", sep = "_"),
+                   as.environment("package:useeior"))*1E6
     USCommOutput <- colSums(US_Make[-which(rownames(US_Make)=="Total Commodity Output"),
                                     -which(colnames(US_Make)=="Total Industry Output")])
     StateCommOutput <- merge(StateCommOutput, USCommOutput, by.x = bea, by.y = 0)
@@ -57,7 +58,8 @@ generateDomestic2RegionICFs <- function (state, year, remove_scrap = FALSE, iosc
   ICF_2r_wide$source <- "FAF"
   # Calculate interregional commodity flow (ICF) ratios for all commodities
   # Merge ICF_2r_wide with complete BEA Commodity list
-  CommodityCodeName <- get(paste(iolevel, "CommodityCodeName_2012", sep = "_"))
+  CommodityCodeName <- get(paste(iolevel, "CommodityCodeName_2012", sep = "_"),
+                           as.environment("package:useeior"))
   ICF <- merge(ICF_2r_wide, CommodityCodeName[, 1, drop = FALSE], by.x = bea,
                by.y = paste("BEA", ioschema, iolevel, "Commodity_Code", sep = "_"),
                all.y = TRUE)

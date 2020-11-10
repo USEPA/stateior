@@ -390,7 +390,7 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
                           as.environment("package:stateior"))[[state]]
   columns <- colnames(SoI_Domestic_Use)[!colnames(SoI_Domestic_Use)%in%c("F040", "F050")]
   US_Domestic_Use <- estimateUSDomesticUse("Summary", year)
-  RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
+  RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use[commodities, ]
   # RoUS commodity output
   US_Commodity_Output <- colSums(US_Make)
   RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output

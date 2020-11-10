@@ -4,7 +4,8 @@
 #' #' @return The US Use table (intermediaete + final demand) of specified iolevel and year.
 getNationalUse <- function(iolevel, year) {
   # Load pre-saved US Use table
-  Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"),
+             as.environment("package:useeior"))*1E6
   # Keep intermediaete and final demand
   Use <- Use[getVectorOfCodes("Summary", "Commodity"),
              c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))]
@@ -139,9 +140,15 @@ adjustGVAComponent <- function(year, return) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data frame contains Summary-level gross value added (V001, V002, V003) for all states at a specific year.
-assembleStateGrossValueAdded <- function(year, iolevel) {
-  US_Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
-  industries <- getVectorOfCodes(iolevel, "Industry")
+assembleStateGrossValueAdded <- function(year) {
+  US_Use <- get(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"),
+                as.environment("package:useeior"))*1E6
+  industries <- getVectorOfCodes("Summary", "Industry")
+  # Determine BEA line codes and sectors where ratios need adjustment
+  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
+                                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) |
+                                                  duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
   StateGVA <- data.frame()
   for (sector in c("EmpCompensation", "Tax", "GOS")) {
     # Generate Value Added tables by BEA
@@ -162,11 +169,6 @@ assembleStateGrossValueAdded <- function(year, iolevel) {
     sector_code <- ifelse(sector=="EmpCompensation", "V001",
                           ifelse(sector=="Tax", "V002",
                                  ifelse(sector=="GOS", "V003")))
-    BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
-    # Determine BEA line codes and sectors where ratios need adjustment
-    allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) |
-                                                    duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
     # Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors
     for (linecode in unique(allocation_sectors$LineCode)) {
       # Determine BEA sectors that need allocation
@@ -194,6 +196,8 @@ assembleStateGrossValueAdded <- function(year, iolevel) {
     rownames(StateGVA_sector) <- paste(rownames(StateGVA_sector), sector_code, sep = ".")
     StateGVA <- rbind(StateGVA, StateGVA_sector)
   }
+  # Replace NA with 0
+  StateGVA[is.na(StateGVA)] <- 0
   return (StateGVA)
 }
 

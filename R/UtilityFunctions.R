@@ -90,7 +90,8 @@ applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
 estimateUSDomesticUse <- function(iolevel, year) {
   # Load Use table and Import matrix
   Use <- getNationalUse(iolevel, year)
-  Import <- get(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"))*1E6
+  Import <- get(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"),
+                as.environment("package:useeior"))*1E6
   # Sort rows and columns in Import to match those in Use
   Import <- Import[rownames(Use), colnames(Use)]
   # Define Export and Import codes
@@ -124,7 +125,8 @@ estimateUSDomesticUse <- function(iolevel, year) {
 #' @return A data frame contains US Domestic Use Ratio (matrix) at a specific year at BEA Summary level.
 calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
   # Load US Use table
-  Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"),
+             as.environment("package:useeior"))*1E6
   # Load US domestic Use table
   Domestic_Use <- estimateUSDomesticUse(iolevel, year)
   # Calculate state Domestic Use ratios

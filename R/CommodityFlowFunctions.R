@@ -7,7 +7,8 @@
 #' @return A data frame contains commodity flow ratios by BEA.
 calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved FAF4 commodity flow data
-  FAF <- get(paste("FAF", year, sep = "_"))
+  FAF <- get(paste("FAF", year, sep = "_"),
+             as.environment("package:stateior"))
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
                                   sep = ",", header = TRUE, check.names = FALSE)
@@ -105,9 +106,11 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
 calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved state export/import data
   if (year<2013) {
-    trade <- get(paste0("Census_USATrade", Hmisc::capitalize(flow_ratio_type), "_", year))
+    trade <- get(paste0("Census_USATrade", Hmisc::capitalize(flow_ratio_type), "_", year),
+                 as.environment("package:stateior"))
   } else {
-    trade <- get(paste0("Census_State", Hmisc::capitalize(flow_ratio_type), "_", year))
+    trade <- get(paste0("Census_State", Hmisc::capitalize(flow_ratio_type), "_", year),
+                 as.environment("package:stateior"))
   }
   # Map from NAICS to BEA
   bea_code <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
