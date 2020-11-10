@@ -56,7 +56,7 @@ getStatePCE <- function(year) {
 #' @return A data frame contains state-US Commodity Output ratios at BEA Summary level.
 calculateStateCommodityOutputRatio <- function(year) {
   # Load state Commodity output
-  State_Summary_CommodityOutput_list <- get(paste0("State_", iolevel, "_CommodityOutput_", year),
+  State_Summary_CommodityOutput_list <- get(paste0("State_Summary_CommodityOutput_", year),
                                             as.environment("package:stateior"))
   states <- names(State_Summary_CommodityOutput_list)
   # Load US Commodity output
