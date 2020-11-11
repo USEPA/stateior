@@ -766,10 +766,10 @@
 #' }
 "AlternativeStateCommodityOutputRatio_2017"
 
-#' State gross value addaed 2012
+#' State gross value addaed at Summary level for 2012
 #' @format A dataframe with 156 obs. (representing Summary GVA sectors in 52 states/regions)
 #' and 71 variables (representing Summary industries)
-"State_GrossValueAdded_2012"
+"State_Summary_GrossValueAdded_2012"
 
 #' State Summary 2012 Make (in a list format)
 #' @format A list with 52 elements:
