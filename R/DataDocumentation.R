@@ -468,7 +468,7 @@
 #' A dataset of domestic and international commodity movement
 #' by all modes of transportation.
 #' Data dictionary can be found in Table 5
-#' at https://faf.ornl.gov/fafweb/data/FAF4%20User%20Guide.pdf.
+#' at https://faf.ornl.gov/fafweb/data/FAF4\%20User\%20Guide.pdf.
 #' @format A data frame with 882491 obs. and 12 variables:
 #' \describe{
 #'  \item{fr_orig}{integer}
@@ -491,7 +491,7 @@
 #' A dataset of domestic and international commodity movement
 #' by all modes of transportation.
 #' Data dictionary can be found in Table 5
-#' at https://faf.ornl.gov/fafweb/data/FAF4%20User%20Guide.pdf.
+#' at https://faf.ornl.gov/fafweb/data/FAF4\%20User\%20Guide.pdf.
 #' @format A data frame with 540145 obs. and 12 variables:
 #' \describe{
 #'  \item{fr_orig}{integer}
@@ -514,7 +514,7 @@
 #' A dataset of domestic and international commodity movement
 #' by all modes of transportation.
 #' Data dictionary can be found in Table 5
-#' at https://faf.ornl.gov/fafweb/data/FAF4%20User%20Guide.pdf.
+#' at https://faf.ornl.gov/fafweb/data/FAF4\%20User\%20Guide.pdf.
 #' @format A data frame with 549137 obs. and 12 variables:
 #' \describe{
 #'  \item{fr_orig}{integer}
@@ -537,7 +537,7 @@
 #' A dataset of domestic and international commodity movement
 #' by all modes of transportation.
 #' Data dictionary can be found in Table 5
-#' at https://faf.ornl.gov/fafweb/data/FAF4%20User%20Guide.pdf.
+#' at https://faf.ornl.gov/fafweb/data/FAF4\%20User\%20Guide.pdf.
 #' @format A data frame with 553480 obs. and 12 variables:
 #' \describe{
 #'  \item{fr_orig}{integer}
@@ -560,7 +560,7 @@
 #' A dataset of domestic and international commodity movement
 #' by all modes of transportation.
 #' Data dictionary can be found in Table 5
-#' at https://faf.ornl.gov/fafweb/data/FAF4%20User%20Guide.pdf.
+#' at https://faf.ornl.gov/fafweb/data/FAF4\%20User\%20Guide.pdf.
 #' @format A data frame with 550886 obs. and 12 variables:
 #' \describe{
 #'  \item{fr_orig}{integer}
@@ -583,7 +583,7 @@
 #' A dataset of domestic and international commodity movement
 #' by all modes of transportation.
 #' Data dictionary can be found in Table 5
-#' at https://faf.ornl.gov/fafweb/data/FAF4%20User%20Guide.pdf.
+#' at https://faf.ornl.gov/fafweb/data/FAF4\%20User\%20Guide.pdf.
 #' @format A data frame with 560968 obs. and 12 variables:
 #' \describe{
 #'  \item{fr_orig}{integer}
@@ -606,7 +606,7 @@
 #' A dataset of domestic and international commodity movement
 #' by all modes of transportation.
 #' Data dictionary can be found in Table 5
-#' at https://faf.ornl.gov/fafweb/data/FAF4%20User%20Guide.pdf.
+#' at https://faf.ornl.gov/fafweb/data/FAF4\%20User\%20Guide.pdf.
 #' @format A data frame with 568202 obs. and 12 variables:
 #' \describe{
 #'  \item{fr_orig}{integer}
