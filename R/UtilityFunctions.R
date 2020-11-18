@@ -125,8 +125,7 @@ estimateUSDomesticUse <- function(iolevel, year) {
 #' @return A data frame contains US Domestic Use Ratio (matrix) at a specific year at BEA Summary level.
 calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
   # Load US Use table
-  Use <- get(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"),
-             as.environment("package:useeior"))*1E6
+  Use <- getNationalUse(iolevel, year)
   # Load US domestic Use table
   Domestic_Use <- estimateUSDomesticUse(iolevel, year)
   # Calculate state Domestic Use ratios
