@@ -103,6 +103,26 @@ adjustGVAComponent <- function(year, return) {
   compareTable[is.na(compareTable$GVA),]$GVA <- compareTable[is.na(compareTable$GVA),]$Tax +
     compareTable[is.na(compareTable$GVA),]$EmpCompensation + 
     compareTable[is.na(compareTable$GVA),]$GOS
+  # Further adjust NA in gva using state employment
+  if (nrow(compareTable[is.na(compareTable$GVA), ]) > 0) {
+    BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
+                                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+    StateEmp <- getStateEmploymentbyBEASummary(year)
+    # Extract State and LineCode that have NA in gva from compareTable
+    StateLineCodePair <- compareTable[is.na(compareTable$GVA), c("GeoName", "LineCode")]
+    for (i in 1:nrow(StateLineCodePair)) {
+      # Determine corresponding BEA sector
+      BEAsector <- BEAStateGVAtoBEASummary[BEAStateGVAtoBEASummary$LineCode==StateLineCodePair[i, "LineCode"], "BEA_2012_Summary_Code"]
+      # Extract state emp number for the BEA sector
+      StateEmp_i <- StateEmp[StateEmp$State==StateLineCodePair[i, "GeoName"] & StateEmp$BEA_2012_Summary_Code%in%BEAsector, "Emp"]
+      # Calculate state-US EmpRatio
+      EmpRatio <- StateEmp_i/sum(StateEmp[StateEmp$BEA_2012_Summary_Code%in%BEAsector, "Emp"])
+      # Determine US gva for the target LineCode
+      US_GVA <- compareTable[compareTable$GeoName=="United States *" & compareTable$LineCode==StateLineCodePair[i, "LineCode"], "GVA"]
+      # Replace NA with US_GVA * EmpRatio
+      compareTable[rownames(StateLineCodePair), "GVA"] <- US_GVA * EmpRatio
+    }
+  }
   
   #adjust NA in EmpComp and GOS 
   ## Step 1: calculate EmpComp-GVA ratio and GOS-GVA ratio for each LineCode
