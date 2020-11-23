@@ -502,3 +502,32 @@ GA_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Georgia", ye
 MN_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Minnesota", year = 2012, ioschema = 2012, "Summary")
 OR_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Oregon", year = 2012, ioschema = 2012, "Summary")
 WA_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Washington", year = 2012, ioschema = 2012, "Summary")
+
+#' 17. State domestic Use table estimated using calculateUSDomesticUseRatioMatrix
+#' must almost equal (tolerance is 1E-3) that estimated via IntlTransportMargins.
+calculateStateDomesticUseviaIntlTransportMargins <- function(state, year) {
+  # Load US Use and Import tables
+  US_Use <- getNationalUse(iolevel, year)
+  US_Import <- get(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"),
+                   as.environment("package:useeior"))*1E6
+  # Calculate SoI Import matrix
+  commodities <- getVectorOfCodes(iolevel, "Commodity")
+  State_Use <- get(paste0("State_Summary_Use_", year),
+                   as.environment("package:stateior"))[[state]][commodities, ]
+  State_Import_Matrix <- State_Use * (US_Import[rownames(US_Use), colnames(US_Use)]/US_Use)
+  State_Import_Matrix[is.na(State_Import_Matrix)] <- 0
+  IntlMarginsRatio <- calculateUSInternationalTransportMarginsRatioMatrix("Summary", year)
+  State_IntlMargins_Matrix <- State_Use * IntlMarginsRatio
+  State_DomesticUse <- State_Use - State_Import_Matrix + State_IntlMargins_Matrix
+  State_DomesticUse[, "F040"] <- State_Use[, "F040"]
+  State_DomesticUse[, "F050"] <- 0
+  return(State_DomesticUse)
+}
+df0 <- SoI_DomesticUse[1:73, ]
+df1 <- calculateStateDomesticUseviaIntlTransportMargins("Georgia", 2012)
+# Compare aggregated state Make against US Make
+comparison <- compareModelResult(df0, df1, abs_diff = TRUE, tolerance = 1E-3)
+# Extract failures
+failures <- extractValidationResult(comparison$confrontation, failure = TRUE)
+colnames(failures) <- c("Commodity", "Industry")
+
