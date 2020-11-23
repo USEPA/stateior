@@ -779,13 +779,13 @@
 
 #' State Summary 2012 Use (in a list format)
 #' @format A list with 52 elements:
-#' each element is a dataframe with 76 obs. (representing Summary commodities and VA sectors)
+#' each element is a dataframe with 76 obs. (representing Summary commodities and value added)
 #' and 91 variables (representing Summary industries and final demand sectors)
 "State_Summary_Use_2012"
 
 #' State Summary 2012 Domestic Use (in a list format)
 #' @format A list with 52 elements:
-#' each element is a dataframe with 73 obs. (representing Summary commodities)
+#' each element is a dataframe with 76 obs. (representing Summary commodities and value added)
 #' and 91 variables (representing Summary industries and final demand sectors)
 "State_Summary_DomesticUse_2012"
 
