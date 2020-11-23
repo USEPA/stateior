@@ -135,6 +135,30 @@ calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
   return(Ratio)
 }
 
+#' Calculate US International Transport Margins Ratio (matrix).
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @return A data frame contains US International Transport Margins Ratio (matrix) at a specific year at BEA Summary level.
+calculateUSInternationalTransportMarginsRatioMatrix <- function(iolevel, year) {
+  # Load US Use and Import tables
+  US_Use <- getNationalUse(iolevel, year)
+  US_Import <- get(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"),
+                   as.environment("package:useeior"))*1E6
+  # Calculate US Domestic Use ratios (w/ International Transport Margins)
+  DomesticUseWithIntlTransportMarginsRatio <- (US_Use - US_Import[rownames(US_Use), colnames(US_Use)])/US_Use
+  DomesticUseWithIntlTransportMarginsRatio[is.na(DomesticUseWithIntlTransportMarginsRatio)] <- 0
+  # Calculate InternationalTransportMargins (vector)
+  InternationalTransportMargins <- US_Use[, "F050"] - US_Import[, "F050"]
+  # Allocate InternationalMargins to get InternationalMarginsMatrix
+  DistributionRatio <- sweep(US_Use, 1, FUN = "/", rowSums(US_Use) - (US_Use[, "F040"] + US_Use[, "F050"]))
+  DistributionRatio[is.na(DistributionRatio)] <- 0
+  InternationalTransportMarginsMatrix <- sweep(DistributionRatio, 1, FUN = "*", InternationalTransportMargins)
+  # Calculate InternationalTransportMarginsRatio
+  InternationalTransportMarginsRatio <- InternationalTransportMarginsMatrix/US_Use
+  InternationalTransportMarginsRatio[is.na(InternationalTransportMarginsRatio)] <- 0
+  return(InternationalTransportMarginsRatio)
+}
+
 #' Extract desired columns from SchemaInfo, return vectors with strings of codes.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param colName A text value specifying desired column name.
@@ -159,7 +183,15 @@ getFinalDemandCodes <- function(iolevel) {
   return(FinalDemandCodes)
 }
 
-
+#' Join strings with slashes
+#'
+#' @param ... text string
+joinStringswithSlashes <- function(...) {
+  items <- list(...)
+  str <- sapply(items, paste, collapse = '/')
+  str <- tolower(str)
+  return(str)
+}
 
 
 #' getStateAbbreviation (MODIFIED)

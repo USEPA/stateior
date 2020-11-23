@@ -194,7 +194,7 @@ buildStateDemandModel <- function(year) {
   
   logging::loginfo("Assembling state use table (intermediate consumption + final demand) ...")
   logging::loginfo("Estimating state domestic use table ...")
-  Domestic_Use_ratios <- calculateUSDomesticUseRatioMatrix("Summary", year)
+  DomesticUse_ratios <- calculateUSDomesticUseRatioMatrix("Summary", year)
   logging::loginfo("Appending value added to state Use tables ...")
   StateGVA <- get(paste0("State_Summary_GrossValueAdded_", year), as.environment("package:stateior"))
   model <- list()
@@ -204,7 +204,7 @@ buildStateDemandModel <- function(year) {
                                StateFinalDemand[gsub("\\..*", "", rownames(StateFinalDemand))==state,
                                                 FinalDemand_columns])
     # Calculate state domestic Use table
-    State_Summary_DomesticUse <- State_Summary_Use*Domestic_Use_ratios
+    State_Summary_DomesticUse <- State_Summary_Use*DomesticUse_ratios
     # Update Import in state Use table
     State_Summary_Use$F050 <- rowSums(State_Summary_DomesticUse) - rowSums(State_Summary_Use)
     # Append value added rows to state Use tables
@@ -226,7 +226,7 @@ buildStateDemandModel <- function(year) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A list of domestic 2-region use tables.
+#' @return A list of domestic two-region use tables.
 buildTwoRegionStateDemandModel <- function(state, year, ioschema, iolevel) {
   # 0 - Define commodities and desired columns
   commodities <- getVectorOfCodes(iolevel, "Commodity")
@@ -237,7 +237,7 @@ buildTwoRegionStateDemandModel <- function(state, year, ioschema, iolevel) {
   
   # 1 - Load state domestic Use for the specified year
   logging::loginfo("Loading state Domestic Use table ...")
-  SoI_Domestic_Use <- get(paste0("State_", iolevel, "_DomesticUse_", year),
+  SoI_DomesticUse <- get(paste0("State_", iolevel, "_DomesticUse_", year),
                           as.environment("package:stateior"))[[state]][commodities, ]
   
   # 2 - Generate 2-region ICFs
@@ -246,41 +246,41 @@ buildTwoRegionStateDemandModel <- function(state, year, ioschema, iolevel) {
   
   # 3 - Generate SoI2SoI domestic Use
   logging::loginfo("Generating SoI2SoI Use table ...")
-  SoI2SoI_Use <- SoI_Domestic_Use
-  SoI2SoI_Use[, columns] <- SoI_Domestic_Use[, columns] * ICF$SoI2SoI
+  SoI2SoI_Use <- SoI_DomesticUse
+  SoI2SoI_Use[, columns] <- SoI_DomesticUse[, columns] * ICF$SoI2SoI
   # Load state commodity output
   logging::loginfo("Loading state commodity output ...")
-  SoI_Commodity_Output <- get(paste0("State_", iolevel, "_CommodityOutput_", year),
+  SoI_CommodityOutput <- get(paste0("State_", iolevel, "_CommodityOutput_", year),
                               as.environment("package:stateior"))[[state]]
   # Calculate Interregional Imports, Exports, and Net Exports
   logging::loginfo("Calculating SoI2SoI interregional imports and exports and net exports ...")
-  SoI2SoI_Use$InterregionalImports <- rowSums(SoI_Domestic_Use[, columns]) - rowSums(SoI2SoI_Use[, columns])
-  SoI2SoI_Use$InterregionalExports <- SoI_Commodity_Output$Output - rowSums(SoI2SoI_Use[, c(columns, ExportCodes)])
+  SoI2SoI_Use$InterregionalImports <- rowSums(SoI_DomesticUse[, columns]) - rowSums(SoI2SoI_Use[, columns])
+  SoI2SoI_Use$InterregionalExports <- SoI_CommodityOutput$Output - rowSums(SoI2SoI_Use[, c(columns, ExportCodes)])
   SoI2SoI_Use$NetExports <- SoI2SoI_Use$InterregionalExports - SoI2SoI_Use$InterregionalImports
   
   # 4 - Generate RoUS domestic Use and commodity output
   # Generate RoUS domestic Use
   logging::loginfo("Generating RoUS Domestic Use table ...")
-  US_Domestic_Use <- estimateUSDomesticUse(iolevel, year)
-  RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use
+  US_DomesticUse <- estimateUSDomesticUse(iolevel, year)
+  RoUS_DomesticUse <- US_DomesticUse - SoI_DomesticUse
   # Calculate RoUS Commodity Output
   logging::loginfo("Generating RoUS commodity output ...")
   US_Make <- getNationalMake(iolevel, year)
-  US_Commodity_Output <- colSums(US_Make)
-  RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
-  colnames(RoUS_Commodity_Output) <- "Output"
-  # Adjust RoUS_Commodity_Output
-  MakeUseDiff <- US_Commodity_Output - rowSums(US_Domestic_Use[, c(columns, ExportCodes)])
-  RoUS_Commodity_Output$Output <- RoUS_Commodity_Output$Output - MakeUseDiff
+  US_CommodityOutput <- colSums(US_Make)
+  RoUS_CommodityOutput <- US_CommodityOutput - SoI_CommodityOutput
+  colnames(RoUS_CommodityOutput) <- "Output"
+  # Adjust RoUS_CommodityOutput
+  MakeUseDiff <- US_CommodityOutput - rowSums(US_DomesticUse[, c(columns, ExportCodes)])
+  RoUS_CommodityOutput$Output <- RoUS_CommodityOutput$Output - MakeUseDiff
   
   # 5 - Generate RoUS2RoUS domestic Use
   logging::loginfo("Generating RoUS2RoUS Use table ...")
-  RoUS2RoUS_Use <- RoUS_Domestic_Use
-  RoUS2RoUS_Use[, columns] <- RoUS_Domestic_Use[, columns] * ICF$RoUS2RoUS
+  RoUS2RoUS_Use <- RoUS_DomesticUse
+  RoUS2RoUS_Use[, columns] <- RoUS_DomesticUse[, columns] * ICF$RoUS2RoUS
   # Calculate Interregional Imports, Exports, and Net Exports
   logging::loginfo("Calculating RoUS2RoUS interregional imports and exports and net exports ...")
-  RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_Domestic_Use[, columns]) - rowSums(RoUS2RoUS_Use[, columns])
-  RoUS2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$Output - rowSums(RoUS2RoUS_Use[, c(columns, ExportCodes)])
+  RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_DomesticUse[, columns]) - rowSums(RoUS2RoUS_Use[, columns])
+  RoUS2RoUS_Use$InterregionalExports <- RoUS_CommodityOutput$Output - rowSums(RoUS2RoUS_Use[, c(columns, ExportCodes)])
   RoUS2RoUS_Use$NetExports <- RoUS2RoUS_Use$InterregionalExports - RoUS2RoUS_Use$InterregionalImports
   
   # 6 - Allocate negative InterregionalExports across columns in SoI2SoI Use and RoUS2RoUS Use
@@ -299,15 +299,15 @@ buildTwoRegionStateDemandModel <- function(state, year, ioschema, iolevel) {
       RoUS2RoUS_Use[i, columns] <- weight + value*(weight/sum(weight))
     }
   }
-  SoI2SoI_Use$InterregionalImports <- rowSums(SoI_Domestic_Use[, columns]) - rowSums(SoI2SoI_Use[, columns])
-  SoI2SoI_Use$InterregionalExports <- SoI_Commodity_Output$Output - rowSums(SoI2SoI_Use[, c(columns, ExportCodes)])
-  RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_Domestic_Use[, columns]) - rowSums(RoUS2RoUS_Use[, columns])
-  RoUS2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$Output - rowSums(RoUS2RoUS_Use[, c(columns, ExportCodes)])
+  SoI2SoI_Use$InterregionalImports <- rowSums(SoI_DomesticUse[, columns]) - rowSums(SoI2SoI_Use[, columns])
+  SoI2SoI_Use$InterregionalExports <- SoI_CommodityOutput$Output - rowSums(SoI2SoI_Use[, c(columns, ExportCodes)])
+  RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_DomesticUse[, columns]) - rowSums(RoUS2RoUS_Use[, columns])
+  RoUS2RoUS_Use$InterregionalExports <- RoUS_CommodityOutput$Output - rowSums(RoUS2RoUS_Use[, c(columns, ExportCodes)])
   
   # 7 - Calculate errors for SoI and RoUS
   logging::loginfo("Allocating difference between interregional imports and exports in SoI2SoI Use and RoUS2RoUS Use ...")
   error <- SoI2SoI_Use$InterregionalImports - RoUS2RoUS_Use$InterregionalExports
-  SoIerror <- error*(SoI_Commodity_Output$Output/US_Commodity_Output)
+  SoIerror <- error*(SoI_CommodityOutput$Output/US_CommodityOutput)
   RoUSerror <- error - SoIerror
   SoIerror_1 <- SoIerror_2 <- SoIerror
   
@@ -322,31 +322,31 @@ buildTwoRegionStateDemandModel <- function(state, year, ioschema, iolevel) {
     SoI2SoI_Use[i, columns] <- SoIweight + SoIerror_2[i]*(SoIweight/sum(SoIweight))
     RoUS2RoUS_Use[i, columns] <- RoUSweight - RoUSerror[i]*(RoUSweight/sum(RoUSweight))
   }
-  # Check if negative cells in SoI2SoI_Use and RoUS2RoUS_Use are also negative in US_Domestic_Use
+  # Check if negative cells in SoI2SoI_Use and RoUS2RoUS_Use are also negative in US_DomesticUse
   
   # 9 - Re-calculate InterregionalImports, InterregionalExports and NetExports
   logging::loginfo("Adjusting interregional imports and exports and net exports in SoI2SoI and RoUS2RoUS ...")
   # SoI2SoI
-  SoI2SoI_Use$InterregionalImports <- rowSums(SoI_Domestic_Use[, columns]) - rowSums(SoI2SoI_Use[, columns])
-  SoI2SoI_Use$InterregionalExports <- SoI_Commodity_Output$Output - rowSums(SoI2SoI_Use[, c(columns, ExportCodes)])
+  SoI2SoI_Use$InterregionalImports <- rowSums(SoI_DomesticUse[, columns]) - rowSums(SoI2SoI_Use[, columns])
+  SoI2SoI_Use$InterregionalExports <- SoI_CommodityOutput$Output - rowSums(SoI2SoI_Use[, c(columns, ExportCodes)])
   SoI2SoI_Use$NetExports <- SoI2SoI_Use$InterregionalExports - SoI2SoI_Use$InterregionalImports
   # RoUS2RoUS
-  RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_Domestic_Use[, columns]) - rowSums(RoUS2RoUS_Use[, columns])
-  RoUS2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$Output - rowSums(RoUS2RoUS_Use[, c(columns, ExportCodes)])
+  RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_DomesticUse[, columns]) - rowSums(RoUS2RoUS_Use[, columns])
+  RoUS2RoUS_Use$InterregionalExports <- RoUS_CommodityOutput$Output - rowSums(RoUS2RoUS_Use[, c(columns, ExportCodes)])
   RoUS2RoUS_Use$NetExports <- RoUS2RoUS_Use$InterregionalExports - RoUS2RoUS_Use$InterregionalImports
   # Check if there are negative values in InterregionalImports, InterregionalExports and NetExports in SoI2SoI_Use and RoUS2RoUS_Use
   
   # 10 - Generate SoI2RoUS and RoUS2SoI Use
   logging::loginfo("Generating SoI2RoUS and RoUS2SoI Use ...")
   # SoI2RoUS
-  SoI2RoUS_Use <- RoUS_Domestic_Use - RoUS2RoUS_Use[rownames(RoUS_Domestic_Use), colnames(RoUS_Domestic_Use)]
-  SoI2RoUS_Use$InterregionalImports <- rowSums(RoUS_Domestic_Use[, columns]) - rowSums(SoI2RoUS_Use[, columns])
-  SoI2RoUS_Use$InterregionalExports <- RoUS_Commodity_Output$Output - rowSums(SoI2RoUS_Use[, c(columns, ExportCodes)])
+  SoI2RoUS_Use <- RoUS_DomesticUse - RoUS2RoUS_Use[rownames(RoUS_DomesticUse), colnames(RoUS_DomesticUse)]
+  SoI2RoUS_Use$InterregionalImports <- rowSums(RoUS_DomesticUse[, columns]) - rowSums(SoI2RoUS_Use[, columns])
+  SoI2RoUS_Use$InterregionalExports <- RoUS_CommodityOutput$Output - rowSums(SoI2RoUS_Use[, c(columns, ExportCodes)])
   SoI2RoUS_Use$NetExports <- SoI2RoUS_Use$InterregionalExports - SoI2RoUS_Use$InterregionalImports
   # RoUS2SoI
-  RoUS2SoI_Use <- SoI_Domestic_Use - SoI2SoI_Use[rownames(SoI_Domestic_Use), colnames(SoI_Domestic_Use)]
-  RoUS2SoI_Use$InterregionalImports <- rowSums(SoI_Domestic_Use[, columns]) - rowSums(RoUS2SoI_Use[, columns])
-  RoUS2SoI_Use$InterregionalExports <- SoI_Commodity_Output$Output - rowSums(RoUS2SoI_Use[, c(columns, ExportCodes)])
+  RoUS2SoI_Use <- SoI_DomesticUse - SoI2SoI_Use[rownames(SoI_DomesticUse), colnames(SoI_DomesticUse)]
+  RoUS2SoI_Use$InterregionalImports <- rowSums(SoI_DomesticUse[, columns]) - rowSums(RoUS2SoI_Use[, columns])
+  RoUS2SoI_Use$InterregionalExports <- SoI_CommodityOutput$Output - rowSums(RoUS2SoI_Use[, c(columns, ExportCodes)])
   RoUS2SoI_Use$NetExports <- RoUS2RoUS_Use$InterregionalExports - RoUS2SoI_Use$InterregionalImports
   
   # 11 - Create validation
@@ -395,8 +395,8 @@ buildFullTwoRegionStateModel <- function(state, year, ioschema, iolevel) {
   rownames(SoI_Make) <- paste(state, industries, "Industry", sep = ".")
   colnames(SoI_Make) <- paste(state, commodities, "Commodity", sep = ".")
   # SoI commodity output
-  SoI_Commodity_Output <- get(paste0("State_", iolevel, "_CommodityOutput_", year),
-                              as.environment("package:stateior"))[[state]]
+  SoI_CommodityOutput <- get(paste0("State_", iolevel, "_CommodityOutput_", year),
+                             as.environment("package:stateior"))[[state]]
   
   logging::loginfo("Generating RoUS Make table ...")
   # RoUS Make
@@ -405,18 +405,18 @@ buildFullTwoRegionStateModel <- function(state, year, ioschema, iolevel) {
   rownames(RoUS_Make) <- paste("RoUS", industries, "Industry", sep = ".")
   colnames(RoUS_Make) <- paste("RoUS", commodities, "Commodity", sep = ".")
   # RoUS domestic Use
-  SoI_Domestic_Use <- get(paste0("State_", iolevel, "_DomesticUse_", year),
-                          as.environment("package:stateior"))[[state]]
-  columns <- colnames(SoI_Domestic_Use)[!colnames(SoI_Domestic_Use)%in%c("F040", "F050")]
-  US_Domestic_Use <- estimateUSDomesticUse(iolevel, year)
-  RoUS_Domestic_Use <- US_Domestic_Use - SoI_Domestic_Use[commodities, ]
+  SoI_DomesticUse <- get(paste0("State_", iolevel, "_DomesticUse_", year),
+                         as.environment("package:stateior"))[[state]]
+  columns <- colnames(SoI_DomesticUse)[!colnames(SoI_DomesticUse)%in%c("F040", "F050")]
+  US_DomesticUse <- estimateUSDomesticUse(iolevel, year)
+  RoUS_DomesticUse <- US_DomesticUse - SoI_DomesticUse[commodities, ]
   # RoUS commodity output
-  US_Commodity_Output <- colSums(US_Make)
-  RoUS_Commodity_Output <- US_Commodity_Output - SoI_Commodity_Output
-  colnames(RoUS_Commodity_Output) <- "Output"
-  # Adjust RoUS_Commodity_Output
-  MakeUseDiff <- US_Commodity_Output - rowSums(US_Domestic_Use[, c(columns, "F040")])
-  RoUS_Commodity_Output$Output <- RoUS_Commodity_Output$Output - MakeUseDiff
+  US_CommodityOutput <- colSums(US_Make)
+  RoUS_CommodityOutput <- US_CommodityOutput - SoI_CommodityOutput
+  colnames(RoUS_CommodityOutput) <- "Output"
+  # Adjust RoUS_CommodityOutput
+  MakeUseDiff <- US_CommodityOutput - rowSums(US_DomesticUse[, c(columns, "F040")])
+  RoUS_CommodityOutput$Output <- RoUS_CommodityOutput$Output - MakeUseDiff
   
   logging::loginfo("Generating two-region Domestic Use tables ...")
   # Two-region Use table
@@ -448,14 +448,18 @@ buildFullTwoRegionStateModel <- function(state, year, ioschema, iolevel) {
   SoI_Use <- get(paste0("State_", iolevel, "_Use_", year),
                  as.environment("package:stateior"))[[state]][commodities, ]
   US_Use <- getNationalUse(iolevel, year)
+  US_Import <- get(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"),
+                   as.environment("package:useeior"))*1E6
+  US_ImportRatios <- US_Import[rownames(US_Use), colnames(US_Use)]/US_Use
+  US_ImportRatios[is.na(US_ImportRatios)] <- 0
   RoUS_Use <- US_Use - SoI_Use
-  InternationalImports <- as.data.frame(t(c(colSums(SoI_Use[commodities, ]) - colSums(SoI_Domestic_Use[commodities, ]),
-                                            colSums(RoUS_Use[commodities, ]) - colSums(RoUS_Domestic_Use[commodities, ]))))
-  colnames(InternationalImports) <- paste0(paste(rep(c(state, "RoUS"), each = ncol(InternationalImports)/2),
-                                                 colnames(InternationalImports),
-                                                 sep = "."),
-                                          rep(c(rep(".Industry", each = length(industries)),
-                                                rep("", each = length(FD_columns))), 2))
+  IntlImports <- as.data.frame(t(c(colSums(SoI_Use * US_ImportRatios),
+                                   colSums(RoUS_Use * US_ImportRatios))))
+  colnames(IntlImports) <- paste0(paste(rep(c(state, "RoUS"), each = ncol(IntlImports)/2),
+                                        colnames(IntlImports),
+                                        sep = "."),
+                                  rep(c(rep(".Industry", each = length(industries)),
+                                        rep("", each = length(FD_columns))), 2))
   
   logging::loginfo("Calculating SoI and RoUS gross value added by industry ...")
   # GVA
@@ -466,6 +470,17 @@ buildFullTwoRegionStateModel <- function(state, year, ioschema, iolevel) {
                               as.environment("package:stateior")))[GVA_rows, ] - SoI_GVA
   TwoRegionGVA <- cbind(SoI_GVA, RoUS_GVA)
   colnames(TwoRegionGVA) <- colnames(InternationalImports)
+  
+  logging::loginfo("Calculating SoI and RoUS international transport margins by industry ...")
+  # International Transport Margins
+  IntlTransportMarginsRatio <- calculateUSInternationalTransportMarginsRatioMatrix(iolevel, year)
+  IntlTransportMargins <- as.data.frame(t(c(colSums(SoI_Use * IntlTransportMarginsRatio),
+                                            colSums(RoUS_Use * IntlTransportMarginsRatio))))
+  colnames(IntlTransportMargins) <- paste0(paste(rep(c(state, "RoUS"), each = ncol(IntlTransportMargins)/2),
+                                                 colnames(IntlTransportMargins),
+                                                 sep = "."),
+                                           rep(c(rep(".Industry", each = length(industries)),
+                                                 rep("", each = length(FD_columns))), 2))
   
   logging::loginfo("Assembling full two-region make and use table ...")
   # Start with SoI_Make
@@ -483,7 +498,7 @@ buildFullTwoRegionStateModel <- function(state, year, ioschema, iolevel) {
                                              colnames(TwoRegionUse), colnames(TwoRegionFinalDemand))]
   
   # Append final demand table
-  FullTwoRegionTable[1:nrow(FullTwoRegionTable), colnames(TwoRegionFinalDemand)] <- TwoRegionFinalDemand
+  FullTwoRegionTable[1:nrow(TwoRegionFinalDemand), colnames(TwoRegionFinalDemand)] <- TwoRegionFinalDemand
   # Append international imports
   FullTwoRegionTable["InternationalImports", colnames(InternationalImports)] <- InternationalImports
   # Append total intermediate consumption
@@ -497,7 +512,7 @@ buildFullTwoRegionStateModel <- function(state, year, ioschema, iolevel) {
   # Append purchases on the domestic territory by non-residents
   # TBD
   # Append international transportation margins
-  
+  FullTwoRegionTable["InternationalTransportMargins", colnames(InternationalTransportMargins)] <- InternationalTransportMargins
   
   return(FullTwoRegionTable)
 }
