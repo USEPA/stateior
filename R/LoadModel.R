@@ -1,64 +1,78 @@
-#' Load make table of a specific state for a given year.
-#' @description Load make table of a specific state for a given year.
+#' Load make tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load make tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A dataframe of state make table.
+#' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) make tables.
 #' @export
-loadStateMakeTable <- function(state, year, iolevel) {
-  Make <- get(paste("State", iolevel, "Make", year, sep = "_"),
+loadTwoRegionMakeTable <- function(state, year, iolevel) {
+  Make <- get(paste("TwoRegion", iolevel, "Make", year, sep = "_"),
               as.environment("package:stateior"))[[state]]
   return(Make)
 }
 
-#' Load commodity output of a specific state for a given year.
-#' @description Load commodity output of a specific state for a given year.
+#' Load commodity output tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load commodity output tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A dataframe of state commodity output.
+#' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) commodity output.
 #' @export
-loadStateCommodityOutput <- function(state, year, iolevel) {
-  CommOutput <- get(paste("State", iolevel, "CommodityOutput", year, sep = "_"),
+loadTwoRegionCommodityOutput <- function(state, year, iolevel) {
+  CommOutput <- get(paste("TwoRegion", iolevel, "CommodityOutput", year, sep = "_"),
                     as.environment("package:stateior"))[[state]]
   return(CommOutput)
 }
 
-#' Load industry output of a specific state for a given year.
-#' @description Load industry output of a specific state for a given year.
+#' Load industry output tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load industry output tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A dataframe of state industry output.
+#' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) industry output.
 #' @export
-loadStateIndustryOutput <- function(state, year, iolevel) {
-  IndOutput <- get(paste("State", iolevel, "IndustryOutput", year, sep = "_"),
+loadTwoRegionIndustryOutput <- function(state, year, iolevel) {
+  IndOutput <- get(paste("TwoRegion", iolevel, "IndustryOutput", year, sep = "_"),
                    as.environment("package:stateior"))[[state]]
   return(IndOutput)
 }
 
-#' Load use table of a specific state for a given year.
-#' @description Load use table of a specific state for a given year.
+#' Load use tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load use tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A dataframe of state use table.
+#' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) use tables.
 #' @export
-loadStateUseTable <- function(state, year, iolevel) {
-  Use <- get(paste("State", iolevel, "Use", year, sep = "_"),
+loadTwoRegionUseTable <- function(state, year, iolevel) {
+  Use <- get(paste("TwoRegion", iolevel, "Use", year, sep = "_"),
              as.environment("package:stateior"))[[state]]
   return(Use)
 }
 
-#' Load domestic use table of a specific state for a given year.
-#' @description Load domestic use table of a specific state for a given year.
+#' Load domestic use tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load domestic use tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A dataframe of state domestic use table.
+#' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) domestic use tables.
 #' @export
-loadStateDomesticUseTable <- function(state, year, iolevel) {
-  DomesticUse <- get(paste("State", iolevel, "DomesticUse", year, sep = "_"),
+loadTwoRegionDomesticUseTable <- function(state, year, iolevel) {
+  DomesticUse <- get(paste("TwoRegion", iolevel, "DomesticUse", year, sep = "_"),
                      as.environment("package:stateior"))[[state]]
   return(DomesticUse)
+}
+
+
+#' Load demand (trade) tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load demand (trade) tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @param state A text value specifying state of interest.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) demand (trade) tables.
+#' @export
+loadTwoRegionDemandTable <- function(state, year, iolevel) {
+  TwoRegionDemand <- get(paste("TwoRegion", iolevel, "Demand", year, sep = "_"),
+                         as.environment("package:stateior"))[[state]]
+  return(TwoRegionDemand)
 }
