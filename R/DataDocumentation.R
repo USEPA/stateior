@@ -800,3 +800,33 @@
 #' each element is a dataframe with 71 obs. (representing Summary industries)
 #' and 1 variable (Industry Output)
 "State_Summary_IndustryOutput_2012"
+
+#' Two-region Summary 2012 Make (in a list format)
+#' @format A list with 51 elements, representing 50 states and DC:
+#' each element is a dataframe with 142 obs. (representing Summary SoI and RoUS industries)
+#' and 146 variables (representing Summary SoI and RoUS commodities)
+"TwoRegion_Summary_Make_2012"
+
+#' Two-region Summary 2012 Use (in a list format)
+#' @format A list with 51 elements, representing 50 states and DC:
+#' each element is a dataframe with 152 obs. (representing Summary SoI and RoUS commodities and value added)
+#' and 182 variables (representing Summary SoI and RoUS industries and final demand sectors)
+"TwoRegion_Summary_Use_2012"
+
+#' Two-region Summary 2012 Domestic Use (in a list format)
+#' @format A list with 51 elements, representing 50 states and DC:
+#' each element is a dataframe with 152 obs. (representing Summary SoI and RoUS commodities and value added)
+#' and 182 variables (representing Summary SoI and RoUS industries and final demand sectors)
+"TwoRegion_Summary_DomesticUse_2012"
+
+#' Two-region Summary 2012 Commodity Output (in a list format)
+#' @format A list with 51 elements, representing 50 states and DC:
+#' each element is a dataframe with 73 obs. (representing Summary commodities)
+#' and 2 variable (SoI and RoUS Commodity Output)
+"TwoRegion_Summary_CommodityOutput_2012"
+
+#' Two-region Summary 2012 Industry Output (in a list format)
+#' @format A list with 51 elements, representing 50 states and DC:
+#' each element is a dataframe with 71 obs. (representing Summary industries)
+#' and 2 variable (SoI and RoUS Industry Output)
+"TwoRegion_Summary_IndustryOutput_2012"
