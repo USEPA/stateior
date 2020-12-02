@@ -20,7 +20,7 @@ State_Summary_DomesticUse_2012 <- StateDemandModel_2012$DomesticUse
 usethis::use_data(State_Summary_DomesticUse_2012, overwrite = TRUE)
 
 ### 2012 Two-region IO tables and industry and commodity output
-TwoRegion_Summary_IO_2012 <- assembleTwoRegionIO(iolevel = "Summary", 2012)
+TwoRegion_Summary_IO_2012 <- assembleTwoRegionIO(year = 2012, iolevel = "Summary")
 # Make
 TwoRegion_Summary_Make_2012 <- TwoRegion_Summary_IO_2012$Make
 usethis::use_data(TwoRegion_Summary_Make_2012, overwrite = TRUE)
