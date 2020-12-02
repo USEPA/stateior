@@ -2,17 +2,19 @@
 % Please edit documentation in R/BuildModel.R
 \name{assembleTwoRegionIO}
 \alias{assembleTwoRegionIO}
-\title{Assemble two-region make, use, domestic use, and demand tables as well as industry and commodity outputs.}
+\title{Assemble two-region make, use, domestic use, and demand tables as well as commodity and industry outputs.}
 \usage{
-assembleTwoRegionIO(iolevel, year)
+assembleTwoRegionIO(year, iolevel)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
 A list of two-region make, use, domestic use, and demand tables
-as well as industry and commodity outputs by state.
+as well as commodity and industry outputs by state.
 }
 \description{
-Assemble two-region make and use tables as well as industry and commodity outputs.
+Assemble two-region make and use tables as well as commodity and industry outputs.
 }

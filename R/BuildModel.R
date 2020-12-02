@@ -231,6 +231,7 @@ buildStateDemandModel <- function(year) {
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A list of domestic two-region demand tables.
+#' @export
 buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel) {
   # 0 - Define commodities and desired columns
   commodities <- getVectorOfCodes(iolevel, "Commodity")
@@ -380,12 +381,14 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel) {
   return(Domestic2RegionUse)
 }
 
-#' Assemble two-region make, use, domestic use, and demand tables as well as industry and commodity outputs.
-#' @description Assemble two-region make and use tables as well as industry and commodity outputs.
+#' Assemble two-region make, use, domestic use, and demand tables as well as commodity and industry outputs.
+#' @description Assemble two-region make and use tables as well as commodity and industry outputs.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A list of two-region make, use, domestic use, and demand tables
-#' as well as industry and commodity outputs by state.
-assembleTwoRegionIO <- function(iolevel, year) {
+#' as well as commodity and industry outputs by state.
+#' @export
+assembleTwoRegionIO <- function(year, iolevel) {
   # Define industries, commodities, valueadded and finaldemand
   industries <- getVectorOfCodes(iolevel, "Industry")
   commodities <- getVectorOfCodes(iolevel, "Commodity")
@@ -475,15 +478,15 @@ assembleTwoRegionIO <- function(iolevel, year) {
   return(TwoRegionIO)
 }
 
-#' Build a two-region state model for all 52 states/regions (including DC and Overseas) for a given year
-#' @description Build a state demand model for all 52 states/regions (including DC and Overseas) for a given year.
+#' Build a full two-region IO table for specified state and rest of US for a given year.
+#' @description Build a full two-region IO table for specified state and rest of US for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A list of state demand model components: Use table and Domestic Use table.
+#' @return A full two-region IO table for specified state and rest of US for a given year.
 #' @export
-buildFullTwoRegionStateModel <- function(state, year, ioschema, iolevel) {
+buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   # Define industries and commodities
   industries <- getVectorOfCodes(iolevel, "Industry")
   commodities <- getVectorOfCodes(iolevel, "Commodity")
