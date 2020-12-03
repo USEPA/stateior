@@ -7,7 +7,7 @@
 #' @export
 loadTwoRegionIOData <- function(year, iolevel, dataname) {
   # Define data file name
-  filename <- paste0(paste("TwoRegion", iolevel, dataname, year, sep = "_"), ".rda")
+  filename <- getTwoRegionDataFileName(year, iolevel, dataname)
   # Try loading data from local folder
   logging::loginfo(paste("Loading", year, "two-region", iolevel, dataname, "table from local folder ..."))
   filefolder <- file.path(rappdirs::user_data_dir(), "stateio")
