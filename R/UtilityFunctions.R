@@ -323,3 +323,73 @@ createMatrixForRASM0 = function(matrixKEY, matrix) {
 }
 
 
+#' Generate two-region data filename with .rda as suffix.
+#' @description Generate two-region data filename with .rda as suffix.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @return A string of two-region data filename with .rda as suffix.
+getTwoRegionDataFileName <- function(year, iolevel, dataname) {
+  filename <- paste("TwoRegion", iolevel, dataname, year, sep = "_")
+  return(filename)
+}
+
+#' Get a datetime object for desired data file on the DataCommons server.
+#' @description Get a datetime object for desired data file on the DataCommons server.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @return A datetime object for desired data file on the DataCommons server.
+getFileUpdateTimefromDataCommons <- function(year, iolevel, dataname) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  base_url <- "https://xri9ebky5b.execute-api.us-east-1.amazonaws.com/api/?"
+  url <- paste0(base_url, "searchvalue=", datafile, "&place=&searchfields=filename")
+  date_str <- jsonlite::fromJSON(url)[, "LastModified"]
+  file_upload_datetime <- as.POSIXct(date_str)
+  return(file_upload_datetime)
+}
+
+
+#' Get a datetime object for desired data file from local folder.
+#' @description Get a datetime object for desired data file from local folder.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param path User-defined local path.
+#' @return A datetime object for desired data file from local folder.
+getFileUpdateTimefromLocal <- function(year, iolevel, dataname, path) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  meta <- read_datafile_meta(datafile, path)
+  file_upload_datetime <- dt.datetime.strptime(meta["LastUpdated"], '%Y-%m-%d %H:%M:%S%z')
+  return(file_upload_datetime)
+}
+
+#' Write a datetime object for desired data file to local folder.
+#' @description Get a datetime object for desired data file to local folder.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param path User-defined local path.
+#' @return A datetime object for desired data file to local folder. 
+writeDatafileMeta <- function(year, iolevel, dataname, path) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  file_upload_dt <- getFileUpdateTimefromDataCommons(year, iolevel, dataname)
+  write(jsonlite::toJSON(file_upload_dt), paste0(path, "/", datafile, "_metadata.json"))
+}
+
+#' Load a datetime object for desired data file from local folder.
+#' @description Load a datetime object for desired data file from local folder.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param path User-defined local path.
+#' @return A datetime object for desired data file from local folder.
+readDatafileMeta <- function(year, iolevel, dataname, path) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  if (file.exists(datafile)) {
+    metadata <- jsonlite::fromJSON(paste0(path, "/", datafile, "_metadata.json"))
+  } else {
+    logging::logerror(paste("Local metadata file for", datafile, "is missing."))
+  }
+  return(metadata)
+}
