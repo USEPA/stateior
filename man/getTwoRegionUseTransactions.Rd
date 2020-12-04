@@ -2,8 +2,8 @@
 % Please edit documentation in R/LoadModel.R
 \name{getTwoRegionUseTransactions}
 \alias{getTwoRegionUseTransactions}
-\title{Load use transactions, including intermediate consumption, final demand and value added,
-of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.}
+\title{Load use transactions (intermediate consumption) of a state of interest (SoI)
+and its corresponding rest-of-US (RoUS) for a given year.}
 \usage{
 getTwoRegionUseTransactions(state, year, iolevel)
 }
@@ -18,6 +18,6 @@ getTwoRegionUseTransactions(state, year, iolevel)
 A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) use transactions.
 }
 \description{
-Load use transactions, including intermediate consumption, final demand and value added,
-of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+Load use transactions (intermediate consumption) of a state of interest (SoI)
+and its corresponding rest-of-US (RoUS) for a given year.
 }

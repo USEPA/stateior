@@ -62,10 +62,10 @@ getTwoRegionIndustryOutput <- function(state, year, iolevel) {
   return(IndOutput)
 }
 
-#' Load use transactions, including intermediate consumption, final demand and value added,
-#' of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
-#' @description Load use transactions, including intermediate consumption, final demand and value added,
-#' of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' Load use transactions (intermediate consumption) of a state of interest (SoI)
+#' and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load use transactions (intermediate consumption) of a state of interest (SoI)
+#' and its corresponding rest-of-US (RoUS) for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
@@ -73,13 +73,37 @@ getTwoRegionIndustryOutput <- function(state, year, iolevel) {
 #' @export
 getTwoRegionUseTransactions <- function(state, year, iolevel) {
   Use <- loadTwoRegionIOData(year, iolevel, "Use")[[state]]
-  return(Use)
+  commodities <- getVectorOfCodes(iolevel, "Commodity")
+  industries <- getVectorOfCodes(iolevel, "Industry")
+  UseTransactions <- Use[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
+                           apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
+                         c(apply(cbind(state, industries), 1, FUN = joinStringswithSlashes),
+                           apply(cbind("RoUS", industries), 1, FUN = joinStringswithSlashes))]
+  return(UseTransactions)
 }
 
-#' Load domestic use transactions, including intermediate consumption, final demand and value added,
-#' of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
-#' @description Load domestic use transactions, including intermediate consumption, final demand and value added,
-#' of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' Load final demand of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load final demand of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @param state A text value specifying state of interest.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) final demand.
+#' @export
+getTwoRegionFinalDemand <- function(state, year, iolevel) {
+  Use <- loadTwoRegionIOData(year, iolevel, "Use")[[state]]
+  commodities <- getVectorOfCodes(iolevel, "Commodity")
+  finaldemand <- getFinalDemandCodes(iolevel)
+  FinalDemand <- Use[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
+                       apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
+                     c(apply(cbind(state, finaldemand), 1, FUN = joinStringswithSlashes),
+                       apply(cbind("RoUS", finaldemand), 1, FUN = joinStringswithSlashes))]
+  return(FinalDemand)
+}
+
+#' Load domestic use transactions (intermediate consumption) of a state of interest (SoI)
+#' and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load domestic use transactions (intermediate consumption) of a state of interest (SoI)
+#' and its corresponding rest-of-US (RoUS) for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
@@ -87,9 +111,32 @@ getTwoRegionUseTransactions <- function(state, year, iolevel) {
 #' @export
 getTwoRegionDomesticUseTransactions <- function(state, year, iolevel) {
   DomesticUse <- loadTwoRegionIOData(year, iolevel, "DomesticUse")[[state]]
-  return(DomesticUse)
+  commodities <- getVectorOfCodes(iolevel, "Commodity")
+  industries <- getVectorOfCodes(iolevel, "Industry")
+  DomesticUseTransactions <- DomesticUse[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
+                                           apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
+                                         c(apply(cbind(state, industries), 1, FUN = joinStringswithSlashes),
+                                           apply(cbind("RoUS", industries), 1, FUN = joinStringswithSlashes))]
+  return(DomesticUseTransactions)
 }
 
+#' Load domestic final demand of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load domestic final demand of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @param state A text value specifying state of interest.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) domestic final demand.
+#' @export
+getTwoRegionDomesticFinalDemand <- function(state, year, iolevel) {
+  DomesticUse <- loadTwoRegionIOData(year, iolevel, "DomesticUse")[[state]]
+  commodities <- getVectorOfCodes(iolevel, "Commodity")
+  finaldemand <- getFinalDemandCodes(iolevel)
+  DomesticFinalDemand <- DomesticUse[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
+                                       apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
+                                     c(apply(cbind(state, finaldemand), 1, FUN = joinStringswithSlashes),
+                                       apply(cbind("RoUS", finaldemand), 1, FUN = joinStringswithSlashes))]
+  return(DomesticFinalDemand)
+}
 
 #' Load demand (trade) tables, including intermediate consumption and final demand,
 #' of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
