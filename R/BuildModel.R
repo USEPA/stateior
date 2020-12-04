@@ -436,7 +436,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
     # Two-region DomesticUse
     SoI_DomesticUse <- State_DomesticUse_list[[state]]
     rownames(SoI_DomesticUse) <- apply(cbind(state, c(commodities, valueadded)), 1, FUN = joinStringswithSlashes)
-    colnames(SoI_DomesticUse) <- apply(cbind(state, industries), 1, FUN = joinStringswithSlashes)
+    colnames(SoI_DomesticUse) <- apply(cbind(state, c(industries, finaldemand)), 1, FUN = joinStringswithSlashes)
     RoUS_DomesticUse <- Reduce("+", State_DomesticUse_list) - SoI_DomesticUse
     rownames(RoUS_DomesticUse) <- apply(cbind("RoUS", c(commodities, valueadded)), 1, FUN = joinStringswithSlashes)
     colnames(RoUS_DomesticUse) <- apply(cbind("RoUS", c(industries, finaldemand)), 1, FUN = joinStringswithSlashes)
