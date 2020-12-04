@@ -25,7 +25,7 @@ loadTwoRegionIOData <- function(year, iolevel, dataname) {
   filepath <- paste0(filefolder, "/", filename, ".rda")
   # If data not found in local folder, try loading from Data Commons
   if (!file.exists(filepath)) {
-    logging::loginfo(paste("File not found in local folder, loading from Data Commons ..."))
+    logging::logwarn(paste("File not found in local folder, loading from Data Commons ..."))
     # Define URL then download from the Data Commons
     url <- paste0("https://edap-ord-data-commons.s3.amazonaws.com/stateio/", filename, ".rda")
     download.file(url, filepath, quiet = TRUE)
@@ -81,13 +81,13 @@ getTwoRegionIndustryOutput <- function(state, year, iolevel) {
 #' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) use transactions.
 #' @export
 getTwoRegionUseTransactions <- function(state, year, iolevel) {
-  Use <- loadTwoRegionIOData(year, iolevel, "UseTransactions")[[state]]
+  df <- loadTwoRegionIOData(year, iolevel, "UseTransactions")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   industries <- getVectorOfCodes(iolevel, "Industry")
-  UseTransactions <- Use[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
-                           apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
-                         c(apply(cbind(state, industries), 1, FUN = joinStringswithSlashes),
-                           apply(cbind("RoUS", industries), 1, FUN = joinStringswithSlashes))]
+  UseTransactions <- df[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
+                          apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
+                        c(apply(cbind(state, industries), 1, FUN = joinStringswithSlashes),
+                          apply(cbind("RoUS", industries), 1, FUN = joinStringswithSlashes))]
   return(UseTransactions)
 }
 
@@ -99,13 +99,13 @@ getTwoRegionUseTransactions <- function(state, year, iolevel) {
 #' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) final demand.
 #' @export
 getTwoRegionFinalDemand <- function(state, year, iolevel) {
-  Use <- loadTwoRegionIOData(year, iolevel, "FinalDemand")[[state]]
+  df <- loadTwoRegionIOData(year, iolevel, "FinalDemand")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   finaldemand <- getFinalDemandCodes(iolevel)
-  FinalDemand <- Use[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
-                       apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
-                     c(apply(cbind(state, finaldemand), 1, FUN = joinStringswithSlashes),
-                       apply(cbind("RoUS", finaldemand), 1, FUN = joinStringswithSlashes))]
+  FinalDemand <- df[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
+                      apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
+                    c(apply(cbind(state, finaldemand), 1, FUN = joinStringswithSlashes),
+                      apply(cbind("RoUS", finaldemand), 1, FUN = joinStringswithSlashes))]
   return(FinalDemand)
 }
 
@@ -119,13 +119,13 @@ getTwoRegionFinalDemand <- function(state, year, iolevel) {
 #' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) domestic use transactions.
 #' @export
 getTwoRegionDomesticUseTransactions <- function(state, year, iolevel) {
-  DomesticUse <- loadTwoRegionIOData(year, iolevel, "DomesticUseTransactions")[[state]]
+  df <- loadTwoRegionIOData(year, iolevel, "DomesticUseTransactions")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   industries <- getVectorOfCodes(iolevel, "Industry")
-  DomesticUseTransactions <- DomesticUse[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
-                                           apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
-                                         c(apply(cbind(state, industries), 1, FUN = joinStringswithSlashes),
-                                           apply(cbind("RoUS", industries), 1, FUN = joinStringswithSlashes))]
+  DomesticUseTransactions <- df[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
+                                  apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
+                                c(apply(cbind(state, industries), 1, FUN = joinStringswithSlashes),
+                                  apply(cbind("RoUS", industries), 1, FUN = joinStringswithSlashes))]
   return(DomesticUseTransactions)
 }
 
@@ -137,13 +137,13 @@ getTwoRegionDomesticUseTransactions <- function(state, year, iolevel) {
 #' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) domestic final demand.
 #' @export
 getTwoRegionDomesticFinalDemand <- function(state, year, iolevel) {
-  DomesticUse <- loadTwoRegionIOData(year, iolevel, "DomesticFinalDemand")[[state]]
+  df <- loadTwoRegionIOData(year, iolevel, "DomesticFinalDemand")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   finaldemand <- getFinalDemandCodes(iolevel)
-  DomesticFinalDemand <- DomesticUse[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
-                                       apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
-                                     c(apply(cbind(state, finaldemand), 1, FUN = joinStringswithSlashes),
-                                       apply(cbind("RoUS", finaldemand), 1, FUN = joinStringswithSlashes))]
+  DomesticFinalDemand <- df[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
+                              apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
+                            c(apply(cbind(state, finaldemand), 1, FUN = joinStringswithSlashes),
+                              apply(cbind("RoUS", finaldemand), 1, FUN = joinStringswithSlashes))]
   return(DomesticFinalDemand)
 }
 
