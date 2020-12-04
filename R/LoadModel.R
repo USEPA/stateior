@@ -2,14 +2,22 @@
 #' @description Load two-region IO data of specified iolevel and year from user's local directory or the EPA Data Commons.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
+#' "UseTransactions", "FinalDemand", "DomesticUseTransactions", "DomesticFinalDemand",
+#' "CommodityOutput, and "IndustryOutput".
 #' @return A list of two-region IO data of specified iolevel and year.
 #' @export
 loadTwoRegionIOData <- function(year, iolevel, dataname) {
   # Define data file name
   filename <- getTwoRegionDataFileName(year, iolevel, dataname)
+  # Adjust filename to fit what is on the Data Commons
+  if (dataname%in%c("UseTransactions", "FinalDemand")) {
+    filename <- gsub(dataname, "Use", filename)
+  } else if (dataname%in%c("DomesticUseTransactions", "DomesticFinalDemand")) {
+    filename <- gsub(dataname, "DomesticUse", filename)
+  }
   # Try loading data from local folder
-  logging::loginfo(paste("Loading", year, "two-region", iolevel, dataname, "table from local folder ..."))
+  logging::loginfo(paste("Loading", year, "two-region", iolevel, dataname, "from local folder ..."))
   filefolder <- file.path(rappdirs::user_data_dir(), "stateio")
   if (!dir.exists(filefolder)) {
     dir.create(filefolder, recursive = TRUE) 
@@ -18,6 +26,7 @@ loadTwoRegionIOData <- function(year, iolevel, dataname) {
   # If data not found in local folder, try loading from Data Commons
   if (!file.exists(filepath)) {
     logging::loginfo(paste("File not found in local folder, loading from Data Commons ..."))
+    # Define URL then download from the Data Commons
     url <- paste0("https://edap-ord-data-commons.s3.amazonaws.com/stateio/", filename, ".rda")
     download.file(url, filepath, quiet = TRUE)
   }
@@ -72,7 +81,7 @@ getTwoRegionIndustryOutput <- function(state, year, iolevel) {
 #' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) use transactions.
 #' @export
 getTwoRegionUseTransactions <- function(state, year, iolevel) {
-  Use <- loadTwoRegionIOData(year, iolevel, "Use")[[state]]
+  Use <- loadTwoRegionIOData(year, iolevel, "UseTransactions")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   industries <- getVectorOfCodes(iolevel, "Industry")
   UseTransactions <- Use[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
@@ -90,7 +99,7 @@ getTwoRegionUseTransactions <- function(state, year, iolevel) {
 #' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) final demand.
 #' @export
 getTwoRegionFinalDemand <- function(state, year, iolevel) {
-  Use <- loadTwoRegionIOData(year, iolevel, "Use")[[state]]
+  Use <- loadTwoRegionIOData(year, iolevel, "FinalDemand")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   finaldemand <- getFinalDemandCodes(iolevel)
   FinalDemand <- Use[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
@@ -110,7 +119,7 @@ getTwoRegionFinalDemand <- function(state, year, iolevel) {
 #' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) domestic use transactions.
 #' @export
 getTwoRegionDomesticUseTransactions <- function(state, year, iolevel) {
-  DomesticUse <- loadTwoRegionIOData(year, iolevel, "DomesticUse")[[state]]
+  DomesticUse <- loadTwoRegionIOData(year, iolevel, "DomesticUseTransactions")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   industries <- getVectorOfCodes(iolevel, "Industry")
   DomesticUseTransactions <- DomesticUse[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
@@ -128,7 +137,7 @@ getTwoRegionDomesticUseTransactions <- function(state, year, iolevel) {
 #' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) domestic final demand.
 #' @export
 getTwoRegionDomesticFinalDemand <- function(state, year, iolevel) {
-  DomesticUse <- loadTwoRegionIOData(year, iolevel, "DomesticUse")[[state]]
+  DomesticUse <- loadTwoRegionIOData(year, iolevel, "DomesticFinalDemand")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   finaldemand <- getFinalDemandCodes(iolevel)
   DomesticFinalDemand <- DomesticUse[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),

@@ -11,7 +11,9 @@ loadTwoRegionIOData(year, iolevel, dataname)
 
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 
-\item{dataname}{Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".}
+\item{dataname}{Name of desired IO data, can be "Make", "Use", "DomesticUse",
+"UseTransactions", "FinalDemand", "DomesticUseTransactions", "DomesticFinalDemand",
+"CommodityOutput, and "IndustryOutput".}
 }
 \value{
 A list of two-region IO data of specified iolevel and year.
