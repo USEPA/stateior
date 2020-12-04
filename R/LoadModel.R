@@ -18,7 +18,8 @@ loadTwoRegionIOData <- function(year, iolevel, dataname) {
   # If data not found in local folder, try loading from Data Commons
   if (!file.exists(filepath)) {
     logging::loginfo(paste("File not found in local folder, loading from Data Commons ..."))
-    download.file(paste0("https://edap-ord-data-commons.s3.amazonaws.com/stateio/", filename), filepath, quiet = TRUE)
+    url <- paste0("https://edap-ord-data-commons.s3.amazonaws.com/stateio/", filename, ".rda")
+    download.file(url, filepath, quiet = TRUE)
   }
   # Load the data
   TwoRegionIOData <- get(load(filepath))
