@@ -166,7 +166,7 @@ calculateUSInternationalTransportMarginsRatioMatrix <- function(iolevel, year) {
 getVectorOfCodes <- function(iolevel, colName) {
   SchemaInfo <- utils::read.table(system.file("extdata",
                                               paste0("2012_", iolevel, "_Schema_Info.csv"),
-                                              package = "useeior"),
+                                              package = "stateior"),
                                   sep = ",", header = TRUE,
                                   stringsAsFactors = FALSE, check.names = FALSE)
   return(as.vector(stats::na.omit(SchemaInfo[, c("Code", colName)])[, "Code"]))
