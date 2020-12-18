@@ -39,7 +39,7 @@ buildStateSupplyModel <- function(year) {
   }
   
   logging::loginfo("Loading state commodity output ratios from alternative data ...")
-  AlternativeStateCommodityOutputRatio <- get(paste("AlternativeStateCommodityOutputRatio_", year),
+  AlternativeStateCommodityOutputRatio <- get(paste0("AlternativeStateCommodityOutputRatio_", year),
                                               as.environment("package:stateior"))
   
   logging::loginfo("Adjusting state Make table ...")

@@ -274,7 +274,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   # Select All Commodities as Ag products
   Ag <- USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy=="All Commodities", ]
   # Convert State_FIPS to numeric values
-  Ag$State_FIPS <- as.numeric(Ag$Location)
+  Ag$State_FIPS <- as.numeric(substr(Ag$Location, 1, 2))
   # Map to state names
   Ag <- merge(Ag, FIPS_STATE, by = "State_FIPS")
   # Calculate Commodity Output Ratio
@@ -288,7 +288,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   # Load Fishery Landings and Forestry CutValue data from flowsa
   Fishery <- loadDatafromFLOWSA("Money", "2012-2018", "NOAA_FisheryLandings")
   FisheryForestry <- rbind(Fishery[Fishery$Year==year, ],
-                           USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy=="Forest products", ])
+                           USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy=="All Species", ])
   # Convert State_FIPS to numeric values
   FisheryForestry$State_FIPS <- as.numeric(substr(FisheryForestry$Location, 1, 2))
   # Map to state names
@@ -318,7 +318,7 @@ getFAFCommodityOutput <- function(year) {
   FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
                                   sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   # Load pre-saved FAF4 commodity flow data
-  FAF <- get(paste("FAF", year, sep = "_"), ironment("package:stateior"))
+  FAF <- get(paste("FAF", year, sep = "_"), as.environment("package:stateior"))
   # Keep domestic and export trade, keep useful columns, then rename
   FAF <- FAF[FAF$trade_type%in%c(1, 3), c("dms_origst", "sctg2", paste0("value_", year))]
   colnames(FAF) <- c("State_FIPS", "SCTG", "Value")
