@@ -243,7 +243,7 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel) {
   # 1 - Load state domestic Use for the specified year
   logging::loginfo("Loading state Domestic Use table ...")
   SoI_DomesticUse <- get(paste0("State_", iolevel, "_DomesticUse_", year),
-                          as.environment("package:stateior"))[[state]][commodities, ]
+                         as.environment("package:stateior"))[[state]][commodities, ]
   
   # 2 - Generate 2-region ICFs
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios ...")
@@ -444,17 +444,20 @@ assembleTwoRegionIO <- function(year, iolevel) {
     TwoRegionDomesticUse[rownames(RoUS_DomesticUse), colnames(RoUS_DomesticUse)] <- RoUS_DomesticUse
     TwoRegionIO[["DomesticUse"]][[state]] <- TwoRegionDomesticUse
     
-    # Two-region Demand
+    # Two-region Demand table
     TwoRegionDemandModel <- buildTwoRegionDemandModel(state, year, ioschema = 2012, iolevel = iolevel)
-    TwoRegionUse <- cbind(rbind(TwoRegionDemandModel[["SoI2SoI"]][commodities, industries],
-                                TwoRegionDemandModel[["RoUS2SoI"]][commodities, industries]),
-                          rbind(TwoRegionDemandModel[["SoI2RoUS"]][commodities, industries],
-                                TwoRegionDemandModel[["RoUS2RoUS"]][commodities, industries]))
-    rownames(TwoRegionUse) <- apply(cbind(rep(c(state, "RoUS"), each = length(commodities)),
-                                          commodities), 1, FUN = joinStringswithSlashes)
-    colnames(TwoRegionUse) <- apply(cbind(rep(c(state, "RoUS"), each = length(industries)),
-                                          industries), 1, FUN = joinStringswithSlashes)
-    TwoRegionIO[["Demand"]][[state]] <- TwoRegionUse
+    TwoRegionDemand <- cbind(rbind(TwoRegionDemandModel[["SoI2SoI"]][commodities, industries],
+                                   TwoRegionDemandModel[["RoUS2SoI"]][commodities, industries]),
+                             rbind(TwoRegionDemandModel[["SoI2RoUS"]][commodities, industries],
+                                   TwoRegionDemandModel[["RoUS2RoUS"]][commodities, industries]))
+    rownames(TwoRegionDemand) <- apply(cbind(rep(c(state, "RoUS"), each = length(commodities)),
+                                             commodities), 1, FUN = joinStringswithSlashes)
+    colnames(TwoRegionDemand) <- apply(cbind(rep(c(state, "RoUS"), each = length(industries)),
+                                             industries), 1, FUN = joinStringswithSlashes)
+    TwoRegionIO[["Demand"]][[state]] <- TwoRegionDemand
+    
+    # Two-region Demand table with exports and imports
+    TwoRegionIO[["CompleteDemand"]][[state]] <- TwoRegionDemandModel[[1:4]]
     
     # Two-region Industry Output
     TwoRegionIndustryOutput <- cbind(State_IndustryOutput_list[[state]],

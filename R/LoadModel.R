@@ -160,3 +160,17 @@ getTwoRegionDemandTable <- function(state, year, iolevel) {
   TwoRegionDemand <- loadTwoRegionIOData(year, iolevel, "Demand")[[state]]
   return(TwoRegionDemand)
 }
+
+#' Load demand (trade) tables, including intermediate consumption, final demand, exports and imports
+#' of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load demand (trade) tables, including intermediate consumption and final demand,
+#' of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @param state A text value specifying state of interest.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @return A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) demand (trade) tables.
+#' @export
+getTwoRegionCompleteDemandTable <- function(state, year, iolevel) {
+  TwoRegionCompleteDemand <- loadTwoRegionIOData(year, iolevel, "CompleteDemand")[[state]]
+  return(TwoRegionCompleteDemand)
+}
