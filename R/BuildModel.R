@@ -325,8 +325,18 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel) {
                             ifelse(SoIerror[i]<0, sum(SoIweight)*-1, sum(SoIweight)))
     SoIerror_2[i] <- ifelse(SoIerror_1[i]!=SoIerror[i], SoIerror_1[i]/2, SoIerror[i])
     RoUSerror[i] <- error[i] - SoIerror_2[i]
-    SoI2SoI_Use[i, columns] <- SoIweight + SoIerror_2[i]*(SoIweight/sum(SoIweight))
-    RoUS2RoUS_Use[i, columns] <- RoUSweight - RoUSerror[i]*(RoUSweight/sum(RoUSweight))
+    if (all(SoIweight==0)) {
+      SoI2SoI_ratio <- 1/length(SoIweight)
+    } else {
+      SoI2SoI_ratio <- SoIweight/sum(SoIweight)
+    }
+    if (all(RoUSweight==0)) {
+      RoUS2RoUS_ratio <- 1/length(RoUSweight)
+    } else {
+      RoUS2RoUS_ratio <- RoUSweight/sum(RoUSweight)
+    }
+    SoI2SoI_Use[i, columns] <- SoIweight + SoIerror_2[i]*SoI2SoI_ratio
+    RoUS2RoUS_Use[i, columns] <- RoUSweight - RoUSerror[i]*RoUS2RoUS_ratio
   }
   # Check if negative cells in SoI2SoI_Use and RoUS2RoUS_Use are also negative in US_DomesticUse
   
