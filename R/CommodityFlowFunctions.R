@@ -39,7 +39,7 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
   # Calculate commodity flow ratio
   # Load SCTGtoBEA mapping table
   SCTGtoBEA <- utils::read.table(system.file("extdata", "Crosswalk_SCTGtoBEA.csv", package = "stateior"),
-                                 sep = ",", header = TRUE, check.names = FALSE)
+                                 sep = ",", header = TRUE, check.names = FALSE, stringsAsFactors = FALSE)
   SCTGtoBEA <- unique(SCTGtoBEA[, c("SCTG", paste("BEA", ioschema, iolevel, "Code", sep = "_"))])
   FAF_2r <- merge(FAF_2r, SCTGtoBEA, by = "SCTG")
   if (iolevel=="Detail") {
@@ -77,8 +77,8 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
     }
     # Calculate commodity flow ratio
     if (flow_ratio_type=="domestic") {
-      totalflow <- stats::aggregate(VALUE ~ DEST + BEA_2012_Summary_Code, FAF_2r, sum)
-      FAF_2r <- merge(FAF_2r, totalflow, by = c("DEST", "BEA_2012_Summary_Code"))
+      totalflow <- stats::aggregate(VALUE ~ ORIG + BEA_2012_Summary_Code, FAF_2r, sum)
+      FAF_2r <- merge(FAF_2r, totalflow, by = c("ORIG", "BEA_2012_Summary_Code"))
       FAF_2r$ratio <- FAF_2r$VALUE.x / FAF_2r$VALUE.y
       FAF_2r <- FAF_2r[, c("ORIG", "DEST", "BEA_2012_Summary_Code", "ratio")]
     } else {
