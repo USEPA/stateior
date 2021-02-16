@@ -88,14 +88,13 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
   # Merge ICF_2r_wide with complete BEA Commodity list
   CommodityCodeName <- get(paste(iolevel, "CommodityCodeName_2012", sep = "_"),
                            as.environment("package:useeior"))
-  ICF <- merge(ICF_2r_wide, CommodityCodeName[, 1, drop = FALSE], by.x = bea,
+  ICF <- merge(ICF_2r_wide, CommodityCodeName, by.x = bea,
                by.y = paste("BEA", ioschema, iolevel, "Commodity_Code", sep = "_"),
                all.y = TRUE)
   # Calculate SoI local and traded ratios
   LocalTradeSoI <- calculateLocalandTradedRatios(state, year, SoI = TRUE, ioschema, iolevel)
   # Calculate RoUS local and traded ratios
   LocalTradeRoUS <- calculateLocalandTradedRatios(state, year, SoI = FALSE, ioschema, iolevel)
-  # Generate SoI Commodity Output
   # Generate state Commodity Output ratio
   CommOutput_ratio <- calculateStateCommodityOutputRatio(year)
   CommOutput_ratio <- CommOutput_ratio[CommOutput_ratio$State==state, ]
@@ -122,16 +121,19 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
   }
   # Use SoI commodity output
   for (BEAcode in intersect(ICF[is.na(ICF$source), bea], CommOutput_ratio[, bea])) {
-    # Assign data source
-    ICF[ICF[, bea]==BEAcode, "source"] <- "state commodity output"
     # Determine ratios
-    if (substr(BEAcode, 1, 1)=="G") { # Assume no interregional trade in government sectors
+    if (substr(BEAcode, 1, 1)=="G") {
+      # Assume no interregional trade in government sectors
       SoI2SoIratio <- 1
       RoUS2RoUSratio <- 1
+      # Assign data source
+      ICF[ICF[, bea]==BEAcode, "source"] <- "manual assignment assuming no interregional trade for government commodities"
     } else {
       # Assume SoI2SoIratio is COR of the commodity
       SoI2SoIratio <- CommOutput_ratio[CommOutput_ratio[, bea]==BEAcode, "Ratio"]
       RoUS2RoUSratio <- 1 - SoI2SoIratio
+      # Assign data source
+      ICF[ICF[, bea]==BEAcode, "source"] <- "state commodity output"
     }
     ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- SoI2SoIratio
     ICF[ICF[, bea]==BEAcode, "SoI2RoUS"] <- 1 - SoI2SoIratio
