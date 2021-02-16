@@ -330,8 +330,13 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel) {
                             ifelse(SoIerror[i]<0, sum(SoIweight)*-1, sum(SoIweight)))
     SoIerror_2[i] <- ifelse(SoIerror_1[i]!=SoIerror[i], SoIerror_1[i]/2, SoIerror[i])
     RoUSerror[i] <- error[i] - SoIerror_2[i]
-    SoI2SoI_Use[i, columns_1] <- SoIweight + SoIerror_2[i]*(SoIweight/sum(SoIweight))
-    RoUS2RoUS_Use[i, columns_1] <- RoUSweight - RoUSerror[i]*(RoUSweight/sum(RoUSweight))
+    # If sum of SoI and RoUS weight != 0, allocate the error to each cell
+    if (sum(SoIweight)!=0) {
+      SoI2SoI_Use[i, columns_1] <- SoIweight + SoIerror_2[i]*(SoIweight/sum(SoIweight))
+    }
+    if (sum(RoUSweight)!=0) {
+      RoUS2RoUS_Use[i, columns_1] <- RoUSweight - RoUSerror[i]*(RoUSweight/sum(RoUSweight))
+    }
   }
   
   # 9 - Re-calculate InterregionalImports, InterregionalExports and NetExports
@@ -425,35 +430,36 @@ assembleTwoRegionIO <- function(year, iolevel) {
   # Assemble two-region IO tables
   TwoRegionIO <- list()
   for (state in sort(c(state.name, "District of Columbia"))) {
+    state_abb <- ifelse(state=="District of Columbia", "DC", state.abb[state.name == state])
     # Two-region Make
     SoI_Make <- State_Make_list[[state]]
-    rownames(SoI_Make) <- apply(cbind(state, industries), 1, FUN = joinStringswithSlashes)
-    colnames(SoI_Make) <- apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes)
+    rownames(SoI_Make) <- apply(cbind(industries, paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes)
+    colnames(SoI_Make) <- apply(cbind(commodities, paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes)
     RoUS_Make <- US_Make - SoI_Make
-    rownames(RoUS_Make) <- apply(cbind("RoUS", industries), 1, FUN = joinStringswithSlashes)
-    colnames(RoUS_Make) <- apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)
+    rownames(RoUS_Make) <- apply(cbind(industries, "RoUS"), 1, FUN = joinStringswithSlashes)
+    colnames(RoUS_Make) <- apply(cbind(commodities, "RoUS"), 1, FUN = joinStringswithSlashes)
     TwoRegionMake <- SoI_Make
     TwoRegionMake[rownames(RoUS_Make), colnames(RoUS_Make)] <- RoUS_Make
     TwoRegionIO[["Make"]][[state]] <- TwoRegionMake
     
     # Two-region Use
     SoI_Use <- State_Use_list[[state]]
-    rownames(SoI_Use) <- apply(cbind(state, c(commodities, valueadded)),1, FUN = joinStringswithSlashes)
-    colnames(SoI_Use) <- apply(cbind(state, c(industries, finaldemand)), 1, FUN = joinStringswithSlashes)
+    rownames(SoI_Use) <- apply(cbind(c(commodities, valueadded), paste0("US-", state_abb)),1, FUN = joinStringswithSlashes)
+    colnames(SoI_Use) <- apply(cbind(c(industries, finaldemand), paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes)
     RoUS_Use <- Reduce("+", State_Use_list) - SoI_Use
-    rownames(RoUS_Use) <- apply(cbind("RoUS", c(commodities, valueadded)), 1, FUN = joinStringswithSlashes)
-    colnames(RoUS_Use) <- apply(cbind("RoUS", c(industries, finaldemand)), 1, FUN = joinStringswithSlashes)
+    rownames(RoUS_Use) <- apply(cbind(c(commodities, valueadded), "RoUS"), 1, FUN = joinStringswithSlashes)
+    colnames(RoUS_Use) <- apply(cbind(c(industries, finaldemand), "RoUS"), 1, FUN = joinStringswithSlashes)
     TwoRegionUse <- SoI_Use
     TwoRegionUse[rownames(RoUS_Use), colnames(RoUS_Use)] <- RoUS_Use
     TwoRegionIO[["Use"]][[state]] <- TwoRegionUse
     
     # Two-region DomesticUse
     SoI_DomesticUse <- State_DomesticUse_list[[state]]
-    rownames(SoI_DomesticUse) <- apply(cbind(state, c(commodities, valueadded)), 1, FUN = joinStringswithSlashes)
-    colnames(SoI_DomesticUse) <- apply(cbind(state, c(industries, finaldemand)), 1, FUN = joinStringswithSlashes)
+    rownames(SoI_DomesticUse) <- apply(cbind(c(commodities, valueadded), paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes)
+    colnames(SoI_DomesticUse) <- apply(cbind(c(industries, finaldemand), paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes)
     RoUS_DomesticUse <- Reduce("+", State_DomesticUse_list) - SoI_DomesticUse
-    rownames(RoUS_DomesticUse) <- apply(cbind("RoUS", c(commodities, valueadded)), 1, FUN = joinStringswithSlashes)
-    colnames(RoUS_DomesticUse) <- apply(cbind("RoUS", c(industries, finaldemand)), 1, FUN = joinStringswithSlashes)
+    rownames(RoUS_DomesticUse) <- apply(cbind(c(commodities, valueadded), "RoUS"), 1, FUN = joinStringswithSlashes)
+    colnames(RoUS_DomesticUse) <- apply(cbind(c(industries, finaldemand), "RoUS"), 1, FUN = joinStringswithSlashes)
     TwoRegionDomesticUse <- SoI_DomesticUse
     TwoRegionDomesticUse[rownames(RoUS_DomesticUse), colnames(RoUS_DomesticUse)] <- RoUS_DomesticUse
     TwoRegionIO[["DomesticUse"]][[state]] <- TwoRegionDomesticUse
@@ -464,9 +470,9 @@ assembleTwoRegionIO <- function(year, iolevel) {
                                    TwoRegionDemandModel[["RoUS2SoI"]][commodities, industries]),
                              rbind(TwoRegionDemandModel[["SoI2RoUS"]][commodities, industries],
                                    TwoRegionDemandModel[["RoUS2RoUS"]][commodities, industries]))
-    rownames(TwoRegionDemand) <- apply(cbind(rep(c(state, "RoUS"), each = length(commodities)),
+    rownames(TwoRegionDemand) <- apply(cbind(rep(c(paste0("US-", state_abb), "RoUS"), each = length(commodities)),
                                              commodities), 1, FUN = joinStringswithSlashes)
-    colnames(TwoRegionDemand) <- apply(cbind(rep(c(state, "RoUS"), each = length(industries)),
+    colnames(TwoRegionDemand) <- apply(cbind(rep(c(paste0("US-", state_abb), "RoUS"), each = length(industries)),
                                              industries), 1, FUN = joinStringswithSlashes)
     TwoRegionIO[["Demand"]][[state]] <- TwoRegionDemand
     
@@ -477,7 +483,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
     TwoRegionIndustryOutput <- cbind(State_IndustryOutput_list[[state]],
                                      rowSums(US_Make) - State_IndustryOutput_list[[state]])
     rownames(TwoRegionIndustryOutput) <- tolower(gsub(".*\\.", "", rownames(TwoRegionIndustryOutput)))
-    colnames(TwoRegionIndustryOutput) <- c(state, "RoUS")
+    colnames(TwoRegionIndustryOutput) <- tolower(c(paste0("US-", state_abb), "RoUS"))
     TwoRegionIO[["IndustryOutput"]][[state]] <- TwoRegionIndustryOutput
     
     # Two-region Commodity Output
@@ -488,7 +494,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
     RoUS_CommodityOutput$Output <- RoUS_CommodityOutput$Output - MakeUseDiff
     TwoRegionCommodityOutput <- cbind(SoI_CommodityOutput, RoUS_CommodityOutput)
     rownames(TwoRegionCommodityOutput) <- tolower(rownames(TwoRegionCommodityOutput))
-    colnames(TwoRegionCommodityOutput) <- c(state, "RoUS")
+    colnames(TwoRegionCommodityOutput) <- tolower(c(paste0("US-", state_abb), "RoUS"))
     TwoRegionIO[["CommodityOutput"]][[state]] <- TwoRegionCommodityOutput
     print(state)
   }
