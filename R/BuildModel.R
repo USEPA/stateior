@@ -466,14 +466,14 @@ assembleTwoRegionIO <- function(year, iolevel) {
     
     # Two-region Demand table
     TwoRegionDemandModel <- buildTwoRegionDemandModel(state, year, ioschema = 2012, iolevel = iolevel)
-    TwoRegionDemand <- cbind(rbind(TwoRegionDemandModel[["SoI2SoI"]][commodities, industries],
-                                   TwoRegionDemandModel[["RoUS2SoI"]][commodities, industries]),
-                             rbind(TwoRegionDemandModel[["SoI2RoUS"]][commodities, industries],
-                                   TwoRegionDemandModel[["RoUS2RoUS"]][commodities, industries]))
-    rownames(TwoRegionDemand) <- apply(cbind(rep(c(paste0("US-", state_abb), "RoUS"), each = length(commodities)),
-                                             commodities), 1, FUN = joinStringswithSlashes)
-    colnames(TwoRegionDemand) <- apply(cbind(rep(c(paste0("US-", state_abb), "RoUS"), each = length(industries)),
-                                             industries), 1, FUN = joinStringswithSlashes)
+    TwoRegionDemand <- cbind(rbind(TwoRegionDemandModel[["SoI2SoI"]][commodities, c(industries, finaldemand)],
+                                   TwoRegionDemandModel[["RoUS2SoI"]][commodities, c(industries, finaldemand)]),
+                             rbind(TwoRegionDemandModel[["SoI2RoUS"]][commodities, c(industries, finaldemand)],
+                                   TwoRegionDemandModel[["RoUS2RoUS"]][commodities, c(industries, finaldemand)]))
+    rownames(TwoRegionDemand) <- apply(cbind(commodities, rep(c(paste0("US-", state_abb), "RoUS"), each = length(commodities))),
+                                       1, FUN = joinStringswithSlashes)
+    colnames(TwoRegionDemand) <- apply(cbind(c(industries, finaldemand), rep(c(paste0("US-", state_abb), "RoUS"), each = length(c(industries, finaldemand)))),
+                                       1, FUN = joinStringswithSlashes)
     TwoRegionIO[["Demand"]][[state]] <- TwoRegionDemand
     
     # Two-region Demand table with exports and imports

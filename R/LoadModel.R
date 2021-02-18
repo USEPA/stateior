@@ -84,10 +84,11 @@ getTwoRegionUseTransactions <- function(state, year, iolevel) {
   df <- loadTwoRegionIOData(year, iolevel, "UseTransactions")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   industries <- getVectorOfCodes(iolevel, "Industry")
-  UseTransactions <- df[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
-                          apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
-                        c(apply(cbind(state, industries), 1, FUN = joinStringswithSlashes),
-                          apply(cbind("RoUS", industries), 1, FUN = joinStringswithSlashes))]
+  state_abb <- ifelse(state=="District of Columbia", "DC", state.abb[state.name == state])
+  UseTransactions <- df[c(apply(cbind(commodities, paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes),
+                          apply(cbind(commodities, "RoUS"), 1, FUN = joinStringswithSlashes)),
+                        c(apply(cbind(industries, paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes),
+                          apply(cbind(industries, "RoUS"), 1, FUN = joinStringswithSlashes))]
   return(UseTransactions)
 }
 
@@ -102,10 +103,11 @@ getTwoRegionFinalDemand <- function(state, year, iolevel) {
   df <- loadTwoRegionIOData(year, iolevel, "FinalDemand")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   finaldemand <- getFinalDemandCodes(iolevel)
-  FinalDemand <- df[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
-                      apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
-                    c(apply(cbind(state, finaldemand), 1, FUN = joinStringswithSlashes),
-                      apply(cbind("RoUS", finaldemand), 1, FUN = joinStringswithSlashes))]
+  state_abb <- ifelse(state=="District of Columbia", "DC", state.abb[state.name == state])
+  FinalDemand <- df[c(apply(cbind(commodities, paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes),
+                      apply(cbind(commodities, "RoUS"), 1, FUN = joinStringswithSlashes)),
+                    c(apply(cbind(finaldemand, paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes),
+                      apply(cbind(finaldemand, "RoUS"), 1, FUN = joinStringswithSlashes))]
   return(FinalDemand)
 }
 
@@ -122,10 +124,11 @@ getTwoRegionDomesticUseTransactions <- function(state, year, iolevel) {
   df <- loadTwoRegionIOData(year, iolevel, "DomesticUseTransactions")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   industries <- getVectorOfCodes(iolevel, "Industry")
-  DomesticUseTransactions <- df[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
-                                  apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
-                                c(apply(cbind(state, industries), 1, FUN = joinStringswithSlashes),
-                                  apply(cbind("RoUS", industries), 1, FUN = joinStringswithSlashes))]
+  state_abb <- ifelse(state=="District of Columbia", "DC", state.abb[state.name == state])
+  DomesticUseTransactions <- df[c(apply(cbind(commodities, paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes),
+                                  apply(cbind(commodities, "RoUS"), 1, FUN = joinStringswithSlashes)),
+                                c(apply(cbind(industries, paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes),
+                                  apply(cbind(industries, "RoUS"), 1, FUN = joinStringswithSlashes))]
   return(DomesticUseTransactions)
 }
 
@@ -140,10 +143,11 @@ getTwoRegionDomesticFinalDemand <- function(state, year, iolevel) {
   df <- loadTwoRegionIOData(year, iolevel, "DomesticFinalDemand")[[state]]
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   finaldemand <- getFinalDemandCodes(iolevel)
-  DomesticFinalDemand <- df[c(apply(cbind(state, commodities), 1, FUN = joinStringswithSlashes),
-                              apply(cbind("RoUS", commodities), 1, FUN = joinStringswithSlashes)),
-                            c(apply(cbind(state, finaldemand), 1, FUN = joinStringswithSlashes),
-                              apply(cbind("RoUS", finaldemand), 1, FUN = joinStringswithSlashes))]
+  state_abb <- ifelse(state=="District of Columbia", "DC", state.abb[state.name == state])
+  DomesticFinalDemand <- df[c(apply(cbind(commodities, paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes),
+                              apply(cbind(commodities, "RoUS"), 1, FUN = joinStringswithSlashes)),
+                            c(apply(cbind(finaldemand, paste0("US-", state_abb)), 1, FUN = joinStringswithSlashes),
+                              apply(cbind(finaldemand, "RoUS"), 1, FUN = joinStringswithSlashes))]
   return(DomesticFinalDemand)
 }
 
