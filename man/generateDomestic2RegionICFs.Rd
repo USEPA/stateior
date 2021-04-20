@@ -4,20 +4,12 @@
 \alias{generateDomestic2RegionICFs}
 \title{Generate domestic 2 region inter-regional commodity flows (ICFs) table.}
 \usage{
-generateDomestic2RegionICFs(
-  state,
-  year,
-  remove_scrap = FALSE,
-  ioschema,
-  iolevel
-)
+generateDomestic2RegionICFs(state, year, ioschema, iolevel)
 }
 \arguments{
 \item{state}{State name.}
 
 \item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
-
-\item{remove_scrap}{A boolean variable indicating whether to remove scrap from the table.}
 
 \item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
 
