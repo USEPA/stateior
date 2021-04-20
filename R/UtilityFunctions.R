@@ -189,7 +189,6 @@ getFinalDemandCodes <- function(iolevel) {
 joinStringswithSlashes <- function(...) {
   items <- list(...)
   str <- sapply(items, paste, collapse = '/')
-  str <- tolower(str)
   return(str)
 }
 
@@ -218,7 +217,7 @@ getStateAbbreviation = function(state) {
 getCountyFIPS = function(state) {
   CountyCodes = readr::read_csv('inst/extdata/CountyFIPS.csv') %>% 
     filter(State == getStateAbbreviation(state)) %>% 
-    select(fips, Name) %>% na.omit() %>% 
+    select(fips, Name) %>% stats::na.omit() %>% 
     arrange(Name)
   return(CountyCodes)
 } 

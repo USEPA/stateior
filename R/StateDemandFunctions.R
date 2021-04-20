@@ -126,8 +126,8 @@ adjustGVAComponent <- function(year, return) {
   
   #adjust NA in EmpComp and GOS 
   ## Step 1: calculate EmpComp-GVA ratio and GOS-GVA ratio for each LineCode
-  ratioTable <- compareTable %>% na.omit() %>% 
-    dplyr::mutate(compRatio = EmpCompensation / GVA, gosRatio = GOS / GVA) %>% na.omit() %>%
+  ratioTable <- compareTable %>% stats::na.omit() %>% 
+    dplyr::mutate(compRatio = EmpCompensation / GVA, gosRatio = GOS / GVA) %>% stats::na.omit() %>%
     dplyr::group_by(LineCode) %>%
     dplyr::summarise(avgCompRatio = mean(compRatio), avgGOSRatio = mean(gosRatio))
   ## Step 2: assign new EmpComp and GOS value to NAs
