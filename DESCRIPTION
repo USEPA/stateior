@@ -30,8 +30,7 @@ Imports:
     utils (>= 3.6.1)
 Depends:
   dplyr,
-  R (>= 3.6),
-  useeior
+  R (>= 3.6)
 Remotes:
   github::USEPA/useeior@master
 License: file LICENSE
