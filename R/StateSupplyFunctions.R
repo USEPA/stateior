@@ -4,7 +4,7 @@
 #' @return The US make table of specified iolevel and year.
 getNationalMake <- function(iolevel, year) {
   # Load pre-saved US Make table
-  Make <- get(paste(iolevel, "Make", year, "BeforeRedef", sep = "_"), as.environment("package:useeior"))*1E6
+  Make <- loadDatafromUSEEIOR(paste(iolevel, "Make", year, "BeforeRedef", sep = "_"))*1E6
   # Keep industry and commodity
   Make <- Make[getVectorOfCodes("Summary", "Industry"), getVectorOfCodes("Summary", "Commodity")]
   return(Make)
@@ -228,6 +228,7 @@ loadDatafromFLOWSA <- function(flowclass, year, datasource) {
   flowsa <- import("flowsa")
   # Load data
   df <- flowsa$getFlowByActivity(list(flowclass), list(as.character(year)), datasource)
+  df <- df[substr(df$Location, 3, 5)=="000", ]
   return(df)
 }
 
@@ -247,8 +248,9 @@ getStateEmploymentbyBEASummary <- function(year) {
                                                    BEAStateEmployment$GeoName), sum)
   colnames(BEAStateEmployment) <- c("BEA_2012_Summary_Code", "State", "Emp")
   # BLS QCEW Emp
-  BLS_QCEW <- loadDatafromFLOWSA("Employment", year, "BLS_QCEW")
-  BLS_QCEW <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Summary")
+  #BLS_QCEW <- loadDatafromFLOWSA("Employment", year, "BLS_QCEW")
+  #BLS_QCEW <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Summary")
+  BLS_QCEW <- get(paste0("BLS_QCEW_", year), as.environment("package:stateior"))
   BLS_QCEW$FIPS <- as.numeric(substr(BLS_QCEW$FIPS, 1, 2))
   FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
                                   sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)

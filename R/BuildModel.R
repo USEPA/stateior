@@ -482,8 +482,8 @@ assembleTwoRegionIO <- function(year, iolevel) {
     # Two-region Industry Output
     TwoRegionIndustryOutput <- cbind(State_IndustryOutput_list[[state]],
                                      rowSums(US_Make) - State_IndustryOutput_list[[state]])
-    rownames(TwoRegionIndustryOutput) <- tolower(gsub(".*\\.", "", rownames(TwoRegionIndustryOutput)))
-    colnames(TwoRegionIndustryOutput) <- tolower(c(paste0("US-", state_abb), "RoUS"))
+    rownames(TwoRegionIndustryOutput) <- gsub(".*\\.", "", rownames(TwoRegionIndustryOutput))
+    colnames(TwoRegionIndustryOutput) <- c(paste0("US-", state_abb), "RoUS")
     TwoRegionIO[["IndustryOutput"]][[state]] <- TwoRegionIndustryOutput
     
     # Two-region Commodity Output
@@ -493,8 +493,8 @@ assembleTwoRegionIO <- function(year, iolevel) {
     MakeUseDiff <- colSums(US_Make) - rowSums(US_DomesticUse[, c(columns, "F040")])
     RoUS_CommodityOutput$Output <- RoUS_CommodityOutput$Output - MakeUseDiff
     TwoRegionCommodityOutput <- cbind(SoI_CommodityOutput, RoUS_CommodityOutput)
-    rownames(TwoRegionCommodityOutput) <- tolower(rownames(TwoRegionCommodityOutput))
-    colnames(TwoRegionCommodityOutput) <- tolower(c(paste0("US-", state_abb), "RoUS"))
+    rownames(TwoRegionCommodityOutput) <- rownames(TwoRegionCommodityOutput)
+    colnames(TwoRegionCommodityOutput) <- c(paste0("US-", state_abb), "RoUS")
     TwoRegionIO[["CommodityOutput"]][[state]] <- TwoRegionCommodityOutput
     print(state)
   }
@@ -574,8 +574,7 @@ buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   SoI_Use <- get(paste0("State_", iolevel, "_Use_", year),
                  as.environment("package:stateior"))[[state]][commodities, ]
   US_Use <- getNationalUse(iolevel, year)
-  US_Import <- get(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"),
-                   as.environment("package:useeior"))*1E6
+  US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"))*1E6
   US_ImportRatios <- US_Import[rownames(US_Use), colnames(US_Use)]/US_Use
   US_ImportRatios[is.na(US_ImportRatios)] <- 0
   RoUS_Use <- US_Use - SoI_Use
