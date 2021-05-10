@@ -25,8 +25,7 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
     BEAtoTradedorLocal <- merge(unique(useeior::MasterCrosswalk2012[, c("NAICS_2012_Code", paste("BEA", ioschema, "Detail_Code", sep = "_"), bea)]),
                                 NAICStoTradedorLocal, by.x = "NAICS_2012_Code", by.y = "NAICS")
     # Use 2012 US data (substitute with more recent data when available)
-    US_Make <- get(paste("Detail_Make_2012_BeforeRedef", sep = "_"),
-                   as.environment("package:useeior"))*1E6
+    US_Make <- loadDatafromUSEEIOR("Detail_Make_2012_BeforeRedef")*1E6
     USCommOutput <- as.data.frame(colSums(US_Make[-which(rownames(US_Make)=="T007"),
                                                   -which(colnames(US_Make)=="T008")]))
     colnames(USCommOutput) <- "CommodityOutput"
@@ -52,19 +51,18 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
     StateCommOutput[StateCommOutput[, bea]==BEAcode, "AdjustedCommodityOutput"] <- value*(weight/sum(weight))
   }
   if (SoI == FALSE) {
-    US_Make <- get(paste(iolevel, "Make", year, "BeforeRedef", sep = "_"),
-                   as.environment("package:useeior"))*1E6
+    US_Make <- loadDatafromUSEEIOR(paste(iolevel, "Make", year, "BeforeRedef", sep = "_"))*1E6
     USCommOutput <- colSums(US_Make[-which(rownames(US_Make)=="Total Commodity Output"),
                                     -which(colnames(US_Make)=="Total Industry Output")])
     StateCommOutput <- merge(StateCommOutput, USCommOutput, by.x = bea, by.y = 0)
-    StateCommOutput$CommodityOutput <- StateCommOutput$y - StateCommOutput$CommodityOutput
+    StateCommOutput$AdjustedCommodityOutput <- StateCommOutput$y - StateCommOutput$AdjustedCommodityOutput
   }
   # Transform table from long to wide
   LocalorTraded <- reshape2::dcast(StateCommOutput, paste(bea, "~ Type"), value.var = "AdjustedCommodityOutput")
   LocalorTraded[is.na(LocalorTraded)] <- 0
   # Calculate local and traded ratios
   LocalorTraded$LocalRatio <- LocalorTraded$Local/(LocalorTraded$Local + LocalorTraded$Traded)
-  LocalorTraded$TradedRatio <- LocalorTraded$Traded/(LocalorTraded$Local + LocalorTraded$Traded)  
+  LocalorTraded$TradedRatio <- LocalorTraded$Traded/(LocalorTraded$Local + LocalorTraded$Traded)
   LocalandTradedRatiosbyBEA <- LocalorTraded[, c(bea, "LocalRatio", "TradedRatio")]
   return(LocalandTradedRatiosbyBEA)
 }
@@ -78,19 +76,30 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
 generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
   # Specify BEA code
   bea <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
-  # Generate SoI-RoUS commodity flow ratios
+  # Generate SoI-RoUS commodity flow ratios from FAF
   ICF_2r <- calculateCommodityFlowRatios(state, year, "domestic", ioschema, iolevel)
   ICF_2r$flowpath <- paste0(ICF_2r$ORIG, "2", ICF_2r$DEST)
   ICF_2r_wide <- reshape2::dcast(ICF_2r[, c(bea, "ratio", "flowpath")],
                                  paste(bea, "~", "flowpath"), value.var = "ratio")
+  # Assume Other Transportation (487OS) has SoI2SoI and RoUS2RoUS ratio == 1
+  ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI), "SoI2SoI"] <- ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI), "RoUS2RoUS"]
+  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "RoUS2RoUS"] <- ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "SoI2SoI"]
+  # Fill NAs
+  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2SoI"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2RoUS"]
+  ICF_2r_wide[is.na(ICF_2r_wide$SoI2RoUS), "SoI2RoUS"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$SoI2RoUS), "SoI2SoI"]
   ICF_2r_wide$source <- "FAF"
+  
   # Calculate interregional commodity flow (ICF) ratios for all commodities
   # Merge ICF_2r_wide with complete BEA Commodity list
-  CommodityCodeName <- get(paste(iolevel, "CommodityCodeName_2012", sep = "_"),
-                           as.environment("package:useeior"))
+  CommodityCodeName <- loadDatafromUSEEIOR(paste(iolevel, "CommodityCodeName_2012", sep = "_"))
   ICF <- merge(ICF_2r_wide, CommodityCodeName, by.x = bea,
                by.y = paste("BEA", ioschema, iolevel, "Commodity_Code", sep = "_"),
                all.y = TRUE)
+  # Assume Transit and ground passenger transportation has SoI2SoI and RoUS2RoUS ratio == 1
+  bea_name <- paste("BEA", ioschema, iolevel, "Commodity_Name", sep = "_")
+  ICF[ICF[, bea_name]=="Transit and ground passenger transportation", c("SoI2SoI", "RoUS2RoUS")] <- 1
+  ICF[ICF[, bea_name]=="Transit and ground passenger transportation", c("SoI2RoUS", "RoUS2SoI")] <- 0
+  
   # Calculate SoI local and traded ratios
   LocalTradeSoI <- calculateLocalandTradedRatios(state, year, SoI = TRUE, ioschema, iolevel)
   # Calculate RoUS local and traded ratios
@@ -140,7 +149,7 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
     ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] <- RoUS2RoUSratio
     ICF[ICF[, bea]==BEAcode, "RoUS2SoI"] <- 1 - RoUS2RoUSratio
   }
-  # Re-order by BEA code
+  # Re-order by BEA commodity code
   ICF <- ICF[order(match(ICF[, bea], CommodityCodeName[, 1])), ]
   return(ICF)
 }
