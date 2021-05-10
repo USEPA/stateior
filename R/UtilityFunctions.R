@@ -1,3 +1,12 @@
+#' Load data from useeior using flexible dataset name
+#' @param dataset A string specifying name of the data to load
+#' @return The data loaded from useeior
+loadDatafromUSEEIOR <- function(dataset) {
+  data(package = "useeior", list = dataset)
+  df <- get(dataset)
+  return(df)
+}
+
 #' Calculate tolerance for RAS. Takes a target row sum vector and target colsum vector.
 #' Specify either relative difference or absolute difference.
 #' @param t_r A vector setting the target row sums of the matrix.
@@ -90,8 +99,7 @@ applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
 estimateUSDomesticUse <- function(iolevel, year) {
   # Load Use table and Import matrix
   Use <- getNationalUse(iolevel, year)
-  Import <- get(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"),
-                as.environment("package:useeior"))*1E6
+  Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"))*1E6
   # Sort rows and columns in Import to match those in Use
   Import <- Import[rownames(Use), colnames(Use)]
   # Define Export and Import codes
@@ -142,8 +150,7 @@ calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
 calculateUSInternationalTransportMarginsRatioMatrix <- function(iolevel, year) {
   # Load US Use and Import tables
   US_Use <- getNationalUse(iolevel, year)
-  US_Import <- get(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"),
-                   as.environment("package:useeior"))*1E6
+  US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"))*1E6
   # Calculate US Domestic Use ratios (w/ International Transport Margins)
   DomesticUseWithIntlTransportMarginsRatio <- (US_Use - US_Import[rownames(US_Use), colnames(US_Use)])/US_Use
   DomesticUseWithIntlTransportMarginsRatio[is.na(DomesticUseWithIntlTransportMarginsRatio)] <- 0
