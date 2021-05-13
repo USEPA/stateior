@@ -8,7 +8,7 @@ getFAF <- function (year) {
   } else if (year %in% c(2013:2018)) {
     FAFzip <- "inst/extdata/FAF4.5.1_State_2013-2018.zip"
   }
-  # Download all BLS QCEW tables into the placeholder file
+  # Download all FAF tables into the placeholder file
   if(!file.exists(FAFzip)) {
     download.file(paste0("https://faf.ornl.gov/fafweb/Data/", gsub("inst/extdata/", "", FAFzip)),
                   FAFzip, mode = "wb")
@@ -24,8 +24,7 @@ getFAF <- function (year) {
     filename <- paste0("inst/extdata/FAF4.5.1_State_2013-2018/FAF4.5.1_State_", year, ".csv")
   }
   # Load state data
-  FAF <- utils::read.table(filename, sep = ",", header = TRUE,
-                           stringsAsFactors = FALSE, check.names = FALSE, fill = TRUE)
+  FAF <- readCSV(filename)
   # Keep columns for year
   FAF <- FAF[, c(colnames(FAF)[1:9], paste0(c("value_", "tons_", "tmiles_"), year))]
   # Convert value from million $ to $

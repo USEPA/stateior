@@ -28,8 +28,7 @@ mapStateTabletoBEASummary <- function(statetablename, year) {
   # Load and adjust State tables
   StateTable <- adjustGVAComponent(year, statetablename)
   # Load State GVA to BEA Summary sector-mapping table
-  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  BEAStateGVAtoBEASummary <- loadBEAStateDatatoBEASummaryMapping("GVA")
   # Merge state table with BEA Summary sector code and name
   StateTableBEA <- merge(StateTable, BEAStateGVAtoBEASummary, by = "LineCode")
   return(StateTableBEA)
@@ -41,22 +40,21 @@ mapStateTabletoBEASummary <- function(statetablename, year) {
 #' @return A data frame contains allocation factors for all states with row names being BEA sector code.
 calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsource) {
   # Load State GVA to BEA Summary sector-mapping table
-  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  BEAStateGVAtoBEASummary <- loadBEAStateDatatoBEASummaryMapping("GVA")
   # Determine BEA sectors that need allocation
-  allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) | duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
+  allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) |
+                                                  duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
   allocation_codes <- allocation_sectors$BEA_2012_Summary_Code
   # Generate a mapping table only for allocation_codes based on MasterCrosswalk2012
   crosswalk <- useeior::MasterCrosswalk2012[useeior::MasterCrosswalk2012$BEA_2012_Summary_Code%in%allocation_codes, ]
   # Generate allocation_weight df based on pre-saved data
   if (allocationweightsource=="Employment") {
     # Load BEA State Emp to BEA Summary mapping
-    BEAStateEmptoBEAmapping <- utils::read.table(system.file("extdata", "Crosswalk_StateEmploymenttoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
-    BEAStateEmptoBEAmapping <- BEAStateEmptoBEAmapping[BEAStateEmptoBEAmapping$BEA_2012_Summary_Code%in%
+    BEAStateEmptoBEASummary <- loadBEAStateDatatoBEASummaryMapping("Employment")
+    BEAStateEmptoBEASummary <- BEAStateEmptoBEASummary[BEAStateEmptoBEASummary$BEA_2012_Summary_Code%in%
                                                          crosswalk[crosswalk$BEA_2012_Sector_Code%in%c("44RT", "FIRE", "G"), "BEA_2012_Summary_Code"], ]
     # For real estate (FIRE) and gov (G) sectors, calculate allocation factors using US GVA by industry
-    allocation_factors <- merge(BEAStateEmptoBEAmapping,
+    allocation_factors <- merge(BEAStateEmptoBEASummary,
                                 useeior::Summary_ValueAdded_IO[, as.character(year), drop = FALSE],
                                 by.x = "BEA_2012_Summary_Code", by.y = 0)
     for (linecode in unique(allocation_factors$LineCode)) {
@@ -188,8 +186,7 @@ calculateStateIndustryOutputbyLineCode <- function(year) {
   USGrossOutput <- as.data.frame(rowSums(US_Summary_Make))
   colnames(USGrossOutput) <- as.character(year)
   # Load State GVA to BEA Summary sector-mapping table
-  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  BEAStateGVAtoBEASummary <- loadBEAStateDatatoBEASummaryMapping("GVA")
   # Generate LineCode-coded US Gross Output
   USGrossOutput <- merge(USGrossOutput, BEAStateGVAtoBEASummary, by.x = 0, by.y = "BEA_2012_Summary_Code")
   USGrossOutput <- stats::aggregate(USGrossOutput[, as.character(year)], by = list(USGrossOutput$LineCode), sum)
@@ -239,9 +236,8 @@ loadDatafromFLOWSA <- function(flowclass, year, datasource) {
 getStateEmploymentbyBEASummary <- function(year) {
   # BEA State Emp
   BEAStateEmployment <- stateior::State_Employment_2009_2018[, c("GeoName", "LineCode", as.character(year))]
-  BEAStateEmptoBEAmapping <- utils::read.table(system.file("extdata", "Crosswalk_StateEmploymenttoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
-  BEAStateEmployment <- merge(BEAStateEmployment, BEAStateEmptoBEAmapping, by = "LineCode")
+  BEAStateEmptoBEASummary <- loadBEAStateDatatoBEASummaryMapping("Employment")
+  BEAStateEmployment <- merge(BEAStateEmployment, BEAStateEmptoBEASummary, by = "LineCode")
   # Aggregate StateEmployment by BEA
   BEAStateEmployment <- stats::aggregate(BEAStateEmployment[, as.character(year)],
                                          by = list(BEAStateEmployment$BEA_2012_Summary_Code,
@@ -252,8 +248,7 @@ getStateEmploymentbyBEASummary <- function(year) {
   BLS_QCEW <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Summary")
   #BLS_QCEW <- get(paste0("BLS_QCEW_", year), as.environment("package:stateior"))
   BLS_QCEW$FIPS <- as.numeric(substr(BLS_QCEW$FIPS, 1, 2))
-  FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
-                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   BLS_QCEW <- merge(BLS_QCEW, FIPS_STATE, by.x = "FIPS", by.y = "State_FIPS")
   # Prioritize BEAStateEmployment, replace NAs in Emp with values from BLS_QCEW
   StateEmployment <- merge(BEAStateEmployment, BLS_QCEW, by = c("State", "BEA_2012_Summary_Code"))
@@ -269,8 +264,7 @@ getStateEmploymentbyBEASummary <- function(year) {
 #' for specified state with row names being BEA sector code.
 getAgFisheryForestryCommodityOutput <- function(year) {
   # Load state FIPS
-  FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
-                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   # Load USDA_ERS_FIWS data from flowsa
   USDA_ERS_FIWS <- loadDatafromFLOWSA("Money", year, "USDA_ERS_FIWS")
   # Select All Commodities as Ag products
@@ -317,8 +311,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
 #' for specified state with row names being BEA sector code.
 getFAFCommodityOutput <- function(year) {
   # Load state FIPS
-  FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
-                                  sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   # Load pre-saved FAF4 commodity flow data
   FAF <- get(paste("FAF", year, sep = "_"), as.environment("package:stateior"))
   # Keep domestic and export trade, keep useful columns, then rename
@@ -330,8 +323,7 @@ getFAFCommodityOutput <- function(year) {
   colnames(FAF) <- c("SCTG", "State", "Value")
   # Map FAF from SCTG to BEA Summary commodities
   # Load SCTGtoBEA mapping table
-  SCTGtoBEA <- utils::read.table(system.file("extdata", "Crosswalk_SCTGtoBEA.csv", package = "stateior"),
-                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  SCTGtoBEA <- readCSV(system.file("extdata", "Crosswalk_SCTGtoBEA.csv", package = "stateior"))
   SCTGtoBEASummary <- unique(SCTGtoBEA[, c("SCTG", "BEA_2012_Summary_Code")])
   FAF <- merge(FAF, SCTGtoBEASummary, by = "SCTG")
   # Determine BEA sectors that need allocation
@@ -451,8 +443,7 @@ finalizeStateUSValueAddedRatio <- function(year) {
   #' Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors (retail, real estate, gov)
   #' RAS converged after 1000001, 6, 911, and 6 iterations.
   # Load State GVA to BEA Summary mapping table
-  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  BEAStateGVAtoBEASummary <- loadBEAStateDatatoBEASummaryMapping("GVA")
   # Determine BEA line codes and sectors where ratios need adjustment
   allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) |
                                                   duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]

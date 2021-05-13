@@ -9,8 +9,7 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
   # Load pre-saved FAF4 commodity flow data
   FAF <- get(paste("FAF", year, sep = "_"), as.environment("package:stateior"))
   # Load state FIPS and determine fips code for the state of interest (SoI)
-  FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
-                                  sep = ",", header = TRUE, check.names = FALSE)
+  FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   fips <- FIPS_STATE[FIPS_STATE$State==state, "State_FIPS"]
   value_col <- paste0("value_", year)
   # Generate FAF_2r
@@ -37,16 +36,15 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
     FAF_2r <- stats::aggregate(VALUE ~ DEST + SCTG + MODE, FAF, sum)
   }
   ## Calculate transportation commodity flow amount
-  FAF_mode <- utils::read.table(system.file("extdata", "Crosswalk_FAFTransportationModetoBEA.csv", package = "stateior"),
-                                sep = ",", header = TRUE, check.names = FALSE)
+  filename <- "Crosswalk_FAFTransportationModetoBEA.csv"
+  FAF_mode <- readCSV(system.file("extdata", filename, package = "stateior"))
   bea <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
   FAF_2r_transportation <- merge(unique(FAF_mode[, c(bea, "Code", "Mode")]), FAF_2r,
                                  by.x = "Code", by.y = "MODE")
   
   ## Calculate commodity flow ratio
   # Load SCTGtoBEA mapping table
-  SCTGtoBEA <- utils::read.table(system.file("extdata", "Crosswalk_SCTGtoBEA.csv", package = "stateior"),
-                                 sep = ",", header = TRUE, check.names = FALSE, stringsAsFactors = FALSE)
+  SCTGtoBEA <- readCSV(system.file("extdata", "Crosswalk_SCTGtoBEA.csv", package = "stateior"))
   SCTGtoBEA <- unique(SCTGtoBEA[, c("SCTG", bea)])
   FAF_2r <- merge(FAF_2r, SCTGtoBEA, by = "SCTG")
   if (iolevel=="Detail") {

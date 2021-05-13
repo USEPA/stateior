@@ -104,8 +104,7 @@ adjustGVAComponent <- function(year, return) {
     compareTable[is.na(compareTable$GVA),]$GOS
   # Further adjust NA in gva using state employment
   if (nrow(compareTable[is.na(compareTable$GVA), ]) > 0) {
-    BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                                 sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+    BEAStateGVAtoBEASummary <- loadBEAStateDatatoBEASummaryMapping("GVA")
     StateEmp <- getStateEmploymentbyBEASummary(year)
     # Extract State and LineCode that have NA in gva from compareTable
     StateLineCodePair <- compareTable[is.na(compareTable$GVA), c("GeoName", "LineCode")]
@@ -163,8 +162,7 @@ assembleStateSummaryGrossValueAdded <- function(year) {
   US_Use <- loadDatafromUSEEIOR(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
   industries <- getVectorOfCodes("Summary", "Industry")
   # Determine BEA line codes and sectors where ratios need adjustment
-  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  BEAStateGVAtoBEASummary <- loadBEAStateDatatoBEASummaryMapping("GVA")
   allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) |
                                                   duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
   StateGVA <- data.frame()
@@ -260,8 +258,8 @@ calculateStateUSPCERatio <- function(year) {
   # Calculate the state-US PCE ratios by LineCode
   StateUSPCE$Ratio <- StateUSPCE[, paste0(year, ".x")]/StateUSPCE[, paste0(year, ".y")]
   # Map to BEA Summary
-  StatePCEtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StatePCEtoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                            sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  filename <- "Crosswalk_StatePCEtoBEASummaryIO2012Schema.csv"
+  StatePCEtoBEASummary <- readCSV(system.file("extdata", filename, package = "stateior"))
   StateUSPCE <- merge(StatePCEtoBEASummary[!StatePCEtoBEASummary$BEA_2012_Summary_Code=="", ],
                       StateUSPCE, by = "Line")
   # Adjust Ratio based on state PCE
@@ -405,8 +403,8 @@ calculateStateSLGovExpenditureRatio <- function(year) {
   GovExp <- get(paste0("Census_StateLocalGovExpenditure_", year), as.environment("package:stateior"))
   GovExp[, "Overseas"] <- GovExp[, "United States Total"] - rowSums(GovExp[, c(state.name, "District of Columbia")])
   # Map to BEA Summary sectors
-  mapping <- utils::read.table(system.file("extdata", "Crosswalk_StateLocalGovExptoBEASummaryIO2012Schema.csv", package = "stateior"),
-                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  filename <- "Crosswalk_StateLocalGovExptoBEASummaryIO2012Schema.csv"
+  mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
   GovExpBEA <- merge(mapping, GovExp, by = c("Line", "Description"))
   # Calculate ratios
   states <- c(state.name, "District of Columbia", "Overseas")
@@ -472,9 +470,9 @@ calculateStateUSEmpCompensationRatio <- function(year) {
   # Map US Employee Compensation to BEA
   USEmpCompensation <- getStateEmpCompensation(year)
   USEmpCompensation <- USEmpCompensation[USEmpCompensation$GeoName=="United States *", ]
-  BEAStateGVAtoBEASummary <- utils::read.table(system.file("extdata", "Crosswalk_StateGVAtoBEASummaryIO2012Schema.csv", package = "stateior"),
-                                               sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
-  allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) | duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
+  BEAStateGVAtoBEASummary <- loadBEAStateDatatoBEASummaryMapping("GVA")
+  allocation_sectors <- BEAStateGVAtoBEASummary[duplicated(BEAStateGVAtoBEASummary$LineCode) |
+                                                  duplicated(BEAStateGVAtoBEASummary$LineCode, fromLast = TRUE), ]
   USEmpCompensation <- merge(USEmpCompensation, BEAStateGVAtoBEASummary, by = "LineCode")
   USEmpCompensation <- merge(USEmpCompensation, useeior::Summary_GrossOutput_IO[, as.character(year), drop = FALSE],
                              by.x = "BEA_2012_Summary_Code", by.y = 0)
