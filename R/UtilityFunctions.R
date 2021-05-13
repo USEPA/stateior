@@ -7,6 +7,27 @@ loadDatafromUSEEIOR <- function(dataset) {
   return(df)
 }
 
+#' Read csv files using read.table function from utils package
+#' set header = TRUE, stringsAsFactors = FALSE, and check.names = FALSE
+#' @param filename A string specifying name of the csv file
+#' @param fill logical. If TRUE then in case the rows have unequal length,
+#' blank fields are implicitly added.
+#' @return The data read
+readCSV <- function(filename, fill = FALSE) {
+  df <- utils::read.table(filename, sep = ",", header = TRUE,
+                          stringsAsFactors = FALSE, check.names = FALSE, fill = fill)
+  return(df)
+}
+
+#' Load BEA State data (GVA and Employment) to BEA Summary mapping table
+#' @param dataname A string specifying name of the BEA state data
+#' @return The mapping table
+loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
+  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO2012Schema.csv")
+  mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
+  return(mapping)
+}
+
 #' Calculate tolerance for RAS. Takes a target row sum vector and target colsum vector.
 #' Specify either relative difference or absolute difference.
 #' @param t_r A vector setting the target row sums of the matrix.
@@ -171,11 +192,9 @@ calculateUSInternationalTransportMarginsRatioMatrix <- function(iolevel, year) {
 #' @param colName A text value specifying desired column name.
 #' @return A vector of codes.
 getVectorOfCodes <- function(iolevel, colName) {
-  SchemaInfo <- utils::read.table(system.file("extdata",
-                                              paste0("2012_", iolevel, "_Schema_Info.csv"),
-                                              package = "stateior"),
-                                  sep = ",", header = TRUE,
-                                  stringsAsFactors = FALSE, check.names = FALSE)
+  SchemaInfo <- readCSV(system.file("extdata",
+                                    paste0("2012_", iolevel, "_Schema_Info.csv"),
+                                    package = "stateior"))
   return(as.vector(stats::na.omit(SchemaInfo[, c("Code", colName)])[, "Code"]))
 }
 
