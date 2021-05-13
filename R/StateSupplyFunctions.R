@@ -224,10 +224,10 @@ getStateCommodityOutputRatioEstimates <- function(year) {
 #' for specified state with row names being BEA sector code.
 loadDatafromFLOWSA <- function(flowclass, year, datasource) {
   # Import flowsa
-  library(reticulate)
-  flowsa <- import("flowsa")
+  flowsa <- reticulate::import("flowsa")
   # Load data
-  df <- flowsa$getFlowByActivity(list(flowclass), list(as.character(year)), datasource)
+  df <- flowsa$getFlowByActivity(datasource, as.character(year),
+                                 flowclass, geographic_level = "state")
   df <- df[substr(df$Location, 3, 5)=="000", ]
   return(df)
 }
@@ -248,9 +248,9 @@ getStateEmploymentbyBEASummary <- function(year) {
                                                    BEAStateEmployment$GeoName), sum)
   colnames(BEAStateEmployment) <- c("BEA_2012_Summary_Code", "State", "Emp")
   # BLS QCEW Emp
-  #BLS_QCEW <- loadDatafromFLOWSA("Employment", year, "BLS_QCEW")
-  #BLS_QCEW <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Summary")
-  BLS_QCEW <- get(paste0("BLS_QCEW_", year), as.environment("package:stateior"))
+  BLS_QCEW <- loadDatafromFLOWSA("Employment", year, "BLS_QCEW")
+  BLS_QCEW <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Summary")
+  #BLS_QCEW <- get(paste0("BLS_QCEW_", year), as.environment("package:stateior"))
   BLS_QCEW$FIPS <- as.numeric(substr(BLS_QCEW$FIPS, 1, 2))
   FIPS_STATE <- utils::read.table(system.file("extdata", "StateFIPS.csv", package = "stateior"),
                                   sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
