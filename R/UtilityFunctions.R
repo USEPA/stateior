@@ -15,7 +15,8 @@ loadDatafromUSEEIOR <- function(dataset) {
 #' @return The data read
 readCSV <- function(filename, fill = FALSE) {
   df <- utils::read.table(filename, sep = ",", header = TRUE,
-                          stringsAsFactors = FALSE, check.names = FALSE, fill = fill)
+                          stringsAsFactors = FALSE, check.names = FALSE,
+                          fill = fill)
   return(df)
 }
 
@@ -120,7 +121,8 @@ applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
 estimateUSDomesticUse <- function(iolevel, year) {
   # Load Use table and Import matrix
   Use <- getNationalUse(iolevel, year)
-  Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"))*1E6
+  Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
+                                      sep = "_"))*1E6
   # Sort rows and columns in Import to match those in Use
   Import <- Import[rownames(Use), colnames(Use)]
   # Define Export and Import codes
@@ -130,7 +132,8 @@ estimateUSDomesticUse <- function(iolevel, year) {
   # The imports column in the Import matrix is in foreign port value.
   # But in the Use table it is in domestic port value.
   # domestic port value = foreign port value + value of all transportation and insurance services to import + customs duties
-  # See documentation of the Import matrix (https://apps.bea.gov/industry/xls/io-annual/ImportMatrices_Before_Redefinitions_SUM_1997-2019.xlsx)
+  # See documentation of the Import matrix
+  # (https://apps.bea.gov/industry/xls/io-annual/ImportMatrices_Before_Redefinitions_SUM_1997-2019.xlsx)
   # So, ImportCost <- Use$Imports - Import$Imports
   ImportCost <- Use[, ImportCode] - Import[, ImportCode]
   # Estimate DomesticUse
@@ -171,20 +174,24 @@ calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
 calculateUSInternationalTransportMarginsRatioMatrix <- function(iolevel, year) {
   # Load US Use and Import tables
   US_Use <- getNationalUse(iolevel, year)
-  US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"))*1E6
+  US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
+                                         sep = "_"))*1E6
   # Calculate US Domestic Use ratios (w/ International Transport Margins)
-  DomesticUseWithIntlTransportMarginsRatio <- (US_Use - US_Import[rownames(US_Use), colnames(US_Use)])/US_Use
-  DomesticUseWithIntlTransportMarginsRatio[is.na(DomesticUseWithIntlTransportMarginsRatio)] <- 0
-  # Calculate InternationalTransportMargins (vector)
-  InternationalTransportMargins <- US_Use[, "F050"] - US_Import[, "F050"]
+  DomesticUsewIntlTransMarginsRatio <- (US_Use - US_Import[rownames(US_Use), colnames(US_Use)])/US_Use
+  DomesticUsewIntlTransMarginsRatio[is.na(DomesticUsewIntlTransMarginsRatio)] <- 0
+  # Calculate IntlTransportMargins (vector)
+  IntlTransportMargins <- US_Use[, "F050"] - US_Import[, "F050"]
   # Allocate InternationalMargins to get InternationalMarginsMatrix
-  DistributionRatio <- sweep(US_Use, 1, FUN = "/", rowSums(US_Use) - (US_Use[, "F040"] + US_Use[, "F050"]))
+  drop_cols <- c("F040", "F050")
+  DistributionRatio <- sweep(US_Use, 1, FUN = "/",
+                             rowSums(US_Use[, !colnames(US_Use) %in% drop_cols]))
   DistributionRatio[is.na(DistributionRatio)] <- 0
-  InternationalTransportMarginsMatrix <- sweep(DistributionRatio, 1, FUN = "*", InternationalTransportMargins)
-  # Calculate InternationalTransportMarginsRatio
-  InternationalTransportMarginsRatio <- InternationalTransportMarginsMatrix/US_Use
-  InternationalTransportMarginsRatio[is.na(InternationalTransportMarginsRatio)] <- 0
-  return(InternationalTransportMarginsRatio)
+  IntlTransportMarginsMatrix <- sweep(DistributionRatio, 1, FUN = "*",
+                                      IntlTransportMargins)
+  # Calculate IntlTransportMarginsRatio
+  IntlTransportMarginsRatio <- IntlTransportMarginsMatrix/US_Use
+  IntlTransportMarginsRatio[is.na(IntlTransportMarginsRatio)] <- 0
+  return(IntlTransportMarginsRatio)
 }
 
 #' Extract desired columns from SchemaInfo, return vectors with strings of codes.
@@ -219,19 +226,33 @@ joinStringswithSlashes <- function(...) {
 }
 
 
-#' getStateAbbreviation (MODIFIED)
-#' 
-#' This function is to return the two-character abbreviation of a US state. For example, 'GA'
-#' 
-#' @param state A string character specifying the full name of a US state , 'Georgia'
-#' @return two-character abbreviation of a US state
-getStateAbbreviation = function(state) {
-  stateCode = readr::read_csv('inst/extdata/StateAbbreviation.csv')
-  state = stateCode[which(stateCode$State == state),]$Code
-  return(state)
+#' This function converts US state name, for example "Alabama",
+#' to a two-character state abbreviation "AL". Can take "District of Columbia".
+#' @param state A string character specifying the full name of a US state.
+#' @return two-character abbreviation of a US state.
+getStateAbbreviation <- function(state) {
+  state_abb <- ifelse(state=="District of Columbia", "DC",
+                      state.abb[state.name == state])
+  return(state_abb)
 }
 
-
+getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
+  # Get code
+  if (sector_type!="FinalDemand") {
+    code <- getVectorOfCodes(iolevel, sector_type)
+  } else {
+    code <- getFinalDemandCodes(iolevel)
+  }
+  # Get code_loc
+  if (location!="RoUS") {
+    state_abb <- getStateAbbreviation(location)
+    code_loc <- apply(cbind(code, paste0("US-", state_abb)), 1,
+                      FUN = joinStringswithSlashes)
+  } else {
+    code_loc <- apply(cbind(code, "RoUS"), 1, FUN = joinStringswithSlashes)
+  }
+  return(code_loc)
+}
 
 #' getCountyFIPS (MODIFIED)
 #' 
