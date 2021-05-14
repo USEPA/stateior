@@ -2,7 +2,8 @@
 % Please edit documentation in R/LoadModel.R
 \name{loadTwoRegionIOData}
 \alias{loadTwoRegionIOData}
-\title{Load two-region IO data of specified iolevel and year from user's local directory or the EPA Data Commons.}
+\title{Load two-region IO data of specified iolevel and year
+from user's local directory or the EPA Data Commons.}
 \usage{
 loadTwoRegionIOData(year, iolevel, dataname)
 }
@@ -13,11 +14,12 @@ loadTwoRegionIOData(year, iolevel, dataname)
 
 \item{dataname}{Name of desired IO data, can be "Make", "Use", "DomesticUse",
 "UseTransactions", "FinalDemand", "DomesticUseTransactions", "DomesticFinalDemand",
-"CommodityOutput, and "IndustryOutput".}
+"CommodityOutput, and "IndustryOutput", "Demand", and "CompleteDemand".}
 }
 \value{
 A list of two-region IO data of specified iolevel and year.
 }
 \description{
-Load two-region IO data of specified iolevel and year from user's local directory or the EPA Data Commons.
+Load two-region IO data of specified iolevel and year
+from user's local directory or the EPA Data Commons.
 }

@@ -2,16 +2,18 @@
 % Please edit documentation in R/BuildModel.R
 \name{buildStateSupplyModel}
 \alias{buildStateSupplyModel}
-\title{Build a state supply model for all 52 states/regions (including DC and Overseas) for a given year}
+\title{Build a state supply model for all 52 states/regions (including DC and Overseas)
+for a given year}
 \usage{
 buildStateSupplyModel(year)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value between 2007 and 2017.}
 }
 \value{
-A list of state supply model components: Make table, commodity and industry output.
+A list of state supply model components: Make, commodity and industry output.
 }
 \description{
-Build a state supply model for all 52 states/regions (including DC and Overseas) for a given year.
+Build a state supply model for all 52 states/regions
+(including DC and Overseas) for a given year.
 }

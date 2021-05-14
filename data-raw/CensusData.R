@@ -4,10 +4,13 @@
 #' @return A data frame contains US import/export data from 2012-2017.
 getCensusUSATradebyNAICS <- function (year, flow_ratio_type) {
   # Load the downloaded table from usatrade.census.gov
-  filename <- paste0("Census_USATrade", Hmisc::capitalize(flow_ratio_type), "_", year, ".csv")
+  filename <- paste0("Census_USATrade",
+                     Hmisc::capitalize(flow_ratio_type), "_", year, ".csv")
   table <- utils::read.table(system.file("extdata", filename, package = "stateior"),
-                             sep = ",", header = FALSE, stringsAsFactors = FALSE, check.names = FALSE, skip = 4,
-                             col.names = c("Commodity", "State", "Country", "Year", "Value"))
+                             sep = ",", header = FALSE, stringsAsFactors = FALSE,
+                             check.names = FALSE, skip = 4,
+                             col.names = c("Commodity", "State", "Country",
+                                           "Year", "Value"))
   # Keep rows for the specified year and drop "All Commodities"
   table <- table[table$Year==year & !table$Commodity=="All Commodities", ]
   # Change state name from "Dist of Columbia" to "District of Columbia"
@@ -15,7 +18,8 @@ getCensusUSATradebyNAICS <- function (year, flow_ratio_type) {
   # Drop "All States" and non-state rows
   table <- table[table$State %in% c(state.name, "District of Columbia"), ]
   # Create NAICS
-  table$NAICS <- as.integer(do.call(rbind, strsplit(table$Commodity, "\\ "))[, 1])
+  table$NAICS <- as.integer(do.call(rbind,
+                                    strsplit(table$Commodity, "\\ "))[, 1])
   # Convert trade value to numeric
   table$Value <- as.numeric(gsub(",", "", table$Value))
   # Re-order columns
@@ -38,14 +42,16 @@ getCensusStateExportbyNAICS <- function(year) {
   # Use "MONTH=12" to pull Year-to-Date import values
   baseurl <- paste0("https://api.census.gov/data/timeseries/intltrade/exports/statenaics?get=NAICS,CTY_NAME,STATE,ALL_VAL_YR&YEAR=", year, "&MONTH=12")
   # Download table and convert to dataframe
-  export <- as.data.frame(jsonlite::fromJSON(baseurl), stringsAsFactors = FALSE)[-1, -6]
+  export <- as.data.frame(jsonlite::fromJSON(baseurl),
+                          stringsAsFactors = FALSE)[-1, -6]
   # Add column names
   colnames(export) <- c("NAICS", "CountryName", "State", "Value", "Year")
   # Convert specific columns to numeric format
   export[, c("Value", "Year")] <- sapply(export[, c("Value", "Year")], as.numeric)
   # Keep export by state (!STATE=="") and convert state abbreviation to state name
   export_states <- export[!export$NAICS=="" & export$State %in% c(state.abb, "DC"), ]
-  export_states$State <- c(state.name, "District of Columbia")[match(export_states$State, c(state.abb, "DC"))]
+  state_names <- c(state.name, "District of Columbia")
+  export_states$State <- state_names[match(export_states$State, c(state.abb, "DC"))]
   return (export_states)
 }
 Census_StateExport_2013 <- getCensusStateExportbyNAICS(2013)
@@ -71,14 +77,16 @@ getCensusStateImportbyNAICS <- function (year) {
   # Use "MONTH=12" to pull Year-to-Date import values
   baseurl <- paste0("https://api.census.gov/data/timeseries/intltrade/imports/statenaics?get=NAICS,CTY_NAME,STATE,GEN_VAL_YR&YEAR=", year, "&MONTH=12")
   # Download table and convert to dataframe
-  import <- as.data.frame(jsonlite::fromJSON(baseurl), stringsAsFactors = FALSE)[-1, -6]
+  import <- as.data.frame(jsonlite::fromJSON(baseurl),
+                          stringsAsFactors = FALSE)[-1, -6]
   # Add column names
   colnames(import) <- c("NAICS", "CountryName", "State", "Value", "Year")
   # Convert specific columns to numeric format
   import[, c("Value", "Year")] <- sapply(import[, c("Value", "Year")], as.numeric)
   # Keep import by state (!STATE=="") and convert state abbreviation to state name
   import_states <- import[!import$NAICS=="" & import$State %in% c(state.abb, "DC"), ]
-  import_states$State <- c(state.name, "District of Columbia")[match(import_states$State, c(state.abb, "DC"))]
+  state_names <- c(state.name, "District of Columbia")
+  import_states$State <- state_names[match(import_states$State, c(state.abb, "DC"))]
   return (import_states)
 }
 Census_StateImport_2013 <- getCensusStateImportbyNAICS(2013)
@@ -97,11 +105,11 @@ usethis::use_data(Census_StateImport_2018, overwrite = TRUE)
 #' Download Census state and local gov expenditure 2007-2017
 #' @return A list of data frames containing Census state and local gov expenditure 2007-2017.
 getStateLocalGovExpenditure <- function () {
-  StateLocalGovExp_list <- list()
+  StateLocalGovExp_ls <- list()
   for (year in 2017:2007) {
     # Create base_url
     base_url <- "https://www2.census.gov/programs-surveys/gov-finances/tables/"
-    df_list <- list()
+    df_ls <- list()
     # Specify table to download
     for (table in c("a", "b")) {
       # Specify file format
@@ -128,22 +136,24 @@ getStateLocalGovExpenditure <- function () {
         skip_rows <- 7
       }
       # Load table
-      df_i <- as.data.frame(readxl::read_excel(FileName, sheet = 1, col_names = TRUE, skip = skip_rows))
+      df_i <- as.data.frame(readxl::read_excel(FileName, sheet = 1,
+                                               col_names = TRUE, skip = skip_rows))
       # Keep Expenditures only
       df_i <- df_i[which(df_i$Description == "Expenditure1"):nrow(df_i), ]
       if (year>2011) {
         Line <- as.integer(df_i[complete.cases(df_i), 1])
       }
-      df_i <- df_i[, colnames(df_i)%in%c("Description", "United States Total", state.name, "District of Columbia")]
-      df_list[[table]] <- df_i[complete.cases(df_i), ]
+      df_i <- df_i[, colnames(df_i)%in%c("Description", "United States Total",
+                                         state.name, "District of Columbia")]
+      df_ls[[table]] <- df_i[complete.cases(df_i), ]
     }
-    df_list[["b"]][, "Description"] <- NULL
-    df <- cbind(Line, df_list[["a"]], df_list[["b"]])
+    df_ls[["b"]][, "Description"] <- NULL
+    df <- cbind(Line, df_ls[["a"]], df_ls[["b"]])
     # Convert values to numeric and $
     df[, 3:ncol(df)] <- sapply(df[, 3:ncol(df)], as.numeric)*1E3
-    StateLocalGovExp_list[[as.character(year)]] <- df
+    StateLocalGovExp_ls[[as.character(year)]] <- df
   }
-  return(StateLocalGovExp_list)
+  return(StateLocalGovExp_ls)
 }
 StateLocalGovExpenditure_2007_2017 <- getStateLocalGovExpenditure()
 Census_StateLocalGovExpenditure_2007 <- StateLocalGovExpenditure_2007_2017[["2007"]]

@@ -19,5 +19,6 @@ buildTwoRegionDemandModel(state, year, ioschema, iolevel)
 A list of domestic two-region demand tables.
 }
 \description{
-Generate two-region (SoI and RoUS) demand tables with interregional exports and imports.
+Generate two-region (SoI and RoUS) demand tables
+with interregional exports and imports.
 }

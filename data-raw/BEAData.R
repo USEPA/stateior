@@ -7,11 +7,14 @@ getBEAStateData <- function (dataname) {
   StateGVAzip <- "inst/extdata/SAGDP.zip"
   # Download all BEA IO tables into the placeholder file
   if(!file.exists(StateGVAzip)) {
-    download.file("https://apps.bea.gov/regional/zip/SAGDP.zip", StateGVAzip, mode = "wb")
+    download.file("https://apps.bea.gov/regional/zip/SAGDP.zip",
+                  StateGVAzip, mode = "wb")
     # Get the name of all files in the zip archive
-    fname <- unzip(StateGVAzip, list = TRUE)[unzip(StateGVAzip, list = TRUE)$Length > 0, ]$Name
+    tmp <- unzip(StateGVAzip, list = TRUE)
+    fname <- tmp[tmp$Length > 0, ]$Name
     # Unzip the file to the designated directory
-    unzip(StateGVAzip, files = fname, exdir = "inst/extdata/SAGDP", overwrite = TRUE)
+    unzip(StateGVAzip, files = fname, exdir = "inst/extdata/SAGDP",
+          overwrite = TRUE)
   }
   # Determine data filename
   if (dataname=="GVA") {
@@ -24,21 +27,22 @@ getBEAStateData <- function (dataname) {
     FileName <- "inst/extdata/SAGDP/SAGDP7N__ALL_AREAS_1997_2017.csv"
   }
   endyear <- substr(FileName, nchar(FileName) - 7, nchar(FileName)-4)
-  year_range <- c(2007:endyear)
+  year_cols <- as.character(c(2007:endyear))
   # Load state data
   StateData <- readCSV(FileName, fill = TRUE)
   StateData <- StateData[!is.na(StateData$LineCode), ]
   # Convert values to numeric
-  StateData[, as.character(year_range)] <- sapply(StateData[, as.character(year_range)], as.numeric)
+  StateData[, year_cols] <- sapply(StateData[, year_cols], as.numeric)
   # Convert values to current US $
   if (unique(StateData$Unit)=="Millions of current dollars") {
-    StateData[, as.character(year_range)] <- StateData[, as.character(year_range)]*1E6
+    StateData[, year_cols] <- StateData[, year_cols]*1E6
   } else if (unique(StateData$Unit)=="Thousands of dollars") {
-    StateData[, as.character(year_range)] <- StateData[, as.character(year_range)]*1E3
+    StateData[, year_cols] <- StateData[, year_cols]*1E3
   }
   # Keep state-level data
-  StateData <- StateData[StateData$GeoName %in% c(state.name, "District of Columbia", "United States *"),
-                         c("GeoName", "LineCode", "Description", as.character(year_range))]
+  geo_names <- c(state.name, "District of Columbia", "United States *")
+  StateData <- StateData[StateData$GeoName %in%geo_names,
+                         c("GeoName", "LineCode", "Description", year_cols)]
   return(StateData)
 }
 State_GVA_2007_2019 <- getBEAStateData("GVA")
@@ -54,33 +58,40 @@ usethis::use_data(State_GOS_2007_2017, overwrite = TRUE)
 #' @return A data frame of BEA state employment data from 2009-2018.
 getBEAStateEmployment <- function () {
   APIkey <- readLines(rappdirs::user_data_dir("BEA_API_KEY.txt"), warn = FALSE)
-  linecodes <- jsonlite::fromJSON(paste0("https://apps.bea.gov/api/data/?&UserID=", APIkey,
-                                         "&method=GetParameterValuesFiltered",
-                                         "&datasetname=Regional",
-                                         "&TargetParameter=LineCode",
-                                         "&TableName=SAEMP25N",
-                                         "&ResultFormat=json"))
+  linecodes_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
+                          APIkey,
+                          "&method=GetParameterValuesFiltered",
+                          "&datasetname=Regional",
+                          "&TargetParameter=LineCode",
+                          "&TableName=SAEMP25N",
+                          "&ResultFormat=json")
+  linecodes <- jsonlite::fromJSON(linecodes_txt)
   StateEmployment <- data.frame()
   for (linecode in linecodes$BEAAPI$Results$ParamValue$Key) {
-    StateEmployment_linecode <- jsonlite::fromJSON(paste0("https://apps.bea.gov/api/data/?&UserID=", APIkey,
-                                                          "&method=GetData",
-                                                          "&datasetname=Regional",
-                                                          "&TableName=SAEMP25N",
-                                                          "&LineCode=", linecode,
-                                                          "&GeoFIPS=STATE",
-                                                          "&Year=Last10",
-                                                          "&ResultFormat=json"))
+    StateEmployment_linecode_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
+                                           APIkey,
+                                           "&method=GetData",
+                                           "&datasetname=Regional",
+                                           "&TableName=SAEMP25N",
+                                           "&LineCode=", linecode,
+                                           "&GeoFIPS=STATE",
+                                           "&Year=Last10",
+                                           "&ResultFormat=json")
+    StateEmployment_linecode <- jsonlite::fromJSON(StateEmployment_linecode_txt)
     StateEmployment_linecode <- StateEmployment_linecode$BEAAPI$Results$Data
     if (is.null(StateEmployment_linecode$NoteRef)) {
       StateEmployment_linecode$NoteRef <- ""
     }
     StateEmployment_linecode$LineCode <- linecode
-    StateEmployment_linecode$DataValue <- as.numeric(gsub(",", "", StateEmployment_linecode$DataValue))
+    datavalue_new <- as.numeric(gsub(",", "", StateEmployment_linecode$DataValue))
+    StateEmployment_linecode$DataValue <- datavalue_new
     StateEmployment <- rbind(StateEmployment, StateEmployment_linecode)
     print(linecode)
   }
   # Reshape to wide table
-  StateEmployment <- reshape2::dcast(StateEmployment, GeoFips + GeoName + LineCode ~ TimePeriod, value.var = "DataValue")
+  StateEmployment <- reshape2::dcast(StateEmployment,
+                                     GeoFips + GeoName + LineCode ~ TimePeriod,
+                                     value.var = "DataValue")
   return(StateEmployment)
 }
 State_Employment_2009_2018 <- getBEAStateEmployment()
@@ -93,11 +104,14 @@ getBEAStatePCE <- function () {
   StatePCEzip <- "inst/extdata/SAEXP.zip"
   # Download all BEA IO tables into the placeholder file
   if(!file.exists(StatePCEzip)) {
-    download.file("https://apps.bea.gov/regional/zip/SAEXP.zip", StatePCEzip, mode = "wb")
+    download.file("https://apps.bea.gov/regional/zip/SAEXP.zip",
+                  StatePCEzip, mode = "wb")
     # Get the name of all files in the zip archive
-    fname <- unzip(StatePCEzip, list = TRUE)[unzip(StatePCEzip, list = TRUE)$Length > 0, ]$Name
+    tmp <- unzip(StatePCEzip, list = TRUE)
+    fname <- tmp[tmp$Length > 0, ]$Name
     # Unzip the file to the designated directory
-    unzip(StatePCEzip, files = fname, exdir = "inst/extdata/SAEXP", overwrite = TRUE)
+    unzip(StatePCEzip, files = fname, exdir = "inst/extdata/SAEXP",
+          overwrite = TRUE)
   }
   # Load state PCE data
   StatePCE <- readCSV("inst/extdata/SAEXP/SAEXP1__ALL_AREAS_1997_2018.csv",
@@ -106,10 +120,12 @@ getBEAStatePCE <- function () {
   # Replace NA with zero
   StatePCE[is.na(StatePCE)] <- 0
   # Convert values to current US $
-  StatePCE[, as.character(2007:2018)] <- StatePCE[, as.character(2007:2018)]*1E6
+  year_cols <- as.character(2007:2018)
+  StatePCE[, year_cols] <- StatePCE[, year_cols]*1E6
   # Keep state-level data
-  StatePCE <- StatePCE[StatePCE$GeoName %in% c(state.name, "District of Columbia", "United States"),
-                       c("GeoName", "Line", "Description", as.character(2007:2018))]
+  StatePCE <- StatePCE[StatePCE$GeoName %in%
+                         c(state.name, "District of Columbia", "United States"),
+                       c("GeoName", "Line", "Description", year_cols)]
   return(StatePCE)
 }
 State_PCE_2007_2018 <- getBEAStatePCE()
@@ -140,10 +156,11 @@ getBEAGovInvestment <- function() {
   # Assign column name to the description column
   colnames(GovInvestment)[2] <- "Description"
   # Keep wanted columns
+  year_cols <- as.character(2007:2019)
   GovInvestment <- GovInvestment[complete.cases(GovInvestment),
-                                 c("Line", "Description", as.character(c(2007:2019)))]
+                                 c("Line", "Description", year_cols)]
   # Convert values from million $ to $
-  GovInvestment[, as.character(c(2007:2019))] <- GovInvestment[, as.character(c(2007:2019))]*1E6
+  GovInvestment[, year_cols] <- GovInvestment[, year_cols]*1E6
   return(GovInvestment)
 }
 GovInvestment_2007_2019 <- getBEAGovInvestment()
@@ -162,10 +179,11 @@ getBEAGovConsumption <- function() {
   # Assign column name to the description column
   colnames(GovConsumption)[2] <- "Description"
   # Keep wanted columns
+  year_cols <- as.character(2007:2019)
   GovConsumption <- GovConsumption[complete.cases(GovConsumption),
-                                   c("Line", "Description", as.character(c(2007:2019)))]
+                                   c("Line", "Description", year_cols)]
   # Convert values from million $ to $
-  GovConsumption[, as.character(c(2007:2019))] <- GovConsumption[, as.character(c(2007:2019))]*1E6
+  GovConsumption[, year_cols] <- GovConsumption[, year_cols]*1E6
   return(GovConsumption)
 }
 GovConsumption_2007_2019 <- getBEAGovConsumption()

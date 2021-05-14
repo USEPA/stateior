@@ -2,7 +2,8 @@
 % Please edit documentation in R/LoadModel.R
 \name{getTwoRegionMakeTransactions}
 \alias{getTwoRegionMakeTransactions}
-\title{Load make transactions of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.}
+\title{Load make transactions of a state of interest (SoI)
+and its corresponding rest-of-US (RoUS) for a given year.}
 \usage{
 getTwoRegionMakeTransactions(state, year, iolevel)
 }
@@ -14,8 +15,9 @@ getTwoRegionMakeTransactions(state, year, iolevel)
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) make transactions.
+A data.frame of SoI's and RoUS' make transactions.
 }
 \description{
-Load make transactions of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+Load make transactions of a SoI and its correspondingRoUS
+for a given year.
 }

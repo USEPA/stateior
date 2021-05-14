@@ -11,22 +11,24 @@ finalizeStateUSValueAddedRatio(year)
 }
 \value{
 A data frame contains RAS-balanced state-US value added ratios
+0 - Define BEA_col and year_col
 1 - Load state GVA/value added (VA) by industry for the given year.
 Map to BEA Summary level
 2 - Where VA must be allocated from a LineCode to BEA Summary industries,
 calculate allocation factors using specified allocationweightsource.
 When using state employment (from BEA) as source for allocation,
-introduce national GVA to disaggregate state employment in real estate and gov industries
-from LineCode to BEA Summary.
+introduce national GVA to disaggregate state employment
+in real estate and gov industries from LineCode to BEA Summary.
 3 - Load US Summary Make table for given year
 Generate US Summary Make Transaction and Industry and Commodity Output
-4 - Calculate state_US_VA_ratio, for each state and each industry, divide state VA by US VA.
-For each state, estimate industry output based on US industry output and state_US_VA_ratio.
-For industries whose state_US_VA_ratio were calculated based on disaggregated state VA,
-apply RAS balancing to adjust state industry output and state_US_VA_ratio.
-Use the adjusted state_US_VA_ratio to calculate state make transaction, industry and commodity output.
-Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors (retail, real estate, gov)
-RAS converged after 1000001, 6, 911, and 6 iterations.
+4 - Calculate state_US_VA_ratio
+For each state and each industry, divide state VA by US VA.
+For each state, estimate industry output based on US industry output and
+state_US_VA_ratio.
+For industries whose state_US_VA_ratio were calculatedbased on disaggregated
+state VA, apply RAS to balance state industry output and state_US_VA_ratio.
+Use the adjusted state_US_VA_ratio to calculate
+state make transaction, industry and commodity output.
 }
 \description{
 Finalize state-US value added ratios using RAS balancing method

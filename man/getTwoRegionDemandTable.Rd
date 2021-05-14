@@ -15,9 +15,9 @@ getTwoRegionDemandTable(state, year, iolevel)
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) demand (trade) tables.
+A data.frame of SoI's and RoUS' demand (trade) tables.
 }
 \description{
-Load demand (trade) tables, including intermediate consumption and final demand,
-of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+Load demand (trade) tables of a SoI and its corresponding RoUS
+for a given year.
 }

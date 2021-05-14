@@ -15,9 +15,9 @@ getTwoRegionUseTransactions(state, year, iolevel)
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) use transactions.
+A data.frame of SoI's and RoUS' use transactions.
 }
 \description{
-Load use transactions (intermediate consumption) of a state of interest (SoI)
-and its corresponding rest-of-US (RoUS) for a given year.
+Load use transactions (intermediate consumption) of a SoI
+and its corresponding RoUS for a given year.
 }

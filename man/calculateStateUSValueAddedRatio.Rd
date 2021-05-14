@@ -10,7 +10,8 @@ calculateStateUSValueAddedRatio(year)
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 }
 \value{
-A data frame contains ratios of state/US GVA (value added) for all states at a specific year at BEA Summary level.
+A data frame contains ratios of state/US GVA (value added)
+for all states at a specific year at BEA Summary level.
 }
 \description{
 Calculate state-US GVA (value added) ratios at BEA Summary level.

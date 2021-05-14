@@ -2,8 +2,9 @@
 % Please edit documentation in R/LoadModel.R
 \name{getTwoRegionDomesticUseTransactions}
 \alias{getTwoRegionDomesticUseTransactions}
-\title{Load domestic use transactions (intermediate consumption) of a state of interest (SoI)
-and its corresponding rest-of-US (RoUS) for a given year.}
+\title{Load domestic use transactions (intermediate consumption)
+of a state of interest (SoI) and its corresponding rest-of-US (RoUS)
+for a given year.}
 \usage{
 getTwoRegionDomesticUseTransactions(state, year, iolevel)
 }
@@ -15,9 +16,9 @@ getTwoRegionDomesticUseTransactions(state, year, iolevel)
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) domestic use transactions.
+A data.frame of SoI's and RoUS' domestic use transactions.
 }
 \description{
-Load domestic use transactions (intermediate consumption) of a state of interest (SoI)
-and its corresponding rest-of-US (RoUS) for a given year.
+Load domestic use transactions (intermediate consumption)
+of a SoI and its corresponding RoUS for a given year.
 }

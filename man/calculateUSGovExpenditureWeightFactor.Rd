@@ -9,7 +9,7 @@ calculateUSGovExpenditureWeightFactor(year, defense)
 \arguments{
 \item{year}{A numeric value between 2007 and 2019 specifying the year of interest.}
 
-\item{defense}{A boolean value indicating if the expenditure is spent on defense or not.}
+\item{defense}{A logical value indicating if the expenditure is spent on defense or not.}
 }
 \value{
 A data frame contains weighting factor of each expenditure component over US total gov expenditure.

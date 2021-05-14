@@ -2,8 +2,9 @@
 % Please edit documentation in R/LoadModel.R
 \name{getTwoRegionCompleteDemandTable}
 \alias{getTwoRegionCompleteDemandTable}
-\title{Load demand (trade) tables, including intermediate consumption, final demand, exports and imports
-of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.}
+\title{Load demand (trade) tables, including intermediate consumption, final demand,
+exports and imports of a state of interest (SoI) and its corresponding
+rest-of-US (RoUS) for a given year.}
 \usage{
 getTwoRegionCompleteDemandTable(state, year, iolevel)
 }
@@ -15,9 +16,10 @@ getTwoRegionCompleteDemandTable(state, year, iolevel)
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) demand (trade) tables.
+A data.frame of SoI's and RoUS' complete demand (trade) tables.
 }
 \description{
-Load demand (trade) tables, including intermediate consumption and final demand,
-of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+Load demand (trade) tables, including intermediate consumption,
+final demand, exports and imports of a SoI and its corresponding RoUS
+for a given year.
 }

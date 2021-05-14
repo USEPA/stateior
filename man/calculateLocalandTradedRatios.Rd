@@ -2,7 +2,7 @@
 % Please edit documentation in R/InteregionalCommodityFlowFunctions.R
 \name{calculateLocalandTradedRatios}
 \alias{calculateLocalandTradedRatios}
-\title{Calculate domestic local and traded ratio, which will be used in the next function generateDomestic2RegionICFs}
+\title{Calculate domestic local and traded ratio, used for calculating ICF ratios.}
 \usage{
 calculateLocalandTradedRatios(state, year, SoI = TRUE, ioschema, iolevel)
 }
@@ -11,15 +11,17 @@ calculateLocalandTradedRatios(state, year, SoI = TRUE, ioschema, iolevel)
 
 \item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
 
-\item{SoI}{A boolean variable indicating whether to calculate local and traded ratios for SoI or RoUS.}
+\item{SoI}{A logical variable indicating whether to calculate
+local and traded ratios for SoI or RoUS.}
 
-\item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
+\item{ioschema}{A numeric value of either 2012 or 2007.}
 
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A data frame contains local and traded ratios by BEA sectors for the specified state.
+A data frame contains local and traded ratios by BEA sectors
+for the specified state.
 }
 \description{
-Calculate domestic local and traded ratio, which will be used in the next function generateDomestic2RegionICFs
+Calculate domestic local and traded ratio, used for calculating ICF ratios.
 }

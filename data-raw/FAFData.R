@@ -10,7 +10,8 @@ getFAF <- function (year) {
   }
   # Download all FAF tables into the placeholder file
   if(!file.exists(FAFzip)) {
-    download.file(paste0("https://faf.ornl.gov/fafweb/Data/", gsub("inst/extdata/", "", FAFzip)),
+    download.file(paste0("https://faf.ornl.gov/fafweb/Data/",
+                         gsub("inst/extdata/", "", FAFzip)),
                   FAFzip, mode = "wb")
     # Get the name of all files in the zip archive
     fname <- unzip(FAFzip, list = TRUE)[unzip(FAFzip, list = TRUE)$Length > 0, ]$Name
@@ -21,7 +22,8 @@ getFAF <- function (year) {
   if (year == 2012) {
     filename <- "inst/extdata/FAF4.5.1_State/FAF4.5.1_State.csv"
   } else if (year %in% c(2013:2018)) {
-    filename <- paste0("inst/extdata/FAF4.5.1_State_2013-2018/FAF4.5.1_State_", year, ".csv")
+    filename <- paste0("inst/extdata/FAF4.5.1_State_2013-2018/FAF4.5.1_State_",
+                       year, ".csv")
   }
   # Load state data
   FAF <- readCSV(filename)

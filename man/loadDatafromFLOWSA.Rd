@@ -4,7 +4,7 @@
 \alias{loadDatafromFLOWSA}
 \title{Load flowbyactivity data from FLOWSA}
 \usage{
-loadDatafromFLOWSA(flowclass, year, datasource)
+loadDatafromFLOWSA(flowclass, year, datasource, geographic_level = "state")
 }
 \arguments{
 \item{flowclass}{A character value specifying flow class, can be "Money".}

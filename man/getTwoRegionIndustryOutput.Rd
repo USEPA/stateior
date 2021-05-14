@@ -2,7 +2,8 @@
 % Please edit documentation in R/LoadModel.R
 \name{getTwoRegionIndustryOutput}
 \alias{getTwoRegionIndustryOutput}
-\title{Load industry output tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.}
+\title{Load industry output tables of a state of interest (SoI)
+and its corresponding rest-of-US (RoUS) for a given year.}
 \usage{
 getTwoRegionIndustryOutput(state, year, iolevel)
 }
@@ -14,8 +15,9 @@ getTwoRegionIndustryOutput(state, year, iolevel)
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) industry output.
+A data.frame of SoI's and RoUS' industry output.
 }
 \description{
-Load industry output tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+Load industry output tables of a SoI and its corresponding RoUS
+for a given year.
 }

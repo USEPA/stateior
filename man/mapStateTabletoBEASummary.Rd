@@ -7,7 +7,8 @@
 mapStateTabletoBEASummary(statetablename, year)
 }
 \arguments{
-\item{statetablename}{Name of pre-saved state table, can be GVA, Tax, Employment Compensation, and GOS.}
+\item{statetablename}{Name of pre-saved state table,
+can be GVA, Tax, Employment Compensation, and GOS.}
 
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 }

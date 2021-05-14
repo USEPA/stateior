@@ -2,7 +2,8 @@
 % Please edit documentation in R/StateSupplyFunctions.R
 \name{calculateStateIndustryOutputbyLineCode}
 \alias{calculateStateIndustryOutputbyLineCode}
-\title{Calculate state industry output by BEA State LineCode via multiplying state_US_VA_ratio_LineCode by USGrossOutput_LineCode.}
+\title{Calculate state industry output by BEA State LineCode
+by multiplying state_US_VA_ratio_LineCode by USGrossOutput_LineCode.}
 \usage{
 calculateStateIndustryOutputbyLineCode(year)
 }
@@ -13,5 +14,6 @@ calculateStateIndustryOutputbyLineCode(year)
 A data frame contains state industry output by BEA State LineCode.
 }
 \description{
-Calculate state industry output by BEA State LineCode via multiplying state_US_VA_ratio_LineCode by USGrossOutput_LineCode.
+Calculate state industry output by BEA State LineCode
+by multiplying state_US_VA_ratio_LineCode by USGrossOutput_LineCode.
 }

@@ -2,7 +2,8 @@
 % Please edit documentation in R/LoadModel.R
 \name{getTwoRegionCommodityOutput}
 \alias{getTwoRegionCommodityOutput}
-\title{Load commodity output tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.}
+\title{Load commodity output tables of a state of interest (SoI)
+and its corresponding rest-of-US (RoUS) for a given year.}
 \usage{
 getTwoRegionCommodityOutput(state, year, iolevel)
 }
@@ -14,8 +15,9 @@ getTwoRegionCommodityOutput(state, year, iolevel)
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A dataframe of a state of interest (SoI) and its corresponding rest-of-US (RoUS) commodity output.
+A data.frame of SoI's and RoUS' commodity output.
 }
 \description{
-Load commodity output tables of a state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+Load commodity output tables of a SoI and its corresponding RoUS
+for a given year.
 }
