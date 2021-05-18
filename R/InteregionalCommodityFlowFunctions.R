@@ -33,7 +33,6 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
     BEAtoTradedorLocal <- merge(crosswalk, NAICStoTradedorLocal,
                                 by.x = "NAICS_2012_Code", by.y = "NAICS")
     # Use 2012 US data (substitute with more recent data when available)
-    #US_Make <- loadDatafromUSEEIOR("Detail_Make_2012_BeforeRedef")*1E6
     USCommOutput <- as.data.frame(colSums(getNationalMake("Detail", 2012)))
     colnames(USCommOutput) <- "CommodityOutput"
     BEA_cols <- paste("BEA", ioschema, c("Sector", "Summary", "Detail"),
@@ -76,9 +75,9 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
                                    value.var = "AdjustedCommodityOutput")
   LocalorTraded[is.na(LocalorTraded)] <- 0
   # Calculate local and traded ratios
-  localplustraded <- LocalorTraded$Local + LocalorTraded$Traded
-  LocalorTraded$LocalRatio <- LocalorTraded$Local/localplustraded
-  LocalorTraded$TradedRatio <- LocalorTraded$Traded/localplustraded
+  LocalorTraded$Total <- LocalorTraded$Local + LocalorTraded$Traded
+  LocalorTraded$LocalRatio <- LocalorTraded$Local/LocalorTraded$Total
+  LocalorTraded$TradedRatio <- LocalorTraded$Traded/LocalorTraded$Total
   LocalandTradedRatiosbyBEA <- LocalorTraded[, c(bea, "LocalRatio", "TradedRatio")]
   return(LocalandTradedRatiosbyBEA)
 }
@@ -119,8 +118,8 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
   bea_name <- paste("BEA", ioschema, iolevel, "Commodity_Name", sep = "_")
   transit_name <- "Transit and ground passenger transportation"
   ICF[ICF[, bea_name]==transit_name, c("SoI2SoI", "RoUS2RoUS",
-                                       "SoI2RoUS", "RoUS2SoI",
-                                       "source")] <- c(1, 1, 0, 0, "FAF")
+                                       "SoI2RoUS", "RoUS2SoI")] <- c(1, 1, 0, 0)
+  ICF[ICF[, bea_name]==transit_name, "source"] <- "FAF"
   
   # Calculate SoI local and traded ratios
   LocalTradeSoI <- calculateLocalandTradedRatios(state, year, SoI = TRUE,
@@ -131,20 +130,20 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
   # Generate state Commodity Output ratio
   CommOutput_ratio <- calculateStateCommodityOutputRatio(year)
   CommOutput_ratio <- CommOutput_ratio[CommOutput_ratio$State==state, ]
-  # Use local and traded ratios and SoI commodity output
+  # Use local and traded ratios and SoI CommOutput_ratio
   for (BEAcode in Reduce(intersect, list(ICF[is.na(ICF$SoI2SoI), bea],
                                          LocalTradeSoI[, bea],
                                          LocalTradeRoUS[, bea]))) {
     # Assign data source
     ICF[ICF[, bea]==BEAcode, "source"] <- "Cluster Mapping and state commodity output"
-    # Calculate LocalRoUS, TradedRoUS and COR (Comm Output Ratio)
+    # Calculate LocalSoI, LocalRoUS, TradedRoUS and COR (Comm Output Ratio)
+    LocalSoI <- LocalTradeSoI[LocalTradeSoI[, bea]==BEAcode, "LocalRatio"]
     LocalRoUS <- LocalTradeRoUS[LocalTradeRoUS[, bea]==BEAcode, "LocalRatio"]
     TradedRoUS <- LocalTradeRoUS[LocalTradeRoUS[, bea]==BEAcode, "TradedRatio"]
     COR <- CommOutput_ratio[CommOutput_ratio[, bea]==BEAcode, "Ratio"]
     # Assign ratios
+    ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- LocalSoI
     ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] <- LocalRoUS + TradedRoUS*(1-COR)
-    ICF[ICF[, bea]==BEAcode,
-        "SoI2SoI"] <- LocalTradeSoI[LocalTradeSoI[, bea]==BEAcode, "LocalRatio"]
     # If SoI2SoI == 0, replace it with COR
     if (ICF[ICF[, bea]==BEAcode, "SoI2SoI"]==0) {
       ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- COR
@@ -153,7 +152,7 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
     ICF[ICF[, bea]==BEAcode, "RoUS2SoI"] <- 1 - ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"]
     ICF[ICF[, bea]==BEAcode, "SoI2RoUS"] <- 1 - ICF[ICF[, bea]==BEAcode, "SoI2SoI"]
   }
-  # Use SoI commodity output
+  # Use SoI CommOutput_ratio
   for (BEAcode in intersect(ICF[is.na(ICF$source), bea], CommOutput_ratio[, bea])) {
     # Determine ratios
     if (substr(BEAcode, 1, 1)=="G") {
