@@ -254,12 +254,12 @@ getStateCommodityOutputRatioEstimates <- function(year) {
 #' @param datasource A character value specifying data source.
 #' @return A data frame contains state Ag, Fishery and Forestry commodity output
 #' for specified state with row names being BEA sector code.
-loadDatafromFLOWSA <- function(flowclass, year, datasource, geographic_level = "state") {
+loadDatafromFLOWSA <- function(flowclass, year, datasource, geographic_level = NULL) {
   # Import flowsa
   flowsa <- reticulate::import("flowsa")
   # Load data
   df <- flowsa$getFlowByActivity(datasource, as.character(year),
-                                 flowclass, geographic_level = "state")
+                                 flowclass, geographic_level)
   df <- df[substr(df$Location, 3, 5)=="000", ]
   return(df)
 }
@@ -318,9 +318,8 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   Ag <- Ag[, c("BEA_2012_Summary_Code", "State", "Value", "Ratio")]
   
   # Load Fishery Landings and Forestry CutValue data from flowsa
-  Fishery <- loadDatafromFLOWSA("Money", "2012-2018", "NOAA_FisheryLandings",
-                                geographic_level = "none")
-  FisheryForestry <- rbind(Fishery[Fishery$Year==year, ],
+  Fishery <- loadDatafromFLOWSA("Money", year, "NOAA_FisheryLandings")
+  FisheryForestry <- rbind(Fishery,
                            USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy=="All Species", ])
   # Convert State_FIPS to numeric values
   FisheryForestry$State_FIPS <- as.numeric(substr(FisheryForestry$Location, 1, 2))
