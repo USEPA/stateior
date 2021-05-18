@@ -21,6 +21,8 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
     FAF$DEST <- ifelse(FAF$DEST==fips, "SoI", "RoUS") 
     # Aggregate to 2 regions 
     FAF_2r <- stats::aggregate(VALUE ~ ORIG + DEST + SCTG + MODE, FAF, sum)
+    # Calculate commodity flow amount in warehousing & storage sector
+    FAF_2r_ws <- stats::aggregate(VALUE ~ ORIG + DEST, FAF, sum)
   } else if (flow_ratio_type=="export") {
     FAF <- FAF[FAF$trade_type==3, c("dms_origst", "sctg2", "fr_outmode", value_col)]
     colnames(FAF) <- c("ORIG", "SCTG", "MODE", "VALUE")
@@ -28,6 +30,8 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
     FAF$DEST <- "RoW"
     # Aggregate to 2 regions 
     FAF_2r <- stats::aggregate(VALUE ~ ORIG + SCTG + MODE, FAF, sum)
+    # Calculate commodity flow amount in warehousing & storage sector
+    FAF_2r_ws <- stats::aggregate(VALUE ~ ORIG, FAF, sum)
   } else if (flow_ratio_type=="import") {
     FAF <- FAF[FAF$trade_type==2, c("dms_destst", "sctg2", "fr_inmode", value_col)]
     colnames(FAF) <- c("DEST", "SCTG", "MODE", "VALUE")
@@ -35,8 +39,10 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
     FAF$DEST <- ifelse(FAF$DEST==fips, "SoI", "RoUS")
     # Aggregate to 2 regions 
     FAF_2r <- stats::aggregate(VALUE ~ DEST + SCTG + MODE, FAF, sum)
+    # Calculate commodity flow amount in warehousing & storage sector
+    FAF_2r_ws <- stats::aggregate(VALUE ~ DEST, FAF, sum)
   }
-  ## Calculate transportation commodity flow amount
+  ## Calculate commodity flow amount in transportation sectors
   filename <- "Crosswalk_FAFTransportationModetoBEA.csv"
   FAF_mode <- readCSV(system.file("extdata", filename, package = "stateior"))
   bea <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
@@ -83,11 +89,14 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
                                    FAF_2r, sum, na.rm = TRUE)
       }
     }
-    # Combine FAF_2r with FAF_2r_transportation
+    # Combine FAF_2r with FAF_2r_transportation and FAF_2r_ws
     common_cols <- c("BEA_2012_Summary_Code", "ORIG", "DEST", "VALUE")
+    FAF_2r_ws[, "BEA_2012_Summary_Code"] <- "493"
     FAF_2r_transportation <- stats::aggregate(VALUE ~ ORIG + DEST + BEA_2012_Summary_Code,
                                               FAF_2r_transportation, sum, na.rm = TRUE)
-    FAF_2r <- rbind(FAF_2r[, common_cols], FAF_2r_transportation[, common_cols])
+    FAF_2r <- rbind(FAF_2r[, common_cols], FAF_2r_ws[, common_cols],
+                    FAF_2r_transportation[, common_cols])
+    
     # Calculate commodity flow ratio
     if (flow_ratio_type=="domestic") {
       totalflow <- stats::aggregate(VALUE ~ ORIG + BEA_2012_Summary_Code, FAF_2r, sum)
