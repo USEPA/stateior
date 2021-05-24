@@ -236,6 +236,13 @@ getStateAbbreviation <- function(state) {
   return(state_abb)
 }
 
+#' Combine sector code and location to the form of code/location.
+#' @param sector_type A text value specifying desired sector type,
+#' can be "Commodity", "Industry", "FinalDemand", or "ValueAdded".
+#' @param location A text value specifying desired location,
+#' can be state name like "Georgia" or "RoUS" representing Rest of US.
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @return A text value in the format of code/location.
 getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
   # Get code
   if (sector_type!="FinalDemand") {
@@ -252,6 +259,23 @@ getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
     code_loc <- apply(cbind(code, "RoUS"), 1, FUN = joinStringswithSlashes)
   }
   return(code_loc)
+}
+
+#' Calculate regional purchase coefficient for specified state and year
+#' @param state Name of desired state, like "Georgia".
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @return  
+calculateRegionalPurchaseCoefficient <- function(SoI2SoIUse, RoUS2SoIUse, iolevel) {
+  import_export_cols <- unlist(sapply(list("Export", "Import"),
+                                      getVectorOfCodes, iolevel = iolevel))
+  LocallyProducedConsumption <- rowSums(SoI2SoIUse) - rowSums(SoI2SoIUse[, import_export_cols])
+  ImportedConsumption <- rowSums(RoUS2SoIUse) - rowSums(RoUS2SoIUse[, import_export_cols])
+  TotalConsumption <- LocallyProducedConsumption + ImportedConsumption
+  rpc <- cbind.data.frame(LocallyProducedConsumption/TotalConsumption,
+                          sum(LocallyProducedConsumption)/sum(TotalConsumption))
+  colnames(rpc) <- c("RPC", "OverallRPC")
+  rpc[is.na(rpc)] <- 1
+  return(rpc)
 }
 
 #' getCountyFIPS (MODIFIED)
