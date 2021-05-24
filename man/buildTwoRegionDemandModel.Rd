@@ -4,7 +4,13 @@
 \alias{buildTwoRegionDemandModel}
 \title{Build a two-region demand model}
 \usage{
-buildTwoRegionDemandModel(state, year, ioschema, iolevel)
+buildTwoRegionDemandModel(
+  state,
+  year,
+  ioschema,
+  iolevel,
+  ICF_manual_adjustment = FALSE
+)
 }
 \arguments{
 \item{state}{A text value specifying state of interest.}

@@ -4,7 +4,13 @@
 \alias{generateDomestic2RegionICFs}
 \title{Generate domestic 2 region inter-regional commodity flows (ICFs) table.}
 \usage{
-generateDomestic2RegionICFs(state, year, ioschema, iolevel)
+generateDomestic2RegionICFs(
+  state,
+  year,
+  ioschema,
+  iolevel,
+  ICF_manual_adjustment = FALSE
+)
 }
 \arguments{
 \item{state}{State name.}
