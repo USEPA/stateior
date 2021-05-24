@@ -88,7 +88,8 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data frame contains domestic 2 region ICFs.
-generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
+generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
+                                         ICF_manual_adjustment = FALSE) {
   # Specify BEA code
   bea <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
   # Generate SoI-RoUS commodity flow ratios from FAF
@@ -97,16 +98,27 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
   ICF_2r_wide <- reshape2::dcast(ICF_2r[, c(bea, "ratio", "flowpath")],
                                  paste(bea, "~", "flowpath"), value.var = "ratio")
   # Assume Other Transportation (487OS) has SoI2SoI and RoUS2RoUS ratio == 1
-  ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI),
-              "SoI2SoI"] <- ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI), "RoUS2RoUS"]
-  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS),
-              "RoUS2RoUS"] <- ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "SoI2SoI"]
+  ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI)|is.na(ICF_2r_wide$RoUS2RoUS),
+              c("SoI2SoI", "RoUS2RoUS")] <- 1
   # Fill NAs
-  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI),
-              "RoUS2SoI"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2RoUS"]
-  ICF_2r_wide[is.na(ICF_2r_wide$SoI2RoUS),
-              "SoI2RoUS"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$SoI2RoUS), "SoI2SoI"]
+  ICF_2r_wide[, "SoI2RoUS"] <- 1 - ICF_2r_wide[, "SoI2SoI"]
+  ICF_2r_wide[, "RoUS2SoI"] <- 1 - ICF_2r_wide[, "RoUS2RoUS"]
   ICF_2r_wide$source <- "FAF"
+  # Adjust air, rail and water transportation has SoI2SoI and RoUS2RoUS ICF ratios
+  if (ICF_manual_adjustment & iolevel == "Summary") {
+    arw_sectors <- c("481", "482", "483")
+    # Calculate adjusted ratios
+    SoI2SoI_original <- ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "SoI2SoI"]
+    SoI2SoI_adjusted <- 0.5 + SoI2SoI_original/2
+    RoUS2RoUS_original <- ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "RoUS2RoUS"]
+    RoUS2RoUS_adjusted <- 0.5 + RoUS2RoUS_original/2
+    # Add adjusted ratios to ICF_2r_wide
+    ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "SoI2SoI"] <- SoI2SoI_adjusted
+    ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "SoI2RoUS"] <- 1 - SoI2SoI_adjusted
+    ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "RoUS2RoUS"] <- RoUS2RoUS_adjusted
+    ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "RoUS2SoI"] <- 1 - RoUS2RoUS_adjusted
+    ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "source"] <- "FAF (w/ manual adjustment: 0.5 + ratio/2)"
+  }
   # Merge ICF_2r_wide with complete BEA Commodity list
   CommodityCodeName <- loadDatafromUSEEIOR(paste(iolevel,
                                                  "CommodityCodeName_2012",
@@ -136,18 +148,26 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
                                          LocalTradeRoUS[, bea]))) {
     # Assign data source
     ICF[ICF[, bea]==BEAcode, "source"] <- "Cluster Mapping and state commodity output"
-    # Calculate LocalSoI, LocalRoUS, TradedRoUS and COR (Comm Output Ratio)
+    # Calculate LocalSoI, LocalRoUS, TradedRoUS and CORSoI (Comm Output Ratio)
     LocalSoI <- LocalTradeSoI[LocalTradeSoI[, bea]==BEAcode, "LocalRatio"]
     LocalRoUS <- LocalTradeRoUS[LocalTradeRoUS[, bea]==BEAcode, "LocalRatio"]
     TradedRoUS <- LocalTradeRoUS[LocalTradeRoUS[, bea]==BEAcode, "TradedRatio"]
-    COR <- CommOutput_ratio[CommOutput_ratio[, bea]==BEAcode, "Ratio"]
+    CORSoI <- CommOutput_ratio[CommOutput_ratio[, bea]==BEAcode, "Ratio"]
     # Assign ratios
     ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- LocalSoI
-    ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] <- LocalRoUS + TradedRoUS*(1-COR)
-    # If SoI2SoI == 0, replace it with COR
+    ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] <- LocalRoUS + TradedRoUS*(1-CORSoI)
+    # If SoI2SoI == 0, replace it with CORSoI
     if (ICF[ICF[, bea]==BEAcode, "SoI2SoI"]==0) {
-      ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- COR
+      ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- CORSoI
       ICF[ICF[, bea]==BEAcode, "source"] <- "state commodity output"
+      # Manually adjust ratios
+      if (ICF_manual_adjustment) {
+        ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- 0.8 + CORSoI/2
+        ICF[ICF[, bea]==BEAcode, "source"] <- "manual adjustment: 0.8 + CORSoI/2"
+      }
+    }
+    if (substr(BEAcode, 1, 2)=="22") {
+      # Use ElectricityLCI to estimate ICF ratios for utilities
     }
     ICF[ICF[, bea]==BEAcode, "RoUS2SoI"] <- 1 - ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"]
     ICF[ICF[, bea]==BEAcode, "SoI2RoUS"] <- 1 - ICF[ICF[, bea]==BEAcode, "SoI2SoI"]
@@ -162,11 +182,12 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
       # Assign data source
       ICF[ICF[, bea]==BEAcode, "source"] <- "manual assignment assuming no interregional trade for government commodities"
     } else {
-      # Assume SoI2SoIratio is COR of the commodity
-      SoI2SoIratio <- CommOutput_ratio[CommOutput_ratio[, bea]==BEAcode, "Ratio"]
-      RoUS2RoUSratio <- 1 - SoI2SoIratio
+      CORSoI <- CommOutput_ratio[CommOutput_ratio[, bea]==BEAcode, "Ratio"]
       # Assign data source
       ICF[ICF[, bea]==BEAcode, "source"] <- "state commodity output"
+      # Assume SoI2SoIratio is CORSoI of the commodity
+      SoI2SoIratio <- CORSoI
+      RoUS2RoUSratio <- 1 - CORSoI
     }
     ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- SoI2SoIratio
     ICF[ICF[, bea]==BEAcode, "SoI2RoUS"] <- 1 - SoI2SoIratio
@@ -174,6 +195,6 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel) {
     ICF[ICF[, bea]==BEAcode, "RoUS2SoI"] <- 1 - RoUS2RoUSratio
   }
   # Re-order by BEA commodity code
-  ICF <- ICF[order(match(CommodityCodeName[, 1], ICF[, bea])), ]
+  ICF <- ICF[match(CommodityCodeName[, 1], ICF[, bea]), ]
   return(ICF)
 }
