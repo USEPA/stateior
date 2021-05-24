@@ -141,7 +141,7 @@ buildStateDemandModel <- function(year) {
   
   logging::loginfo("Loading state and US industry output ...")
   # State industry output
-  State_IndustryOutput_ls <- get(paste0("State_IndustryOutput_", year),
+  State_IndustryOutput_ls <- get(paste0("State_Summary_IndustryOutput_", year),
                                  as.environment("package:stateior"))
   states <- names(State_IndustryOutput_ls)
   # US industry output
@@ -210,7 +210,7 @@ buildStateDemandModel <- function(year) {
   logging::loginfo("Estimating state domestic use table ...")
   DomesticUse_ratios <- calculateUSDomesticUseRatioMatrix("Summary", year)
   logging::loginfo("Appending value added to state Use tables ...")
-  StateGVA <- get(paste0("State_GrossValueAdded_", year),
+  StateGVA <- get(paste0("State_Summary_GrossValueAdded_", year),
                   as.environment("package:stateior"))
   model <- list()
   for (state in states) {
@@ -249,7 +249,7 @@ buildStateDemandModel <- function(year) {
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A list of domestic two-region demand tables.
 #' @export
-buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel) {
+buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel, ICF_manual_adjustment = FALSE) {
   # 0 - Define commodities and desired columns
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   FD_cols <- getFinalDemandCodes(iolevel)
@@ -270,8 +270,9 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel) {
   
   # 2 - Generate 2-region ICFs
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios ...")
-  ICF <- get(paste0("TwoRegion_", iolevel, "_ICF_Ratios_", year),
-             as.environment("package:stateior"))[[state]]
+  # ICF <- get(paste0("TwoRegion_", iolevel, "_ICF_Ratios_", year),
+  #            as.environment("package:stateior"))[[state]]
+  ICF <- generateDomestic2RegionICFs(state, year, ioschema, iolevel, ICF_manual_adjustment)
   # Only allocate "error" to rows (commodities) that does not have ICF of 1 or 0
   commodities_notrade <- ICF[ICF$SoI2SoI==1&ICF$SoI2RoUS==0 &
                                ICF$RoUS2RoUS==1&ICF$RoUS2SoI==0, 1]
@@ -412,6 +413,12 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel) {
                             "SoI2RoUS$InterregionalImports - RoUS2SoI$InterregionalExports",
                             "SoI2RoUS$InterregionalExports - RoUS2SoI$InterregionalImports",
                             "SoI2RoUS$NetExports + RoUS2SoI$NetExports")
+  validation_check <- validation[, c("SoI2SoI$InterregionalImports - RoUS2RoUS$InterregionalExports",
+                                     "SoI2SoI$InterregionalExports - RoUS2RoUS$InterregionalImports",
+                                     "SoI2SoI$NetExports + RoUS2RoUS$NetExports")]
+  if (max(abs(validation_check))>1E-3) {
+    stop("two-region results did not pass validation.")
+  }
   
   # 13 - Assemble SoI2SoI Use, RoUS2RoUS Use
   Domestic2RegionUse <- list("SoI2SoI"    = SoI2SoI_Use,
