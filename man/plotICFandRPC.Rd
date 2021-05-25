@@ -2,7 +2,7 @@
 % Please edit documentation in R/VisualizationFunctions.R
 \name{plotICFandRPC}
 \alias{plotICFandRPC}
-\title{Plot SoI2SoI ICF and state RPC}
+\title{Plot SoI2SoI or RoUS2RoUS ICF and state RPC}
 \usage{
 plotICFandRPC(ICF_df, RPC_df)
 }
@@ -12,5 +12,5 @@ plotICFandRPC(ICF_df, RPC_df)
 \item{RPC_df}{A data.frame contains state RPC ratios}
 }
 \description{
-Plot SoI2SoI ICF and state RPC
+Plot SoI2SoI or RoUS2RoUS ICF and state RPC
 }
