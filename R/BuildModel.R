@@ -249,7 +249,9 @@ buildStateDemandModel <- function(year) {
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A list of domestic two-region demand tables.
 #' @export
-buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel, ICF_manual_adjustment = FALSE) {
+buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
+                                      ICF_manual_adjustment = FALSE,
+                                      adjust_by = 0) {
   # 0 - Define commodities and desired columns
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   FD_cols <- getFinalDemandCodes(iolevel)
@@ -272,12 +274,13 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel, ICF_manual
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios ...")
   # ICF <- get(paste0("TwoRegion_", iolevel, "_ICF_Ratios_", year),
   #            as.environment("package:stateior"))[[state]]
-  ICF <- generateDomestic2RegionICFs(state, year, ioschema, iolevel, ICF_manual_adjustment)
+  ICF <- generateDomestic2RegionICFs(state, year, ioschema, iolevel,
+                                     ICF_manual_adjustment, adjust_by)
   # Only allocate "error" to rows (commodities) that does not have ICF of 1 or 0
   commodities_notrade <- ICF[ICF$SoI2SoI==1&ICF$SoI2RoUS==0 &
                                ICF$RoUS2RoUS==1&ICF$RoUS2SoI==0, 1]
   rows_allocation <- commodities[-which(commodities%in%commodities_notrade)]
-     
+  
   # 3 - Generate SoI2SoI domestic Use
   logging::loginfo("Generating SoI2SoI Use table ...")
   SoI2SoI_Use <- SoI_DomesticUse
@@ -336,28 +339,30 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel, ICF_manual
   RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_DomesticUse[, tradable_cols]) - rowSums(RoUS2RoUS_Use[, tradable_cols])
   RoUS2RoUS_Use$InterregionalExports <- RoUS_CommodityOutput$Output - rowSums(RoUS2RoUS_Use[, nonimport_cols])
   
-  # 7 - Calculate errors for SoI and RoUS
-  logging::loginfo("Allocating difference between interregional imports and exports in SoI2SoI Use and RoUS2RoUS Use ...")
-  error <- SoI2SoI_Use$InterregionalImports - RoUS2RoUS_Use$InterregionalExports
-  SoIerror <- error*(SoI_CommodityOutput$Output/US_CommodityOutput)
-  RoUSerror <- error - SoIerror
-  SoIerror_1 <- SoIerror_2 <- SoIerror
-  names(error) <- names(SoIerror_1)
+  # 7 - Calculate residual for SoI and RoUS
+  logging::loginfo("Allocating difference between interregional imports and exports (residual) in SoI2SoI Use and RoUS2RoUS Use ...")
+  residual <- SoI2SoI_Use$InterregionalImports - RoUS2RoUS_Use$InterregionalExports
+  SoI_residual <- residual*(SoI_CommodityOutput$Output/US_CommodityOutput)
+  RoUS_residual <- residual - SoI_residual
+  SoI_residual_1 <- SoI_residual_2 <- SoI_residual
+  names(residual) <- names(SoI_residual_1)
+  residual_df <- cbind.data.frame(residual, SoI_residual, RoUS_residual)
   
-  # 8 - Allocate the errors across columns in SoI2SoI Use and RoUS2RoUS Use
+  # 8 - Allocate residual across columns in SoI2SoI Use and RoUS2RoUS Use
   for (i in rows_allocation) {
     SoIweight <- SoI2SoI_Use[i, tradable_cols]
     RoUSweight <- RoUS2RoUS_Use[i, tradable_cols]
-    SoIerror_1[i] <- ifelse(abs(SoIerror[i])<sum(SoIweight), SoIerror[i],
-                            ifelse(SoIerror[i]<0, sum(SoIweight)*-1, sum(SoIweight)))
-    SoIerror_2[i] <- ifelse(SoIerror_1[i]!=SoIerror[i], SoIerror_1[i]/2, SoIerror[i])
-    RoUSerror[i] <- error[i] - SoIerror_2[i]
-    # If sum of SoI and RoUS weight != 0, allocate the error to each cell
+    SoI_residual_1[i] <- ifelse(abs(SoI_residual[i])<sum(SoIweight), SoI_residual[i],
+                                ifelse(SoI_residual[i]<0,
+                                       sum(SoIweight)*-1, sum(SoIweight)))
+    SoI_residual_2[i] <- ifelse(SoI_residual_1[i]!=SoI_residual[i], SoI_residual_1[i]/2, SoI_residual[i])
+    RoUS_residual[i] <- residual[i] - SoI_residual_2[i]
+    # If sum of SoI and RoUS weight != 0, allocate residual to each cell
     if (sum(SoIweight)!=0) {
-      SoI2SoI_Use[i, tradable_cols] <- SoIweight + SoIerror_2[i]*(SoIweight/sum(SoIweight))
+      SoI2SoI_Use[i, tradable_cols] <- SoIweight + SoI_residual_2[i]*(SoIweight/sum(SoIweight))
     }
     if (sum(RoUSweight)!=0) {
-      RoUS2RoUS_Use[i, tradable_cols] <- RoUSweight - RoUSerror[i]*(RoUSweight/sum(RoUSweight))
+      RoUS2RoUS_Use[i, tradable_cols] <- RoUSweight - RoUS_residual[i]*(RoUSweight/sum(RoUSweight))
     }
   }
   
@@ -425,7 +430,8 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel, ICF_manual
                              "SoI2RoUS"   = SoI2RoUS_Use,
                              "RoUS2SoI"   = RoUS2SoI_Use,
                              "RoUS2RoUS"  = RoUS2RoUS_Use,
-                             "Validation" = validation)
+                             "Validation" = validation,
+                             "Residual"   = residual_df)
   logging::loginfo("Domestic two-region Use complete ...")
   return(Domestic2RegionUse)
 }

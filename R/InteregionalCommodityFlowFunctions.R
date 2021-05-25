@@ -89,7 +89,8 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data frame contains domestic 2 region ICFs.
 generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
-                                         ICF_manual_adjustment = FALSE) {
+                                         ICF_manual_adjustment = FALSE,
+                                         adjust_by = 0) {
   # Specify BEA code
   bea <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
   # Generate SoI-RoUS commodity flow ratios from FAF
@@ -109,15 +110,16 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
     arw_sectors <- c("481", "482", "483")
     # Calculate adjusted ratios
     SoI2SoI_original <- ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "SoI2SoI"]
-    SoI2SoI_adjusted <- 0.5 + SoI2SoI_original/2
+    SoI2SoI_adjusted <- adjust_by + SoI2SoI_original*(1-adjust_by)
     RoUS2RoUS_original <- ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "RoUS2RoUS"]
-    RoUS2RoUS_adjusted <- 0.5 + RoUS2RoUS_original/2
+    RoUS2RoUS_adjusted <- adjust_by + RoUS2RoUS_original*(1-adjust_by)
     # Add adjusted ratios to ICF_2r_wide
     ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "SoI2SoI"] <- SoI2SoI_adjusted
     ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "SoI2RoUS"] <- 1 - SoI2SoI_adjusted
     ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "RoUS2RoUS"] <- RoUS2RoUS_adjusted
     ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "RoUS2SoI"] <- 1 - RoUS2RoUS_adjusted
-    ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "source"] <- "FAF (w/ manual adjustment: 0.5 + ratio/2)"
+    ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "source"] <- paste("FAF (w/ manual adjustment by",
+                                                                      adjust_by)
   }
   # Merge ICF_2r_wide with complete BEA Commodity list
   CommodityCodeName <- loadDatafromUSEEIOR(paste(iolevel,
@@ -156,14 +158,19 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
     # Assign ratios
     ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- LocalSoI
     ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] <- LocalRoUS + TradedRoUS*(1-CORSoI)
+    if (ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] > 1) {
+      stop("RoUS2RoUS ICF > 1")
+    }
     # If SoI2SoI == 0, replace it with CORSoI
     if (ICF[ICF[, bea]==BEAcode, "SoI2SoI"]==0) {
       ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- CORSoI
       ICF[ICF[, bea]==BEAcode, "source"] <- "state commodity output"
       # Manually adjust ratios
       if (ICF_manual_adjustment) {
-        ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- 0.8 + CORSoI/2
-        ICF[ICF[, bea]==BEAcode, "source"] <- "manual adjustment: 0.8 + CORSoI/2"
+        ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- adjust_by + CORSoI*(1-adjust_by)
+        RoUS2RoUS_original <- ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"]
+        ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] <- adjust_by + RoUS2RoUS_original*(1-adjust_by)
+        ICF[ICF[, bea]==BEAcode, "source"] <- paste("manual adjustment by", adjust_by)
       }
     }
     if (substr(BEAcode, 1, 2)=="22") {

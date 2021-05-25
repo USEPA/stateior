@@ -9,7 +9,8 @@ buildTwoRegionDemandModel(
   year,
   ioschema,
   iolevel,
-  ICF_manual_adjustment = FALSE
+  ICF_manual_adjustment = FALSE,
+  adjust_by = 0
 )
 }
 \arguments{
