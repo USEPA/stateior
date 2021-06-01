@@ -13,7 +13,7 @@ loadTwoRegionIOData <- function(year, iolevel, dataname) {
   # Define data file name
   filename <- getTwoRegionDataFileName(year, iolevel, dataname)
   # Adjust filename to fit what is on the Data Commons
-  if (dataname%in%c("UseTransactions", "FinalDemand")) {
+  if (dataname%in%c("UseTransactions", "FinalDemand", "ValueAdded")) {
     filename <- gsub(dataname, "Use", filename)
   } else if (dataname%in%c("DomesticUseTransactions", "DomesticFinalDemand")) {
     filename <- gsub(dataname, "DomesticUse", filename)
@@ -155,6 +155,25 @@ getTwoRegionDomesticFinalDemand <- function(state, year, iolevel) {
                  getBEASectorCodeLocation("FinalDemand", "RoUS", iolevel))
   DomesticFinalDemand <- df[row_names, col_names]
   return(DomesticFinalDemand)
+}
+
+#' Load value added of a state of interest (SoI) and
+#' its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load domestic final demand of a SoI and its corresponding RoUS
+#' for a given year.
+#' @param state A text value specifying state of interest.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @return A data.frame of SoI's and RoUS' value added.
+#' @export
+getTwoRegionValueAdded <- function(state, year, iolevel) {
+  df <- loadTwoRegionIOData(year, iolevel, "ValueAdded")[[state]]
+  row_names <- c(getBEASectorCodeLocation("ValueAdded", state, iolevel),
+                 getBEASectorCodeLocation("ValueAdded", "RoUS", iolevel))
+  col_names <- c(getBEASectorCodeLocation("Industry", state, iolevel),
+                 getBEASectorCodeLocation("Industry", "RoUS", iolevel))
+  ValueAdded <- df[row_names, col_names]
+  return(ValueAdded)
 }
 
 #' Load demand (trade) tables, including intermediate consumption and final demand,
