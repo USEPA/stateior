@@ -4,7 +4,7 @@
 \alias{plotICFandRPC}
 \title{Plot SoI2SoI or RoUS2RoUS ICF and state RPC}
 \usage{
-plotICFandRPC(ICF_df, RPC_df)
+plotICFandRPC(ICF_df, RPC_df, isSoI = TRUE)
 }
 \arguments{
 \item{ICF_df}{A data.frame contains SoI2SoI ICF ratios}

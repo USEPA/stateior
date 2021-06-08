@@ -250,7 +250,7 @@ buildStateDemandModel <- function(year) {
 #' @return A list of domestic two-region demand tables.
 #' @export
 buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
-                                      ICF_manual_adjustment = FALSE,
+                                      ICF_sensitivity_analysis = FALSE,
                                       adjust_by = 0) {
   # 0 - Define commodities and desired columns
   commodities <- getVectorOfCodes(iolevel, "Commodity")
@@ -275,7 +275,7 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
   # ICF <- get(paste0("TwoRegion_", iolevel, "_ICF_Ratios_", year),
   #            as.environment("package:stateior"))[[state]]
   ICF <- generateDomestic2RegionICFs(state, year, ioschema, iolevel,
-                                     ICF_manual_adjustment, adjust_by)
+                                     ICF_sensitivity_analysis, adjust_by)
   # Only allocate "error" to rows (commodities) that does not have ICF of 1 or 0
   commodities_notrade <- ICF[ICF$SoI2SoI==1&ICF$SoI2RoUS==0 &
                                ICF$RoUS2RoUS==1&ICF$RoUS2SoI==0, 1]
@@ -558,6 +558,11 @@ assembleTwoRegionIO <- function(year, iolevel) {
                                                 1, FUN = joinStringswithSlashes)
     TwoRegionIO[["CommodityOutput"]][[state]] <- TwoRegionCommodityOutput
     print(state)
+  }
+  # Replace NA with 0 in two-region Make and Use tables
+  for (name in c("Make", "Use", "DomesticUse")) {
+    TwoRegionIO[[name]] <- lapply(TwoRegionIO[[name]],
+                                  function(x) {x[is.na(x)] <- 0; return(x)})
   }
   return(TwoRegionIO)
 }

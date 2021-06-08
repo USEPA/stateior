@@ -9,7 +9,7 @@ generateDomestic2RegionICFs(
   year,
   ioschema,
   iolevel,
-  ICF_manual_adjustment = FALSE,
+  ICF_sensitivity_analysis = FALSE,
   adjust_by = 0
 )
 }

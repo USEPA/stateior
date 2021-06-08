@@ -264,7 +264,7 @@ getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
 #' Calculate regional purchase coefficient for specified state and year
 #' @param state Name of desired state, like "Georgia".
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return  
+#' @return A data.frame contains by-commodity RPC and overall RPC
 calculateRegionalPurchaseCoefficient <- function(SoI2SoIUse, RoUS2SoIUse, iolevel) {
   import_export_cols <- unlist(sapply(list("Export", "Import"),
                                       getVectorOfCodes, iolevel = iolevel))

@@ -7,7 +7,7 @@ NULL
 #' @param ICF_df A data.frame contains SoI2SoI ICF ratios
 #' @param RPC_df A data.frame contains state RPC ratios
 #' @export
-plotICFandRPC <- function(ICF_df, RPC_df) {
+plotICFandRPC <- function(ICF_df, RPC_df, isSoI = TRUE) {
   # ICF
   adjust_by <- unique(ICF_df$AdjustBy)
   icf_remove_cols <- c("source", "source (adjusted)", "AdjustBy")
@@ -18,6 +18,11 @@ plotICFandRPC <- function(ICF_df, RPC_df) {
   rpc_remove_cols <- c("OverallRPC", "OverallRPC (adjusted)")
   RPC_df_long <- reshape2::melt(RPC_df[, !colnames(RPC_df)%in%rpc_remove_cols],
                                 id.vars = c("Sector", "Name"))
+  if (isSoI) {
+    RPC_df_long$variable <- paste("SoI", RPC_df_long$variable)
+  } else {
+    RPC_df_long$variable <- paste("RoUS", RPC_df_long$variable)
+  }
   # plot
   SectorName <- ICF_df[, c("Sector", "Name")]
   p <- ggplot(ICF_df_long, aes(x = value, y = factor(Name, levels = rev(SectorName$Name)))) +
@@ -30,11 +35,14 @@ plotICFandRPC <- function(ICF_df, RPC_df) {
     # RPC
     geom_line(data = RPC_df_long[RPC_df_long$value>=0, ], aes(group = Sector)) +
     geom_point(data = RPC_df_long[RPC_df_long$value>=0, ], aes(shape = variable), size = 3) +
+    scale_shape_manual(values = c(15, 17)) +
     # Overall RPC
     geom_vline(data = RPC_df, aes(xintercept = mean(RPC_df[, "OverallRPC"]),
-                                  linetype = "Overall RPC")) +
+                                  linetype = ifelse(isSoI, "SoI Overall RPC",
+                                                    "Overall RPC")))+
     geom_vline(data = RPC_df, aes(xintercept = mean(RPC_df[, "OverallRPC (adjusted)"]),
-                                  linetype = "Overall RPC (adjusted)")) +
+                                  linetype = ifelse(isSoI, "SoI Overall RPC (adjusted)",
+                                                    "Overall RPC (adjusted)"))) +
     # general aesthetics
     labs(x = "", y = "", shape = "", linetype = "",
          col = paste("Adjusted ICF =", adjust_by, "+ ICF * (1 -", paste0(adjust_by, ")"))) +
