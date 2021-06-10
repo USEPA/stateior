@@ -17,7 +17,8 @@ URL: https://github.com/USEPA/stateior
 BugReports: https://github.com/USEPA/stateior/issues
 Imports:
     configr (>= 0.3.4),
-    dplyr (>= 0.8.5),
+    dplyr (>= 1.0.6),
+    ggplot2 (>= 3.0),
     httr (>= 1.4.2),
     logging (>= 0.10),
     Matrix (>= 1.2),
@@ -29,7 +30,6 @@ Imports:
     useeior,
     utils (>= 3.6.1)
 Depends:
-  dplyr,
   R (>= 3.6)
 Remotes:
   github::USEPA/useeior@master

@@ -287,9 +287,9 @@ calculateRegionalPurchaseCoefficient <- function(SoI2SoIUse, RoUS2SoIUse, ioleve
 #' @return A data frame contains all 159 names and FIPS for all counties in specified state
 getCountyFIPS = function(state) {
   CountyCodes = readr::read_csv('inst/extdata/CountyFIPS.csv') %>% 
-    filter(State == getStateAbbreviation(state)) %>% 
-    select(fips, Name) %>% stats::na.omit() %>% 
-    arrange(Name)
+    dplyr::filter(State == getStateAbbreviation(state)) %>% 
+    dplyr::select(fips, Name) %>% stats::na.omit() %>% 
+    dplyr::arrange(Name)
   return(CountyCodes)
 } 
 
