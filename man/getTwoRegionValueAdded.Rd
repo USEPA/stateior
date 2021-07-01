@@ -2,8 +2,8 @@
 % Please edit documentation in R/LoadModel.R
 \name{getTwoRegionValueAdded}
 \alias{getTwoRegionValueAdded}
-\title{Load value added of a state of interest (SoI) and
-its corresponding rest-of-US (RoUS) for a given year.}
+\title{Load two-region value added in state of interest (SoI)
+and its corresponding rest-of-US (RoUS) for a given year.}
 \usage{
 getTwoRegionValueAdded(state, year, iolevel)
 }
@@ -15,9 +15,9 @@ getTwoRegionValueAdded(state, year, iolevel)
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A data.frame of SoI's and RoUS' value added.
+A data.frame of two-region value added.
 }
 \description{
-Load domestic final demand of a SoI and its corresponding RoUS
+Load two-region value added of a SoI and its corresponding RoUS
 for a given year.
 }

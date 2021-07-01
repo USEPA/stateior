@@ -2,8 +2,8 @@
 % Please edit documentation in R/LoadModel.R
 \name{getTwoRegionDomesticFinalDemand}
 \alias{getTwoRegionDomesticFinalDemand}
-\title{Load domestic final demand of a state of interest (SoI) and
-its corresponding rest-of-US (RoUS) for a given year.}
+\title{Load domestic two-region final demand in state of interest (SoI)
+and its corresponding rest-of-US (RoUS) for a given year.}
 \usage{
 getTwoRegionDomesticFinalDemand(state, year, iolevel)
 }
@@ -15,9 +15,8 @@ getTwoRegionDomesticFinalDemand(state, year, iolevel)
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
-A data.frame of SoI's and RoUS' domestic final demand.
+A data.frame of two-region domestic final demand.
 }
 \description{
-Load domestic final demand of a SoI and its corresponding RoUS
-for a given year.
+Load two-region domestic final demand in SoI and RoUS for a given year.
 }
