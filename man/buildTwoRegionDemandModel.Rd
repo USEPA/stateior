@@ -10,7 +10,8 @@ buildTwoRegionDemandModel(
   ioschema,
   iolevel,
   ICF_sensitivity_analysis = FALSE,
-  adjust_by = 0
+  adjust_by = 0,
+  domestic = TRUE
 )
 }
 \arguments{
