@@ -99,29 +99,36 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
   ICF_2r_wide <- reshape2::dcast(ICF_2r[, c(bea, "ratio", "flowpath")],
                                  paste(bea, "~", "flowpath"), value.var = "ratio")
   # Assume Other Transportation (487OS) has SoI2SoI and RoUS2RoUS ratio == 1
-  ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI)|is.na(ICF_2r_wide$RoUS2RoUS),
-              c("SoI2SoI", "RoUS2RoUS")] <- 1
+  ICF_2r_wide[ICF_2r_wide$BEA_2012_Summary_Code=="487OS", c("SoI2SoI", "RoUS2RoUS")] <- 1
   # Fill NAs
-  ICF_2r_wide[, "SoI2RoUS"] <- 1 - ICF_2r_wide[, "SoI2SoI"]
-  ICF_2r_wide[, "RoUS2SoI"] <- 1 - ICF_2r_wide[, "RoUS2RoUS"]
+  ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI)&is.na(ICF_2r_wide$SoI2RoUS), "SoI2SoI"] <- 0.5
+  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS)&is.na(ICF_2r_wide$RoUS2SoI), "RoUS2SoI"] <- 0.5
+  ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI), "SoI2SoI"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI), "SoI2RoUS"]
+  ICF_2r_wide[is.na(ICF_2r_wide$SoI2RoUS), "SoI2RoUS"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$SoI2RoUS), "SoI2SoI"]
+  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "RoUS2RoUS"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "RoUS2SoI"]
+  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2SoI"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2RoUS"]
   ICF_2r_wide$source <- "FAF"
-  # Adjust air, rail and water transportation has SoI2SoI and RoUS2RoUS ICF ratios
-  adjust_by <- ifelse(ICF_sensitivity_analysis, adjust_by, 0.5)
+  # Adjust SoI2SoI and RoUS2RoUS ICF ratios of air, rail and water transportation and
+  # waste management and remediation services
   if (iolevel == "Summary") {
-    arw_sectors <- c("481", "482", "483")
+    for (BEAcode in c("481", "482", "483", "562")) {
+      # Determine adjust_by ratio
+      adjust_by <- ifelse(ICF_sensitivity_analysis, adjust_by,
+                          ifelse(BEAcode=="562", 0.8, 0.5))
+      # Calculate adjusted ICF ratios
+      SoI2SoI_original <- ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "SoI2SoI"]
+      SoI2SoI_adjusted <- adjust_by + SoI2SoI_original*(1-adjust_by)
+      RoUS2RoUS_original <- ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "RoUS2RoUS"]
+      RoUS2RoUS_adjusted <- adjust_by + RoUS2RoUS_original*(1-adjust_by)
+      # Add adjusted ratios to ICF_2r_wide
+      ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "SoI2SoI"] <- SoI2SoI_adjusted
+      ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "SoI2RoUS"] <- 1 - SoI2SoI_adjusted
+      ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "RoUS2RoUS"] <- RoUS2RoUS_adjusted
+      ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "RoUS2SoI"] <- 1 - RoUS2RoUS_adjusted
+      ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "source"] <- paste("FAF w/ manual adjustment by",
+                                                                        adjust_by)
+    }
   }
-  # Calculate adjusted ICF ratios
-  SoI2SoI_original <- ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "SoI2SoI"]
-  SoI2SoI_adjusted <- adjust_by + SoI2SoI_original*(1-adjust_by)
-  RoUS2RoUS_original <- ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "RoUS2RoUS"]
-  RoUS2RoUS_adjusted <- adjust_by + RoUS2RoUS_original*(1-adjust_by)
-  # Add adjusted ratios to ICF_2r_wide
-  ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "SoI2SoI"] <- SoI2SoI_adjusted
-  ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "SoI2RoUS"] <- 1 - SoI2SoI_adjusted
-  ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "RoUS2RoUS"] <- RoUS2RoUS_adjusted
-  ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "RoUS2SoI"] <- 1 - RoUS2RoUS_adjusted
-  ICF_2r_wide[ICF_2r_wide[, bea]%in%arw_sectors, "source"] <- paste("FAF w/ manual adjustment by",
-                                                                    adjust_by)
   # Merge ICF_2r_wide with complete BEA Commodity list
   CommodityCodeName <- loadDatafromUSEEIOR(paste(iolevel,
                                                  "CommodityCodeName_2012",
@@ -171,7 +178,8 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
       ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- adjust_by + CORSoI*(1-adjust_by)
       RoUS2RoUS_original <- ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"]
       ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] <- adjust_by + RoUS2RoUS_original*(1-adjust_by)
-      ICF[ICF[, bea]==BEAcode, "source"] <- paste("manual adjustment by", adjust_by)
+      ICF[ICF[, bea]==BEAcode, "source"] <- paste(ICF[ICF[, bea]==BEAcode, "source"],
+                                                  "w/ manual adjustment by", adjust_by)
     }
     if (substr(BEAcode, 1, 2)=="22") {
       # Use ElectricityLCI to estimate ICF ratios for utilities
