@@ -187,3 +187,68 @@ calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, io
   state_US_trade_BEA[, c("StateValue", "USValue")] <- NULL
   return(state_US_trade_BEA)
 }
+
+
+#' Calculate domestic electricity flow ratios by state
+#' @param state State name.
+#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @return A data frame contains electricity flow ratios by BEA.
+calculateElectricityFlowRatios <- function (state, year, ioschema, iolevel) {
+  state_abb <- getStateAbbreviation(state)
+  # Load data
+  CodeDesc <- get("EIA_SEDS_CodeDescription", as.environment("package:stateior"))
+  Consumption <- get("EIA_SEDS_StateElectricityConsumption_2010_2019",
+                     as.environment("package:stateior"))
+  Expenditure <- get("EIA_SEDS_StateElectricityExpenditure_2010_2019",
+                     as.environment("package:stateior"))
+  Generation <- get("EIA_StateElectricityGeneration_2010_2019",
+                    as.environment("package:stateior"))
+  Generation_SoI <- Generation[Generation$YEAR==year & Generation$STATE==state_abb &
+                                 Generation$`TYPE OF PRODUCER`=="Total Electric Power Industry" &
+                                 Generation$`ENERGY SOURCE`=="Total",
+                               "GENERATION (Gigawatt hours)"]
+  Generation_RoUS <- sum(Generation[Generation$YEAR==year & Generation$STATE!=state_abb &
+                                      Generation$`TYPE OF PRODUCER`=="Total Electric Power Industry" &
+                                      Generation$`ENERGY SOURCE`=="Total",
+                                    "GENERATION (Gigawatt hours)"])
+  # Subset net interstate trade (in gigawatt hours) from Consumption
+  trade_desc <- "Net interstate flow of electricity (negative indicates flow out of state)"
+  NetInterstateTradeMSN <- CodeDesc[CodeDesc$Description==trade_desc, "MSN"]
+  NetInterstateTrade_SoI <- Consumption[Consumption$MSN==NetInterstateTradeMSN&
+                                          Consumption$State==state_abb,
+                                        as.character(year)]
+  NetInterstateTrade_RoUS <- sum(Consumption[Consumption$MSN==NetInterstateTradeMSN&
+                                               Consumption$State!=state_abb,
+                                             as.character(year)])
+  
+  if (NetInterstateTrade < 0) {
+    # If NetInterstateTrade < 0, SoI is a net exporter
+    # the amount of net export is considered total electricity traded from SoI to RoUS
+    Elec_ICF_2r <- data.frame("SoI2SoI" = 1 - abs(NetInterstateTrade_SoI)/Generation_SoI,
+                              "SoI2RoUS" = abs(NetInterstateTrade_SoI)/Generation_SoI,
+                              "RoUS2SoI" = 0,
+                              "RoUS2RoUS" = 1)
+  } else {
+    # If NetInterstateTrade < 0, SoI is a net importer
+    Elec_ICF_2r <- data.frame("SoI2SoI" = 1,
+                              "SoI2RoUS" = 0,
+                              "RoUS2SoI" = abs(NetInterstateTrade_RoUS)/Generation_RoUS,
+                              "RoUS2RoUS" = 1 - abs(NetInterstateTrade_RoUS)/Generation_RoUS)
+  }
+  
+  # # Calculate electricity price from total consumption and expenditures
+  # consumption_desc <- "Electricity total consumption (i.e., retail sales)"
+  # expenditure_desc <- "Electricity total expenditures"
+  # ConsumptionMSN <- CodeDesc[CodeDesc$Description==consumption_desc&
+  #                              CodeDesc$Unit=="Million kilowatthours", "MSN"]
+  # ExpenditureMSN <- CodeDesc[CodeDesc$Description==expenditure_desc, "MSN"]
+  # Consumption_subset <- Consumption[Consumption$MSN==ConsumptionMSN, ]
+  # Expenditure_subset <- Expenditure[Expenditure$MSN==ExpenditureMSN, ]
+  # AveragePrice <- merge(Expenditure_subset, Consumption_subset, by = "State")
+  # AveragePrice[, year_cols] <- AveragePrice[, paste0(year_cols, ".x")]/AveragePrice[, paste0(year_cols, ".y")]
+  # AveragePrice <- AveragePrice[, c("State", year_cols)]
+  
+  return(Elec_ICF_2r)
+}
