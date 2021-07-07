@@ -187,3 +187,44 @@ calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, io
   state_US_trade_BEA[, c("StateValue", "USValue")] <- NULL
   return(state_US_trade_BEA)
 }
+
+#' Calculate domestic hazardous waste management services flow ratios by state
+#' @param state State name.
+#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @return A data frame contains hazardous waste management services flow ratios by BEA.
+calculateHazWasteManagementServiceFlowRatios <- function (state, year, ioschema, iolevel) {
+  df <- get(paste0("RCRAInfoBR_", year), as.environment("package:stateior"))
+  # Check if received haz waste is not completely managed
+  df[, "RECEIVED - MANAGED"] <- df$`RECEIVED TONS` - df$`MANAGED TONS`
+  df_mgntdeficit <- df[df$`RECEIVED TONS`>0 & df$`RECEIVED - MANAGED`>0, ]
+  if (nrow(df_mgntdeficit)>0) {
+    stop("Deal with management deficit first.")
+  }
+  # Separate to SoI and RoUS df
+  # SoI
+  df_SoI <- df[df$`RECEIVER STATE NAME`==toupper(state), ]
+  SoI2SoI_total <- sum(df_SoI[df_SoI$`SHIPPER STATE NAME`==toupper(state), "MANAGED TONS"])
+  SoI2RoUS_total <- sum(df_SoI[df_SoI$`SHIPPER STATE NAME`!=toupper(state), "MANAGED TONS"])
+  # RoUS
+  df_RoUS <- df[df$`RECEIVER STATE NAME`!=toupper(state), ]
+  RoUS2RoUS_total <- sum(df_RoUS[df_RoUS$`SHIPPER STATE NAME`!=toupper(state), "MANAGED TONS"])
+  RoUS2SoI_total <- sum(df_RoUS[df_RoUS$`SHIPPER STATE NAME`==toupper(state), "MANAGED TONS"])
+  # Calculate two-region ICF ratios
+  HazWaste_ICF_2r <- data.frame("SoI2SoI" = SoI2SoI_total/(SoI2SoI_total + SoI2RoUS_total),
+                                "SoI2RoUS" = SoI2RoUS_total/(SoI2SoI_total + SoI2RoUS_total),
+                                "RoUS2SoI" = RoUS2SoI_total/(RoUS2SoI_total + RoUS2RoUS_total),
+                                "RoUS2RoUS" = RoUS2RoUS_total/(RoUS2SoI_total + RoUS2RoUS_total))
+  return(HazWaste_ICF_2r)
+}
+
+#' Calculate domestic waste management services flow ratios by state
+#' @param state State name.
+#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @return A data frame contains waste management services flow ratios by BEA.
+calculateWasteManagementServiceFlowRatios <- function (state, year, ioschema, iolevel) {
+  
+}
