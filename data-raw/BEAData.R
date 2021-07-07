@@ -258,8 +258,8 @@ getBEACountySectorGDP = function(year, state, axis = 0) {
     # WHY ARRANGE? It is because there is a discrepancy between rank by FIPS (default) and Name. 
     # We decide to stick with character string ranking (For instance: in Georgia, we arrange 'Macon' before 'McIntosh' while Macon in fact has a larger fips than McIntosh) 
     countyDataOneYearColumn = countyDataOneYearColumn %>% 
-                                                      arrange(GeoName) %>%
-                                                                       spread(GeoName, GDP)
+      dplyr::arrange(GeoName) %>%
+      dplyr::spread(GeoName, GDP)
     
     return(countyDataOneYearColumn)
     
