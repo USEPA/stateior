@@ -212,10 +212,10 @@ calculateHazWasteManagementServiceFlowRatios <- function (state, year, ioschema,
   RoUS2RoUS_total <- sum(df_RoUS[df_RoUS$`SHIPPER STATE NAME`!=toupper(state), "MANAGED TONS"])
   RoUS2SoI_total <- sum(df_RoUS[df_RoUS$`SHIPPER STATE NAME`==toupper(state), "MANAGED TONS"])
   # Calculate two-region ICF ratios
-  HazWaste_ICF_2r <- data.frame("SoI2SoI" = SoI2SoI_total/(SoI2SoI_total + SoI2RoUS_total),
-                                "SoI2RoUS" = SoI2RoUS_total/(SoI2SoI_total + SoI2RoUS_total),
-                                "RoUS2SoI" = RoUS2SoI_total/(RoUS2SoI_total + RoUS2RoUS_total),
-                                "RoUS2RoUS" = RoUS2RoUS_total/(RoUS2SoI_total + RoUS2RoUS_total))
+  HazWaste_ICF_2r <- data.frame("SoI2SoI" = SoI2SoI_total/(SoI2SoI_total + RoUS2SoI_total),
+                                "SoI2RoUS" = RoUS2SoI_total/(SoI2SoI_total + RoUS2SoI_total),
+                                "RoUS2SoI" = SoI2RoUS_total/(SoI2RoUS_total + RoUS2RoUS_total),
+                                "RoUS2RoUS" = RoUS2RoUS_total/(SoI2RoUS_total + RoUS2RoUS_total))
   return(HazWaste_ICF_2r)
 }
 
