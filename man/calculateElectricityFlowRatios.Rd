@@ -4,16 +4,12 @@
 \alias{calculateElectricityFlowRatios}
 \title{Calculate domestic electricity flow ratios by state}
 \usage{
-calculateElectricityFlowRatios(state, year, ioschema, iolevel)
+calculateElectricityFlowRatios(state, year)
 }
 \arguments{
 \item{state}{State name.}
 
 \item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
-
-\item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
-
-\item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
 A data frame contains electricity flow ratios by BEA.

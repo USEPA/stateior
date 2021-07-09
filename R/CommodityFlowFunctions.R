@@ -192,10 +192,8 @@ calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, io
 #' Calculate domestic electricity flow ratios by state
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
-#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data frame contains electricity flow ratios by BEA.
-calculateElectricityFlowRatios <- function (state, year, ioschema, iolevel) {
+calculateElectricityFlowRatios <- function (state, year) {
   state_abb <- getStateAbbreviation(state)
   # Load data
   CodeDesc <- get("EIA_SEDS_CodeDescription", as.environment("package:stateior"))
@@ -223,7 +221,7 @@ calculateElectricityFlowRatios <- function (state, year, ioschema, iolevel) {
                                                Consumption$State!=state_abb,
                                              as.character(year)])
   
-  if (NetInterstateTrade < 0) {
+  if (NetInterstateTrade_SoI < 0) {
     # If NetInterstateTrade < 0, SoI is a net exporter
     # the amount of net export is considered total electricity traded from SoI to RoUS
     Elec_ICF_2r <- data.frame("SoI2SoI" = 1 - abs(NetInterstateTrade_SoI)/Generation_SoI,
@@ -231,11 +229,14 @@ calculateElectricityFlowRatios <- function (state, year, ioschema, iolevel) {
                               "RoUS2SoI" = 0,
                               "RoUS2RoUS" = 1)
   } else {
-    # If NetInterstateTrade < 0, SoI is a net importer
+    # If NetInterstateTrade > 0, SoI is a net importer
+    # the amount of net import is considered total electricity traded from RoUS to SoI 
     Elec_ICF_2r <- data.frame("SoI2SoI" = 1,
                               "SoI2RoUS" = 0,
                               "RoUS2SoI" = abs(NetInterstateTrade_RoUS)/Generation_RoUS,
                               "RoUS2RoUS" = 1 - abs(NetInterstateTrade_RoUS)/Generation_RoUS)
+    # NetInterstateTrade = 0 means there is no interstate trade between SoI and RoUS
+    # ICF_SoI2SoI and ICF_RoUS2RoUS are both 0
   }
   
   # # Calculate electricity price from total consumption and expenditures
