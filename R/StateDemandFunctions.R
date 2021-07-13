@@ -408,6 +408,51 @@ estimateStateExport <- function(year) {
   State_Export$F040 <- State_Export$F040 * State_Export$SoITradeRatio
   rownames(State_Export) <- paste(State_Export$State, State_Export$Row.names, sep = ".")
   State_Export <- State_Export[, "F040", drop = FALSE]
+  
+  # Adjust state international exports to avoid state exports > state commodity output
+  State_CommOutput <- do.call(rbind, get(paste0("State_Summary_CommodityOutput_", year),
+                                         as.environment("package:stateior")))
+  State_CommOutput <- State_CommOutput[rownames(State_Export), , drop = FALSE]
+  # Prepare vectors of commodities and states that will be examined and adjusted
+  commodities <- unique(gsub(".*\\.", "", rownames(State_CommOutput)))
+  states <- setdiff(unique(gsub("\\..*", "", rownames(State_CommOutput))), "Overseas")
+  states_comms <- paste(states, rep(commodities, length(states)), sep = ".")
+  # Prepare a static copy of State_Export 
+  State_Export_original <- State_Export
+  
+  # Determine original condition
+  original_condition <- State_Export[states_comms, ] > State_CommOutput[states_comms, ]
+  # For each problematic commodity, apply the adjustment
+  for (comm in unique(gsub(".*\\.", "", states_comms[original_condition]))) {
+    states_comm <- paste(states, comm, sep = ".")
+    # Enter the while loop as long as there are state exports > commodity output
+    max_itr <- 1E3
+    while(any(State_Export[states_comm, ] > State_CommOutput[states_comm, ])) {
+      # Set i and states_comm
+      i <- 1
+      # Determine new condition for each iteration in while loop
+      new_condition <- State_Export[states_comm, ] > State_CommOutput[states_comm, ]
+      # Set state and trouble_rows
+      state <- unique(gsub("\\..*", "", states_comm[new_condition]))
+      trouble_rows <- paste(state, comm, sep = ".")
+      # Calculate total residual
+      residual <- sum(State_Export[trouble_rows, ] - State_CommOutput[trouble_rows, ])
+      # Determine allocate_to_rows
+      allocate_to_rows <- paste(setdiff(states, state), comm, sep = ".")
+      # Use original export amount as weight
+      weight <- State_Export_original[allocate_to_rows, ]
+      # Allocate residual to all other states 
+      residual_df <- as.data.frame(residual*(weight/sum(weight)),
+                                   row.names = allocate_to_rows)
+      # Adjust State_Export
+      State_Export[allocate_to_rows, ] <- State_Export[allocate_to_rows, ] + residual_df
+      State_Export[trouble_rows, ] <- State_CommOutput[trouble_rows, ]
+      i <- i + 1
+      if (i >= max_itr) {
+        stop("Allocation of export residuals exceeds maximum iteration")
+      }
+    }
+  }
   return(State_Export)
 }
 
