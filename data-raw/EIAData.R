@@ -17,21 +17,29 @@ EIA_SEDS_CodeDescription <- getEIASEDSCodeDescription()
 usethis::use_data(EIA_SEDS_CodeDescription, overwrite = TRUE)
 
 #' Get state electricity consumption data (including total consumption and interstate trade,
-#' in million kilowatt hours or gigawatt hours) from EIA State Energy Data Systems (SEDS)
-#' @param startyear A numeric value specifying start year of the year range of interest.
-#' @param endyear A numeric value specifying end year of the year range of interest.
+#' in million kilowatt hours) from EIA State Energy Data Systems (SEDS)
+#' @param year A numeric value specifying year of interest.
 #' @return A data frame of state electricity consumption data (including total consumption
-#' and interstate trade, in million kilowatt hours or gigawatt hours) from EIA SEDS
-getEIASEDSStateElectricityConsumption <- function (startyear, endyear) {
+#' and interstate trade, in million kilowatt hours) from EIA SEDS
+getEIASEDSStateElectricityConsumption <- function (year) {
   # Download state electricity consumption data from EIA State Energy Data Systems (SEDS)
   ConsumptionFile <- "inst/extdata/EIA_SEDS_consumption.csv"
   if(!file.exists(ConsumptionFile)) {
     download.file("https://www.eia.gov/state/seds/sep_use/total/csv/use_all_phy.csv",
                   ConsumptionFile, mode = "wb")
   }
-  Consumption <- readCSV(ConsumptionFile)[, c("State", "MSN",
-                                              as.character(seq(startyear, endyear)))]
+  Consumption <- readCSV(ConsumptionFile)[, c("State", "MSN",  as.character(year))]
   return(Consumption)
 }
-EIA_SEDS_StateElectricityConsumption_2010_2019 <- getEIASEDSStateElectricityConsumption(2010, 2019)
-usethis::use_data(EIA_SEDS_StateElectricityConsumption_2010_2019, overwrite = TRUE)
+EIA_SEDS_StateElectricityConsumption_2012 <- getEIASEDSStateElectricityConsumption(2012)
+usethis::use_data(EIA_SEDS_StateElectricityConsumption_2012, overwrite = TRUE)
+EIA_SEDS_StateElectricityConsumption_2013 <- getEIASEDSStateElectricityConsumption(2013)
+usethis::use_data(EIA_SEDS_StateElectricityConsumption_2013, overwrite = TRUE)
+EIA_SEDS_StateElectricityConsumption_2014 <- getEIASEDSStateElectricityConsumption(2014)
+usethis::use_data(EIA_SEDS_StateElectricityConsumption_2014, overwrite = TRUE)
+EIA_SEDS_StateElectricityConsumption_2015 <- getEIASEDSStateElectricityConsumption(2015)
+usethis::use_data(EIA_SEDS_StateElectricityConsumption_2015, overwrite = TRUE)
+EIA_SEDS_StateElectricityConsumption_2016 <- getEIASEDSStateElectricityConsumption(2016)
+usethis::use_data(EIA_SEDS_StateElectricityConsumption_2016, overwrite = TRUE)
+EIA_SEDS_StateElectricityConsumption_2017 <- getEIASEDSStateElectricityConsumption(2017)
+usethis::use_data(EIA_SEDS_StateElectricityConsumption_2017, overwrite = TRUE)
