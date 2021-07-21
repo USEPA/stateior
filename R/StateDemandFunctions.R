@@ -1,7 +1,7 @@
 #' Get US Use table (intermediaete + final demand) of specified iolevel and year.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param year A numeric value specifying the year of interest.
-#' #' @return The US Use table (intermediaete + final demand) of specified iolevel and year.
+#' @return The US Use table (intermediaete + final demand) of specified iolevel and year.
 getNationalUse <- function(iolevel, year) {
   # Load pre-saved US Use table
   Use <- loadDatafromUSEEIOR(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
@@ -415,7 +415,8 @@ estimateStateExport <- function(year) {
                                          as.environment("package:stateior")))
   State_CommOutput <- State_CommOutput[rownames(State_Export), , drop = FALSE]
   # Prepare vectors of commodities and states that will be examined and adjusted
-  commodities <- unique(gsub(".*\\.", "", rownames(State_CommOutput)))
+  commodities <- setdiff(unique(gsub(".*\\.", "", rownames(State_CommOutput))),
+                         c("Other", "Used"))
   states <- setdiff(unique(gsub("\\..*", "", rownames(State_CommOutput))), "Overseas")
   states_comms <- paste(states, rep(commodities, length(states)), sep = ".")
   # Prepare a static copy of State_Export 
@@ -447,7 +448,9 @@ estimateStateExport <- function(year) {
                                    row.names = allocate_to_rows)
       # Adjust State_Export
       State_Export[allocate_to_rows, ] <- State_Export[allocate_to_rows, ] + residual_df
-      State_Export[trouble_rows, ] <- State_CommOutput[trouble_rows, ]
+      comm_output_ratios <- CommOutput_ratio[CommOutput_ratio[, BEA_col]==comm&
+                                               CommOutput_ratio$State%in%state, "Ratio"]
+      State_Export[trouble_rows, ] <- US_Export[comm, ]*comm_output_ratios
       i <- i + 1
       if (i >= max_itr) {
         stop("Allocation of export residuals exceeds maximum iteration")
