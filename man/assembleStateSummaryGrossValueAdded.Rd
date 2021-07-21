@@ -7,8 +7,9 @@
 assembleStateSummaryGrossValueAdded(year)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
+\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
 A data frame contains Summary-level gross value added (V001, V002, V003) for all states at a specific year.
