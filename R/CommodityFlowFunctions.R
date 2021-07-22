@@ -191,31 +191,40 @@ calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, io
 #' Calculate domestic hazardous waste management services flow ratios by state
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
-#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data frame contains hazardous waste management services flow ratios by BEA.
-calculateHazWasteManagementServiceFlowRatios <- function (state, year, ioschema, iolevel) {
-  df <- get(paste0("RCRAInfoBR_", year), as.environment("package:stateior"))
-  # Check if received haz waste is not completely managed
-  df[, "RECEIVED - MANAGED"] <- df$`RECEIVED TONS` - df$`MANAGED TONS`
-  df_mgntdeficit <- df[df$`RECEIVED TONS`>0 & df$`RECEIVED - MANAGED`>0, ]
-  if (nrow(df_mgntdeficit)>0) {
-    stop("Deal with management deficit first.")
-  }
-  # Separate to SoI and RoUS df
-  # SoI
-  df_SoI <- df[df$`RECEIVER STATE NAME`==toupper(state), ]
-  SoI2SoI_total <- sum(df_SoI[df_SoI$`SHIPPER STATE NAME`==toupper(state), "MANAGED TONS"])
-  SoI2RoUS_total <- sum(df_SoI[df_SoI$`SHIPPER STATE NAME`!=toupper(state), "MANAGED TONS"])
-  # RoUS
-  df_RoUS <- df[df$`RECEIVER STATE NAME`!=toupper(state), ]
-  RoUS2RoUS_total <- sum(df_RoUS[df_RoUS$`SHIPPER STATE NAME`!=toupper(state), "MANAGED TONS"])
-  RoUS2SoI_total <- sum(df_RoUS[df_RoUS$`SHIPPER STATE NAME`==toupper(state), "MANAGED TONS"])
+calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
+  # Load data
+  SummaryBR <- utils::read.csv(system.file("extdata",
+                                           paste0("RCRAInfoBR/SummaryBR_", year, ".csv"),
+                                           package = "stateior"),
+                               header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  SummaryBR[, 2:ncol(SummaryBR)] <- lapply(SummaryBR[, 2:ncol(SummaryBR)],
+                                           function(x){as.numeric(gsub(",", "", x))})
+  SummaryBR <- SummaryBR[SummaryBR$`Location Name`%in%toupper(c(state.name, "District of Columbia")), ]
+  
+  InterstateFlow <- utils::read.csv(system.file("extdata",
+                                                paste0("RCRAInfoBR/Interstate_", year, ".csv"),
+                                                package = "stateior"),
+                                    header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  InterstateFlow[, 2:ncol(InterstateFlow)] <- lapply(InterstateFlow[, 2:ncol(InterstateFlow)],
+                                                     function(x){as.numeric(gsub(",", "", x))})
+  InterstateFlow <- InterstateFlow[InterstateFlow$`Location Name`%in%toupper(c(state.name, "District of Columbia")), ]
+  # Calculate total managed, shipped and received
+  # Total Managed
+  TM_SoI <- SummaryBR[SummaryBR$`Location Name`==toupper(state), "Managed (Tons)"]
+  TM_RoUS <- sum(SummaryBR[SummaryBR$`Location Name`!=toupper(state), "Managed (Tons)"])
+  # Total Interstate Shipments
+  TS_SoI <- InterstateFlow[InterstateFlow$`Location Name`==toupper(state), "Interstate Shipments (Tons)"]
+  TS_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name`!=toupper(state), "Interstate Shipments (Tons)"])
+  # Total Interstate Receipts
+  TR_SoI <- InterstateFlow[InterstateFlow$`Location Name`==toupper(state), "Interstate Receipts (Tons)"]
+  TR_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name`!=toupper(state), "Interstate Receipts (Tons)"])
+  
   # Calculate two-region ICF ratios
-  HazWaste_ICF_2r <- data.frame("SoI2SoI" = SoI2SoI_total/(SoI2SoI_total + RoUS2SoI_total),
-                                "SoI2RoUS" = RoUS2SoI_total/(SoI2SoI_total + RoUS2SoI_total),
-                                "RoUS2SoI" = SoI2RoUS_total/(SoI2RoUS_total + RoUS2RoUS_total),
-                                "RoUS2RoUS" = RoUS2RoUS_total/(SoI2RoUS_total + RoUS2RoUS_total))
+  HazWaste_ICF_2r <- data.frame("SoI2SoI" = 1 - TR_SoI/TM_SoI,
+                                "SoI2RoUS" = TR_RoUS/TM_RoUS,
+                                "RoUS2SoI" = TR_SoI/TM_SoI,
+                                "RoUS2RoUS" = 1 - TR_RoUS/TM_RoUS)
   return(HazWaste_ICF_2r)
 }
 
