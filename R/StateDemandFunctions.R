@@ -422,8 +422,16 @@ estimateStateExport <- function(year) {
   # Prepare a static copy of State_Export 
   State_Export_original <- State_Export
   
-  # Determine original condition
-  original_condition <- State_Export[states_comms, ] > State_CommOutput[states_comms, ]
+  # Determine original condition:
+  # Compare state commodity output against the sum of state export and following FD sectors
+  # whose state values are derived using COR (or ratios similar to COR, e.g. gross output raios)
+  # F02S - Nonresidential private fixed investment in structures
+  # F02N - Nonresidential private fixed investment in intellectual property products
+  # F030 - Change in private inventories
+  StatePI <- estimateStatePrivateInvestment(year)
+  StatePI_sum <- rowSums(StatePI[, c("F02S", "F02N", "F030")])
+  original_condition <- State_Export[states_comms, ] + StatePI_sum[states_comms] > State_CommOutput[states_comms, ]
+  
   # For each problematic commodity, apply the adjustment
   for (comm in unique(gsub(".*\\.", "", states_comms[original_condition]))) {
     states_comm <- paste(states, comm, sep = ".")
@@ -433,7 +441,7 @@ estimateStateExport <- function(year) {
       # Set i and states_comm
       i <- 1
       # Determine new condition for each iteration in while loop
-      new_condition <- State_Export[states_comm, ] > State_CommOutput[states_comm, ]
+      new_condition <- State_Export[states_comm, ] + StatePI_sum[states_comm] > State_CommOutput[states_comm, ]
       # Set state and trouble_rows
       state <- unique(gsub("\\..*", "", states_comm[new_condition]))
       trouble_rows <- paste(state, comm, sep = ".")
