@@ -220,11 +220,11 @@ calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
   TR_SoI <- InterstateFlow[InterstateFlow$`Location Name`==toupper(state), "Interstate Receipts (Tons)"]
   TR_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name`!=toupper(state), "Interstate Receipts (Tons)"])
   
-  # Calculate two-region ICF ratios
-  HazWaste_ICF_2r <- data.frame("SoI2SoI" = 1 - TR_SoI/TM_SoI,
-                                "SoI2RoUS" = TR_RoUS/TM_RoUS,
-                                "RoUS2SoI" = TR_SoI/TM_SoI,
-                                "RoUS2RoUS" = 1 - TR_RoUS/TM_RoUS)
+  # Calculate two-region ICF ratios. !!! imports of HW == exports of HW management service
+  HazWaste_ICF_2r <- data.frame("SoI2SoI" = 1 - TR_SoI/TM_SoI, # the remainder after exporting service to RoUS
+                                "SoI2RoUS" = TR_SoI/TM_SoI, # receiving HW == exporting service
+                                "RoUS2SoI" = TR_RoUS/TM_RoUS, # receiving HW == exporting service
+                                "RoUS2RoUS" = 1 - TR_RoUS/TM_RoUS) # the remainder after exporting service to SoI
   return(HazWaste_ICF_2r)
 }
 
