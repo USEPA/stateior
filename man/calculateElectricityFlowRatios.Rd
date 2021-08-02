@@ -2,7 +2,7 @@
 % Please edit documentation in R/CommodityFlowFunctions.R
 \name{calculateElectricityFlowRatios}
 \alias{calculateElectricityFlowRatios}
-\title{Calculate domestic electricity flow ratios by state}
+\title{Calculate domestic interregional electricity flow ratios by state}
 \usage{
 calculateElectricityFlowRatios(state, year)
 }
@@ -12,8 +12,8 @@ calculateElectricityFlowRatios(state, year)
 \item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
 }
 \value{
-A data frame contains electricity flow ratios by BEA.
+A data frame contains domestic interregional electricity flow ratios by state.
 }
 \description{
-Calculate domestic electricity flow ratios by state
+Calculate domestic interregional electricity flow ratios by state
 }

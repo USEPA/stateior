@@ -252,15 +252,15 @@ getStateCommodityOutputRatioEstimates <- function(year) {
 #' @param flowclass A character value specifying flow class, can be "Money".
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param datasource A character value specifying data source.
-#' @return A data frame contains state Ag, Fishery and Forestry commodity output
-#' for specified state with row names being BEA sector code.
+#' @return A data frame contains state data from FLOWSA.
 loadDatafromFLOWSA <- function(flowclass, year, datasource, geographic_level = NULL) {
   # Import flowsa
   flowsa <- reticulate::import("flowsa")
   # Load data
   df <- flowsa$getFlowByActivity(datasource, as.character(year),
                                  flowclass, geographic_level)
-  df <- df[substr(df$Location, 3, 5)=="000", ]
+  # Keep state-level data, including 50 states and D.C.
+  df <- df[substr(df$Location, 1, 2)<=56 & substr(df$Location, 3, 5)=="000", ]
   return(df)
 }
 
