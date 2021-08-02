@@ -136,8 +136,6 @@ estimateUSDomesticUse <- function(iolevel, year) {
   # (https://apps.bea.gov/industry/xls/io-annual/ImportMatrices_Before_Redefinitions_SUM_1997-2019.xlsx)
   # So, ImportCost <- Use$Imports - Import$Imports
   ImportCost <- Use[, ImportCode] - Import[, ImportCode]
-  # Estimate DomesticUse
-  DomesticUse <- Use
   # Calculate row_sum of Use, except for Export and Import, for allocating ImportCost
   row_sum <- rowSums(Use) - (Use[, ExportCode] + Use[, ImportCode])
   # Calculate allocation ratios
