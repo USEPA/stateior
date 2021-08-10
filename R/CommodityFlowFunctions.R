@@ -247,3 +247,87 @@ calculateWasteManagementServiceFlowRatios <- function (state, year) {
   Waste_ICF_2r <- (HazWaste_ICF_2r + NonHazWaste_ICF_2r)*0.5
   return(Waste_ICF_2r)
 }
+
+#' Calculate domestic interregional electricity flow ratios by state
+#' @param state State name.
+#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @return A data frame contains domestic interregional electricity flow ratios by state.
+calculateElectricityFlowRatios <- function (state, year) {
+  state_abb <- getStateAbbreviation(state)
+  # Load consumption data
+  CodeDesc <- get("EIA_SEDS_CodeDescription", as.environment("package:stateior"))
+  Consumption <- get(paste0("EIA_SEDS_StateElectricityConsumption_", year),
+                     as.environment("package:stateior"))
+  # Subset SoI and RoUS total consumption
+  consumption_desc <- "Electricity total consumption (i.e., retail sales)"
+  ConsumptionMSN <- CodeDesc[CodeDesc$Description==consumption_desc&
+                               CodeDesc$Unit=="Million kilowatthours", "MSN"]
+  Consumption_SoI <- Consumption[Consumption$MSN==ConsumptionMSN&
+                                   Consumption$State==state_abb,
+                                 as.character(year)]
+  Consumption_RoUS <- Consumption[Consumption$MSN==ConsumptionMSN&
+                                    Consumption$State=="US",
+                                  as.character(year)] - Consumption_SoI
+  # Subset SoI and RoUS net interstate trade
+  trade_desc <- "Net interstate flow of electricity (negative indicates flow out of state)"
+  NetInterstateTradeMSN <- CodeDesc[CodeDesc$Description==trade_desc&
+                                      CodeDesc$Unit=="Million kilowatthours", "MSN"]
+  NetInterstateTrade_SoI <- Consumption[Consumption$MSN==NetInterstateTradeMSN&
+                                          Consumption$State==state_abb,
+                                        as.character(year)]
+  NetInterstateTrade_RoUS <- Consumption[Consumption$MSN==NetInterstateTradeMSN&
+                                           Consumption$State=="US",
+                                         as.character(year)] - NetInterstateTrade_SoI
+  # Note that abs(NetInterstateTrade_SoI)==abs(NetInterstateTrade_RoUS)
+  
+  if (NetInterstateTrade_SoI < 0) {
+    # If NetInterstateTrade_SoI < 0, SoI is a net exporter
+    # the amount of net export is considered total electricity traded from SoI to RoUS
+    Elec_ICF_2r <- data.frame("SoI2SoI" = 1,
+                              "SoI2RoUS" = abs(NetInterstateTrade_SoI)/Consumption_RoUS,
+                              "RoUS2SoI" = 0,
+                              "RoUS2RoUS" = 1 - abs(NetInterstateTrade_SoI)/Consumption_RoUS)
+  } else {
+    # If NetInterstateTrade_SoI > 0, SoI is a net importer
+    # the amount of net import is considered total electricity traded from RoUS to SoI 
+    Elec_ICF_2r <- data.frame("SoI2SoI" = 1 - abs(NetInterstateTrade_RoUS)/Consumption_SoI,
+                              "SoI2RoUS" = 0,
+                              "RoUS2SoI" = abs(NetInterstateTrade_RoUS)/Consumption_SoI,
+                              "RoUS2RoUS" = 1)
+    # NetInterstateTrade_SoI = 0 means there is no interstate trade between SoI and RoUS
+    # ICF_SoI2SoI and ICF_RoUS2RoUS are both 0
+  }
+  return(Elec_ICF_2r)
+}
+
+#' Calculate domestic interregional utilities flow ratios by state,
+#' utilities include electricity generation, transmission and distribution,
+#' natural gas distribution and water, sewage and other
+#' @param state State name.
+#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @return A data frame contains domestic interregional utilities flow ratios by state.
+calculateUtilitiesFlowRatios <- function (state, year) {
+  # Get state employment
+  BLS_QCEW <- loadDatafromFLOWSA("Employment", year, "BLS_QCEW")
+  StateDetailEmp <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Detail")
+  StateDetailEmp$FIPS <- as.numeric(substr(StateDetailEmp$FIPS, 1, 2))
+  FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
+  utilities <- c("221100", "221200", "221300")
+  StateUtilitiesEmp <- merge(StateDetailEmp[StateDetailEmp$BEA_2012_Detail_Code%in%utilities, ],
+                             FIPS_STATE[FIPS_STATE$State==state, ],
+                             by.x = "FIPS", by.y = "State_FIPS", all.y = TRUE)
+  # Calulate weight and ratios, matching utilities sector order
+  weight <- StateUtilitiesEmp[match(utilities, StateUtilitiesEmp$BEA_2012_Detail_Code),
+                              "FlowAmount"]
+  ratios <- weight/sum(weight)
+  # Assume natural gas distribution and water, sewage and other are all 100% local.
+  Gas_ICF_2r <- Water_ICF_2r <- data.frame("SoI2SoI" = 1,
+                                           "SoI2RoUS" = 0,
+                                           "RoUS2SoI" = 0,
+                                           "RoUS2RoUS" = 1)
+  # Generate electricity two-region ICF ratios
+  Elec_ICF_2r <- calculateElectricityFlowRatios(state, year)
+  # Combine ICF ratios based on state employment
+  Utilities_ICF_2r <- Elec_ICF_2r*ratios[1] + Gas_ICF_2r*ratios[2] + Water_ICF_2r*ratios[3]
+  return(Utilities_ICF_2r)
+}

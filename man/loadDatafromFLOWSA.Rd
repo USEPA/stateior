@@ -14,8 +14,7 @@ loadDatafromFLOWSA(flowclass, year, datasource, geographic_level = NULL)
 \item{datasource}{A character value specifying data source.}
 }
 \value{
-A data frame contains state Ag, Fishery and Forestry commodity output
-for specified state with row names being BEA sector code.
+A data frame contains state data from FLOWSA.
 }
 \description{
 Load flowbyactivity data from FLOWSA

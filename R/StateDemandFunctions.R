@@ -1,7 +1,7 @@
 #' Get US Use table (intermediaete + final demand) of specified iolevel and year.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param year A numeric value specifying the year of interest.
-#' #' @return The US Use table (intermediaete + final demand) of specified iolevel and year.
+#' @return The US Use table (intermediaete + final demand) of specified iolevel and year.
 getNationalUse <- function(iolevel, year) {
   # Load pre-saved US Use table
   Use <- loadDatafromUSEEIOR(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
@@ -78,6 +78,7 @@ calculateStateCommodityOutputRatio <- function(year) {
 #' Adjust EmpComp, Tax, and GOS to fill NA and make them consistent with GVA
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param return A character string showing which attribute to return. 'comp', 'tax', 'gos'
+#' @importFrom magrittr %>%
 #' @return A data frame contains adjusted EmpComp, Tax, GOS, and GVA
 adjustGVAComponent <- function(year, return) {
   #load data
@@ -165,7 +166,7 @@ adjustGVAComponent <- function(year, return) {
 
 #' Assemble Summary-level gross value added sectors (V001, V002, V003) for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data frame contains Summary-level gross value added (V001, V002, V003) for all states at a specific year.
 assembleStateSummaryGrossValueAdded <- function(year) {
   US_Use <- loadDatafromUSEEIOR(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
@@ -408,6 +409,62 @@ estimateStateExport <- function(year) {
   State_Export$F040 <- State_Export$F040 * State_Export$SoITradeRatio
   rownames(State_Export) <- paste(State_Export$State, State_Export$Row.names, sep = ".")
   State_Export <- State_Export[, "F040", drop = FALSE]
+  
+  # Adjust state international exports to avoid state exports > state commodity output
+  State_CommOutput <- do.call(rbind, get(paste0("State_Summary_CommodityOutput_", year),
+                                         as.environment("package:stateior")))
+  State_CommOutput <- State_CommOutput[rownames(State_Export), , drop = FALSE]
+  # Prepare vectors of commodities and states that will be examined and adjusted
+  commodities <- setdiff(unique(gsub(".*\\.", "", rownames(State_CommOutput))),
+                         c("Other", "Used"))
+  states <- setdiff(unique(gsub("\\..*", "", rownames(State_CommOutput))), "Overseas")
+  states_comms <- paste(states, rep(commodities, length(states)), sep = ".")
+  # Prepare a static copy of State_Export 
+  State_Export_original <- State_Export
+  
+  # Determine original condition:
+  # Compare state commodity output against the sum of state export and following FD sectors
+  # whose state values are derived using COR (or ratios similar to COR, e.g. gross output raios)
+  # F02S - Nonresidential private fixed investment in structures
+  # F02N - Nonresidential private fixed investment in intellectual property products
+  # F030 - Change in private inventories
+  StatePI <- estimateStatePrivateInvestment(year)
+  StatePI_sum <- rowSums(StatePI[, c("F02S", "F02N", "F030")])
+  original_condition <- State_Export[states_comms, ] + StatePI_sum[states_comms] > State_CommOutput[states_comms, ]
+  
+  # For each problematic commodity, apply the adjustment
+  for (comm in unique(gsub(".*\\.", "", states_comms[original_condition]))) {
+    states_comm <- paste(states, comm, sep = ".")
+    # Enter the while loop as long as there are state exports > commodity output
+    max_itr <- 1E3
+    while(any(State_Export[states_comm, ] > State_CommOutput[states_comm, ])) {
+      # Set i and states_comm
+      i <- 1
+      # Determine new condition for each iteration in while loop
+      new_condition <- State_Export[states_comm, ] + StatePI_sum[states_comm] > State_CommOutput[states_comm, ]
+      # Set state and trouble_rows
+      state <- unique(gsub("\\..*", "", states_comm[new_condition]))
+      trouble_rows <- paste(state, comm, sep = ".")
+      # Calculate total residual
+      residual <- sum(State_Export[trouble_rows, ] - State_CommOutput[trouble_rows, ])
+      # Determine allocate_to_rows
+      allocate_to_rows <- paste(setdiff(states, state), comm, sep = ".")
+      # Use original export amount as weight
+      weight <- State_Export_original[allocate_to_rows, ]
+      # Allocate residual to all other states 
+      residual_df <- as.data.frame(residual*(weight/sum(weight)),
+                                   row.names = allocate_to_rows)
+      # Adjust State_Export
+      State_Export[allocate_to_rows, ] <- State_Export[allocate_to_rows, ] + residual_df
+      comm_output_ratios <- CommOutput_ratio[CommOutput_ratio[, BEA_col]==comm&
+                                               CommOutput_ratio$State%in%state, "Ratio"]
+      State_Export[trouble_rows, ] <- US_Export[comm, ]*comm_output_ratios
+      i <- i + 1
+      if (i >= max_itr) {
+        stop("Allocation of export residuals exceeds maximum iteration")
+      }
+    }
+  }
   return(State_Export)
 }
 
