@@ -188,6 +188,66 @@ calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, io
   return(state_US_trade_BEA)
 }
 
+#' Calculate domestic hazardous waste management services flow ratios by state
+#' @param state State name.
+#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @return A data frame contains hazardous waste management services flow ratios by BEA.
+calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
+  # Load data
+  SummaryBR <- utils::read.csv(system.file("extdata",
+                                           paste0("RCRAInfoBR/SummaryBR_", year, ".csv"),
+                                           package = "stateior"),
+                               header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  SummaryBR[, 2:ncol(SummaryBR)] <- lapply(SummaryBR[, 2:ncol(SummaryBR)],
+                                           function(x){as.numeric(gsub(",", "", x))})
+  SummaryBR <- SummaryBR[SummaryBR$`Location Name`%in%toupper(c(state.name, "District of Columbia")), ]
+  
+  InterstateFlow <- utils::read.csv(system.file("extdata",
+                                                paste0("RCRAInfoBR/Interstate_", year, ".csv"),
+                                                package = "stateior"),
+                                    header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  InterstateFlow[, 2:ncol(InterstateFlow)] <- lapply(InterstateFlow[, 2:ncol(InterstateFlow)],
+                                                     function(x){as.numeric(gsub(",", "", x))})
+  InterstateFlow <- InterstateFlow[InterstateFlow$`Location Name`%in%toupper(c(state.name, "District of Columbia")), ]
+  # Calculate total managed, shipped and received
+  # Total Managed
+  TM_SoI <- SummaryBR[SummaryBR$`Location Name`==toupper(state), "Managed (Tons)"]
+  TM_RoUS <- sum(SummaryBR[SummaryBR$`Location Name`!=toupper(state), "Managed (Tons)"])
+  # Total Interstate Shipments
+  TS_SoI <- InterstateFlow[InterstateFlow$`Location Name`==toupper(state), "Interstate Shipments (Tons)"]
+  TS_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name`!=toupper(state), "Interstate Shipments (Tons)"])
+  # Total Interstate Receipts
+  TR_SoI <- InterstateFlow[InterstateFlow$`Location Name`==toupper(state), "Interstate Receipts (Tons)"]
+  TR_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name`!=toupper(state), "Interstate Receipts (Tons)"])
+  
+  # Calculate two-region ICF ratios. !!! imports of HW == exports of HW management service
+  HazWaste_ICF_2r <- data.frame("SoI2SoI"   = 1 - TR_SoI/TM_SoI, # the remainder after exporting service to RoUS
+                                "SoI2RoUS"  = TR_SoI/TM_SoI, # receiving HW == exporting service
+                                "RoUS2SoI"  = TR_RoUS/TM_RoUS, # receiving HW == exporting service
+                                "RoUS2RoUS" = 1 - TR_RoUS/TM_RoUS) # the remainder after exporting service to SoI
+  return(HazWaste_ICF_2r)
+}
+
+#' Calculate domestic waste management services flow ratios by state
+#' @param state State name.
+#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @return A data frame contains waste management services flow ratios by BEA.
+calculateWasteManagementServiceFlowRatios <- function (state, year) {
+  # Assume non-haz waste ICF ratios == commodity output ratios
+  COR <- calculateStateCommodityOutputRatio(year)
+  SoIWasteCOR <- COR[COR$BEA_2012_Summary_Code=="562"&COR$State==state, "Ratio"]
+  RoUSWasteCOR <- 1 - SoIWasteCOR
+  NonHazWaste_ICF_2r <- data.frame("SoI2SoI"   = SoIWasteCOR,
+                                   "SoI2RoUS"  = 1 - SoIWasteCOR,
+                                   "RoUS2SoI"  = 1 - RoUSWasteCOR,
+                                   "RoUS2RoUS" = RoUSWasteCOR)
+  # Generate haz waste two-region ICF ratios
+  HazWaste_ICF_2r <- calculateHazWasteManagementServiceFlowRatios(state, year)
+  # Combine ICF ratios
+  Waste_ICF_2r <- (HazWaste_ICF_2r + NonHazWaste_ICF_2r)*0.5
+  return(Waste_ICF_2r)
+}
+
 #' Calculate domestic interregional electricity flow ratios by state
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
