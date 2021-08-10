@@ -221,9 +221,9 @@ calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
   TR_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name`!=toupper(state), "Interstate Receipts (Tons)"])
   
   # Calculate two-region ICF ratios. !!! imports of HW == exports of HW management service
-  HazWaste_ICF_2r <- data.frame("SoI2SoI" = 1 - TR_SoI/TM_SoI, # the remainder after exporting service to RoUS
-                                "SoI2RoUS" = TR_SoI/TM_SoI, # receiving HW == exporting service
-                                "RoUS2SoI" = TR_RoUS/TM_RoUS, # receiving HW == exporting service
+  HazWaste_ICF_2r <- data.frame("SoI2SoI"   = 1 - TR_SoI/TM_SoI, # the remainder after exporting service to RoUS
+                                "SoI2RoUS"  = TR_SoI/TM_SoI, # receiving HW == exporting service
+                                "RoUS2SoI"  = TR_RoUS/TM_RoUS, # receiving HW == exporting service
                                 "RoUS2RoUS" = 1 - TR_RoUS/TM_RoUS) # the remainder after exporting service to SoI
   return(HazWaste_ICF_2r)
 }
@@ -231,9 +231,19 @@ calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
 #' Calculate domestic waste management services flow ratios by state
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
-#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data frame contains waste management services flow ratios by BEA.
-calculateWasteManagementServiceFlowRatios <- function (state, year, ioschema, iolevel) {
-  
+calculateWasteManagementServiceFlowRatios <- function (state, year) {
+  # Assume non-haz waste ICF ratios == commodity output ratios
+  COR <- calculateStateCommodityOutputRatio(year)
+  SoIWasteCOR <- COR[COR$BEA_2012_Summary_Code=="562"&COR$State==state, "Ratio"]
+  RoUSWasteCOR <- 1 - SoIWasteCOR
+  NonHazWaste_ICF_2r <- data.frame("SoI2SoI"   = SoIWasteCOR,
+                                   "SoI2RoUS"  = 1 - SoIWasteCOR,
+                                   "RoUS2SoI"  = 1 - RoUSWasteCOR,
+                                   "RoUS2RoUS" = RoUSWasteCOR)
+  # Generate haz waste two-region ICF ratios
+  HazWaste_ICF_2r <- calculateHazWasteManagementServiceFlowRatios(state, year)
+  # Combine ICF ratios
+  Waste_ICF_2r <- (HazWaste_ICF_2r + NonHazWaste_ICF_2r)*0.5
+  return(Waste_ICF_2r)
 }
