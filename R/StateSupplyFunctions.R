@@ -248,22 +248,6 @@ getStateCommodityOutputRatioEstimates <- function(year) {
   return(StateCommodityOutputRatio)
 }
 
-#' Load flowbyactivity data from FLOWSA
-#' @param flowclass A character value specifying flow class, can be "Money".
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param datasource A character value specifying data source.
-#' @return A data frame contains state data from FLOWSA.
-loadDatafromFLOWSA <- function(flowclass, year, datasource, geographic_level = NULL) {
-  # Import flowsa
-  flowsa <- reticulate::import("flowsa")
-  # Load data
-  df <- flowsa$getFlowByActivity(datasource, as.character(year),
-                                 flowclass, geographic_level)
-  # Keep state-level data, including 50 states and D.C.
-  df <- df[substr(df$Location, 1, 2)<=56 & substr(df$Location, 3, 5)=="000", ]
-  return(df)
-}
-
 #' Load BEA and BLS QCEW State Employment data from pre-saved .rda files and FLOWSA.
 #' Map to BEA Summary sectors.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
@@ -280,15 +264,15 @@ getStateEmploymentbyBEASummary <- function(year) {
                                                    BEAStateEmp$GeoName), sum)
   colnames(BEAStateEmp) <- c("BEA_2012_Summary_Code", "State", "Emp")
   # BLS QCEW Emp
-  BLS_QCEW <- loadDatafromFLOWSA("Employment", year, "BLS_QCEW")
+  BLS_QCEW <- loadDataCommonsfile("Employment", year)
   BLS_QCEW <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Summary")
-  #BLS_QCEW <- get(paste0("BLS_QCEW_", year), as.environment("package:stateior"))
-  BLS_QCEW$FIPS <- as.numeric(substr(BLS_QCEW$FIPS, 1, 2))
-  FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
-  BLS_QCEW <- merge(BLS_QCEW, FIPS_STATE, by.x = "FIPS", by.y = "State_FIPS")
+  BLS_QCEW$State <- mapFIPS5toLocationNames(BLS_QCEW$FIPS, "FIPS")
   # Prioritize BEAStateEmp, replace NAs in Emp with values from BLS_QCEW
-  StateEmp <- merge(BEAStateEmp, BLS_QCEW, by = c("State", "BEA_2012_Summary_Code"))
+  StateEmp <- merge(BEAStateEmp[BEAStateEmp$State%in%BLS_QCEW$State, ],
+                    BLS_QCEW, by = c("State", "BEA_2012_Summary_Code"), all = TRUE)
   StateEmp[is.na(StateEmp$Emp), "Emp"] <- StateEmp[is.na(StateEmp$Emp), "FlowAmount"]
+  # Replace the remaining NAs in Emp with zero
+  StateEmp[is.na(StateEmp$Emp), "Emp"] <- 0
   # Drop unwanted columns
   StateEmp <- StateEmp[, colnames(BEAStateEmp)]
   return(StateEmp)
@@ -302,7 +286,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   # Load state FIPS
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   # Load USDA_ERS_FIWS data from flowsa
-  USDA_ERS_FIWS <- loadDatafromFLOWSA("Money", year, "USDA_ERS_FIWS")
+  USDA_ERS_FIWS <- loadDataCommonsfile("USDA_ERS_FIWS", year)
   # Select All Commodities as Ag products
   Ag <- USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy=="All Commodities", ]
   # Convert State_FIPS to numeric values
@@ -318,7 +302,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   Ag <- Ag[, c("BEA_2012_Summary_Code", "State", "Value", "Ratio")]
   
   # Load Fishery Landings and Forestry CutValue data from flowsa
-  Fishery <- loadDatafromFLOWSA("Money", year, "NOAA_FisheryLandings")
+  Fishery <- loadDataCommonsfile("NOAA_FisheryLandings", year)
   FisheryForestry <- rbind(Fishery,
                            USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy=="All Species", ])
   # Convert State_FIPS to numeric values

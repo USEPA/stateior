@@ -2,8 +2,51 @@
 #' @param dataset A string specifying name of the data to load
 #' @return The data loaded from useeior
 loadDatafromUSEEIOR <- function(dataset) {
-  data(package = "useeior", list = dataset)
+  utils::data(package = "useeior", list = dataset)
   df <- get(dataset)
+  return(df)
+}
+
+#' Load flowsa FlowByActivity or FlowBySector data from Data Commons
+#' @param dataname A string specifying data name, can be "NOAA_FisheryLandings".
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @return A data frame contains state data from FLOWSA.
+loadDataCommonsfile <- function(dataname, year) {
+  # Load metadata
+  if (dataname=="Employment") {
+    meta <- configr::read.config(system.file("extdata/", "FlowBySector_metadata.yml",
+                                             package = "stateior"))
+    filename <- paste(dataname, "state", year, meta[[dataname]], sep = "_")
+    subdirectory <- "flowsa/FlowBySector"
+  } else {
+    meta <- configr::read.config(system.file("extdata/", "FlowByActivity_metadata.yml",
+                                             package = "stateior"))
+    # Define file name and subdirectory
+    if (dataname=="NOAA_FisheryLandings") {
+      year <- "2012-2018"
+      filename <- paste0(paste(dataname, year, sep = "_"), meta[[dataname]])
+    } else {
+      filename <- paste(dataname, year, meta[[dataname]], sep = "_")
+    }
+    subdirectory <- "flowsa/FlowByActivity"
+  }
+  # Define file directory
+  directory <- paste0(rappdirs::user_data_dir(), "/", subdirectory)
+  if (!file.exists(paste0(directory, "/", filename))) {
+    url <- paste0("https://edap-ord-data-commons.s3.amazonaws.com/", subdirectory)
+    logging::loginfo(paste0("file not found, downloading from ", url))
+    # Check for and create directory if necessary
+    if(!file.exists(directory)){
+      dir.create(directory, recursive = TRUE)
+    }
+    # Download file
+    utils::download.file(paste0(url, "/", filename),
+                         paste0(directory, "/", filename), mode = "wb", quiet = TRUE)
+  }
+  # Load FBA
+  df <- as.data.frame(arrow::read_parquet(paste0(directory, "/", filename)))
+  # Keep state-level data, including 50 states and D.C.
+  df <- df[substr(df$Location, 1, 2)<=56 & substr(df$Location, 3, 5)=="000", ]
   return(df)
 }
 
@@ -223,6 +266,27 @@ joinStringswithSlashes <- function(...) {
   return(str)
 }
 
+#' Maps a vector of 5-digit FIPS codes to location names
+#' @param fipscodes A vector of 5 digit FIPS codes
+#' @param fipssystem A text value specifying FIPS System, can be FIPS_2015
+#' @return A vector of location names where matches are found
+mapFIPS5toLocationNames <- function(fipscodes, fipssystem) {
+  mapping_file <- "Crosswalk_FIPS.csv"
+  mapping <- utils::read.table(system.file("extdata", mapping_file, package = "stateior"),
+                               sep = ",", header = TRUE, stringsAsFactors = FALSE, 
+                               check.names = FALSE, quote = "")
+  # Add leading zeros to FIPS codes if necessary
+  if (!fipssystem%in%colnames(mapping)) {
+    fipssystem <- max(which(startsWith(colnames(mapping), "FIPS")))
+  }
+  mapping[, fipssystem] <- formatC(mapping[, fipssystem], width = 5, format = "d", flag = "0")
+  mapping <- mapping[mapping[, fipssystem]%in%fipscodes, ]
+  # Get locations based on fip scodes
+  locations <- stringr::str_replace_all(string = fipscodes,
+                                        pattern = setNames(as.vector(mapping$State),
+                                                           mapping[, fipssystem]))
+  return(locations)
+}
 
 #' This function converts US state name, for example "Alabama",
 #' to a two-character state abbreviation "AL". Can take "District of Columbia".
