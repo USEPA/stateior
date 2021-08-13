@@ -193,6 +193,8 @@ calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, io
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @return A data frame contains hazardous waste management services flow ratios by BEA.
 calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
+  # Modify year due to the fact that RCRAInfo is biennial
+  year <- ifelse(year%%2==0, year-1, year)
   # Load data
   SummaryBR <- utils::read.csv(system.file("extdata",
                                            paste0("RCRAInfoBR/SummaryBR_", year, ".csv"),
@@ -307,15 +309,13 @@ calculateElectricityFlowRatios <- function (state, year) {
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @return A data frame contains domestic interregional utilities flow ratios by state.
 calculateUtilitiesFlowRatios <- function (state, year) {
-  # Get state employment
-  BLS_QCEW <- loadDatafromFLOWSA("Employment", year, "BLS_QCEW")
+  # Get state employment for utilities sector
+  BLS_QCEW <- loadDataCommonsfile("Employment", year)
   StateDetailEmp <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Detail")
-  StateDetailEmp$FIPS <- as.numeric(substr(StateDetailEmp$FIPS, 1, 2))
-  FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
+  StateDetailEmp$State <- mapFIPS5toLocationNames(StateDetailEmp$FIPS, "FIPS")
   utilities <- c("221100", "221200", "221300")
-  StateUtilitiesEmp <- merge(StateDetailEmp[StateDetailEmp$BEA_2012_Detail_Code%in%utilities, ],
-                             FIPS_STATE[FIPS_STATE$State==state, ],
-                             by.x = "FIPS", by.y = "State_FIPS", all.y = TRUE)
+  StateUtilitiesEmp <- StateDetailEmp[StateDetailEmp$BEA_2012_Detail_Code%in%utilities &
+                                        StateDetailEmp$State==state, ]
   # Calulate weight and ratios, matching utilities sector order
   weight <- StateUtilitiesEmp[match(utilities, StateUtilitiesEmp$BEA_2012_Detail_Code),
                               "FlowAmount"]

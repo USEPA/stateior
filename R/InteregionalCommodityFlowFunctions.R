@@ -108,13 +108,18 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
   ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "RoUS2RoUS"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "RoUS2SoI"]
   ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2SoI"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2RoUS"]
   ICF_2r_wide$source <- "FAF"
-  # Adjust SoI2SoI and RoUS2RoUS ICF ratios of air, rail and water transportation and
+  # Adjust SoI2SoI and RoUS2RoUS ICF ratios of utilities, air, rail and water transportation and
   # waste management and remediation services
+  cols <- colnames(ICF_2r_wide)[2:5]
   if (iolevel == "Summary") {
-    for (BEAcode in c("481", "482", "483", "562")) {
+    # Adjust utilities
+    ICF_2r_wide[ICF_2r_wide[, bea]=="211", cols] <- calculateUtilitiesFlowRatios(state, year)[, cols]
+    # Adjust waste management and remediation services
+    ICF_2r_wide[ICF_2r_wide[, bea]=="562", cols] <- calculateWasteManagementServiceFlowRatios(state, year)[, cols]
+    # Adjust air, rail and water transportation
+    for (BEAcode in c("481", "482", "483")) {
       # Determine adjust_by ratio
-      adjust_by <- ifelse(ICF_sensitivity_analysis, adjust_by,
-                          ifelse(BEAcode=="562", 0.8, 0.5))
+      adjust_by <- 0.5
       # Calculate adjusted ICF ratios
       SoI2SoI_original <- ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "SoI2SoI"]
       SoI2SoI_adjusted <- adjust_by + SoI2SoI_original*(1-adjust_by)
