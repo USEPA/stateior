@@ -1,6 +1,6 @@
 ### State Supply Model
 # Define year
-year <- 2017
+year <- 2012
 # Load US Make and Use
 US_Summary_Make <- getNationalMake("Summary", year)
 US_Summary_Use <- getNationalUse("Summary", year)
@@ -12,7 +12,8 @@ State_Summary_IndustryOutput_ls <- get(paste0("State_Summary_IndustryOutput_", y
                                        as.environment("package:stateior"))
 State_Summary_CommodityOutput_ls <- get(paste0("State_Summary_CommodityOutput_", year),
                                         as.environment("package:stateior"))
-states <- setdiff(names(State_Summary_Make_ls), c("District of Columbia", "Overseas"))
+# states <- setdiff(names(State_Summary_Make_ls), c("District of Columbia", "Overseas"))
+states <- names(State_Summary_Make_ls)
 # Load state total Use and domestic Use
 State_Summary_Use_ls <- get(paste0("State_Summary_Use_", year),
                             as.environment("package:stateior"))
@@ -20,10 +21,11 @@ State_Summary_DomesticUse_ls <- get(paste0("State_Summary_DomesticUse_", year),
                                     as.environment("package:stateior"))
 # Build two-region tables
 TwoRegionTable_ls <- list()
-for (state in states) {
+for (state in states[states!="Overseas"]) {
   # Prepare domestic 2-region Use tables
   TwoRegionTable_ls[[state]] <- buildTwoRegionDemandModel(state, year = 2012,
-                                                          ioschema = 2012, "Summary")
+                                                          ioschema = 2012,
+                                                          iolevel = "Summary")
 }
 
 #' 1. Sum of each cell across all state Make tables must almost equal
@@ -139,7 +141,7 @@ StateDomesticUseValidationFailures <- validateStateUseAgainstNationlUse(domestic
 
 #' 8. If SoI commodity output == 0, SoI2SoI ICF ratio == 0
 failures <- c()
-for (state in states) {
+for (state in states[states!="Overseas"]) {
   # Find zero values in SoI commodity output
   CO_zeros <- formatValidationResult(State_Summary_CommodityOutput_ls[[state]]-0,
                                      abs_diff = TRUE, tolerance = 0)[["Pass"]]
@@ -157,7 +159,7 @@ for (state in states) {
 
 #' 9. SoI and RoUS interregional exports >= 0, interregional imports >= 0
 failures <- data.frame()
-for (state in states) {
+for (state in states[states!="Overseas"]) {
   # Prepare domestic 2-region Use tables
   TwoRegionTable_state <- TwoRegionTable_ls[[state]]
   df <- cbind(TwoRegionTable_state[["SoI2SoI"]][, c("InterregionalImports", "InterregionalExports")],
@@ -173,7 +175,7 @@ for (state in states) {
 
 #' 10. SoI net exports + RoUS net exports == 0
 failures <- data.frame()
-for (state in states) {
+for (state in states[states!="Overseas"]) {
   # Prepare domestic 2-region Use tables
   TwoRegionTable_state <- TwoRegionTable_ls[[state]]
   df <- TwoRegionTable_state[["SoI2SoI"]][, "NetExports", drop = FALSE] +
@@ -188,7 +190,7 @@ for (state in states) {
 #' 11. Check row sum of SoI2SoI <= state commodity supply, or diff <= 1E-3
 #' Row sum of RoUS2RoUS <= national commodity supply, or diff <= 1E-3
 failures <- data.frame()
-for (state in states) {
+for (state in states[states!="Overseas"]) {
   # Prepare state commodity supply
   df0 <- cbind.data.frame(State_Summary_CommodityOutput_ls[[state]][, "Output", drop = FALSE],
                           colSums(US_Summary_Make))
@@ -212,7 +214,7 @@ US_negatives <- formatValidationResult(abs(US_Summary_DomesticUse) - US_Summary_
 colnames(US_negatives) <- c("Commodity", "Industry")
 # Validate the position of zero values in state Make tables
 failures <- data.frame()
-for (state in states) {
+for (state in states[states!="Overseas"]) {
   # Prepare domestic 2-region Use tables
   TwoRegionTable_state <- TwoRegionTable_ls[[state]]
   columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
@@ -247,7 +249,7 @@ for (state in states) {
 
 #' 13. SoI interregional imports == RoUS interregional exports, or difference <= 1E-3
 failures <- data.frame()
-for (state in states) {
+for (state in states[states!="Overseas"]) {
   # Prepare domestic 2-region Use tables
   TwoRegionTable_state <- TwoRegionTable_ls[[state]]
   # Prepare df0 and df1
@@ -265,7 +267,7 @@ for (state in states) {
 #' 14. Total state commodity supply == state demand by intermediate consumption,
 #' plus final demand (except imports) + Interregional Exports
 failures <- data.frame()
-for (state in states) {
+for (state in states[states!="Overseas"]) {
   # Prepare domestic 2-region Use tables
   TwoRegionTable_state <- TwoRegionTable_ls[[state]]
   columns <- c(getVectorOfCodes("Summary", "Industry"),
@@ -292,7 +294,7 @@ US_negatives <- formatValidationResult(abs(US_Summary_DomesticUse) - US_Summary_
                                        abs_diff = FALSE, tolerance = 0)[["Failure"]]
 colnames(US_negatives) <- c("Commodity", "Industry")
 failure <- data.frame()
-for (state in states) {
+for (state in states[states!="Overseas"]) {
   # Prepare domestic 2-region Use tables
   TwoRegionTable_state <- TwoRegionTable_ls[[state]]
   columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
