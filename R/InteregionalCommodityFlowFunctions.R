@@ -101,21 +101,17 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
   # Assume Other Transportation (487OS) has SoI2SoI and RoUS2RoUS ratio == 1
   ICF_2r_wide[ICF_2r_wide$BEA_2012_Summary_Code=="487OS", c("SoI2SoI", "RoUS2RoUS")] <- 1
   # Fill NAs
-  ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI)&is.na(ICF_2r_wide$SoI2RoUS), "SoI2SoI"] <- 0.5
-  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS)&is.na(ICF_2r_wide$RoUS2SoI), "RoUS2SoI"] <- 0.5
-  ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI), "SoI2SoI"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI), "SoI2RoUS"]
-  ICF_2r_wide[is.na(ICF_2r_wide$SoI2RoUS), "SoI2RoUS"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$SoI2RoUS), "SoI2SoI"]
-  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "RoUS2RoUS"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "RoUS2SoI"]
-  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2SoI"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2RoUS"]
+  ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI)&is.na(ICF_2r_wide$RoUS2SoI), "SoI2SoI"] <- 0.5
+  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS)&is.na(ICF_2r_wide$SoI2RoUS), "SoI2RoUS"] <- 0.5
+  ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI), "SoI2SoI"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI), "RoUS2SoI"]
+  ICF_2r_wide[is.na(ICF_2r_wide$SoI2RoUS), "SoI2RoUS"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$SoI2RoUS), "RoUS2RoUS"]
+  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "RoUS2RoUS"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "SoI2RoUS"]
+  ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2SoI"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "SoI2SoI"]
   ICF_2r_wide$source <- "FAF"
   # Adjust SoI2SoI and RoUS2RoUS ICF ratios of utilities, air, rail and water transportation and
   # waste management and remediation services
   cols <- colnames(ICF_2r_wide)[2:5]
   if (iolevel == "Summary") {
-    # Adjust utilities
-    ICF_2r_wide[ICF_2r_wide[, bea]=="211", cols] <- calculateUtilitiesFlowRatios(state, year)[, cols]
-    # Adjust waste management and remediation services
-    ICF_2r_wide[ICF_2r_wide[, bea]=="562", cols] <- calculateWasteManagementServiceFlowRatios(state, year)[, cols]
     # Adjust air, rail and water transportation
     for (BEAcode in c("481", "482", "483")) {
       # Determine adjust_by ratio
@@ -127,9 +123,9 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
       RoUS2RoUS_adjusted <- adjust_by + RoUS2RoUS_original*(1-adjust_by)
       # Add adjusted ratios to ICF_2r_wide
       ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "SoI2SoI"] <- SoI2SoI_adjusted
-      ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "SoI2RoUS"] <- 1 - SoI2SoI_adjusted
+      ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "SoI2RoUS"] <- 1 - RoUS2RoUS_adjusted
       ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "RoUS2RoUS"] <- RoUS2RoUS_adjusted
-      ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "RoUS2SoI"] <- 1 - RoUS2RoUS_adjusted
+      ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "RoUS2SoI"] <- 1 - SoI2SoI_adjusted
       ICF_2r_wide[ICF_2r_wide[, bea]==BEAcode, "source"] <- paste("FAF w/ manual adjustment by",
                                                                         adjust_by)
     }
@@ -141,6 +137,14 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
   ICF <- merge(ICF_2r_wide, CommodityCodeName, by.x = bea,
                by.y = paste("BEA", ioschema, iolevel, "Commodity_Code", sep = "_"),
                all.y = TRUE)
+  if (iolevel == "Summary") {
+    # Adjust utilities
+    ICF[ICF[, bea]=="22", cols] <- calculateUtilitiesFlowRatios(state, year)[, cols]
+    ICF[ICF[, bea]=="22", "source"] <- "EIA"
+    # Adjust waste management and remediation services
+    ICF[ICF[, bea]=="562", cols] <- calculateWasteManagementServiceFlowRatios(state, year)[, cols]
+    ICF[ICF[, bea]=="562", "source"] <- "RCRAInfo and SMP"
+  }
   # Assume Transit and ground passenger transportation has SoI2SoI and RoUS2RoUS ratio == 1
   bea_name <- paste("BEA", ioschema, iolevel, "Commodity_Name", sep = "_")
   transit_name <- "Transit and ground passenger transportation"
@@ -189,8 +193,8 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
     if (substr(BEAcode, 1, 2)=="22") {
       # Use ElectricityLCI to estimate ICF ratios for utilities
     }
-    ICF[ICF[, bea]==BEAcode, "RoUS2SoI"] <- 1 - ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"]
-    ICF[ICF[, bea]==BEAcode, "SoI2RoUS"] <- 1 - ICF[ICF[, bea]==BEAcode, "SoI2SoI"]
+    ICF[ICF[, bea]==BEAcode, "RoUS2SoI"] <- 1 - ICF[ICF[, bea]==BEAcode, "SoI2SoI"]
+    ICF[ICF[, bea]==BEAcode, "SoI2RoUS"] <- 1 - ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"]
   }
   # Use SoI CommOutput_ratio
   for (BEAcode in intersect(ICF[is.na(ICF$source), bea], CommOutput_ratio[, bea])) {
@@ -210,9 +214,9 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
       RoUS2RoUSratio <- 1 - CORSoI
     }
     ICF[ICF[, bea]==BEAcode, "SoI2SoI"] <- SoI2SoIratio
-    ICF[ICF[, bea]==BEAcode, "SoI2RoUS"] <- 1 - SoI2SoIratio
+    ICF[ICF[, bea]==BEAcode, "SoI2RoUS"] <- 1 - RoUS2RoUSratio
     ICF[ICF[, bea]==BEAcode, "RoUS2RoUS"] <- RoUS2RoUSratio
-    ICF[ICF[, bea]==BEAcode, "RoUS2SoI"] <- 1 - RoUS2RoUSratio
+    ICF[ICF[, bea]==BEAcode, "RoUS2SoI"] <- 1 - SoI2SoIratio
   }
   # Re-order by BEA commodity code
   ICF <- ICF[match(CommodityCodeName[, 1], ICF[, bea]), ]

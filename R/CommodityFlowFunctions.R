@@ -99,8 +99,8 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
     
     # Calculate commodity flow ratio
     if (flow_ratio_type=="domestic") {
-      totalflow <- stats::aggregate(VALUE ~ ORIG + BEA_2012_Summary_Code, FAF_2r, sum)
-      FAF_2r <- merge(FAF_2r, totalflow, by = c("ORIG", "BEA_2012_Summary_Code"))
+      totalflow <- stats::aggregate(VALUE ~ DEST + BEA_2012_Summary_Code, FAF_2r, sum)
+      FAF_2r <- merge(FAF_2r, totalflow, by = c("DEST", "BEA_2012_Summary_Code"))
       FAF_2r$ratio <- FAF_2r$VALUE.x / FAF_2r$VALUE.y
       FAF_2r <- FAF_2r[, c("ORIG", "DEST", "BEA_2012_Summary_Code", "ratio")]
     } else {
