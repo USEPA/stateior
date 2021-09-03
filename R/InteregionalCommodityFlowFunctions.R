@@ -108,7 +108,7 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
   ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "RoUS2RoUS"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS), "SoI2RoUS"]
   ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "RoUS2SoI"] <- 1 - ICF_2r_wide[is.na(ICF_2r_wide$RoUS2SoI), "SoI2SoI"]
   ICF_2r_wide$source <- "FAF"
-  # Adjust SoI2SoI and RoUS2RoUS ICF ratios of utilities, air, rail and water transportation and
+  # Adjust SoI2SoI and RoUS2RoUS ICF ratios of air, rail and water transportation and
   # waste management and remediation services
   cols <- colnames(ICF_2r_wide)[2:5]
   if (iolevel == "Summary") {
@@ -144,13 +144,16 @@ generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
     # Adjust waste management and remediation services
     ICF[ICF[, bea]=="562", cols] <- calculateWasteManagementServiceFlowRatios(state, year)[, cols]
     ICF[ICF[, bea]=="562", "source"] <- "RCRAInfo and SMP"
+    # Adjust construction, used and other
+    ICF[ICF[, bea]=="23", cols] <- c(1, 0, 0, 1)
+    ICF[ICF[, bea]%in%c("Other", "Used"), cols] <- ICF[ICF[, bea]=="23", cols]
+    ICF[ICF[, bea]%in%c("23", "Other", "Used"), "source"] <- "Assuming no interregional trade"
   }
   # Assume Transit and ground passenger transportation has SoI2SoI and RoUS2RoUS ratio == 1
   bea_name <- paste("BEA", ioschema, iolevel, "Commodity_Name", sep = "_")
   transit_name <- "Transit and ground passenger transportation"
-  ICF[ICF[, bea_name]==transit_name, c("SoI2SoI", "RoUS2RoUS",
-                                       "SoI2RoUS", "RoUS2SoI")] <- c(1, 1, 0, 0)
-  ICF[ICF[, bea_name]==transit_name, "source"] <- "FAF"
+  ICF[ICF[, bea_name]==transit_name, cols] <- c(1, 0, 0, 1)
+  ICF[ICF[, bea_name]==transit_name, "source"] <- "Assuming no interregional trade"
   
   # Calculate SoI local and traded ratios
   LocalTradeSoI <- calculateLocalandTradedRatios(state, year, SoI = TRUE,
