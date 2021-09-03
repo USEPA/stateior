@@ -174,18 +174,18 @@ getTwoRegionIndustryOutput <- function(state, year, iolevel) {
   return(IndOutput)
 }
 
-#' Load demand (trade) tables, including intermediate consumption, final demand,
-#' exports and imports of a state of interest (SoI) and its corresponding
-#' rest-of-US (RoUS) for a given year.
-#' @description Load demand (trade) tables, including intermediate consumption,
-#' final demand, exports and imports of a SoI and its corresponding RoUS
+#' Load two-region domestic use table (intermediate consumption and final demand)
+#' and interregional trade in state of interest (SoI) and its corresponding rest-of-US (RoUS)
+#' for a given year.
+#' @description Load two-region domestic use table (intermediate consumption and final demand)
+#' and interregional trade in state of interest (SoI) and its corresponding rest-of-US (RoUS)
 #' for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data.frame of SoI's and RoUS' complete demand (trade) tables.
 #' @export
-getTwoRegionCompleteDemandTable <- function(state, year, iolevel) {
-  TwoRegionCompleteDemand <- loadTwoRegionIOData(year, iolevel, "CompleteDemand")[[state]]
-  return(TwoRegionCompleteDemand)
+getTwoRegionDomesticUsewithTrade <- function(state, year, iolevel) {
+  TwoRegionDomesticUsewithTrade <- loadTwoRegionIOData(year, iolevel, "DomesticUsewithTrade")[[state]]
+  return(TwoRegionDomesticUsewithTrade)
 }
