@@ -259,7 +259,7 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
   tradable_cols <- c(unlist(sapply(list("Industry", "HouseholdDemand"),
                                    getVectorOfCodes, iolevel = iolevel)),
                      FD_cols[substr(FD_cols, nchar(FD_cols),
-                                    nchar(FD_cols))%in%c("C", "E")])
+                                    nchar(FD_cols))%in%c("C", "E", "R", "N")])
   # All sectors except international imports
   industries <- getVectorOfCodes(iolevel, "Industry")
   import_col <- getVectorOfCodes(iolevel, "Import")
@@ -277,7 +277,7 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
   # Only allocate "error" to rows (commodities) that does not have ICF of 1 or 0
   commodities_notrade <- ICF[ICF$SoI2SoI==1&ICF$SoI2RoUS==0 &
                                ICF$RoUS2RoUS==1&ICF$RoUS2SoI==0, 1]
-  rows_allocation <- commodities[-which(commodities%in%commodities_notrade)]
+  rows_allocation <- setdiff(commodities, commodities_notrade)
   
   # 3 - Generate SoI2SoI domestic Use
   logging::loginfo("Generating SoI2SoI Use table ...")
@@ -336,9 +336,9 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
   SoI2SoI_Use$InterregionalExports <- SoI_CommodityOutput$Output - rowSums(SoI2SoI_Use[, nonimport_cols])
   RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_DomesticUse[, tradable_cols]) - rowSums(RoUS2RoUS_Use[, tradable_cols])
   RoUS2RoUS_Use$InterregionalExports <- RoUS_CommodityOutput$Output - rowSums(RoUS2RoUS_Use[, nonimport_cols])
-  
+   
   # 7 - Calculate residual for SoI and RoUS
-  logging::loginfo("Allocating difference between interregional imports and exports (residual) in SoI2SoI Use and RoUS2RoUS Use ...")
+  logging::loginfo("Allocating the difference between interregional imports and exports (i.e. residual) in SoI2SoI Use and RoUS2RoUS Use ...")
   residual <- SoI2SoI_Use$InterregionalImports - RoUS2RoUS_Use$InterregionalExports
   SoI_residual <- residual*(SoI_CommodityOutput$Output/US_CommodityOutput)
   RoUS_residual <- residual - SoI_residual
