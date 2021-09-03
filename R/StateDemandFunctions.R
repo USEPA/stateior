@@ -435,9 +435,9 @@ estimateStateExport <- function(year) {
   # For each problematic commodity, apply the adjustment
   for (comm in unique(gsub(".*\\.", "", states_comms[original_condition]))) {
     states_comm <- paste(states, comm, sep = ".")
-    # Enter the while loop as long as there are state exports > commodity output
+    # Enter the while loop as long as there are state exports + state PI > commodity output
     max_itr <- 1E3
-    while(any(State_Export[states_comm, ] > State_CommOutput[states_comm, ])) {
+    while(any(State_Export[states_comm, ] + StatePI_sum[states_comm] > State_CommOutput[states_comm, ])) {
       # Set i and states_comm
       i <- 1
       # Determine new condition for each iteration in while loop
@@ -446,7 +446,9 @@ estimateStateExport <- function(year) {
       state <- unique(gsub("\\..*", "", states_comm[new_condition]))
       trouble_rows <- paste(state, comm, sep = ".")
       # Calculate total residual
-      residual <- sum(State_Export[trouble_rows, ] - State_CommOutput[trouble_rows, ])
+      comm_output_ratio <- CommOutput_ratio[CommOutput_ratio[, BEA_col]==comm&
+                                              CommOutput_ratio$State%in%state, "Ratio"]
+      residual <- sum(State_Export[trouble_rows, ] - US_Export[comm, ]*comm_output_ratio)
       # Determine allocate_to_rows
       allocate_to_rows <- paste(setdiff(states, state), comm, sep = ".")
       # Use original export amount as weight
@@ -456,9 +458,7 @@ estimateStateExport <- function(year) {
                                    row.names = allocate_to_rows)
       # Adjust State_Export
       State_Export[allocate_to_rows, ] <- State_Export[allocate_to_rows, ] + residual_df
-      comm_output_ratios <- CommOutput_ratio[CommOutput_ratio[, BEA_col]==comm&
-                                               CommOutput_ratio$State%in%state, "Ratio"]
-      State_Export[trouble_rows, ] <- US_Export[comm, ]*comm_output_ratios
+      State_Export[trouble_rows, ] <- US_Export[comm, ]*comm_output_ratio
       i <- i + 1
       if (i >= max_itr) {
         stop("Allocation of export residuals exceeds maximum iteration")
