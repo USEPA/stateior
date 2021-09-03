@@ -227,6 +227,20 @@ calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
                                 "SoI2RoUS"  = TR_SoI/TM_SoI, # receiving HW == exporting service
                                 "RoUS2SoI"  = TR_RoUS/TM_RoUS, # receiving HW == exporting service
                                 "RoUS2RoUS" = 1 - TR_RoUS/TM_RoUS) # the remainder after exporting service to SoI
+  # Adjust ICF ratios if TM value is 0
+  if (TM_SoI==0) {
+    HazWaste_ICF_2r[, c("SoI2SoI", "SoI2RoUS")] <- c(1, 0)
+  }
+  if (TM_RoUS==0) {
+    HazWaste_ICF_2r[, c("RoUS2RoUS", "RoUS2SoI")] <- c(1, 0)
+  }
+  # Adjust ICF ratios if TR/TM > 1
+  if (HazWaste_ICF_2r$SoI2RoUS>1) {
+    HazWaste_ICF_2r[, c("SoI2SoI", "SoI2RoUS")] <- c(0, 1)
+  }
+  if (HazWaste_ICF_2r$RoUS2SoI>1) {
+    HazWaste_ICF_2r[, c("RoUS2RoUS", "RoUS2SoI")] <- c(0, 1)
+  }
   return(HazWaste_ICF_2r)
 }
 
