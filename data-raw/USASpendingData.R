@@ -29,13 +29,12 @@ getFedGovSpending <- function() {
       download.file(paste0("https://files.usaspending.gov/award_data_archive/FY",
                            year, "_All_Contracts_Full_20200713.zip"),
                     FedGovExpzip, mode = "wb")
-      # Get the name of all files in the zip archive
-      fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
-      # Unzip the file to the designated directory
-      unzip(FedGovExpzip, files = fname, exdir = "inst/extdata/USAspending", overwrite = TRUE)
-    } else {
-      fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
     }
+    # Get the name of all files in the zip archive
+    fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
+    # Unzip the file to the designated directory
+    unzip(FedGovExpzip, files = fname, exdir = "inst/extdata/USAspending", overwrite = TRUE)
+    # Load data
     df <- data.frame()
     for (i in 1:length(fname)) {
       # Specify desired columns
@@ -54,7 +53,8 @@ getFedGovSpending <- function() {
                                     df_slice$award_type_code%in%c("A", "B", "C", "D") &
                                     df_slice$primary_place_of_performance_state_code%in%c(state.abb, "DC") &
                                     !is.na(df_slice$federal_action_obligation) &
-                                    !is.na(df_slice$naics_code), ])
+                                    !is.na(df_slice$naics_code) &
+                                    df_slice$federal_action_obligation >= 0, ])
       # Assign calendar Year column
       df_slice$Year <- as.integer(substr(df_slice$action_date, 1, 4))
       df <- rbind(df, df_slice)

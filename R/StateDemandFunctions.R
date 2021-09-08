@@ -649,6 +649,7 @@ calculateStateFedGovExpenditureRatio <- function(year) {
                                  value.var = "Amount")
     GovExpBEA[is.na(GovExpBEA)] <- 0
     # Calculate ratios
+    GovExpBEA[rowSums(GovExpBEA[, -1])==0, 2:ncol(GovExpBEA)] <- 1
     GovExpBEA[, -1] <- GovExpBEA[, -1]/rowSums(GovExpBEA[, -1])
     # Add missing states
     GovExpBEA[, c(setdiff(state.name, colnames(GovExpBEA[, -1])), "Overseas")] <- 0
