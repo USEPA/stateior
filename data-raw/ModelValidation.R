@@ -1,6 +1,6 @@
 ### State Supply Model
 # Define year
-year <- 2015
+year <- 2012
 # Load US Make and Use
 US_Summary_Make <- getNationalMake("Summary", year)
 US_Summary_Use <- getNationalUse("Summary", year)
@@ -18,14 +18,8 @@ State_Summary_Use_ls <- get(paste0("State_Summary_Use_", year),
                             as.environment("package:stateior"))
 State_Summary_DomesticUse_ls <- get(paste0("State_Summary_DomesticUse_", year),
                                     as.environment("package:stateior"))
-# Build two-region tables
-TwoRegionTable_ls <- list()
-for (state in states[states!="Overseas"]) {
-  # Prepare domestic 2-region Use tables
-  TwoRegionTable_ls[[state]] <- buildTwoRegionDemandModel(state, year,
-                                                          ioschema = 2012,
-                                                          iolevel = "Summary")
-}
+# Load two-region tables
+TwoRegionTable_ls <- get(paste0("TwoRegion_Summary_DomesticUsewithTrade_", year))
 
 #' 1. Sum of each cell across all state Make tables must almost equal
 #' (tolerance is 1E-3) the same cell in US Make table.
