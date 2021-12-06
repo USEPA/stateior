@@ -295,7 +295,7 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
   # 4 - Generate RoUS domestic Use and commodity output
   # Generate RoUS domestic Use
   logging::loginfo("Generating RoUS Domestic Use table ...")
-  US_DomesticUse <- estimateUSDomesticUse(iolevel, year)
+  US_DomesticUse <- generateUSDomesticUse(iolevel, year)
   RoUS_DomesticUse <- US_DomesticUse - SoI_DomesticUse
   # Calculate RoUS Commodity Output
   logging::loginfo("Generating RoUS commodity output ...")
@@ -480,7 +480,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
   FD_cols <- getFinalDemandCodes(iolevel)
   # Load US Make table
   US_Make <- getNationalMake(iolevel, year)
-  US_DomesticUse <- estimateUSDomesticUse(iolevel, year)
+  US_DomesticUse <- generateUSDomesticUse(iolevel, year)
   # Load state Make, industry and commodity output
   State_Make_ls <- get(paste0("State_", iolevel, "_Make_", year),
                        as.environment("package:stateior"))
@@ -615,7 +615,7 @@ buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   SoI_DomesticUse <- get(paste0("State_", iolevel, "_DomesticUse_", year),
                          as.environment("package:stateior"))[[state]]
   columns <- colnames(SoI_DomesticUse)[!colnames(SoI_DomesticUse)%in%c("F040", "F050")]
-  US_DomesticUse <- estimateUSDomesticUse(iolevel, year)
+  US_DomesticUse <- generateUSDomesticUse(iolevel, year)
   RoUS_DomesticUse <- US_DomesticUse - SoI_DomesticUse[commodities, ]
   # RoUS commodity output
   US_CommodityOutput <- colSums(US_Make)
