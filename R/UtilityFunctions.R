@@ -31,8 +31,8 @@ loadDataCommonsfile <- function(dataname, year) {
     subdirectory <- "flowsa/FlowByActivity"
   }
   # Define file directory
-  directory <- paste0(rappdirs::user_data_dir(), "/", subdirectory)
-  if (!file.exists(paste0(directory, "/", filename))) {
+  directory <- file.path(rappdirs::user_data_dir(), subdirectory)
+  if (!file.exists(file.path(directory, filename))) {
     url <- paste0("https://edap-ord-data-commons.s3.amazonaws.com/", subdirectory)
     logging::loginfo(paste0("file not found, downloading from ", url))
     # Check for and create directory if necessary
@@ -40,11 +40,11 @@ loadDataCommonsfile <- function(dataname, year) {
       dir.create(directory, recursive = TRUE)
     }
     # Download file
-    utils::download.file(paste0(url, "/", filename),
-                         paste0(directory, "/", filename), mode = "wb", quiet = TRUE)
+    utils::download.file(file.path(url, filename),
+                         file.path(directory, filename), mode = "wb", quiet = TRUE)
   }
   # Load FBA
-  df <- as.data.frame(arrow::read_parquet(paste0(directory, "/", filename)))
+  df <- as.data.frame(arrow::read_parquet(file.path(directory, filename)))
   # Keep state-level data, including 50 states and D.C.
   df <- df[substr(df$Location, 1, 2)<=56 & substr(df$Location, 3, 5)=="000", ]
   return(df)
@@ -157,39 +157,41 @@ applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
   return(m)
 }
 
-#' Estimate US domestic Use table by adjusting US Use table based on Import matrix.
+#' Generate US domestic Use table by adjusting US Use table based on Import matrix.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param year A numeric value specifying the year of interest.
-#' @return A US Domestic Use table.
-estimateUSDomesticUse <- function(iolevel, year) {
+#' @return A US Domestic Use table with rows as commodity codes and columns as industry and final demand codes
+generateUSDomesticUse <- function(iolevel, year) {
   # Load Use table and Import matrix
   Use <- getNationalUse(iolevel, year)
   Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
                                       sep = "_"))*1E6
-  # Sort rows and columns in Import to match those in Use
-  Import <- Import[rownames(Use), colnames(Use)]
-  # Define Export and Import codes
-  ExportCode <- getVectorOfCodes(iolevel, "Export")
-  ImportCode <- getVectorOfCodes(iolevel, "Import")
-  # Calculate ImportCost.
-  # The imports column in the Import matrix is in foreign port value.
-  # But in the Use table it is in domestic port value.
-  # domestic port value = foreign port value + value of all transportation and insurance services to import + customs duties
-  # See documentation of the Import matrix
-  # (https://apps.bea.gov/industry/xls/io-annual/ImportMatrices_Before_Redefinitions_SUM_1997-2019.xlsx)
-  # So, ImportCost <- Use$Imports - Import$Imports
-  ImportCost <- Use[, ImportCode] - Import[, ImportCode]
-  # Calculate row_sum of Use, except for Export and Import, for allocating ImportCost
-  row_sum <- rowSums(Use) - (Use[, ExportCode] + Use[, ImportCode])
-  # Calculate allocation ratios
-  ratio <- sweep(Use, 1, FUN = "/", row_sum)
-  ratio[is.na(ratio)] <- 0
-  # Subtract Import from Use, then allocate ImportCost to each Industry (column), except for Export and Import
-  DomesticUse <- Use - Import + sweep(ratio, 1, FUN = "*", ImportCost)
-  # Adjust Export and Import columns
-  DomesticUse[, ExportCode] <- Use[, ExportCode]
-  DomesticUse[, ImportCode] <- 0
+  # Subtract Import from Use
+  DomesticUse <- Use - Import[rownames(Use), colnames(Use)]
   return(DomesticUse)
+}
+
+#' Generate international trade adjustment vector from Use and Import matrix.
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param year A numeric value specifying the year of interest.
+#' @return An international trade adjustment vector with names as commodity codes
+generateInternationalTradeAdjustmentVector <- function(iolevel, year) {
+  # Load Use table and Import matrix
+  Use <- getNationalUse(iolevel, year)
+  Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
+                                      sep = "_"))*1E6
+  # Define Import code
+  ImportCode <- getVectorOfCodes(iolevel, "Import")
+  # Calculate InternationalTradeAdjustment
+  # In the Import matrix, the imports column is in domestic (US) port value.
+  # But in the Use table, it is in foreign port value.
+  # domestic port value = foreign port value + value of all transportation and insurance services to import + customs duties
+  # See documentation of the Import matrix (https://apps.bea.gov/industry/xls/io-annual/ImportMatrices_Before_Redefinitions_DET_2007_2012.xlsx)
+  # So, InternationalTradeAdjustment <- Use$Imports - Import$Imports
+  # InternationalTradeAdjustment is essentially 'value of all transportation and insurance services to import' and 'customs duties'
+  InternationalTradeAdjustment <- Use[, ImportCode] - Import[rownames(Use), ImportCode]
+  names(InternationalTradeAdjustment) <- rownames(Use)
+  return(InternationalTradeAdjustment)
 }
 
 #' Calculate US Domestic Use Ratio (matrix).
@@ -200,7 +202,7 @@ calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
   # Load US Use table
   Use <- getNationalUse(iolevel, year)
   # Load US domestic Use table
-  Domestic_Use <- estimateUSDomesticUse(iolevel, year)
+  Domestic_Use <- generateUSDomesticUse(iolevel, year)
   # Calculate state Domestic Use ratios
   Ratio <- Domestic_Use/Use[rownames(Domestic_Use), colnames(Domestic_Use)]
   Ratio[is.na(Ratio)] <- 0
