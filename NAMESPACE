@@ -2,8 +2,8 @@
 
 export(assembleTwoRegionIO)
 export(buildFullTwoRegionIOTable)
-export(buildStateDemandModel)
 export(buildStateSupplyModel)
+export(buildStateUseModel)
 export(buildTwoRegionDemandModel)
 export(getTwoRegionCommodityOutput)
 export(getTwoRegionDomesticFinalDemand)

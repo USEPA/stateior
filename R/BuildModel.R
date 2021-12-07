@@ -126,14 +126,14 @@ buildStateSupplyModel <- function(year) {
   return(model)
 }
 
-#' Build a state demand model for all 52 states/regions
+#' Build a state use use for all 52 states/regions
 #' (including DC and Overseas) for a given year
 #' @description Build a state demand model for all 52 states/regions
 #' (including DC and Overseas) for a given year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A list of state demand model components: Use table and Domestic Use table.
+#' @return A list of state use model components: Use table and Domestic Use table.
 #' @export
-buildStateDemandModel <- function(year) {
+buildStateUseModel <- function(year) {
   # Define industries, commodities and # Define final demand columns
   industries <- getVectorOfCodes("Summary", "Industry")
   commodities <- getVectorOfCodes("Summary", "Commodity")
@@ -153,6 +153,8 @@ buildStateDemandModel <- function(year) {
   US_Use <- getNationalUse("Summary", year)
   # Generate US Summary Use Transaction
   US_Use_Intermediate <- US_Use[commodities, industries]
+  # Generate US international trade adjustment
+  US_ITA <- generateInternationalTradeAdjustmentVector("Summary", year)
   
   logging::loginfo("Calculating state-to-US industry output ratios ...")
   logging::loginfo("Estimating state intermediate consumption ...")
@@ -223,6 +225,8 @@ buildStateDemandModel <- function(year) {
     State_DomesticUse <- State_Use*DomesticUse_ratios
     # Update Import in state Use table
     State_Use$F050 <- rowSums(State_DomesticUse) - rowSums(State_Use)
+    # Append international trade adjustment to state Use an domestic Use tables
+    State_Use[, "F051"] <- State_DomesticUse[, "F051"] <- US_ITA*(State_Use$F050/US_Use$F050)
     # Append value added rows to state Use tables
     GVA <- StateGVA[gsub("\\..*", "", rownames(StateGVA))==state, ]
     rownames(GVA) <- gsub(".*\\.", "", rownames(GVA))
