@@ -207,6 +207,8 @@ buildStateUseModel <- function(year) {
                             State_Import[row_names, , drop = FALSE],
                             estimateStateFedGovExpenditure(year)[row_names, ],
                             estimateStateSLGovExpenditure(year))[row_names, ]
+  StateFinalDemand$State <- gsub("\\..*", "", rownames(StateFinalDemand))
+  StateFinalDemand$Commodity <- gsub(".*\\.", "", rownames(StateFinalDemand))
   
   logging::loginfo("Assembling state use table (intermediate consumption + final demand) ...")
   logging::loginfo("Estimating state domestic use table ...")
@@ -218,15 +220,12 @@ buildStateUseModel <- function(year) {
   for (state in states) {
     # Assemble state Use table
     State_Use <- cbind(State_Use_Intermediate_ls[[state]],
-                       StateFinalDemand[gsub("\\..*", "",
-                                             rownames(StateFinalDemand))==state,
+                       StateFinalDemand[StateFinalDemand$State==state,
                                         FinalDemand_columns])
     # Calculate state domestic Use table
     State_DomesticUse <- State_Use*DomesticUse_ratios
     # Update Import in state Use table
     State_Use$F050 <- rowSums(State_DomesticUse) - rowSums(State_Use)
-    # Append international trade adjustment to state Use an domestic Use tables
-    State_Use[, "F051"] <- State_DomesticUse[, "F051"] <- US_ITA*(State_Use$F050/US_Use$F050)
     # Append value added rows to state Use tables
     GVA <- StateGVA[gsub("\\..*", "", rownames(StateGVA))==state, ]
     rownames(GVA) <- gsub(".*\\.", "", rownames(GVA))
@@ -238,6 +237,23 @@ buildStateUseModel <- function(year) {
     # Add to model
     model[["Use"]][[state]] <- State_Use
     model[["DomesticUse"]][[state]] <- State_DomesticUse
+  }
+  # Append international trade adjustment to state Use and DomesticUse tables
+  #!This step has to be executed after 'model' is complete in order to derive 'ratio'.
+  State_Import_sum <- Reduce("+", model[["Use"]])[commodities, "F050"]
+  for (state in states) {
+    ratio <- model[["Use"]][[state]][commodities, "F050"]/State_Import_sum
+    ratio[is.na(ratio)] <- 0
+    names(ratio) <- commodities
+    # If a commodity has non-zero national ITA but zero in state/US import ratios, 
+    # replace the zeros in the ratios with total consumption (rowSums of Use excluding Imports) ratios.
+    for (comm in intersect(names(US_ITA[US_ITA!=0]), names(ratio[ratio==0]))) {
+      state_total_cons <- sum(model[["Use"]][[state]][comm, setdiff(c(industries, FinalDemand_columns), "F050")])
+      US_total_cons <- sum(US_Use[comm, setdiff(c(industries, FinalDemand_columns), "F050")])
+      ratio[comm] <- state_total_cons/US_total_cons
+    }
+    model[["Use"]][[state]][commodities, "F051"] <- US_ITA*ratio
+    model[["DomesticUse"]][[state]][commodities, "F051"] <- US_ITA*ratio
   }
   
   logging::loginfo("Model build complete.")
@@ -263,11 +279,15 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
   tradable_cols <- c(unlist(sapply(list("Industry", "HouseholdDemand"),
                                    getVectorOfCodes, iolevel = iolevel)),
                      FD_cols[substr(FD_cols, nchar(FD_cols),
-                                    nchar(FD_cols))%in%c("C", "E", "R", "N")])
+                                    nchar(FD_cols))%in%c("C", "E", "R", "N")],
+                     ifelse(iolevel=="Detail", "F05100", "F051"))
   # All sectors except international imports
   industries <- getVectorOfCodes(iolevel, "Industry")
+  # import_col <- c(getVectorOfCodes(iolevel, "Import"),
+  #                 ifelse(iolevel=="Detail", "F05100", "F051"))
   import_col <- getVectorOfCodes(iolevel, "Import")
-  nonimport_cols <- c(industries, FD_cols[-which(FD_cols%in%import_col)])
+  nonimport_cols <- c(industries, FD_cols[-which(FD_cols%in%import_col)],
+                      ifelse(iolevel=="Detail", "F05100", "F051"))
   
   # 1 - Load state domestic Use for the specified year
   logging::loginfo("Loading state Domestic Use table ...")
@@ -432,7 +452,8 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
   # then add them to SoI2SoI, SoI2RoUS, RoUS2RoUS, and RoUS2SoI domestic Use
   if (!domestic) {
     # Generate US_Import
-    US_Import <- getNationalUse(iolevel, year) - US_DomesticUse
+    US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
+                                           sep = "_"))[, c(industries, FD_cols)]*1E6
     # Sum the two-region Domestic Use
     DomesticUse_sum <- Reduce("+", lapply(list(SoI2SoI_Use, SoI2RoUS_Use, RoUS2SoI_Use, RoUS2RoUS_Use),
                                           "[", c(industries, FD_cols)))
