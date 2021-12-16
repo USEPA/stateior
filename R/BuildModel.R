@@ -128,7 +128,7 @@ buildStateSupplyModel <- function(year) {
 
 #' Build a state use use for all 52 states/regions
 #' (including DC and Overseas) for a given year
-#' @description Build a state demand model for all 52 states/regions
+#' @description Build a state Use model for all 52 states/regions
 #' (including DC and Overseas) for a given year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A list of state use model components: Use table and Domestic Use table.
@@ -260,18 +260,18 @@ buildStateUseModel <- function(year) {
   return(model)
 }
 
-#' Build a two-region demand model
-#' @description Generate two-region (SoI and RoUS) demand tables
+#' Build a two-region Use model
+#' @description Generate two-region (SoI and RoUS) Use tables
 #' with interregional exports and imports.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A list of domestic two-region demand tables.
+#' @return A list of domestic two-region Use tables.
 #' @export
-buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
-                                      ICF_sensitivity_analysis = FALSE,
-                                      adjust_by = 0, domestic = TRUE) {
+buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
+                                   ICF_sensitivity_analysis = FALSE,
+                                   adjust_by = 0, domestic = TRUE) {
   # 0 - Define commodities and desired columns
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   FD_cols <- getFinalDemandCodes(iolevel)
@@ -360,7 +360,7 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
   SoI2SoI_Use$InterregionalExports <- SoI_CommodityOutput$Output - rowSums(SoI2SoI_Use[, nonimport_cols])
   RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_DomesticUse[, tradable_cols]) - rowSums(RoUS2RoUS_Use[, tradable_cols])
   RoUS2RoUS_Use$InterregionalExports <- RoUS_CommodityOutput$Output - rowSums(RoUS2RoUS_Use[, nonimport_cols])
-   
+  
   # 7 - Calculate residual for SoI and RoUS
   logging::loginfo("Allocating the difference between interregional imports and exports (i.e. residual) in SoI2SoI Use and RoUS2RoUS Use ...")
   residual <- SoI2SoI_Use$InterregionalImports - RoUS2RoUS_Use$InterregionalExports
@@ -490,11 +490,11 @@ buildTwoRegionDemandModel <- function(state, year, ioschema, iolevel,
   return(TwoRegionUse)
 }
 
-#' Assemble two-region make, use, domestic use, and demand tables as well as commodity and industry outputs.
+#' Assemble two-region make, use, domestic use, and Use tables as well as commodity and industry outputs.
 #' @description Assemble two-region make and use tables as well as commodity and industry outputs.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A list of two-region make, use, domestic use, and demand tables
+#' @return A list of two-region make, use, domestic use, and Use tables
 #' as well as commodity and industry outputs by state.
 #' @export
 assembleTwoRegionIO <- function(year, iolevel) {
@@ -538,18 +538,18 @@ assembleTwoRegionIO <- function(year, iolevel) {
     TwoRegionIO[["Make"]][[state]] <- TwoRegionMake
     
     ## Two-region Use and Domestic Use table
-    TwoRegionDemandModel <- buildTwoRegionDemandModel(state, year, ioschema = 2012,
-                                                      iolevel = iolevel, domestic = FALSE)
-    TwoRegionUse <- cbind(rbind(TwoRegionDemandModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
-                                TwoRegionDemandModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
-                          rbind(TwoRegionDemandModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
-                                TwoRegionDemandModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
-    TwoRegionDomesticDemandModel <- buildTwoRegionDemandModel(state, year, ioschema = 2012,
-                                                              iolevel = iolevel, domestic = TRUE)
-    TwoRegionDomesticUse <- cbind(rbind(TwoRegionDomesticDemandModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
-                                        TwoRegionDomesticDemandModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
-                                  rbind(TwoRegionDomesticDemandModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
-                                        TwoRegionDomesticDemandModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
+    TwoRegionUseModel <- buildTwoRegionUseModel(state, year, ioschema = 2012,
+                                                iolevel = iolevel, domestic = FALSE)
+    TwoRegionUse <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
+                                TwoRegionUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
+                          rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
+                                TwoRegionUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
+    TwoRegionDomesticUseModel <- buildTwoRegionUseModel(state, year, ioschema = 2012,
+                                                        iolevel = iolevel, domestic = TRUE)
+    TwoRegionDomesticUse <- cbind(rbind(TwoRegionDomesticUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
+                                        TwoRegionDomesticUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
+                                  rbind(TwoRegionDomesticUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
+                                        TwoRegionDomesticUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
     
     rownames(TwoRegionUse) <- rownames(TwoRegionDomesticUse) <- apply(cbind(commodities,
                                                                             rep(c(paste0("US-", state_abb), "RoUS"),
@@ -565,9 +565,9 @@ assembleTwoRegionIO <- function(year, iolevel) {
     ## Two-region Value Added
     SoI_VA <- State_Use_ls[[state]][VA_rows, industries]
     rownames(SoI_VA) <- apply(cbind(VA_rows, paste0("US-", state_abb)),
-                               1, FUN = joinStringswithSlashes)
+                              1, FUN = joinStringswithSlashes)
     colnames(SoI_VA) <- apply(cbind(industries, paste0("US-", state_abb)),
-                               1, FUN = joinStringswithSlashes)
+                              1, FUN = joinStringswithSlashes)
     RoUS_VA <- (Reduce("+", State_Use_ls) - State_Use_ls[[state]])[VA_rows, industries]
     rownames(RoUS_VA) <- apply(cbind(VA_rows, "RoUS"), 1, joinStringswithSlashes)
     colnames(RoUS_VA) <- apply(cbind(industries, "RoUS"), 1, joinStringswithSlashes)
@@ -578,7 +578,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
     TwoRegionIO[["ValueAdded"]][[state]] <- TwoRegionVA
     
     ## Two-region Domestic Use table with interregional exports and imports
-    TwoRegionIO[["DomesticUsewithTrade"]][[state]] <- TwoRegionDomesticDemandModel[1:4]
+    TwoRegionIO[["DomesticUsewithTrade"]][[state]] <- TwoRegionDomesticUseModel[1:4]
     
     ## Two-region Commodity Output
     SoI_CommodityOutput <- State_CommodityOutput_ls[[state]]
@@ -652,11 +652,11 @@ buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   
   logging::loginfo("Generating two-region Domestic Use tables ...")
   # Two-region Use table
-  TwoRegionDemandModel <- buildTwoRegionDemandModel(state, year, ioschema, iolevel)
-  TwoRegionUse <- cbind(rbind(TwoRegionDemandModel[["SoI2SoI"]][commodities, industries],
-                              TwoRegionDemandModel[["RoUS2SoI"]][commodities, industries]),
-                        rbind(TwoRegionDemandModel[["SoI2RoUS"]][commodities, industries],
-                              TwoRegionDemandModel[["RoUS2RoUS"]][commodities, industries]))
+  TwoRegionUseModel <- buildTwoRegionUseModel(state, year, ioschema, iolevel)
+  TwoRegionUse <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, industries],
+                              TwoRegionUseModel[["RoUS2SoI"]][commodities, industries]),
+                        rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, industries],
+                              TwoRegionUseModel[["RoUS2RoUS"]][commodities, industries]))
   rownames(TwoRegionUse) <- paste(rep(c(state, "RoUS"), each = length(commodities)),
                                   commodities, rep("Commodity", each = length(commodities)),
                                   sep = ".")
@@ -667,10 +667,10 @@ buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   logging::loginfo("Generating two-region final demand tables ...")
   # Final demand
   FD_columns <- getFinalDemandCodes(iolevel)
-  TwoRegionFinalDemand <- cbind(rbind(TwoRegionDemandModel[["SoI2SoI"]][commodities, FD_columns],
-                                      TwoRegionDemandModel[["RoUS2SoI"]][commodities, FD_columns]),
-                                rbind(TwoRegionDemandModel[["SoI2RoUS"]][commodities, FD_columns],
-                                      TwoRegionDemandModel[["RoUS2RoUS"]][commodities, FD_columns]))
+  TwoRegionFinalDemand <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, FD_columns],
+                                      TwoRegionUseModel[["RoUS2SoI"]][commodities, FD_columns]),
+                                rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, FD_columns],
+                                      TwoRegionUseModel[["RoUS2RoUS"]][commodities, FD_columns]))
   rownames(TwoRegionFinalDemand) <- rownames(TwoRegionUse)
   colnames(TwoRegionFinalDemand) <- paste(rep(c(state, "RoUS"), each = length(FD_columns)),
                                           FD_columns, sep = ".")

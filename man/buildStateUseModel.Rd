@@ -14,6 +14,6 @@ buildStateUseModel(year)
 A list of state use model components: Use table and Domestic Use table.
 }
 \description{
-Build a state demand model for all 52 states/regions
+Build a state Use model for all 52 states/regions
 (including DC and Overseas) for a given year.
 }
