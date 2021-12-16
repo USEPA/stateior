@@ -11,7 +11,7 @@ State_Summary_CommodityOutput_2012 <- StateSupplyModel_2012$CommodityOutput
 usethis::use_data(State_Summary_CommodityOutput_2012, overwrite = TRUE)
 
 ### 2012 State Demand Model ###
-StateDemandModel_2012 <- buildStateDemandModel(2012)
+StateDemandModel_2012 <- buildStateUseModel(2012)
 # Use table
 State_Summary_Use_2012 <- StateDemandModel_2012$Use
 usethis::use_data(State_Summary_Use_2012, overwrite = TRUE)
@@ -33,7 +33,7 @@ State_Summary_CommodityOutput_2013 <- StateSupplyModel_2013$CommodityOutput
 usethis::use_data(State_Summary_CommodityOutput_2013, overwrite = TRUE)
 
 ### 2013 State Demand Model ###
-StateDemandModel_2013 <- buildStateDemandModel(2013)
+StateDemandModel_2013 <- buildStateUseModel(2013)
 # Use table
 State_Summary_Use_2013 <- StateDemandModel_2013$Use
 usethis::use_data(State_Summary_Use_2013, overwrite = TRUE)
@@ -55,7 +55,7 @@ State_Summary_CommodityOutput_2014 <- StateSupplyModel_2014$CommodityOutput
 usethis::use_data(State_Summary_CommodityOutput_2014, overwrite = TRUE)
 
 ### 2014 State Demand Model ###
-StateDemandModel_2014 <- buildStateDemandModel(2014)
+StateDemandModel_2014 <- buildStateUseModel(2014)
 # Use table
 State_Summary_Use_2014 <- StateDemandModel_2014$Use
 usethis::use_data(State_Summary_Use_2014, overwrite = TRUE)
@@ -77,7 +77,7 @@ State_Summary_CommodityOutput_2015 <- StateSupplyModel_2015$CommodityOutput
 usethis::use_data(State_Summary_CommodityOutput_2015, overwrite = TRUE)
 
 ### 2015 State Demand Model ###
-StateDemandModel_2015 <- buildStateDemandModel(2015)
+StateDemandModel_2015 <- buildStateUseModel(2015)
 # Use table
 State_Summary_Use_2015 <- StateDemandModel_2015$Use
 usethis::use_data(State_Summary_Use_2015, overwrite = TRUE)
@@ -99,7 +99,7 @@ State_Summary_CommodityOutput_2016 <- StateSupplyModel_2016$CommodityOutput
 usethis::use_data(State_Summary_CommodityOutput_2016, overwrite = TRUE)
 
 ### 2016 State Demand Model ###
-StateDemandModel_2016 <- buildStateDemandModel(2016)
+StateDemandModel_2016 <- buildStateUseModel(2016)
 # Use table
 State_Summary_Use_2016 <- StateDemandModel_2016$Use
 usethis::use_data(State_Summary_Use_2016, overwrite = TRUE)
@@ -121,7 +121,7 @@ State_Summary_CommodityOutput_2017 <- StateSupplyModel_2017$CommodityOutput
 usethis::use_data(State_Summary_CommodityOutput_2017, overwrite = TRUE)
 
 ### 2017 State Demand Model ###
-StateDemandModel_2017 <- buildStateDemandModel(2017)
+StateDemandModel_2017 <- buildStateUseModel(2017)
 # Use table
 State_Summary_Use_2017 <- StateDemandModel_2017$Use
 usethis::use_data(State_Summary_Use_2017, overwrite = TRUE)
