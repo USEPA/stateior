@@ -168,6 +168,14 @@ generateUSDomesticUse <- function(iolevel, year) {
                                       sep = "_"))*1E6
   # Subtract Import from Use
   DomesticUse <- Use - Import[rownames(Use), colnames(Use)]
+  # Adjust Import column in DomesticUse to 0
+  DomesticUse[, getVectorOfCodes(iolevel, "Import")] <- 0
+  # Append international trade adjustment as the last column in DomesticUse table
+  if (iolevel=="Detail") {
+    DomesticUse[, "F05100"] <- generateInternationalTradeAdjustmentVector(iolevel, year)
+  } else {
+    DomesticUse[, "F051"] <- generateInternationalTradeAdjustmentVector(iolevel, year)
+  }
   return(DomesticUse)
 }
 
@@ -202,9 +210,9 @@ calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
   # Load US Use table
   Use <- getNationalUse(iolevel, year)
   # Load US domestic Use table
-  Domestic_Use <- generateUSDomesticUse(iolevel, year)
+  DomesticUse <- generateUSDomesticUse(iolevel, year)
   # Calculate state Domestic Use ratios
-  Ratio <- Domestic_Use/Use[rownames(Domestic_Use), colnames(Domestic_Use)]
+  Ratio <- DomesticUse[rownames(Use), colnames(Use)]/Use
   Ratio[is.na(Ratio)] <- 0
   Ratio$F050 <- 0
   return(Ratio)
