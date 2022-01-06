@@ -7,6 +7,127 @@ loadDatafromUSEEIOR <- function(dataset) {
   return(df)
 }
 
+#' Read csv files using read.table function from utils package
+#' set header = TRUE, stringsAsFactors = FALSE, and check.names = FALSE
+#' @param filename A string specifying name of the csv file
+#' @param fill logical. If TRUE then in case the rows have unequal length,
+#' blank fields are implicitly added.
+#' @return The data read
+readCSV <- function(filename, fill = FALSE) {
+  df <- utils::read.table(filename, sep = ",", header = TRUE,
+                          stringsAsFactors = FALSE, check.names = FALSE,
+                          fill = fill)
+  return(df)
+}
+
+#' Join strings with slashes
+#'
+#' @param ... text string
+joinStringswithSlashes <- function(...) {
+  items <- list(...)
+  str <- sapply(items, paste, collapse = '/')
+  return(str)
+}
+
+#' Extract desired columns from SchemaInfo, return vectors with strings of codes.
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param colName A text value specifying desired column name.
+#' @return A vector of codes.
+getVectorOfCodes <- function(iolevel, colName) {
+  SchemaInfo <- readCSV(system.file("extdata",
+                                    paste0("2012_", iolevel, "_Schema_Info.csv"),
+                                    package = "stateior"))
+  return(as.vector(stats::na.omit(SchemaInfo[, c("Code", colName)])[, "Code"]))
+}
+
+#' Get codes of final demand.
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @return A vector of final demand codes.
+getFinalDemandCodes <- function(iolevel) {
+  FinalDemandCodes <- unlist(sapply(list("HouseholdDemand", "InvestmentDemand",
+                                         "ChangeInventories", "Export", "Import",
+                                         "GovernmentDemand"),
+                                    getVectorOfCodes, iolevel = iolevel))
+  return(FinalDemandCodes)
+}
+
+#' This function converts US state name, for example "Alabama",
+#' to a two-character state abbreviation "AL". Can take "District of Columbia".
+#' @param state A string character specifying the full name of a US state.
+#' @return two-character abbreviation of a US state.
+getStateAbbreviation <- function(state) {
+  state_abb <- ifelse(state=="District of Columbia", "DC",
+                      state.abb[state.name == state])
+  return(state_abb)
+}
+
+#' Maps a vector of 5-digit FIPS codes to location names
+#' @param fipscodes A vector of 5 digit FIPS codes
+#' @param fipssystem A text value specifying FIPS System, can be FIPS_2015
+#' @return A vector of location names where matches are found
+mapFIPS5toLocationNames <- function(fipscodes, fipssystem) {
+  mapping_file <- "Crosswalk_FIPS.csv"
+  mapping <- utils::read.table(system.file("extdata", mapping_file, package = "stateior"),
+                               sep = ",", header = TRUE, stringsAsFactors = FALSE, 
+                               check.names = FALSE, quote = "")
+  # Add leading zeros to FIPS codes if necessary
+  if (!fipssystem%in%colnames(mapping)) {
+    fipssystem <- max(which(startsWith(colnames(mapping), "FIPS")))
+  }
+  mapping[, fipssystem] <- formatC(mapping[, fipssystem], width = 5, format = "d", flag = "0")
+  mapping <- mapping[mapping[, fipssystem]%in%fipscodes, ]
+  # Get locations based on fip scodes
+  locations <- stringr::str_replace_all(string = fipscodes,
+                                        pattern = setNames(as.vector(mapping$State),
+                                                           mapping[, fipssystem]))
+  return(locations)
+}
+
+#' Load BEA State data (GVA and Employment) to BEA Summary mapping table
+#' @param dataname A string specifying name of the BEA state data
+#' @return The mapping table
+loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
+  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO2012Schema.csv")
+  mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
+  return(mapping)
+}
+
+#' Combine sector code and location to the form of code/location.
+#' @param sector_type A text value specifying desired sector type,
+#' can be "Commodity", "Industry", "FinalDemand", or "ValueAdded".
+#' @param location A text value specifying desired location,
+#' can be state name like "Georgia" or "RoUS" representing Rest of US.
+#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @return A text value in the format of code/location.
+getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
+  # Get code
+  if (sector_type!="FinalDemand") {
+    code <- getVectorOfCodes(iolevel, sector_type)
+  } else {
+    code <- getFinalDemandCodes(iolevel)
+  }
+  # Get code_loc
+  if (location!="RoUS") {
+    state_abb <- getStateAbbreviation(location)
+    code_loc <- apply(cbind(code, paste0("US-", state_abb)), 1,
+                      FUN = joinStringswithSlashes)
+  } else {
+    code_loc <- apply(cbind(code, "RoUS"), 1, FUN = joinStringswithSlashes)
+  }
+  return(code_loc)
+}
+
+#' Generate two-region data filename with .rda as suffix.
+#' @description Generate two-region data filename with .rda as suffix.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @return A string of two-region data filename with .rda as suffix.
+getTwoRegionDataFileName <- function(year, iolevel, dataname) {
+  filename <- paste("TwoRegion", iolevel, dataname, year, sep = "_")
+  return(filename)
+}
+
 #' Load flowsa FlowByActivity or FlowBySector data from Data Commons
 #' @param dataname A string specifying data name, can be "NOAA_FisheryLandings".
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
@@ -50,305 +171,68 @@ loadDataCommonsfile <- function(dataname, year) {
   return(df)
 }
 
-#' Read csv files using read.table function from utils package
-#' set header = TRUE, stringsAsFactors = FALSE, and check.names = FALSE
-#' @param filename A string specifying name of the csv file
-#' @param fill logical. If TRUE then in case the rows have unequal length,
-#' blank fields are implicitly added.
-#' @return The data read
-readCSV <- function(filename, fill = FALSE) {
-  df <- utils::read.table(filename, sep = ",", header = TRUE,
-                          stringsAsFactors = FALSE, check.names = FALSE,
-                          fill = fill)
-  return(df)
-}
-
-#' Load BEA State data (GVA and Employment) to BEA Summary mapping table
-#' @param dataname A string specifying name of the BEA state data
-#' @return The mapping table
-loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
-  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO2012Schema.csv")
-  mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
-  return(mapping)
-}
-
-#' Calculate tolerance for RAS. Takes a target row sum vector and target colsum vector.
-#' Specify either relative difference or absolute difference.
-#' @param t_r A vector setting the target row sums of the matrix.
-#' @param t_c A vector setting the target column sums of the matrix.
-#' @param relative_diff A numeric value setting the relative difference of the two numerical vectors.
-#' @param absolute_diff A numeric value setting the mean absolute difference of the two numerical vectors.
-#' @return A numeric value of relative difference of t_r and t_c.
-setToleranceforRAS <- function(t_r, t_c, relative_diff = NULL, absolute_diff = NULL) {
-  if (!is.null(relative_diff)) {
-    t <- relative_diff
-  } else if (!is.null(absolute_diff)) {
-    t <- absolute_diff/max(abs(t_c), abs(t_r))
-  } else {
-    stop("Set relative_diff or absolute_diff first.")
-  }
-  return(t)
-}
-
-#' Generalized RAS procedure. Takes an initial matrix, a target row sum vector
-#' and target colsum vector. Iterates until all row sums of matrix equal to target row sum vector
-#' and colsums of matrix equal target col sum vector, within a tolerance.
-#' @param m0 A matrix object.
-#' @param t_r A vector setting the target row sums of the matrix.
-#' @param t_c A vector setting the target column sums of the matrix.
-#' @param t A numeric value setting the tolerance of RAS.
-#' @param max_itr A numeric value setting the maximum number of iterations to try for convergence.
-#' Defualt: 1000000.
-#' @return A RAS balanced matrix.
-RAS <- function(m0, t_r, t_c, t, max_itr = 1E6) {
-  m <- m0
-  c_r <- as.vector(rowSums(m0))
-  c_c <- as.vector(colSums(m0))
-  # Check row and column conditions
-  row_condition <- all.equal(t_r, c_r, tolerance = t)
-  col_condition <- all.equal(t_c, c_c, tolerance = t)
-  i <- 0
-  while(!isTRUE(row_condition) | !isTRUE(col_condition)) {
-    if(i>max_itr){
-      break
-    }
-    # Adjust rowwise
-    c_r <- as.vector(rowSums(m))
-    # Replace 0 with 1 in c_r
-    c_r[c_r==0] <- 1
-    r_ratio <- t_r/c_r
-    m <- diag(r_ratio) %*% m
-    # Adjust colwise
-    c_c <- as.vector(colSums(m))
-    # Replace 0 with 1 in c_c
-    c_c[c_c==0] <- 1
-    c_ratio <- t_c/c_c
-    m <- m %*% diag(c_ratio)
-    # Check row and column conditions
-    row_condition <- all.equal(t_r, c_r, tolerance = t)
-    col_condition <- all.equal(t_c, c_c, tolerance = t)
-    i <- i + 1
-  }
-  dimnames(m) <- dimnames(m0)
-  print(paste("RAS converged after", i, "iterations."))
-  return(m)
-}
-
-#' Integrate pre-adjustment of t_r, t_c and t (tolerance level) with RAS function.
-#' @param m0 A matrix object.
-#' @param t_r A vector setting the target row sums of the matrix.
-#' @param t_c A vector setting the target column sums of the matrix.
-#' @param relative_diff A numeric value setting the relative difference of the two numerical vectors.
-#' @param absolute_diff A numeric value setting the mean absolute difference of the two numerical vectors.
-#' @param max_itr A numeric value setting the maximum number of iterations to try for convergence.
-#' Defualt: 1000000.
-#' @return A RAS balanced matrix.
-applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
-  # Adjust t_c/t_r, make sum(t_c)==sum(t_r)
-  if (sum(t_c) > sum(t_r)) {
-    t_r <- (t_r/sum(t_r))*sum(t_c)
-  } else {
-    t_c <- (t_c/sum(t_c))*sum(t_r)
-  }
-  # Generate t for RAS
-  t <- setToleranceforRAS(t_r, t_c, relative_diff, absolute_diff)
-  # Apply RAS
-  m <- RAS(m0, t_r, t_c, t, max_itr)
-  return(m)
-}
-
-#' Generate US domestic Use table by adjusting US Use table based on Import matrix.
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @param year A numeric value specifying the year of interest.
-#' @return A US Domestic Use table with rows as commodity codes and columns as industry and final demand codes
-generateUSDomesticUse <- function(iolevel, year) {
-  # Load Use table and Import matrix
-  Use <- getNationalUse(iolevel, year)
-  Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
-                                      sep = "_"))*1E6
-  # Subtract Import from Use
-  DomesticUse <- Use - Import[rownames(Use), colnames(Use)]
-  # Adjust Import column in DomesticUse to 0
-  DomesticUse[, getVectorOfCodes(iolevel, "Import")] <- 0
-  # Append international trade adjustment as the last column in DomesticUse table
-  if (iolevel=="Detail") {
-    DomesticUse[, "F05100"] <- generateInternationalTradeAdjustmentVector(iolevel, year)
-  } else {
-    DomesticUse[, "F051"] <- generateInternationalTradeAdjustmentVector(iolevel, year)
-  }
-  return(DomesticUse)
-}
-
-#' Generate international trade adjustment vector from Use and Import matrix.
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @param year A numeric value specifying the year of interest.
-#' @return An international trade adjustment vector with names as commodity codes
-generateInternationalTradeAdjustmentVector <- function(iolevel, year) {
-  # Load Use table and Import matrix
-  Use <- getNationalUse(iolevel, year)
-  Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
-                                      sep = "_"))*1E6
-  # Define Import code
-  ImportCode <- getVectorOfCodes(iolevel, "Import")
-  # Calculate InternationalTradeAdjustment
-  # In the Import matrix, the imports column is in domestic (US) port value.
-  # But in the Use table, it is in foreign port value.
-  # domestic port value = foreign port value + value of all transportation and insurance services to import + customs duties
-  # See documentation of the Import matrix (https://apps.bea.gov/industry/xls/io-annual/ImportMatrices_Before_Redefinitions_DET_2007_2012.xlsx)
-  # So, InternationalTradeAdjustment <- Use$Imports - Import$Imports
-  # InternationalTradeAdjustment is essentially 'value of all transportation and insurance services to import' and 'customs duties'
-  InternationalTradeAdjustment <- Use[, ImportCode] - Import[rownames(Use), ImportCode]
-  names(InternationalTradeAdjustment) <- rownames(Use)
-  return(InternationalTradeAdjustment)
-}
-
-#' Calculate US Domestic Use Ratio (matrix).
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' Get a datetime object for desired data file on the DataCommons server.
+#' @description Get a datetime object for desired data file on the DataCommons server.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains US Domestic Use Ratio (matrix) at a specific year at BEA Summary level.
-calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
-  # Load US Use table
-  Use <- getNationalUse(iolevel, year)
-  # Load US domestic Use table
-  DomesticUse <- generateUSDomesticUse(iolevel, year)
-  # Calculate state Domestic Use ratios
-  Ratio <- DomesticUse[rownames(Use), colnames(Use)]/Use
-  Ratio[is.na(Ratio)] <- 0
-  Ratio$F050 <- 0
-  return(Ratio)
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @return A datetime object for desired data file on the DataCommons server.
+getFileUpdateTimefromDataCommons <- function(year, iolevel, dataname) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  base_url <- "https://xri9ebky5b.execute-api.us-east-1.amazonaws.com/api/?"
+  url <- paste0(base_url, "searchvalue=", datafile, "&place=&searchfields=filename")
+  date_str <- jsonlite::fromJSON(url)[, "LastModified"]
+  file_upload_datetime <- as.POSIXct(date_str)
+  return(file_upload_datetime)
 }
 
-#' Calculate US International Transport Margins Ratio (matrix).
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' Get a datetime object for desired data file from local folder.
+#' @description Get a datetime object for desired data file from local folder.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains US International Transport Margins Ratio (matrix) at a specific year at BEA Summary level.
-calculateUSInternationalTransportMarginsRatioMatrix <- function(iolevel, year) {
-  # Load US Use and Import tables
-  US_Use <- getNationalUse(iolevel, year)
-  US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
-                                         sep = "_"))*1E6
-  # Calculate US Domestic Use ratios (w/ International Transport Margins)
-  DomesticUsewIntlTransMarginsRatio <- (US_Use - US_Import[rownames(US_Use), colnames(US_Use)])/US_Use
-  DomesticUsewIntlTransMarginsRatio[is.na(DomesticUsewIntlTransMarginsRatio)] <- 0
-  # Calculate IntlTransportMargins (vector)
-  IntlTransportMargins <- US_Use[, "F050"] - US_Import[, "F050"]
-  # Allocate InternationalMargins to get InternationalMarginsMatrix
-  drop_cols <- c("F040", "F050")
-  DistributionRatio <- sweep(US_Use, 1, FUN = "/",
-                             rowSums(US_Use[, !colnames(US_Use) %in% drop_cols]))
-  DistributionRatio[is.na(DistributionRatio)] <- 0
-  IntlTransportMarginsMatrix <- sweep(DistributionRatio, 1, FUN = "*",
-                                      IntlTransportMargins)
-  # Calculate IntlTransportMarginsRatio
-  IntlTransportMarginsRatio <- IntlTransportMarginsMatrix/US_Use
-  IntlTransportMarginsRatio[is.na(IntlTransportMarginsRatio)] <- 0
-  return(IntlTransportMarginsRatio)
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param path User-defined local path.
+#' @return A datetime object for desired data file from local folder.
+getFileUpdateTimefromLocal <- function(year, iolevel, dataname, path) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  meta <- read_datafile_meta(datafile, path)
+  file_upload_datetime <- dt.datetime.strptime(meta["LastUpdated"], '%Y-%m-%d %H:%M:%S%z')
+  return(file_upload_datetime)
 }
 
-#' Extract desired columns from SchemaInfo, return vectors with strings of codes.
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @param colName A text value specifying desired column name.
-#' @return A vector of codes.
-getVectorOfCodes <- function(iolevel, colName) {
-  SchemaInfo <- readCSV(system.file("extdata",
-                                    paste0("2012_", iolevel, "_Schema_Info.csv"),
-                                    package = "stateior"))
-  return(as.vector(stats::na.omit(SchemaInfo[, c("Code", colName)])[, "Code"]))
-}
-
-#' Get codes of final demand.
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @return A vector of final demand codes.
-getFinalDemandCodes <- function(iolevel) {
-  FinalDemandCodes <- unlist(sapply(list("HouseholdDemand", "InvestmentDemand",
-                                         "ChangeInventories", "Export", "Import",
-                                         "GovernmentDemand"),
-                                    getVectorOfCodes, iolevel = iolevel))
-  return(FinalDemandCodes)
-}
-
-#' Join strings with slashes
-#'
-#' @param ... text string
-joinStringswithSlashes <- function(...) {
-  items <- list(...)
-  str <- sapply(items, paste, collapse = '/')
-  return(str)
-}
-
-#' Maps a vector of 5-digit FIPS codes to location names
-#' @param fipscodes A vector of 5 digit FIPS codes
-#' @param fipssystem A text value specifying FIPS System, can be FIPS_2015
-#' @return A vector of location names where matches are found
-mapFIPS5toLocationNames <- function(fipscodes, fipssystem) {
-  mapping_file <- "Crosswalk_FIPS.csv"
-  mapping <- utils::read.table(system.file("extdata", mapping_file, package = "stateior"),
-                               sep = ",", header = TRUE, stringsAsFactors = FALSE, 
-                               check.names = FALSE, quote = "")
-  # Add leading zeros to FIPS codes if necessary
-  if (!fipssystem%in%colnames(mapping)) {
-    fipssystem <- max(which(startsWith(colnames(mapping), "FIPS")))
-  }
-  mapping[, fipssystem] <- formatC(mapping[, fipssystem], width = 5, format = "d", flag = "0")
-  mapping <- mapping[mapping[, fipssystem]%in%fipscodes, ]
-  # Get locations based on fip scodes
-  locations <- stringr::str_replace_all(string = fipscodes,
-                                        pattern = setNames(as.vector(mapping$State),
-                                                           mapping[, fipssystem]))
-  return(locations)
-}
-
-#' This function converts US state name, for example "Alabama",
-#' to a two-character state abbreviation "AL". Can take "District of Columbia".
-#' @param state A string character specifying the full name of a US state.
-#' @return two-character abbreviation of a US state.
-getStateAbbreviation <- function(state) {
-  state_abb <- ifelse(state=="District of Columbia", "DC",
-                      state.abb[state.name == state])
-  return(state_abb)
-}
-
-#' Combine sector code and location to the form of code/location.
-#' @param sector_type A text value specifying desired sector type,
-#' can be "Commodity", "Industry", "FinalDemand", or "ValueAdded".
-#' @param location A text value specifying desired location,
-#' can be state name like "Georgia" or "RoUS" representing Rest of US.
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @return A text value in the format of code/location.
-getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
-  # Get code
-  if (sector_type!="FinalDemand") {
-    code <- getVectorOfCodes(iolevel, sector_type)
-  } else {
-    code <- getFinalDemandCodes(iolevel)
-  }
-  # Get code_loc
-  if (location!="RoUS") {
-    state_abb <- getStateAbbreviation(location)
-    code_loc <- apply(cbind(code, paste0("US-", state_abb)), 1,
-                      FUN = joinStringswithSlashes)
-  } else {
-    code_loc <- apply(cbind(code, "RoUS"), 1, FUN = joinStringswithSlashes)
-  }
-  return(code_loc)
-}
-
-#' Calculate regional purchase coefficient for specified state and year
-#' @param state Name of desired state, like "Georgia".
+#' Write a datetime object for desired data file to local folder.
+#' @description Get a datetime object for desired data file to local folder.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data.frame contains by-commodity RPC and overall RPC
-calculateRegionalPurchaseCoefficient <- function(SoI2SoIUse, RoUS2SoIUse, iolevel) {
-  import_export_cols <- unlist(sapply(list("Export", "Import"),
-                                      getVectorOfCodes, iolevel = iolevel))
-  LocallyProducedConsumption <- rowSums(SoI2SoIUse) - rowSums(SoI2SoIUse[, import_export_cols])
-  ImportedConsumption <- rowSums(RoUS2SoIUse) - rowSums(RoUS2SoIUse[, import_export_cols])
-  TotalConsumption <- LocallyProducedConsumption + ImportedConsumption
-  rpc <- cbind.data.frame(LocallyProducedConsumption/TotalConsumption,
-                          sum(LocallyProducedConsumption)/sum(TotalConsumption))
-  colnames(rpc) <- c("RPC", "OverallRPC")
-  rpc[is.na(rpc)] <- 1
-  return(rpc)
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param path User-defined local path.
+#' @return A datetime object for desired data file to local folder. 
+writeDatafileMeta <- function(year, iolevel, dataname, path) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  file_upload_dt <- getFileUpdateTimefromDataCommons(year, iolevel, dataname)
+  write(jsonlite::toJSON(file_upload_dt), paste0(path, "/", datafile, "_metadata.json"))
 }
+
+#' Load a datetime object for desired data file from local folder.
+#' @description Load a datetime object for desired data file from local folder.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param path User-defined local path.
+#' @return A datetime object for desired data file from local folder.
+readDatafileMeta <- function(year, iolevel, dataname, path) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  if (file.exists(datafile)) {
+    metadata <- jsonlite::fromJSON(paste0(path, "/", datafile, "_metadata.json"))
+  } else {
+    logging::logerror(paste("Local metadata file for", datafile, "is missing."))
+  }
+  return(metadata)
+}
+
+##############################################################
+### All functions below are archived and need modification ###
+##############################################################
 
 #' getCountyFIPS (MODIFIED)
 #' 
@@ -465,73 +349,3 @@ createMatrixForRASM0 = function(matrixKEY, matrix) {
 }
 
 
-#' Generate two-region data filename with .rda as suffix.
-#' @description Generate two-region data filename with .rda as suffix.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @return A string of two-region data filename with .rda as suffix.
-getTwoRegionDataFileName <- function(year, iolevel, dataname) {
-  filename <- paste("TwoRegion", iolevel, dataname, year, sep = "_")
-  return(filename)
-}
-
-#' Get a datetime object for desired data file on the DataCommons server.
-#' @description Get a datetime object for desired data file on the DataCommons server.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @return A datetime object for desired data file on the DataCommons server.
-getFileUpdateTimefromDataCommons <- function(year, iolevel, dataname) {
-  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
-  base_url <- "https://xri9ebky5b.execute-api.us-east-1.amazonaws.com/api/?"
-  url <- paste0(base_url, "searchvalue=", datafile, "&place=&searchfields=filename")
-  date_str <- jsonlite::fromJSON(url)[, "LastModified"]
-  file_upload_datetime <- as.POSIXct(date_str)
-  return(file_upload_datetime)
-}
-
-
-#' Get a datetime object for desired data file from local folder.
-#' @description Get a datetime object for desired data file from local folder.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @param path User-defined local path.
-#' @return A datetime object for desired data file from local folder.
-getFileUpdateTimefromLocal <- function(year, iolevel, dataname, path) {
-  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
-  meta <- read_datafile_meta(datafile, path)
-  file_upload_datetime <- dt.datetime.strptime(meta["LastUpdated"], '%Y-%m-%d %H:%M:%S%z')
-  return(file_upload_datetime)
-}
-
-#' Write a datetime object for desired data file to local folder.
-#' @description Get a datetime object for desired data file to local folder.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @param path User-defined local path.
-#' @return A datetime object for desired data file to local folder. 
-writeDatafileMeta <- function(year, iolevel, dataname, path) {
-  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
-  file_upload_dt <- getFileUpdateTimefromDataCommons(year, iolevel, dataname)
-  write(jsonlite::toJSON(file_upload_dt), paste0(path, "/", datafile, "_metadata.json"))
-}
-
-#' Load a datetime object for desired data file from local folder.
-#' @description Load a datetime object for desired data file from local folder.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @param path User-defined local path.
-#' @return A datetime object for desired data file from local folder.
-readDatafileMeta <- function(year, iolevel, dataname, path) {
-  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
-  if (file.exists(datafile)) {
-    metadata <- jsonlite::fromJSON(paste0(path, "/", datafile, "_metadata.json"))
-  } else {
-    logging::logerror(paste("Local metadata file for", datafile, "is missing."))
-  }
-  return(metadata)
-}
