@@ -8,7 +8,6 @@
 #' "UseTransactions", "FinalDemand", "DomesticUseTransactions", "DomesticFinalDemand",
 #' "CommodityOutput, and "IndustryOutput", "Demand", and "CompleteDemand".
 #' @return A list of two-region IO data of specified iolevel and year.
-#' @export
 loadTwoRegionIOData <- function(year, iolevel, dataname) {
   # Define data file name
   filename <- getTwoRegionDataFileName(year, iolevel, dataname)
