@@ -132,7 +132,7 @@ getTwoRegionDataFileName <- function(year, iolevel, dataname) {
 #' @param dataname A string specifying data name, can be "NOAA_FisheryLandings".
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state data from FLOWSA.
-loadDataCommonsfile <- function(dataname, year) {
+getFlowsaData <- function(dataname, year) {
   # Load metadata
   if (dataname=="Employment") {
     meta <- configr::read.config(system.file("extdata/", "FlowBySector_metadata.yml",
