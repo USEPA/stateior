@@ -171,6 +171,31 @@ getFlowsaData <- function(dataname, year) {
   return(df)
 }
 
+#' Load state IO data from Data Commons
+#' @param dataname A string specifying data name, can be "State_Summary_Use".
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param version A string specifying version of the data, can be "v0.1.0". 
+#' @return A data frame contains state data from FLOWSA.
+getStateIOData <- function(dataname, year, version) {
+  # Define file name and directory
+  filename <- paste0(paste(dataname, year, version, sep = "_"), ".rda")
+  directory <- file.path(rappdirs::user_data_dir(), "stateio")
+  if (!file.exists(file.path(directory, filename))) {
+    url <- "https://edap-ord-data-commons.s3.amazonaws.com/stateio"
+    logging::loginfo(paste0("file not found, downloading from ", url))
+    # Check for and create directory if necessary
+    if(!file.exists(directory)){
+      dir.create(directory, recursive = TRUE)
+    }
+    # Download file
+    utils::download.file(file.path(url, filename),
+                         file.path(directory, filename), mode = "wb", quiet = TRUE)
+  }
+  # Load data
+  df <- load(file.path(directory, filename))
+  return(df)
+}
+
 #' Get a datetime object for desired data file on the DataCommons server.
 #' @description Get a datetime object for desired data file on the DataCommons server.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
