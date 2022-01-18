@@ -171,29 +171,60 @@ getFlowsaData <- function(dataname, year) {
   return(df)
 }
 
-#' Load state IO data from Data Commons
-#' @param dataname A string specifying data name, can be "State_Summary_Use".
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param version A string specifying version of the data, can be "v0.1.0". 
-#' @return A data frame contains state data from FLOWSA.
-getStateIOData <- function(dataname, year, version) {
-  # Define file name and directory
-  filename <- paste0(paste(dataname, year, version, sep = "_"), ".rda")
+#' Find the latest state IO data on Data Commons.
+#' @param filename A string specifying filename "State_Summary_Use_2017".
+#' @return File name of the latest state IO data on Data Commons.
+findLatestStateIODataonDataCommons <- function(filename) {
+  base_url <- "https://xri9ebky5b.execute-api.us-east-1.amazonaws.com/api/?"
+  url <- paste0(base_url, "searchvalue=", filename, "&place=&searchfields=filename")
+  registry <- jsonlite::fromJSON(url)
+  f <- basename(registry[which.max(as.Date(registry[, "LastModified"])), "ObjKey"])
+  return(f)
+}
+
+#' Download state IO data file from Data Commons and stores in a local data directory.
+#' @param filename A string specifying filename "State_Summary_Use_2017".
+#' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
+#' @return An .rda data file downloaded from Data Commons and stored in local directory.
+downloadStateIODatafromDataCommons <- function(filename, ver = NULL) {
+  # Define local directory
   directory <- file.path(rappdirs::user_data_dir(), "stateio")
-  if (!file.exists(file.path(directory, filename))) {
-    url <- "https://edap-ord-data-commons.s3.amazonaws.com/stateio"
-    logging::loginfo(paste0("file not found, downloading from ", url))
-    # Check for and create directory if necessary
-    if(!file.exists(directory)){
-      dir.create(directory, recursive = TRUE)
-    }
-    # Download file
-    utils::download.file(file.path(url, filename),
-                         file.path(directory, filename), mode = "wb", quiet = TRUE)
+  if (!file.exists(directory)) {
+    dir.create(directory, recursive = TRUE)
   }
-  # Load data
-  df <- load(file.path(directory, filename))
-  return(df)
+  # Define file name
+  if (is.null(ver)) {
+    # Look for the latest file
+    f <- findLatestStateIODataonDataCommons(filename)
+  } else {
+    # Look for file under specific version
+    f <- paste0(paste(filename, ver, sep = "_"), ".rda")
+  }
+  # Download file
+  url <- "https://edap-ord-data-commons.s3.amazonaws.com/stateio"
+  utils::download.file(file.path(url, f),
+                       file.path(directory, f), mode = "wb", quiet = TRUE)
+}
+
+#' Load state IO data file from local data directory.
+#' @param filename A string specifying filename "State_Summary_Use_2017".
+#' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
+#' @return The pathname to the state IO data file.
+loadStateIODataFile <- function(filename, ver = NULL) {
+  # Define file name
+  if (is.null(ver)) {
+    # Look for the latest file
+    f <- findLatestStateIODataonDataCommons(filename)
+    if (!file.exists(file.path(rappdirs::user_data_dir(), "stateio", f))) {
+      logging::loginfo(paste("Latest", filename, "data file not found, downloading from Data Commons..."))
+      downloadStateIODatafromDataCommons(filename)
+    }
+  } else {
+    # Look for file under specific version
+    f <- paste0(paste(filename, ver, sep = "_"), ".rda")
+  }
+  f <- file.path(rappdirs::user_data_dir(), "stateio", f)
+  return(f)
 }
 
 #' Get a datetime object for desired data file on the DataCommons server.
