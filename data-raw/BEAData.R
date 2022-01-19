@@ -1,7 +1,7 @@
-#' Get BEA state data from 2007-2018.
+#' Get BEA state data from 2007-2017.
 #' @param dataname A text indicating what state data to get.
 #' Can be GVA, employee compensation, taxes, and gross operating surplus.
-#' @return A data frame of BEA state data from 2007-2018.
+#' @return A data frame of BEA state data from 2007-2017.
 getBEAStateData <- function (dataname) {
   # Create the placeholder file
   StateGVAzip <- "inst/extdata/SAGDP.zip"
@@ -26,8 +26,7 @@ getBEAStateData <- function (dataname) {
   } else if (dataname=="GOS") {
     FileName <- "inst/extdata/SAGDP/SAGDP7N__ALL_AREAS_1997_2017.csv"
   }
-  endyear <- substr(FileName, nchar(FileName) - 7, nchar(FileName)-4)
-  year_cols <- as.character(c(2007:endyear))
+  year_cols <- as.character(2007:2017)
   # Load state data
   StateData <- readCSV(FileName, fill = TRUE)
   StateData <- StateData[!is.na(StateData$LineCode), ]
@@ -43,16 +42,23 @@ getBEAStateData <- function (dataname) {
   geo_names <- c(state.name, "District of Columbia", "United States *")
   StateData <- StateData[StateData$GeoName %in%geo_names,
                          c("GeoName", "LineCode", "Description", year_cols)]
-  return(StateData)
+  # Write data to .rds
+  data_name <- paste("State", dataname, "2007_2017",
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = StateData,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = "2007-2017",
+                                source = "US Bureau of Economic Analysis",
+                                url = NULL)
 }
-State_GVA_2007_2019 <- getBEAStateData("GVA")
-usethis::use_data(State_GVA_2007_2019, overwrite = TRUE)
-State_Tax_2007_2017 <- getBEAStateData("Tax")
-usethis::use_data(State_Tax_2007_2017, overwrite = TRUE)
-State_Compensation_2007_2017 <- getBEAStateData("Compensation")
-usethis::use_data(State_Compensation_2007_2017, overwrite = TRUE)
-State_GOS_2007_2017 <- getBEAStateData("GOS")
-usethis::use_data(State_GOS_2007_2017, overwrite = TRUE)
+# Download, save and document 2007-2017 state economic data (from BEA)
+for (dataname in c("GVA", "Tax", "Compensation", "GOS")) {
+  getBEAStateData(dataname)
+}
 
 #' Get BEA state employment (full-time and part-time) data from 2009-2018
 #' @return A data frame of BEA state employment data from 2009-2018.
@@ -86,16 +92,27 @@ getBEAStateEmployment <- function () {
     datavalue_new <- as.numeric(gsub(",", "", StateEmployment_linecode$DataValue))
     StateEmployment_linecode$DataValue <- datavalue_new
     StateEmployment <- rbind(StateEmployment, StateEmployment_linecode)
-    print(linecode)
+    # print(linecode)
   }
   # Reshape to wide table
   StateEmployment <- reshape2::dcast(StateEmployment,
                                      GeoFips + GeoName + LineCode ~ TimePeriod,
                                      value.var = "DataValue")
-  return(StateEmployment)
+  # Write data to .rds
+  data_name <- paste("State_Employment_2009_2018",
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = StateEmployment,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = "2009-2018",
+                                source = "US Bureau of Economic Analysis",
+                                url = NULL)
 }
-State_Employment_2009_2018 <- getBEAStateEmployment()
-usethis::use_data(State_Employment_2009_2018, overwrite = TRUE)
+# Download, save and document 2009-2018 state employment data (from BEA)
+getBEAStateEmployment()
 
 #' Get BEA state PCE (personal consumption expenditures) data from 2007-2018
 #' @return A data frame of BEA state PCE data from 2007-2018.
@@ -126,14 +143,25 @@ getBEAStatePCE <- function () {
   StatePCE <- StatePCE[StatePCE$GeoName %in%
                          c(state.name, "District of Columbia", "United States"),
                        c("GeoName", "Line", "Description", year_cols)]
-  return(StatePCE)
+  # Write data to .rds
+  data_name <- paste("State_PCE_2007_2018",
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = StatePCE,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = "2007-2018",
+                                source = "US Bureau of Economic Analysis",
+                                url = NULL)
 }
-State_PCE_2007_2018 <- getBEAStatePCE()
-usethis::use_data(State_PCE_2007_2018, overwrite = TRUE)
+# Download, save and document 2007-2018 state PCE data (from BEA)
+getBEAStatePCE()
 
 #' Download BEA US Gov Expenditure data (NIPA table) from 2007-2019.
 #' @return A data frame of BEA US Gov Expenditure data (NIPA table) from 2007-2019.
-getBEAGovExpenditure <- function() {
+downloadBEAGovExpenditure <- function() {
   TableName <- "Section3All_xls.xlsx"
   FileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
   url <- "https://apps.bea.gov/national/Release/XLS/Survey/Section3All_xls.xlsx"
@@ -147,7 +175,7 @@ getBEAGovExpenditure <- function() {
 #' @return A data frame of BEA US Gov Investment data from 2007-2019.
 getBEAGovInvestment <- function() {
   # Download US Gov Expenditure (NIPA table) from BEA
-  getBEAGovExpenditure()
+  downloadBEAGovExpenditure()
   # Load Gov Investment table
   TableName <- "Section3All_xls.xlsx"
   FileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
@@ -161,16 +189,27 @@ getBEAGovInvestment <- function() {
                                  c("Line", "Description", year_cols)]
   # Convert values from million $ to $
   GovInvestment[, year_cols] <- GovInvestment[, year_cols]*1E6
-  return(GovInvestment)
+  # Write data to .rds
+  data_name <- paste("GovInvestment_2007_2019",
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = GovInvestment,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = "2007-2019",
+                                source = "US Bureau of Economic Analysis",
+                                url = NULL)
 }
-GovInvestment_2007_2019 <- getBEAGovInvestment()
-usethis::use_data(GovInvestment_2007_2019, overwrite = TRUE)
+# Download, save and document 2007-2019 state government investment data (from BEA)
+getBEAGovInvestment()
 
 #' Get US Gov Consumption data (Table 3.10.5 annual) from 2007-2019.
 #' @return A data frame of BEA US Gov Consumption data from 2007-2019.
 getBEAGovConsumption <- function() {
   # Download US Gov Expenditure (NIPA table) from BEA
-  getBEAGovExpenditure()
+  downloadBEAGovExpenditure()
   # Load Gov Consumption table
   TableName <- "Section3All_xls.xlsx"
   FileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
@@ -184,13 +223,21 @@ getBEAGovConsumption <- function() {
                                    c("Line", "Description", year_cols)]
   # Convert values from million $ to $
   GovConsumption[, year_cols] <- GovConsumption[, year_cols]*1E6
-  return(GovConsumption)
+  # Write data to .rds
+  data_name <- paste("GovConsumption_2007_2019",
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = GovConsumption,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = "2007-2019",
+                                source = "US Bureau of Economic Analysis",
+                                url = NULL)
 }
-GovConsumption_2007_2019 <- getBEAGovConsumption()
-usethis::use_data(GovConsumption_2007_2019, overwrite = TRUE)
-
-
-
+# Download, save and document 2007-2019 state government consumption data (from BEA)
+getBEAGovConsumption()
 
 
 
@@ -270,9 +317,3 @@ getBEACountySectorGDP = function(year, state, axis = 0) {
 
 CountyGA_BEASectorGDP_2001_2018 = getBEACountySectorGDP(year = 0, state = 'Georgia', axis = 1)
 usethis::use_data(CountyGA_BEASectorGDP_2001_2018, overwrite = TRUE)
-
-
-
-
-
-
