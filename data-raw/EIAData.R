@@ -11,10 +11,21 @@ getEIASEDSCodeDescription <- function() {
   CodeDesc <- as.data.frame(readxl::read_excel(CodeDescFile,
                                                sheet = "MSN Descriptions",
                                                skip = 9))
-  return(CodeDesc)
+  # Write data to .rds
+  data_name <- paste("EIA_SEDS_CodeDescription",
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = StateData,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = NULL,
+                                source = "US Energy Information Administration",
+                                url = NULL)
 }
-EIA_SEDS_CodeDescription <- getEIASEDSCodeDescription()
-usethis::use_data(EIA_SEDS_CodeDescription, overwrite = TRUE)
+# Download, save and document state electricity consumption code and description (from EIA)
+getEIASEDSCodeDescription()
 
 #' Get state electricity consumption data (including total consumption and interstate trade,
 #' in million kilowatt hours) from EIA State Energy Data Systems (SEDS)
@@ -29,17 +40,20 @@ getEIASEDSStateElectricityConsumption <- function (year) {
                   ConsumptionFile, mode = "wb")
   }
   Consumption <- readCSV(ConsumptionFile)[, c("State", "MSN",  as.character(year))]
-  return(Consumption)
+  # Write data to .rds
+  data_name <- paste("EIA_SEDS_StateElectricityConsumption", year,
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = StateData,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = year,
+                                source = "US Energy Information Administration",
+                                url = NULL)
 }
-EIA_SEDS_StateElectricityConsumption_2012 <- getEIASEDSStateElectricityConsumption(2012)
-usethis::use_data(EIA_SEDS_StateElectricityConsumption_2012, overwrite = TRUE)
-EIA_SEDS_StateElectricityConsumption_2013 <- getEIASEDSStateElectricityConsumption(2013)
-usethis::use_data(EIA_SEDS_StateElectricityConsumption_2013, overwrite = TRUE)
-EIA_SEDS_StateElectricityConsumption_2014 <- getEIASEDSStateElectricityConsumption(2014)
-usethis::use_data(EIA_SEDS_StateElectricityConsumption_2014, overwrite = TRUE)
-EIA_SEDS_StateElectricityConsumption_2015 <- getEIASEDSStateElectricityConsumption(2015)
-usethis::use_data(EIA_SEDS_StateElectricityConsumption_2015, overwrite = TRUE)
-EIA_SEDS_StateElectricityConsumption_2016 <- getEIASEDSStateElectricityConsumption(2016)
-usethis::use_data(EIA_SEDS_StateElectricityConsumption_2016, overwrite = TRUE)
-EIA_SEDS_StateElectricityConsumption_2017 <- getEIASEDSStateElectricityConsumption(2017)
-usethis::use_data(EIA_SEDS_StateElectricityConsumption_2017, overwrite = TRUE)
+# Download, save and document 2012-2017 state electricity consumption (from EIA)
+for (year in 2012:2017) {
+  getEIASEDSStateElectricityConsumption(year)
+}
