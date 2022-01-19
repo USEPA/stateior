@@ -42,9 +42,6 @@ jobs:
       # Census Data
       - name: Generate Census data and save as .rds files (metadata saved as .json files)
         run: Rscript data-raw/CensusData.R
-      # Test data
-      - name: Generate Test data and save as .rds files (metadata saved as .json files)
-        run: Rscript data-raw/TestDownloadData.R
       
       # Upload .rds files
       - name: Upload .rds files and prepare zip for manual download
