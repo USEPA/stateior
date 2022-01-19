@@ -15,7 +15,7 @@ getEIASEDSCodeDescription <- function() {
   data_name <- paste("EIA_SEDS_CodeDescription",
                      utils::packageDescription("stateior", fields = "Version"),
                      sep = "_")
-  saveRDS(object = StateData,
+  saveRDS(object = CodeDesc,
           file = paste0(file.path("data", data_name), ".rds"))
   # Write metadata to JSON
   useeior:::writeMetadatatoJSON(package = "stateior",
@@ -44,7 +44,7 @@ getEIASEDSStateElectricityConsumption <- function (year) {
   data_name <- paste("EIA_SEDS_StateElectricityConsumption", year,
                      utils::packageDescription("stateior", fields = "Version"),
                      sep = "_")
-  saveRDS(object = StateData,
+  saveRDS(object = Consumption,
           file = paste0(file.path("data", data_name), ".rds"))
   # Write metadata to JSON
   useeior:::writeMetadatatoJSON(package = "stateior",
