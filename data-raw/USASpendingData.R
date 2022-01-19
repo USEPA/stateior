@@ -1,7 +1,7 @@
 #' Download Federal Government Spending data by 6-digit NAICS code
 #' By state and county from USASpending.gov.
 #' @return A list of Federal Government Spending data by 6-digit NAICS
-#' by state and county from 2008 to 2019.
+#' by state and county from 2012 to 2017.
 getFedGovSpending <- function() {
   # Load PSC table
   PSC <- utils::read.csv(system.file("extdata", "USASpending_PSC.csv",
@@ -18,17 +18,20 @@ getFedGovSpending <- function() {
                                              "USASpending_NAICStoPull.csv",
                                              package = "stateior"),
                                  stringsAsFactors = FALSE, check.names = FALSE)
-  # Download data from all years
+  
+  # Because the original data is by fiscal year (Oct-Sept) instead of calendar year (Jan-Dec)
+  # Download and load data from all years to compile complete data by calendar year
+  # Need get 2012-2017 data, extend the range to 2011-2018 to retrieve complete records
   df_ls <- list()
-  df_ls[as.character(2008:2019)] <- data.frame()
-  FedGovExp_ls <- list()
-  for (year in 2008:2019) {
+  df_ls[as.character(2011:2018)] <- data.frame()
+  for (year in 2011:2018) {
     # Create the placeholder file
-    FedGovExpzip <- paste0("inst/extdata/FY", year, "_All_Contracts_Full_20200713.zip")
+    FedGovExpzip <- paste0("inst/extdata/FY", year, "_All_Contracts_Full_20220110.zip")
     if(!file.exists(FedGovExpzip)) {
-      download.file(paste0("https://files.usaspending.gov/award_data_archive/FY",
-                           year, "_All_Contracts_Full_20200713.zip"),
-                    FedGovExpzip, mode = "wb")
+      utils::download.file(paste0("https://files.usaspending.gov/award_data_archive/FY",
+                                  year, "_All_Contracts_Full_20220110.zip"),
+                           FedGovExpzip, mode = "wb",
+                           timeout = options(timeout = max(300, getOption("timeout"))))
     }
     # Get the name of all files in the zip archive
     fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
@@ -62,165 +65,48 @@ getFedGovSpending <- function() {
     }
     # Paste df in df_ls
     df_ls[[as.character(year)]] <- rbind(df_ls[[as.character(year)]],
-                                           df[df$Year==year, ])
+                                         df[df$Year==year, ])
     df_ls[[as.character(year-1)]] <- rbind(df_ls[[as.character(year-1)]],
-                                             df[df$Year==(year-1), ])
+                                           df[df$Year==(year-1), ])
+  }
+  # Subset 2012-2017 data only
+  for (year in 2012:2017) {
+    # Load df for the year
+    df_year <- df_ls[[as.character(year)]]
+    # Subset df_year by category and type (Defense and NonDefense)
     for (category in names(psc_ls)) {
-      # Load df for the year
-      df_year <- df_ls[[as.character(year)]]
-      # Extract records for Defense (based on awarding agency and PSC code)
-      df_defense <- df_year[df_year$product_or_service_code%in%psc_ls[[category]] &
-                              df_year$awarding_agency_name=="DEPARTMENT OF DEFENSE (DOD)" |
-                              df_year$product_or_service_code%in%PSC[grep("DEFENSE", PSC$PSC_Code), "4_Digit_PSC"], ]
-      # Aggregate
-      df_defense <- stats::aggregate(df_defense$federal_action_obligation,
-                                     by = list(df_defense$Year, df_defense$naics_code,
-                                               df_defense$primary_place_of_performance_state_code,
-                                               df_defense$primary_place_of_performance_county_name),
-                                     sum)
-      colnames(df_defense) <- c("Year", "NAICS", "State", "County", "Amount")
-      # Store in list
-      FedGovExp_ls[[as.character(year)]][[category]][["Defense"]] <- df_defense
-      # Extract records for Non-Defense (based on awarding agency)
-      df_nondefense <- df_year[df_year$product_or_service_code%in%psc_ls[[category]] &
-                                 df_year$awarding_agency_name!="DEPARTMENT OF DEFENSE (DOD)", ]
-      # Aggregate
-      df_nondefense <- stats::aggregate(df_nondefense$federal_action_obligation,
-                                     by = list(df_nondefense$Year, df_nondefense$naics_code,
-                                               df_nondefense$primary_place_of_performance_state_code,
-                                               df_nondefense$primary_place_of_performance_county_name),
-                                     sum)
-      colnames(df_nondefense) <- colnames(df_defense)
-      # Store in list
-      FedGovExp_ls[[as.character(year)]][[category]][["NonDefense"]] <- df_nondefense
+      # Extract records for Defense and Non-Defense (based on awarding agency and PSC code)
+      for (type in c("Defense", "NonDefense")) {
+        if (type=="Defense") {
+          df_type <- df_year[df_year$product_or_service_code%in%psc_ls[[category]] &
+                               df_year$awarding_agency_name=="DEPARTMENT OF DEFENSE (DOD)" |
+                               df_year$product_or_service_code%in%PSC[grep("DEFENSE", PSC$PSC_Code), "4_Digit_PSC"], ]
+        } else {
+          df_type <- df_year[df_year$product_or_service_code%in%psc_ls[[category]] &
+                               df_year$awarding_agency_name!="DEPARTMENT OF DEFENSE (DOD)", ]
+        }
+        # Aggregate
+        df <- stats::aggregate(df_type$federal_action_obligation,
+                               by = list(df_type$Year, df_type$naics_code,
+                                         df_type$primary_place_of_performance_state_code,
+                                         df_type$primary_place_of_performance_county_name),
+                               sum)
+        colnames(df) <- c("Year", "NAICS", "State", "County", "Amount")
+        # Write data to .rds
+        data_name <- paste("FedGovExp", category, type, year,
+                           utils::packageDescription("stateior", fields = "Version"),
+                           sep = "_")
+        saveRDS(object = df,
+                file = paste0(file.path("data", data_name), ".rds"))
+        # Write metadata to JSON
+        useeior:::writeMetadatatoJSON(package = "stateior",
+                                      name = data_name,
+                                      year = year,
+                                      source = "USA spending",
+                                      url = "https://www.usaspending.gov/download_center/award_data_archive")
+      }
     }
   }
-  return(FedGovExp_ls)
 }
-
-USASpending <- getFedGovSpending()
-# 2012
-FedGovExp_IntermediateDefense_2012 <- USASpending[["2012"]][["Intermediate"]][["Defense"]]
-usethis::use_data(FedGovExp_IntermediateDefense_2012, overwrite = TRUE)
-FedGovExp_IntermediateNonDefense_2012 <- USASpending[["2012"]][["Intermediate"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IntermediateNonDefense_2012, overwrite = TRUE)
-
-FedGovExp_EquipmentDefense_2012 <- USASpending[["2012"]][["Equipment"]][["Defense"]]
-usethis::use_data(FedGovExp_EquipmentDefense_2012, overwrite = TRUE)
-FedGovExp_EquipmentNonDefense_2012 <- USASpending[["2012"]][["Equipment"]][["NonDefense"]]
-usethis::use_data(FedGovExp_EquipmentNonDefense_2012, overwrite = TRUE)
-
-FedGovExp_IPDefense_2012 <- USASpending[["2012"]][["IP"]][["Defense"]]
-usethis::use_data(FedGovExp_IPDefense_2012, overwrite = TRUE)
-FedGovExp_IPNonDefense_2012 <- USASpending[["2012"]][["IP"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IPNonDefense_2012, overwrite = TRUE)
-
-FedGovExp_StructureDefense_2012 <- USASpending[["2012"]][["Structure"]][["Defense"]]
-usethis::use_data(FedGovExp_StructureDefense_2012, overwrite = TRUE)
-FedGovExp_StructureNonDefense_2012 <- USASpending[["2012"]][["Structure"]][["NonDefense"]]
-usethis::use_data(FedGovExp_StructureNonDefense_2012, overwrite = TRUE)
-
-# 2013
-FedGovExp_IntermediateDefense_2013 <- USASpending[["2013"]][["Intermediate"]][["Defense"]]
-usethis::use_data(FedGovExp_IntermediateDefense_2013, overwrite = TRUE)
-FedGovExp_IntermediateNonDefense_2013 <- USASpending[["2013"]][["Intermediate"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IntermediateNonDefense_2013, overwrite = TRUE)
-
-FedGovExp_EquipmentDefense_2013 <- USASpending[["2013"]][["Equipment"]][["Defense"]]
-usethis::use_data(FedGovExp_EquipmentDefense_2013, overwrite = TRUE)
-FedGovExp_EquipmentNonDefense_2013 <- USASpending[["2013"]][["Equipment"]][["NonDefense"]]
-usethis::use_data(FedGovExp_EquipmentNonDefense_2013, overwrite = TRUE)
-
-FedGovExp_IPDefense_2013 <- USASpending[["2013"]][["IP"]][["Defense"]]
-usethis::use_data(FedGovExp_IPDefense_2013, overwrite = TRUE)
-FedGovExp_IPNonDefense_2013 <- USASpending[["2013"]][["IP"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IPNonDefense_2013, overwrite = TRUE)
-
-FedGovExp_StructureDefense_2013 <- USASpending[["2013"]][["Structure"]][["Defense"]]
-usethis::use_data(FedGovExp_StructureDefense_2013, overwrite = TRUE)
-FedGovExp_StructureNonDefense_2013 <- USASpending[["2013"]][["Structure"]][["NonDefense"]]
-usethis::use_data(FedGovExp_StructureNonDefense_2013, overwrite = TRUE)
-
-# 2014
-FedGovExp_IntermediateDefense_2014 <- USASpending[["2014"]][["Intermediate"]][["Defense"]]
-usethis::use_data(FedGovExp_IntermediateDefense_2014, overwrite = TRUE)
-FedGovExp_IntermediateNonDefense_2014 <- USASpending[["2014"]][["Intermediate"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IntermediateNonDefense_2014, overwrite = TRUE)
-
-FedGovExp_EquipmentDefense_2014 <- USASpending[["2014"]][["Equipment"]][["Defense"]]
-usethis::use_data(FedGovExp_EquipmentDefense_2014, overwrite = TRUE)
-FedGovExp_EquipmentNonDefense_2014 <- USASpending[["2014"]][["Equipment"]][["NonDefense"]]
-usethis::use_data(FedGovExp_EquipmentNonDefense_2014, overwrite = TRUE)
-
-FedGovExp_IPDefense_2014 <- USASpending[["2014"]][["IP"]][["Defense"]]
-usethis::use_data(FedGovExp_IPDefense_2014, overwrite = TRUE)
-FedGovExp_IPNonDefense_2014 <- USASpending[["2014"]][["IP"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IPNonDefense_2014, overwrite = TRUE)
-
-FedGovExp_StructureDefense_2014 <- USASpending[["2014"]][["Structure"]][["Defense"]]
-usethis::use_data(FedGovExp_StructureDefense_2014, overwrite = TRUE)
-FedGovExp_StructureNonDefense_2014 <- USASpending[["2014"]][["Structure"]][["NonDefense"]]
-usethis::use_data(FedGovExp_StructureNonDefense_2014, overwrite = TRUE)
-
-# 2015
-FedGovExp_IntermediateDefense_2015 <- USASpending[["2015"]][["Intermediate"]][["Defense"]]
-usethis::use_data(FedGovExp_IntermediateDefense_2015, overwrite = TRUE)
-FedGovExp_IntermediateNonDefense_2015 <- USASpending[["2015"]][["Intermediate"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IntermediateNonDefense_2015, overwrite = TRUE)
-
-FedGovExp_EquipmentDefense_2015 <- USASpending[["2015"]][["Equipment"]][["Defense"]]
-usethis::use_data(FedGovExp_EquipmentDefense_2015, overwrite = TRUE)
-FedGovExp_EquipmentNonDefense_2015 <- USASpending[["2015"]][["Equipment"]][["NonDefense"]]
-usethis::use_data(FedGovExp_EquipmentNonDefense_2015, overwrite = TRUE)
-
-FedGovExp_IPDefense_2015 <- USASpending[["2015"]][["IP"]][["Defense"]]
-usethis::use_data(FedGovExp_IPDefense_2015, overwrite = TRUE)
-FedGovExp_IPNonDefense_2015 <- USASpending[["2015"]][["IP"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IPNonDefense_2015, overwrite = TRUE)
-
-FedGovExp_StructureDefense_2015 <- USASpending[["2015"]][["Structure"]][["Defense"]]
-usethis::use_data(FedGovExp_StructureDefense_2015, overwrite = TRUE)
-FedGovExp_StructureNonDefense_2015 <- USASpending[["2015"]][["Structure"]][["NonDefense"]]
-usethis::use_data(FedGovExp_StructureNonDefense_2015, overwrite = TRUE)
-
-# 2016
-FedGovExp_IntermediateDefense_2016 <- USASpending[["2016"]][["Intermediate"]][["Defense"]]
-usethis::use_data(FedGovExp_IntermediateDefense_2016, overwrite = TRUE)
-FedGovExp_IntermediateNonDefense_2016 <- USASpending[["2016"]][["Intermediate"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IntermediateNonDefense_2016, overwrite = TRUE)
-
-FedGovExp_EquipmentDefense_2016 <- USASpending[["2016"]][["Equipment"]][["Defense"]]
-usethis::use_data(FedGovExp_EquipmentDefense_2016, overwrite = TRUE)
-FedGovExp_EquipmentNonDefense_2016 <- USASpending[["2016"]][["Equipment"]][["NonDefense"]]
-usethis::use_data(FedGovExp_EquipmentNonDefense_2016, overwrite = TRUE)
-
-FedGovExp_IPDefense_2016 <- USASpending[["2016"]][["IP"]][["Defense"]]
-usethis::use_data(FedGovExp_IPDefense_2016, overwrite = TRUE)
-FedGovExp_IPNonDefense_2016 <- USASpending[["2016"]][["IP"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IPNonDefense_2016, overwrite = TRUE)
-
-FedGovExp_StructureDefense_2016 <- USASpending[["2016"]][["Structure"]][["Defense"]]
-usethis::use_data(FedGovExp_StructureDefense_2016, overwrite = TRUE)
-FedGovExp_StructureNonDefense_2016 <- USASpending[["2016"]][["Structure"]][["NonDefense"]]
-usethis::use_data(FedGovExp_StructureNonDefense_2016, overwrite = TRUE)
-
-# 2017
-FedGovExp_IntermediateDefense_2017 <- USASpending[["2017"]][["Intermediate"]][["Defense"]]
-usethis::use_data(FedGovExp_IntermediateDefense_2017, overwrite = TRUE)
-FedGovExp_IntermediateNonDefense_2017 <- USASpending[["2017"]][["Intermediate"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IntermediateNonDefense_2017, overwrite = TRUE)
-
-FedGovExp_EquipmentDefense_2017 <- USASpending[["2017"]][["Equipment"]][["Defense"]]
-usethis::use_data(FedGovExp_EquipmentDefense_2017, overwrite = TRUE)
-FedGovExp_EquipmentNonDefense_2017 <- USASpending[["2017"]][["Equipment"]][["NonDefense"]]
-usethis::use_data(FedGovExp_EquipmentNonDefense_2017, overwrite = TRUE)
-
-FedGovExp_IPDefense_2017 <- USASpending[["2017"]][["IP"]][["Defense"]]
-usethis::use_data(FedGovExp_IPDefense_2017, overwrite = TRUE)
-FedGovExp_IPNonDefense_2017 <- USASpending[["2017"]][["IP"]][["NonDefense"]]
-usethis::use_data(FedGovExp_IPNonDefense_2017, overwrite = TRUE)
-
-FedGovExp_StructureDefense_2017 <- USASpending[["2017"]][["Structure"]][["Defense"]]
-usethis::use_data(FedGovExp_StructureDefense_2017, overwrite = TRUE)
-FedGovExp_StructureNonDefense_2017 <- USASpending[["2017"]][["Structure"]][["NonDefense"]]
-usethis::use_data(FedGovExp_StructureNonDefense_2017, overwrite = TRUE)
+# Download, save and document 2012-2017 federal government spending data by state (from USASpending)
+getFedGovSpending()
