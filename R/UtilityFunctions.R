@@ -214,17 +214,20 @@ loadStateIODataFile <- function(filename, ver = NULL) {
   # Define file name
   if (is.null(ver)) {
     # Look for the latest file
-    f <- findLatestStateIODataonDataCommons(filename)
-    if (!file.exists(file.path(rappdirs::user_data_dir(), "stateio", f))) {
-      logging::loginfo(paste("Latest", filename, "data file not found, downloading from Data Commons..."))
-      downloadStateIODatafromDataCommons(filename)
-    }
+    local_files <- list.files(file.path(rappdirs::user_data_dir(), "stateio"),
+                              pattern = paste0(filename, ".*\\.rds"), full.names = TRUE)
+    f <- basename(local_files[which.max(file.mtime(local_files))])
+    # f <- findLatestStateIODataonDataCommons(filename)
+    # if (!file.exists(file.path(rappdirs::user_data_dir(), "stateio", f))) {
+    #   logging::loginfo(paste("Latest", filename, "data file not found, downloading from Data Commons..."))
+    #   downloadStateIODatafromDataCommons(filename)
+    # }
   } else {
     # Look for file under specific version
-    f <- paste0(paste(filename, ver, sep = "_"), ".rda")
+    f <- paste0(paste(filename, ver, sep = "_"), ".rds")
   }
-  f <- file.path(rappdirs::user_data_dir(), "stateio", f)
-  return(f)
+  df <- readRDS(file.path(rappdirs::user_data_dir(), "stateio", f))
+  return(df)
 }
 
 #' Get a datetime object for desired data file on the DataCommons server.
