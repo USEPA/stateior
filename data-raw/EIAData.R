@@ -22,7 +22,7 @@ getEIASEDSCodeDescription <- function() {
                                 name = data_name,
                                 year = NULL,
                                 source = "US Energy Information Administration",
-                                url = NULL)
+                                url = "https://www.eia.gov/state/seds/CDF/Codes_and_Descriptions.xlsx")
 }
 # Download, save and document state electricity consumption code and description (from EIA)
 getEIASEDSCodeDescription()
@@ -51,7 +51,7 @@ getEIASEDSStateElectricityConsumption <- function (year) {
                                 name = data_name,
                                 year = year,
                                 source = "US Energy Information Administration",
-                                url = NULL)
+                                url = "https://www.eia.gov/state/seds/sep_use/total/csv/use_all_phy.csv")
 }
 # Download, save and document 2012-2017 state electricity consumption (from EIA)
 for (year in 2012:2017) {

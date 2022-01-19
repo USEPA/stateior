@@ -53,7 +53,7 @@ getBEAStateData <- function (dataname) {
                                 name = data_name,
                                 year = "2007-2017",
                                 source = "US Bureau of Economic Analysis",
-                                url = NULL)
+                                url = "https://apps.bea.gov/regional/zip/SAGDP.zip")
 }
 # Download, save and document 2007-2017 state economic data (from BEA)
 for (dataname in c("GVA", "Tax", "Compensation", "GOS")) {
@@ -109,7 +109,7 @@ getBEAStateEmployment <- function () {
                                 name = data_name,
                                 year = "2009-2018",
                                 source = "US Bureau of Economic Analysis",
-                                url = NULL)
+                                url = "https://apps.bea.gov/api")
 }
 # Download, save and document 2009-2018 state employment data (from BEA)
 getBEAStateEmployment()
@@ -118,20 +118,20 @@ getBEAStateEmployment()
 #' @return A data frame of BEA state PCE data from 2007-2018.
 getBEAStatePCE <- function () {
   # Create the placeholder file
-  StatePCEzip <- "inst/extdata/SAEXP.zip"
+  StatePCEzip <- "inst/extdata/SAPCE.zip"
   # Download all BEA IO tables into the placeholder file
   if(!file.exists(StatePCEzip)) {
-    download.file("https://apps.bea.gov/regional/zip/SAEXP.zip",
+    download.file("https://apps.bea.gov/regional/zip/SAPCE.zip",
                   StatePCEzip, mode = "wb")
     # Get the name of all files in the zip archive
     tmp <- unzip(StatePCEzip, list = TRUE)
     fname <- tmp[tmp$Length > 0, ]$Name
     # Unzip the file to the designated directory
-    unzip(StatePCEzip, files = fname, exdir = "inst/extdata/SAEXP",
+    unzip(StatePCEzip, files = fname, exdir = "inst/extdata/SAPCE",
           overwrite = TRUE)
   }
   # Load state PCE data
-  StatePCE <- readCSV("inst/extdata/SAEXP/SAEXP1__ALL_AREAS_1997_2018.csv",
+  StatePCE <- readCSV("inst/extdata/SAPCE/SAPCE1__ALL_AREAS_1997_2018.csv",
                       fill = TRUE)
   StatePCE <- StatePCE[!is.na(StatePCE$Line), ]
   # Replace NA with zero
@@ -154,7 +154,7 @@ getBEAStatePCE <- function () {
                                 name = data_name,
                                 year = "2007-2018",
                                 source = "US Bureau of Economic Analysis",
-                                url = NULL)
+                                url = "https://apps.bea.gov/regional/zip/SAPCE.zip")
 }
 # Download, save and document 2007-2018 state PCE data (from BEA)
 getBEAStatePCE()
@@ -169,13 +169,14 @@ downloadBEAGovExpenditure <- function() {
   if(!file.exists(FileName)) {
     utils::download.file(url, FileName, mode = "wb")
   }
+  return(url)
 }
 
 #' Get US Gov Investment data (Table 3.9.5 annual) from 2007-2019.
 #' @return A data frame of BEA US Gov Investment data from 2007-2019.
 getBEAGovInvestment <- function() {
   # Download US Gov Expenditure (NIPA table) from BEA
-  downloadBEAGovExpenditure()
+  url <- downloadBEAGovExpenditure()
   # Load Gov Investment table
   TableName <- "Section3All_xls.xlsx"
   FileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
@@ -200,7 +201,7 @@ getBEAGovInvestment <- function() {
                                 name = data_name,
                                 year = "2007-2019",
                                 source = "US Bureau of Economic Analysis",
-                                url = NULL)
+                                url = url)
 }
 # Download, save and document 2007-2019 state government investment data (from BEA)
 getBEAGovInvestment()
@@ -209,7 +210,7 @@ getBEAGovInvestment()
 #' @return A data frame of BEA US Gov Consumption data from 2007-2019.
 getBEAGovConsumption <- function() {
   # Download US Gov Expenditure (NIPA table) from BEA
-  downloadBEAGovExpenditure()
+  url <- downloadBEAGovExpenditure()
   # Load Gov Consumption table
   TableName <- "Section3All_xls.xlsx"
   FileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
@@ -234,7 +235,7 @@ getBEAGovConsumption <- function() {
                                 name = data_name,
                                 year = "2007-2019",
                                 source = "US Bureau of Economic Analysis",
-                                url = NULL)
+                                url = url)
 }
 # Download, save and document 2007-2019 state government consumption data (from BEA)
 getBEAGovConsumption()
