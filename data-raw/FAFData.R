@@ -1,6 +1,6 @@
-# Get Freight Analysis Framework (FAF) data from 2013-2018.
+# Get Freight Analysis Framework (FAF) data from 2012-2018.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
-#' @return A data frame contains FAF data from 2013-2018.
+#' @return A data frame contains FAF data from 2012-2018.
 getFAF <- function (year) {
   # Create the placeholder file
   if (year == 2012) {
@@ -35,20 +35,20 @@ getFAF <- function (year) {
   FAF[, paste0("tons_", year)] <- FAF[, paste0("tons_", year)]*1E3
   # Convert wright-distance from million ton-miles to ton-miles
   FAF[, paste0("tmiles_", year)] <- FAF[, paste0("tmiles_", year)]*1E6
-  return(FAF)
+  # Write data to .rds
+  data_name <- paste("FAF", year,
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = FAF,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = year,
+                                source = "US Oak Ridge National Laboratory",
+                                url = NULL)
 }
-
-FAF_2012 <- getFAF(2012)
-usethis::use_data(FAF_2012, overwrite = TRUE)
-FAF_2013 <- getFAF(2013)
-usethis::use_data(FAF_2013, overwrite = TRUE)
-FAF_2014 <- getFAF(2014)
-usethis::use_data(FAF_2014, overwrite = TRUE)
-FAF_2015 <- getFAF(2015)
-usethis::use_data(FAF_2015, overwrite = TRUE)
-FAF_2016 <- getFAF(2016)
-usethis::use_data(FAF_2016, overwrite = TRUE)
-FAF_2017 <- getFAF(2017)
-usethis::use_data(FAF_2017, overwrite = TRUE)
-FAF_2018 <- getFAF(2018)
-usethis::use_data(FAF_2018, overwrite = TRUE)
+# Download, save and document 2012-2018 state FAF data (from ORNL)
+for (year in 2012:2018) {
+  getEIASEDSStateElectricityConsumption(year)
+}
