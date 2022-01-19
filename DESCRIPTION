@@ -19,6 +19,7 @@ Imports:
     configr (>= 0.3.4),
     dplyr (>= 1.0.6),
     ggplot2 (>= 3.0),
+    Hmisc (>= 4.6-0),
     httr (>= 1.4.2),
     logging (>= 0.10),
     magrittr (>= 2.0.1),
