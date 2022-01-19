@@ -7,8 +7,8 @@ getBEAStateData <- function (dataname) {
   StateGVAzip <- "inst/extdata/SAGDP.zip"
   # Download all BEA IO tables into the placeholder file
   if(!file.exists(StateGVAzip)) {
-    download.file("https://apps.bea.gov/regional/zip/SAGDP.zip",
-                  StateGVAzip, mode = "wb")
+    utils::download.file("https://apps.bea.gov/regional/zip/SAGDP.zip",
+                         StateGVAzip, mode = "wb")
     # Get the name of all files in the zip archive
     tmp <- unzip(StateGVAzip, list = TRUE)
     fname <- tmp[tmp$Length > 0, ]$Name
@@ -121,8 +121,8 @@ getBEAStatePCE <- function () {
   StatePCEzip <- "inst/extdata/SAPCE.zip"
   # Download all BEA IO tables into the placeholder file
   if(!file.exists(StatePCEzip)) {
-    download.file("https://apps.bea.gov/regional/zip/SAPCE.zip",
-                  StatePCEzip, mode = "wb")
+    utils::download.file("https://apps.bea.gov/regional/zip/SAPCE.zip",
+                         StatePCEzip, mode = "wb")
     # Get the name of all files in the zip archive
     tmp <- unzip(StatePCEzip, list = TRUE)
     fname <- tmp[tmp$Length > 0, ]$Name
@@ -260,7 +260,7 @@ getBEACountySectorGDP = function(year, state, axis = 0) {
   CountyGDPzip = "inst/extdata/CAGDP2.zip"
   # Download all BEA IO tables into the placeholder file
   if(!file.exists(CountyGDPzip)) {
-    download.file("https://apps.bea.gov/regional/zip/CAGDP2.zip", CountyGDPzip, mode = "wb")
+    utils::download.file("https://apps.bea.gov/regional/zip/CAGDP2.zip", CountyGDPzip, mode = "wb")
     # Get the name of all files in the zip archive
     fname = unzip(CountyGDPzip, list = TRUE)[unzip(CountyGDPzip, list = TRUE)$Length > 0, ]$Name
     # Unzip the file to the designated directory

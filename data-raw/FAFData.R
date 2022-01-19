@@ -10,7 +10,7 @@ getFAF <- function (year) {
   }
   # Download all FAF tables into the placeholder file
   if(!file.exists(FAFzip)) {
-    download.file(paste0("https://faf.ornl.gov/fafweb/Data/",
+    utils::download.file(paste0("https://faf.ornl.gov/fafweb/Data/",
                          gsub("inst/extdata/", "", FAFzip)),
                   FAFzip, mode = "wb")
     # Get the name of all files in the zip archive

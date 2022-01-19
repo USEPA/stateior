@@ -5,7 +5,7 @@ getEIASEDSCodeDescription <- function() {
   CodeDescFile <- "inst/extdata/EIA_SEDS_CodesDescriptions.xlsx"
   # Download EIA State Energy Data Systems (SEDS) consumption data
   if(!file.exists(CodeDescFile)) {
-    download.file("https://www.eia.gov/state/seds/CDF/Codes_and_Descriptions.xlsx",
+    utils::download.file("https://www.eia.gov/state/seds/CDF/Codes_and_Descriptions.xlsx",
                   CodeDescFile, mode = "wb")
   }
   CodeDesc <- as.data.frame(readxl::read_excel(CodeDescFile,
@@ -36,7 +36,7 @@ getEIASEDSStateElectricityConsumption <- function (year) {
   # Download state electricity consumption data from EIA State Energy Data Systems (SEDS)
   ConsumptionFile <- "inst/extdata/EIA_SEDS_consumption.csv"
   if(!file.exists(ConsumptionFile)) {
-    download.file("https://www.eia.gov/state/seds/sep_use/total/csv/use_all_phy.csv",
+    utils::download.file("https://www.eia.gov/state/seds/sep_use/total/csv/use_all_phy.csv",
                   ConsumptionFile, mode = "wb")
   }
   Consumption <- readCSV(ConsumptionFile)[, c("State", "MSN",  as.character(year))]

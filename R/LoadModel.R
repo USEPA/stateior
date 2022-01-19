@@ -31,7 +31,7 @@ loadTwoRegionIOData <- function(year, iolevel, dataname) {
     # Define URL then download from the Data Commons
     url <- paste0("https://edap-ord-data-commons.s3.amazonaws.com/stateio/",
                   filename, ".rda")
-    download.file(url, filepath, quiet = TRUE)
+    utils::download.file(url, filepath, quiet = TRUE)
   }
   # Load the data
   TwoRegionIOData <- get(load(filepath))
