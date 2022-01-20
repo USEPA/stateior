@@ -18,13 +18,13 @@ getBEAStateData <- function (dataname) {
   }
   # Determine data filename
   if (dataname=="GVA") {
-    FileName <- "inst/extdata/SAGDP/SAGDP2N__ALL_AREAS_1997_2019.csv"
+    FileName <- list.files("inst/extdata/SAGDP/", pattern = "SAGDP2N__ALL_AREAS")
   } else if (dataname=="Tax") {
-    FileName <- "inst/extdata/SAGDP/SAGDP3N__ALL_AREAS_1997_2017.csv"
+    FileName <- list.files("inst/extdata/SAGDP/", pattern = "SAGDP3N__ALL_AREAS")
   } else if (dataname=="Compensation") {
-    FileName <- "inst/extdata/SAGDP/SAGDP4N__ALL_AREAS_1997_2017.csv"
+    FileName <- list.files("inst/extdata/SAGDP/", pattern = "SAGDP4N__ALL_AREAS")
   } else if (dataname=="GOS") {
-    FileName <- "inst/extdata/SAGDP/SAGDP7N__ALL_AREAS_1997_2017.csv"
+    FileName <- list.files("inst/extdata/SAGDP/", pattern = "SAGDP7N__ALL_AREAS")
   }
   year_cols <- as.character(2007:2017)
   # Load state data
@@ -133,7 +133,8 @@ getBEAStatePCE <- function () {
           overwrite = TRUE)
   }
   # Load state PCE data
-  StatePCE <- utils::read.table("inst/extdata/SAPCE/SAPCE1__ALL_AREAS_1997_2018.csv",
+  StatePCE <- utils::read.table(list.files("inst/extdata/SAPCE/",
+                                           pattern = "SAPCE1__ALL_AREAS"),
                                 sep = ",", header = TRUE, stringsAsFactors = FALSE,
                                 check.names = FALSE, fill = TRUE)
   StatePCE <- StatePCE[!is.na(StatePCE$Line), ]
