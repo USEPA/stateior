@@ -4,15 +4,15 @@
 getFAF <- function (year) {
   # Create the placeholder file
   if (year == 2012) {
-    FAFzip <- "inst/extdata/FAF4.5.1_State.zip"
+    FAFzip <- "inst/extdata/FAF4.5.1_csv_State.zip"
   } else if (year %in% c(2013:2018)) {
-    FAFzip <- "inst/extdata/FAF4.5.1_State_2013-2018.zip"
+    FAFzip <- "inst/extdata/FAF4.5.1_csv_State_2013-2018.zip"
   }
   # Download all FAF tables into the placeholder file
   if(!file.exists(FAFzip)) {
-    utils::download.file(paste0("https://faf.ornl.gov/fafweb/Data/",
-                         gsub("inst/extdata/", "", FAFzip)),
-                  FAFzip, mode = "wb")
+    utils::download.file(paste0("https://www.bts.gov/sites/bts.dot.gov/files/legacy/AdditionalAttachmentFiles/",
+                                gsub("inst/extdata/", "", FAFzip)),
+                         FAFzip, mode = "wb")
     # Get the name of all files in the zip archive
     fname <- unzip(FAFzip, list = TRUE)[unzip(FAFzip, list = TRUE)$Length > 0, ]$Name
     # Unzip the file to the designated directory
@@ -20,9 +20,9 @@ getFAF <- function (year) {
   }
   # Specify filename based on year
   if (year == 2012) {
-    filename <- "inst/extdata/FAF4.5.1_State/FAF4.5.1_State.csv"
+    filename <- "inst/extdata/FAF4.5.1_csv_State/FAF4.5.1_State.csv"
   } else if (year %in% c(2013:2018)) {
-    filename <- paste0("inst/extdata/FAF4.5.1_State_2013-2018/FAF4.5.1_State_",
+    filename <- paste0("inst/extdata/FAF4.5.1_csv_State_2013-2018/FAF4.5.1_State_",
                        year, ".csv")
   }
   # Load state data
@@ -48,7 +48,7 @@ getFAF <- function (year) {
                                 name = data_name,
                                 year = year,
                                 source = "US Oak Ridge National Laboratory",
-                                url = NULL)
+                                url = "https://www.bts.gov/faf/faf4")
 }
 # Download, save and document 2012-2018 state FAF data (from ORNL)
 for (year in 2012:2018) {
