@@ -39,7 +39,9 @@ getEIASEDSStateElectricityConsumption <- function (year) {
     utils::download.file("https://www.eia.gov/state/seds/sep_use/total/csv/use_all_phy.csv",
                   ConsumptionFile, mode = "wb")
   }
-  Consumption <- readCSV(ConsumptionFile)[, c("State", "MSN",  as.character(year))]
+  Consumption <- utils::read.table(ConsumptionFile, sep = ",", header = TRUE,
+                                   stringsAsFactors = FALSE, check.names = FALSE,
+                                   fill = TRUE)[, c("State", "MSN",  as.character(year))]
   # Write data to .rds
   data_name <- paste("EIA_SEDS_StateElectricityConsumption", year,
                      utils::packageDescription("stateior", fields = "Version"),

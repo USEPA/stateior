@@ -28,7 +28,9 @@ getBEAStateData <- function (dataname) {
   }
   year_cols <- as.character(2007:2017)
   # Load state data
-  StateData <- readCSV(FileName, fill = TRUE)
+  StateData <- utils::read.table(FileName, sep = ",", header = TRUE,
+                                 stringsAsFactors = FALSE, check.names = FALSE,
+                                 fill = TRUE)
   StateData <- StateData[!is.na(StateData$LineCode), ]
   # Convert values to numeric
   StateData[, year_cols] <- sapply(StateData[, year_cols], as.numeric)
@@ -131,8 +133,9 @@ getBEAStatePCE <- function () {
           overwrite = TRUE)
   }
   # Load state PCE data
-  StatePCE <- readCSV("inst/extdata/SAPCE/SAPCE1__ALL_AREAS_1997_2018.csv",
-                      fill = TRUE)
+  StatePCE <- utils::read.table("inst/extdata/SAPCE/SAPCE1__ALL_AREAS_1997_2018.csv",
+                                sep = ",", header = TRUE, stringsAsFactors = FALSE,
+                                check.names = FALSE, fill = TRUE)
   StatePCE <- StatePCE[!is.na(StatePCE$Line), ]
   # Replace NA with zero
   StatePCE[is.na(StatePCE)] <- 0
@@ -269,7 +272,9 @@ getBEACountySectorGDP = function(year, state, axis = 0) {
   # filter for specified state
   fileName = paste0('inst/extdata/CAGDP2/CAGDP2_', paste0(getStateAbbreviation(state),'_2001_2018.csv'))
   # read data 
-  countyData = readCSV(fileName, fill = TRUE)
+  countyData = utils::read.table(fileName, sep = ",", header = TRUE,
+                                 stringsAsFactors = FALSE, check.names = FALSE,
+                                 fill = TRUE)
   # drop last four rows (notes in original file)
   countyData = countyData[!is.na(countyData$Region), ]
   # select only BEA-sector-level rows

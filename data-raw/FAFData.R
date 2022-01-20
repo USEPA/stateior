@@ -26,7 +26,9 @@ getFAF <- function (year) {
                        year, ".csv")
   }
   # Load state data
-  FAF <- readCSV(filename)
+  FAF <- utils::read.table(filename, sep = ",", header = TRUE,
+                           stringsAsFactors = FALSE,
+                           check.names = FALSE, fill = TRUE)
   # Keep columns for year
   FAF <- FAF[, c(colnames(FAF)[1:9], paste0(c("value_", "tons_", "tmiles_"), year))]
   # Convert value from million $ to $
