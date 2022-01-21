@@ -117,12 +117,12 @@ getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
   return(code_loc)
 }
 
-#' Generate two-region data filename with .rda as suffix.
-#' @description Generate two-region data filename with .rda as suffix.
+#' Generate two-region data filename with .rds as suffix.
+#' @description Generate two-region data filename with .rds as suffix.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @return A string of two-region data filename with .rda as suffix.
+#' @return A string of two-region data filename with .rds as suffix.
 getTwoRegionDataFileName <- function(year, iolevel, dataname) {
   filename <- paste("TwoRegion", iolevel, dataname, year, sep = "_")
   return(filename)
@@ -185,7 +185,7 @@ findLatestStateIODataonDataCommons <- function(filename) {
 #' Download state IO data file from Data Commons and stores in a local data directory.
 #' @param filename A string specifying filename "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
-#' @return An .rda data file downloaded from Data Commons and stored in local directory.
+#' @return An .rds data file downloaded from Data Commons and stored in local directory.
 downloadStateIODatafromDataCommons <- function(filename, ver = NULL) {
   # Define local directory
   directory <- file.path(rappdirs::user_data_dir(), "stateio")
@@ -198,7 +198,7 @@ downloadStateIODatafromDataCommons <- function(filename, ver = NULL) {
     f <- findLatestStateIODataonDataCommons(filename)
   } else {
     # Look for file under specific version
-    f <- paste0(paste(filename, ver, sep = "_"), ".rda")
+    f <- paste0(paste(filename, ver, sep = "_"), ".rds")
   }
   # Download file
   url <- "https://edap-ord-data-commons.s3.amazonaws.com/stateio"

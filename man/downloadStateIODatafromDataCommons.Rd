@@ -12,7 +12,7 @@ downloadStateIODatafromDataCommons(filename, ver = NULL)
 \item{ver}{A string specifying version of the data, default is NULL, can be "v0.1.0".}
 }
 \value{
-An .rda data file downloaded from Data Commons and stored in local directory.
+An .rds data file downloaded from Data Commons and stored in local directory.
 }
 \description{
 Download state IO data file from Data Commons and stores in a local data directory.

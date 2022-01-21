@@ -2,7 +2,7 @@
 % Please edit documentation in R/UtilityFunctions.R
 \name{getTwoRegionDataFileName}
 \alias{getTwoRegionDataFileName}
-\title{Generate two-region data filename with .rda as suffix.}
+\title{Generate two-region data filename with .rds as suffix.}
 \usage{
 getTwoRegionDataFileName(year, iolevel, dataname)
 }
@@ -14,8 +14,8 @@ getTwoRegionDataFileName(year, iolevel, dataname)
 \item{dataname}{Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".}
 }
 \value{
-A string of two-region data filename with .rda as suffix.
+A string of two-region data filename with .rds as suffix.
 }
 \description{
-Generate two-region data filename with .rda as suffix.
+Generate two-region data filename with .rds as suffix.
 }
