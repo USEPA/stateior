@@ -473,8 +473,7 @@ estimateStateExport <- function(year) {
 #' @return A data frame contains state S&L government expenditure ratio for all states at a specific year at BEA Summary level.
 calculateStateSLGovExpenditureRatio <- function(year) {
   # Load state and local government expenditure
-  GovExp <- get(paste0("Census_StateLocalGovExpenditure_", year),
-                as.environment("package:stateior"))
+  GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year))
   GovExp_statetotal <- rowSums(GovExp[, c(state.name, "District of Columbia")])
   GovExp[, "Overseas"] <- GovExp[, "United States Total"] - GovExp_statetotal
   # Map to BEA Summary sectors
@@ -627,13 +626,12 @@ calculateUSGovExpenditureWeightFactor <- function(year, defense) {
 calculateStateFedGovExpenditureRatio <- function(year) {
   # Load state and local government expenditure
   GovExpRatio <- data.frame()
-  sectors <- paste0(c("Intermediate", "Structure", "Equipment", "IP"),
-                    rep(c("Defense", "NonDefense"), each = 4))
+  sectors <- paste(c("Intermediate", "Structure", "Equipment", "IP"),
+                   rep(c("Defense", "NonDefense"), each = 4), sep = "_")
   mapping <- unique(useeior::MasterCrosswalk2012[, c("BEA_2012_Summary_Code",
                                                      "NAICS_2012_Code")])
   for(sector in sectors) {
-    GovExp <- get(paste("FedGovExp", sector, year, sep = "_"),
-                  as.environment("package:stateior"))
+    GovExp <- loadStateIODataFile(paste("FedGovExp", sector, year, sep = "_"))
     # Change State to full state name
     for (state in unique(GovExp$State)) {
       GovExp[GovExp$State==state, "State"] <- ifelse(state=="DC", "District of Columbia",

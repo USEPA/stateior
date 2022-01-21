@@ -7,8 +7,7 @@
 #' @export
 buildStateSupplyModel <- function(year) {
   logging::loginfo("Loading RAS-balanced state-to-US value added (VA) ratios ...")
-  StateUS_VA_Ratio <- get(paste0("StateUS_VA_Ratio_", year),
-                          as.environment("package:stateior"))
+  StateUS_VA_Ratio <- loadStateIODataFile(paste0("StateUS_VA_Ratio_", year))
   states <- unique(StateUS_VA_Ratio$GeoName)
   
   logging::loginfo("Estimating state Make table and commodity output ...")
@@ -44,8 +43,7 @@ buildStateSupplyModel <- function(year) {
   }
   
   logging::loginfo("Loading state commodity output ratios from alternative data ...")
-  AlternativeStateCOR <- get(paste0("AlternativeStateCommodityOutputRatio_", year),
-                             as.environment("package:stateior"))
+  AlternativeStateCOR <- loadStateIODataFile(paste0("AlternativeStateCommodityOutputRatio_", year))
   
   logging::loginfo("Adjusting state Make table ...")
   # Adjust estimated state commodity output and calculate state commodity adjustment ratio
@@ -214,8 +212,7 @@ buildStateUseModel <- function(year) {
   logging::loginfo("Estimating state domestic use table ...")
   DomesticUse_ratios <- calculateUSDomesticUseRatioMatrix("Summary", year)
   logging::loginfo("Appending value added to state Use tables ...")
-  StateGVA <- get(paste0("State_Summary_GrossValueAdded_", year),
-                  as.environment("package:stateior"))
+  StateGVA <- loadStateIODataFile(paste0("State_Summary_GrossValueAdded_", year))
   model <- list()
   for (state in states) {
     # Assemble state Use table

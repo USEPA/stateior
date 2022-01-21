@@ -71,7 +71,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
       allocation_factors[allocation_factors$LineCode==linecode, "factor"] <- weight_vector/sum(weight_vector)
     }
     # Load BEA state Emp
-    BEAStateEmp <- stateior::State_Employment_2009_2018[, c("GeoName", "LineCode", year_col)]
+    BEAStateEmp <- loadStateIODataFile("State_Employment_2009_2018")[, c("GeoName", "LineCode", year_col)]
     # Map BEA state Emp (from LineCode) to BEA Summary
     BEAStateEmp <- merge(BEAStateEmp[BEAStateEmp$GeoName %in% c(state.name, "District of Columbia"), ],
                          allocation_factors[, c(BEA_col, "LineCode", "factor")],
@@ -248,14 +248,15 @@ getStateCommodityOutputRatioEstimates <- function(year) {
   return(StateCommodityOutputRatio)
 }
 
-#' Load BEA and BLS QCEW State Employment data from pre-saved .rda files and FLOWSA.
+#' Load BEA and BLS QCEW State Employment data from pre-saved .rds files and FLOWSA.
 #' Map to BEA Summary sectors.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains State Emp by BEA Summary.
 getStateEmploymentbyBEASummary <- function(year) {
   # BEA State Emp
-  BEAStateEmp <- stateior::State_Employment_2009_2018[, c("GeoName", "LineCode",
-                                                          as.character(year))]
+  BEAStateEmp <- loadStateIODataFile("State_Employment_2009_2018")[, c("GeoName",
+                                                                       "LineCode",
+                                                                       as.character(year))]
   EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
   BEAStateEmp <- merge(BEAStateEmp, EmptoBEAmapping, by = "LineCode")
   # Aggregate StateEmployment by BEA
@@ -336,7 +337,7 @@ getFAFCommodityOutput <- function(year) {
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv",
                                     package = "stateior"))
   # Load pre-saved FAF4 commodity flow data
-  FAF <- get(paste("FAF", year, sep = "_"), as.environment("package:stateior"))
+  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"))
   # Keep domestic and export trade, keep useful columns, then rename
   FAF <- FAF[FAF$trade_type%in%c(1, 3),
              c("dms_origst", "sctg2", paste0("value_", year))]

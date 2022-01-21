@@ -7,7 +7,7 @@
 #' @return A data frame contains commodity flow ratios by BEA.
 calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved FAF4 commodity flow data
-  FAF <- get(paste("FAF", year, sep = "_"), as.environment("package:stateior"))
+  FAF_new <- loadStateIODataFile(paste("FAF", year, sep = "_"))
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   fips <- FIPS_STATE[FIPS_STATE$State==state, "State_FIPS"]
@@ -128,13 +128,13 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
 calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved state export/import data
   if (year<2013) {
-    trade <- get(paste0("Census_USATrade",
-                        Hmisc::capitalize(flow_ratio_type), "_", year),
-                 as.environment("package:stateior"))
+    trade <- loadStateIODataFile(paste0("Census_USATrade",
+                                        Hmisc::capitalize(flow_ratio_type),
+                                        "_", year))
   } else {
-    trade <- get(paste0("Census_State",
-                        Hmisc::capitalize(flow_ratio_type), "_", year),
-                 as.environment("package:stateior"))
+    trade <- loadStateIODataFile(paste0("Census_State",
+                                        Hmisc::capitalize(flow_ratio_type),
+                                        "_", year))
   }
   # Map from NAICS to BEA
   bea_code <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
@@ -271,9 +271,9 @@ calculateWasteManagementServiceFlowRatios <- function (state, year) {
 calculateElectricityFlowRatios <- function (state, year) {
   state_abb <- getStateAbbreviation(state)
   # Load consumption data
-  CodeDesc <- get("EIA_SEDS_CodeDescription", as.environment("package:stateior"))
-  Consumption <- get(paste0("EIA_SEDS_StateElectricityConsumption_", year),
-                     as.environment("package:stateior"))
+  CodeDesc <- loadStateIODataFile("EIA_SEDS_CodeDescription")
+  Consumption <- loadStateIODataFile(paste0("EIA_SEDS_StateElectricityConsumption_",
+                                            year))
   # Subset SoI and RoUS total consumption
   consumption_desc <- "Electricity total consumption (i.e., retail sales)"
   ConsumptionMSN <- CodeDesc[CodeDesc$Description==consumption_desc&
