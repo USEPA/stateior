@@ -2,7 +2,7 @@
 #' By state and county from USASpending.gov.
 #' @return A list of Federal Government Spending data by 6-digit NAICS
 #' by state and county from 2012 to 2017.
-getFedGovSpending <- function() {
+getFedGovSpending <- function(year) {
   # Load PSC table
   PSC <- utils::read.csv(system.file("extdata", "USASpending_PSC.csv",
                                      package = "stateior"),
@@ -22,16 +22,17 @@ getFedGovSpending <- function() {
   # Because the original data is by fiscal year (Oct-Sept) instead of calendar year (Jan-Dec)
   # Download and load data from all years to compile complete data by calendar year
   # Need get 2012-2017 data, extend the range to 2011-2018 to retrieve complete records
+  year_range <- (year-1):(year+1)
   df_ls <- list()
-  df_ls[as.character(2011:2018)] <- data.frame()
-  for (year in 2011:2018) {
+  df_ls[as.character(year_range)] <- data.frame()
+  for (year_N in year_range) {
     # Create the placeholder file
-    FedGovExpzip <- paste0("inst/extdata/FY", year, "_All_Contracts_Full_20220110.zip")
+    FedGovExpzip <- paste0("inst/extdata/FY", year_N, "_All_Contracts_Full_20220110.zip")
     if(!file.exists(FedGovExpzip)) {
       utils::download.file(paste0("https://files.usaspending.gov/award_data_archive/FY",
-                                  year, "_All_Contracts_Full_20220110.zip"),
+                                  year_N, "_All_Contracts_Full_20220110.zip"),
                            FedGovExpzip, mode = "wb",
-                           timeout = options(timeout = max(300, getOption("timeout"))))
+                           timeout = max(500, getOption("timeout")))
     }
     # Get the name of all files in the zip archive
     fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
@@ -64,49 +65,47 @@ getFedGovSpending <- function() {
       rm(df_slice)
     }
     # Paste df in df_ls
-    df_ls[[as.character(year)]] <- rbind(df_ls[[as.character(year)]],
-                                         df[df$Year==year, ])
-    df_ls[[as.character(year-1)]] <- rbind(df_ls[[as.character(year-1)]],
-                                           df[df$Year==(year-1), ])
+    df_ls[[as.character(year_N)]] <- rbind(df_ls[[as.character(year_N)]],
+                                           df[df$Year==year_N, ])
+    df_ls[[as.character(year_N-1)]] <- rbind(df_ls[[as.character(year_N-1)]],
+                                             df[df$Year==(year_N-1), ])
   }
-  # Subset 2012-2017 data only
-  for (year in 2012:2017) {
-    # Load df for the year
-    df_year <- df_ls[[as.character(year)]]
-    # Subset df_year by category and type (Defense and NonDefense)
-    for (category in names(psc_ls)) {
-      # Extract records for Defense and Non-Defense (based on awarding agency and PSC code)
-      for (type in c("Defense", "NonDefense")) {
-        if (type=="Defense") {
-          df_type <- df_year[df_year$product_or_service_code%in%psc_ls[[category]] &
-                               df_year$awarding_agency_name=="DEPARTMENT OF DEFENSE (DOD)" |
-                               df_year$product_or_service_code%in%PSC[grep("DEFENSE", PSC$PSC_Code), "4_Digit_PSC"], ]
-        } else {
-          df_type <- df_year[df_year$product_or_service_code%in%psc_ls[[category]] &
-                               df_year$awarding_agency_name!="DEPARTMENT OF DEFENSE (DOD)", ]
-        }
-        # Aggregate
-        df <- stats::aggregate(df_type$federal_action_obligation,
-                               by = list(df_type$Year, df_type$naics_code,
-                                         df_type$primary_place_of_performance_state_code,
-                                         df_type$primary_place_of_performance_county_name),
-                               sum)
-        colnames(df) <- c("Year", "NAICS", "State", "County", "Amount")
-        # Write data to .rds
-        data_name <- paste("FedGovExp", category, type, year,
-                           utils::packageDescription("stateior", fields = "Version"),
-                           sep = "_")
-        saveRDS(object = df,
-                file = paste0(file.path("data", data_name), ".rds"))
-        # Write metadata to JSON
-        useeior:::writeMetadatatoJSON(package = "stateior",
-                                      name = data_name,
-                                      year = year,
-                                      source = "USA spending",
-                                      url = "https://www.usaspending.gov/download_center/award_data_archive")
+  # Subset data
+  # Load df for the year
+  df_year <- df_ls[[as.character(year)]]
+  # Subset df_year by category and type (Defense and NonDefense)
+  for (category in names(psc_ls)) {
+    # Extract records for Defense and Non-Defense (based on awarding agency and PSC code)
+    for (type in c("Defense", "NonDefense")) {
+      if (type=="Defense") {
+        df_type <- df_year[df_year$product_or_service_code%in%psc_ls[[category]] &
+                             df_year$awarding_agency_name=="DEPARTMENT OF DEFENSE (DOD)" |
+                             df_year$product_or_service_code%in%PSC[grep("DEFENSE", PSC$PSC_Code), "4_Digit_PSC"], ]
+      } else {
+        df_type <- df_year[df_year$product_or_service_code%in%psc_ls[[category]] &
+                             df_year$awarding_agency_name!="DEPARTMENT OF DEFENSE (DOD)", ]
       }
+      # Aggregate
+      df <- stats::aggregate(df_type$federal_action_obligation,
+                             by = list(df_type$Year, df_type$naics_code,
+                                       df_type$primary_place_of_performance_state_code,
+                                       df_type$primary_place_of_performance_county_name),
+                             sum)
+      colnames(df) <- c("Year", "NAICS", "State", "County", "Amount")
+      # Write data to .rds
+      data_name <- paste("FedGovExp", category, type, year,
+                         utils::packageDescription("stateior", fields = "Version"),
+                         sep = "_")
+      saveRDS(object = df,
+              file = paste0(file.path("data", data_name), ".rds"))
+      # Write metadata to JSON
+      useeior:::writeMetadatatoJSON(package = "stateior",
+                                    name = data_name,
+                                    year = year,
+                                    source = "USA spending",
+                                    url = "https://www.usaspending.gov/download_center/award_data_archive")
     }
   }
 }
 # Download, save and document 2012-2017 federal government spending data by state (from USASpending)
-getFedGovSpending()
+getFedGovSpending(year)

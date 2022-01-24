@@ -20,10 +20,9 @@ getFAF <- function (year) {
   }
   # Specify filename based on year
   if (year == 2012) {
-    filename <- "inst/extdata/FAF4.5.1_csv_State/FAF4.5.1_State.csv"
+    filename <- "inst/extdata/FAF4.5.1_State.csv"
   } else if (year %in% c(2013:2018)) {
-    filename <- paste0("inst/extdata/FAF4.5.1_csv_State_2013-2018/FAF4.5.1_State_",
-                       year, ".csv")
+    filename <- paste0("inst/extdata/FAF4.5.1_State_", year, ".csv")
   }
   # Load state data
   FAF <- utils::read.table(filename, sep = ",", header = TRUE,
@@ -52,5 +51,5 @@ getFAF <- function (year) {
 }
 # Download, save and document 2012-2018 state FAF data (from ORNL)
 for (year in 2012:2018) {
-  getEIASEDSStateElectricityConsumption(year)
+  getFAF(year)
 }
