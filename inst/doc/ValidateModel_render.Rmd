@@ -1,0 +1,41 @@
+---
+output: html_document
+params:
+  year: [2012, 2013, 2014, 2015, 2016, 2017]
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, results = "asis")
+require(rmarkdown)
+require(knitr)
+require(devtools)
+require(stateior)
+```
+
+```{r include=FALSE}
+devtools::load_all()
+```
+
+```{r include=FALSE}
+for (year in params$year) {
+  # Load Us Make, Use, and DomesticUse
+  US_Summary_Make <- getNationalMake("Summary", year)
+  US_Summary_Use <- getNationalUse("Summary", year)
+  US_Summary_DomesticUse <- generateUSDomesticUse("Summary", year)
+  # Load state Make, industry and commodity output
+  State_Summary_Make_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
+  State_Summary_IndustryOutput_ls <- loadStateIODataFile(paste0("State_Summary_IndustryOutput_", year))
+  State_Summary_CommodityOutput_ls <- loadStateIODataFile(paste0("State_Summary_CommodityOutput_", year))
+  states <- names(State_Summary_Make_ls)
+  # Load state total Use and domestic Use
+  State_Summary_Use_ls <- loadStateIODataFile(paste0("State_Summary_Use_", year))
+  State_Summary_DomesticUse_ls <- loadStateIODataFile(paste0("State_Summary_DomesticUse_", year))
+  # Load two-region tables
+  TwoRegionTable_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_DomesticUsewithTrade_", year))
+  
+  # Render Model Validation
+  rmarkdown::render("inst/doc/ValidateModel.Rmd", output_file = paste0("ValidateModel_", year, ".html"))
+}
+```
+
