@@ -56,8 +56,8 @@ getStatePCE <- function(year) {
 #' @return A data frame contains state-US Commodity Output ratios at BEA Summary level.
 calculateStateCommodityOutputRatio <- function(year) {
   # Load state Commodity output
-  State_CommodityOutput_ls <- get(paste0("State_Summary_CommodityOutput_", year),
-                                  as.environment("package:stateior"))
+  State_CommodityOutput_ls <- loadStateIODataFile(paste0("State_Summary_CommodityOutput_",
+                                                         year))
   states <- names(State_CommodityOutput_ls)
   # Load US Commodity output
   US_MakeTransaction <- getNationalMake("Summary", year)
@@ -411,8 +411,9 @@ estimateStateExport <- function(year) {
   State_Export <- State_Export[, "F040", drop = FALSE]
   
   # Adjust state international exports to avoid state exports > state commodity output
-  State_CommOutput <- do.call(rbind, get(paste0("State_Summary_CommodityOutput_", year),
-                                         as.environment("package:stateior")))
+  State_CommOutput <- do.call(rbind,
+                              loadStateIODataFile(paste0("State_Summary_CommodityOutput_",
+                                                         year)))
   State_CommOutput <- State_CommOutput[rownames(State_Export), , drop = FALSE]
   # Prepare vectors of commodities and states that will be examined and adjusted
   commodities <- setdiff(unique(gsub(".*\\.", "", rownames(State_CommOutput))),
