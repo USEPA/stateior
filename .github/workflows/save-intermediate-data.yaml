@@ -1,5 +1,5 @@
 # This workflow is designed to be manually triggered only.
-name: Generate and save data/metadata as .rds/.json files
+name: Save intermediate data in parrallel runs
 
 on:
   workflow_dispatch: # allow manual trigger
@@ -8,13 +8,13 @@ jobs:
   generate-save-data:
     runs-on: ${{ matrix.config.os }}
 
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
-
+    name: ${{ matrix.config.os}} (${{ matrix.config.r}})
+    
     strategy:
       fail-fast: false
       matrix:
         config:
-          - {os: ubuntu-latest,   r: 'release'}
+          - {os: ubuntu-latest, r: 'release'}
 
     # env:
       # R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -34,14 +34,12 @@ jobs:
         with:
           extra-packages: devtools
       
-      # Load package
-      - name: Load stateior
-        run: Rscript -e 'devtools::load_all'
-        
-      # Generate data and save as .rds files
-      # Census Data
-      - name: Generate Census data and save as .rds files (metadata saved as .json files)
-        run: Rscript data-raw/CensusData.R
+      # Load package and generate intermediate data
+      - name: Load stateior and generate intermediate data
+        run: |
+          devtools::load_all()
+          source("data-raw/StateIntermediateData.R")
+        shell: Rscript {0}
       
       # Upload .rds files
       - name: Upload .rds files and prepare zip for manual download
