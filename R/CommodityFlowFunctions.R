@@ -7,7 +7,7 @@
 #' @return A data frame contains commodity flow ratios by BEA.
 calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved FAF4 commodity flow data
-  FAF_new <- loadStateIODataFile(paste("FAF", year, sep = "_"))
+  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"))
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   fips <- FIPS_STATE[FIPS_STATE$State==state, "State_FIPS"]
