@@ -47,7 +47,7 @@ getStateGOS <- function(year) {
 getStatePCE <- function(year) {
   # Load pre-saved state PCE 2007-2018
   StatePCE <- loadStateIODataFile("State_PCE_2007_2018")
-  StatePCE <- StatePCE[, c("GeoName", "Line", as.character(year))]
+  StatePCE <- StatePCE[, c("GeoName", "LineCode", as.character(year))]
   return(StatePCE)
 }
 
@@ -254,24 +254,24 @@ calculateStateUSPCERatio <- function(year) {
   StatePCE <- PCE[PCE$GeoName!="United States", ]
   # Generate sum of state PCE
   StatePCE_sum <- stats::aggregate(StatePCE[, as.character(year)], by = list(StatePCE$Line), sum)
-  colnames(StatePCE_sum) <- c("Line", as.character(year))
+  colnames(StatePCE_sum) <- c("LineCode", as.character(year))
   # Extract US PCE
-  USPCE <- PCE[PCE$GeoName=="United States", c("Line", as.character(year))]
+  USPCE <- PCE[PCE$GeoName=="United States", c("LineCode", as.character(year))]
   # Merge sum of state PCE with US PCE to get PCE of Overseas region
-  OverseasPCE <- merge(StatePCE_sum, USPCE, by = "Line")
+  OverseasPCE <- merge(StatePCE_sum, USPCE, by = "LineCode")
   OverseasPCE[, as.character(year)] <- OverseasPCE[, paste0(year, ".y")] - OverseasPCE[, paste0(year, ".x")]
   OverseasPCE$GeoName <- "Overseas"
   # Append Overseas PCE to StatePCE
   StatePCE <- rbind(StatePCE, OverseasPCE[, colnames(StatePCE)])
   # Merge State and US PCE by LineCode
-  StateUSPCE <- merge(StatePCE, USPCE, by = "Line")
+  StateUSPCE <- merge(StatePCE, USPCE, by = "LineCode")
   # Calculate the state-US PCE ratios by LineCode
   StateUSPCE$Ratio <- StateUSPCE[, paste0(year, ".x")]/StateUSPCE[, paste0(year, ".y")]
   # Map to BEA Summary
   filename <- "Crosswalk_StatePCEtoBEASummaryIO2012Schema.csv"
   StatePCEtoBEASummary <- readCSV(system.file("extdata", filename, package = "stateior"))
   StateUSPCE <- merge(StatePCEtoBEASummary[!StatePCEtoBEASummary$BEA_2012_Summary_Code=="", ],
-                      StateUSPCE, by = "Line")
+                      StateUSPCE, by.x = "Line", by.y = "LineCode")
   # Adjust Ratio based on state PCE
   for (state in unique(StateUSPCE$GeoName)) {
     for (sector in unique(StateUSPCE$BEA_2012_Summary_Code)) {
