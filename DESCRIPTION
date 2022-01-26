@@ -1,8 +1,8 @@
 Package: stateior
 Type: Package
 Title: US State Input-Output (stateio) R modeling software
-Version: 0.0.1
-Date: 2020-07-13
+Version: 0.1.0
+Date: 2022-01-20
 Authors@R: c(
   person("Mo", "Li", email="mo.li@gdit.com", role="aut"),
   person("Joao-Pedro", "Ferreira", email="joao.ferreira@ufl.edu", role= c("aut")),
@@ -16,6 +16,7 @@ Description:
 URL: https://github.com/USEPA/stateior
 BugReports: https://github.com/USEPA/stateior/issues
 Imports:
+    aws.s3 (>= 0.3.21),
     configr (>= 0.3.4),
     dplyr (>= 1.0.6),
     ggplot2 (>= 3.0),
