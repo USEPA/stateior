@@ -17,7 +17,7 @@ getNationalMake <- function(iolevel, year) {
 #' @return A data frame contains state GVA for all states at a specific year.
 getStateGVA <- function(year) {
   # Load pre-saved state GVA 2007-2019
-  StateGVA <- stateior::State_GVA_2007_2019
+  StateGVA <- loadStateIODataFile("State_GVA_2007_2019")
   StateGVA <- StateGVA[, c("GeoName", "LineCode", as.character(year))]
   return(StateGVA)
 }
