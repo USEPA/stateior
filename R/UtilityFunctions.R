@@ -175,10 +175,15 @@ getFlowsaData <- function(dataname, year) {
 #' @param filename A string specifying filename "State_Summary_Use_2017".
 #' @return File name of the latest state IO data on Data Commons.
 findLatestStateIODataonDataCommons <- function(filename) {
-  base_url <- "https://xri9ebky5b.execute-api.us-east-1.amazonaws.com/api/?"
-  url <- paste0(base_url, "searchvalue=", filename, "&place=&searchfields=filename")
-  registry <- jsonlite::fromJSON(url)
-  f <- basename(registry[which.max(as.Date(registry[, "LastModified"])), "ObjKey"])
+  registry_ls <- aws.s3::get_bucket(bucket = "edap-ord-data-commons",
+                                    prefix = "stateio")
+  registry <- cbind.data.frame(basename(sapply(registry_ls, `[[`, "Key")),
+                               sapply(registry_ls, `[[`, "LastModified"))
+  colnames(registry) <- c("Key", "LastModified")
+  f <- basename(registry[startsWith(registry$Key, filename)& 
+                           endsWith(registry$Key, ".rds") &
+                           which.max(as.Date(registry$LastModified)),
+                         "Key"])
   return(f)
 }
 
@@ -214,14 +219,11 @@ loadStateIODataFile <- function(filename, ver = NULL) {
   # Define file name
   if (is.null(ver)) {
     # Look for the latest file
-    local_files <- list.files(file.path(rappdirs::user_data_dir(), "stateio"),
-                              pattern = paste0(filename, ".*\\.rds"), full.names = TRUE)
-    f <- basename(local_files[which.max(file.mtime(local_files))])
-    # f <- findLatestStateIODataonDataCommons(filename)
-    # if (!file.exists(file.path(rappdirs::user_data_dir(), "stateio", f))) {
-    #   logging::loginfo(paste("Latest", filename, "data file not found, downloading from Data Commons..."))
-    #   downloadStateIODatafromDataCommons(filename)
-    # }
+    f <- findLatestStateIODataonDataCommons(filename)
+    if (!file.exists(file.path(rappdirs::user_data_dir(), "stateio", f))) {
+      logging::loginfo(paste("Latest", filename, "data file not found, downloading from Data Commons..."))
+      downloadStateIODatafromDataCommons(filename)
+    }
   } else {
     # Look for file under specific version
     f <- paste0(paste(filename, ver, sep = "_"), ".rds")
