@@ -89,7 +89,11 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A data frame contains domestic 2 region ICFs.
+#' @param ICF_sensitivity_analysis A logical value indicating whether to conduct
+#' sensitivity analysis on ICF, default is FALSE.
+#' @param adjust_by A numeric value between 0 and 1 indicating the manual adjustment
+#' to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.
+#' #' @return A data frame contains domestic 2 region ICFs.
 generateDomestic2RegionICFs <- function (state, year, ioschema, iolevel,
                                          ICF_sensitivity_analysis = FALSE,
                                          adjust_by = 0) {

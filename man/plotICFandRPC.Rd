@@ -10,6 +10,8 @@ plotICFandRPC(ICF_df, RPC_df, isSoI = TRUE)
 \item{ICF_df}{A data.frame contains SoI2SoI ICF ratios}
 
 \item{RPC_df}{A data.frame contains state RPC ratios}
+
+\item{isSoI}{A logical value indicating whether to plot ICF and RPC of SoI or not.}
 }
 \description{
 Plot SoI2SoI or RoUS2RoUS ICF and state RPC

@@ -38,9 +38,9 @@ mapStateTabletoBEASummary <- function(statetablename, year) {
 }
 
 #' Calculate allocation factors based on state-level data, such as employment
-#' @param statetablename Name of pre-saved state table,
-#' can be GVA, Tax, Employment Compensation, and GOS.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param allocationweightsource A string specifying the source being used
+#' as the weight in the allocation.
 #' @return A data frame contains allocation factors
 #' for all states with row names being BEA sector code.
 calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsource) {

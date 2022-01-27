@@ -84,8 +84,9 @@ applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
 }
 
 #' Calculate regional purchase coefficient for specified state and year
-#' @param state Name of desired state, like "Georgia".
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param SoI2SoIUse A data.frame of SoI2SoIUse table.
+#' @param RoUS2SoIUse A data.frame of RoUS2SoIUse table.
+#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data.frame contains by-commodity RPC and overall RPC
 calculateRegionalPurchaseCoefficient <- function(SoI2SoIUse, RoUS2SoIUse, iolevel) {
   import_export_cols <- unlist(sapply(list("Export", "Import"),

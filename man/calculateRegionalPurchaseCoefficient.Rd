@@ -7,9 +7,11 @@
 calculateRegionalPurchaseCoefficient(SoI2SoIUse, RoUS2SoIUse, iolevel)
 }
 \arguments{
-\item{state}{Name of desired state, like "Georgia".}
+\item{SoI2SoIUse}{A data.frame of SoI2SoIUse table.}
 
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{RoUS2SoIUse}{A data.frame of RoUS2SoIUse table.}
+
+\item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
 }
 \value{
 A data.frame contains by-commodity RPC and overall RPC
