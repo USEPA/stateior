@@ -17,24 +17,8 @@ loadTwoRegionIOData <- function(year, iolevel, dataname) {
   } else if (dataname%in%c("DomesticUseTransactions", "DomesticFinalDemand")) {
     filename <- gsub(dataname, "DomesticUse", filename)
   }
+  TwoRegionIOData <- loadStateIODataFile(filename)
   # Try loading data from local folder
-  logging::loginfo(paste("Loading", year, "two-region", iolevel, dataname,
-                         "from local folder ..."))
-  filefolder <- file.path(rappdirs::user_data_dir(), "stateio")
-  if (!dir.exists(filefolder)) {
-    dir.create(filefolder, recursive = TRUE) 
-  }
-  filepath <- paste0(filefolder, "/", filename, ".rds")
-  # If data not found in local folder, try loading from Data Commons
-  if (!file.exists(filepath)) {
-    logging::logwarn(paste("File not found in local folder, loading from Data Commons ..."))
-    # Define URL then download from the Data Commons
-    url <- paste0("https://edap-ord-data-commons.s3.amazonaws.com/stateio/",
-                  filename, ".rds")
-    utils::download.file(url, filepath, quiet = TRUE)
-  }
-  # Load the data
-  TwoRegionIOData <- get(load(filepath))
   return(TwoRegionIOData)
 }
 
