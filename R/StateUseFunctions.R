@@ -166,7 +166,6 @@ adjustGVAComponent <- function(year, return) {
 
 #' Assemble Summary-level gross value added sectors (V001, V002, V003) for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @return A data frame contains Summary-level gross value added (V001, V002, V003) for all states at a specific year.
 assembleStateSummaryGrossValueAdded <- function(year) {
   US_Use <- loadDatafromUSEEIOR(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
