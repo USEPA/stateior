@@ -220,13 +220,16 @@ loadStateIODataFile <- function(filename, ver = NULL) {
   if (is.null(ver)) {
     # Look for the latest file
     f <- findLatestStateIODataonDataCommons(filename)
-    if (!file.exists(file.path(rappdirs::user_data_dir(), "stateio", f))) {
-      logging::loginfo(paste("Latest", filename, "data file not found, downloading from Data Commons..."))
-      downloadStateIODatafromDataCommons(filename)
-    }
   } else {
     # Look for file under specific version
     f <- paste0(paste(filename, ver, sep = "_"), ".rds")
+  }
+  # Download file from Data Commons, or load file from local folder
+  if (!file.exists(file.path(rappdirs::user_data_dir(), "stateio", f))) {
+    logging::loginfo(paste(f, "not found in local folder, downloading from Data Commons..."))
+    downloadStateIODatafromDataCommons(filename, ver = ver)
+  } else {
+    logging::loginfo(paste("Loading", f, "from local folder ..."))
   }
   df <- readRDS(file.path(rappdirs::user_data_dir(), "stateio", f))
   return(df)
