@@ -120,8 +120,10 @@ getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
 #' Generate two-region data filename with .rds as suffix.
 #' @description Generate two-region data filename with .rds as suffix.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
+#' "CommodityOutput, and "IndustryOutput".
 #' @return A string of two-region data filename with .rds as suffix.
 getTwoRegionDataFileName <- function(year, iolevel, dataname) {
   filename <- paste("TwoRegion", iolevel, dataname, year, sep = "_")
@@ -178,7 +180,8 @@ findLatestStateIODataonDataCommons <- function(filename) {
   registry_ls <- aws.s3::get_bucket(bucket = "edap-ord-data-commons",
                                     prefix = "stateio")
   registry <- cbind.data.frame(basename(sapply(registry_ls, `[[`, "Key")),
-                               sapply(registry_ls, `[[`, "LastModified"),stringsAsFactors=FALSE)
+                               sapply(registry_ls, `[[`, "LastModified"),
+                               stringsAsFactors = FALSE)
   colnames(registry) <- c("Key", "LastModified")
   f <- basename(registry[startsWith(registry$Key, filename)& 
                            endsWith(registry$Key, ".rds") &
@@ -238,8 +241,10 @@ loadStateIODataFile <- function(filename, ver = NULL) {
 #' Get a datetime object for desired data file on the DataCommons server.
 #' @description Get a datetime object for desired data file on the DataCommons server.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
+#' "CommodityOutput, and "IndustryOutput".
 #' @return A datetime object for desired data file on the DataCommons server.
 getFileUpdateTimefromDataCommons <- function(year, iolevel, dataname) {
   datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
@@ -253,8 +258,10 @@ getFileUpdateTimefromDataCommons <- function(year, iolevel, dataname) {
 #' Get a datetime object for desired data file from local folder.
 #' @description Get a datetime object for desired data file from local folder.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
+#' "CommodityOutput, and "IndustryOutput".
 #' @param path User-defined local path.
 #' @return A datetime object for desired data file from local folder.
 getFileUpdateTimefromLocal <- function(year, iolevel, dataname, path) {
@@ -267,8 +274,10 @@ getFileUpdateTimefromLocal <- function(year, iolevel, dataname, path) {
 #' Write a datetime object for desired data file to local folder.
 #' @description Get a datetime object for desired data file to local folder.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
+#' "CommodityOutput, and "IndustryOutput".
 #' @param path User-defined local path.
 #' @return A datetime object for desired data file to local folder. 
 writeDatafileMeta <- function(year, iolevel, dataname, path) {
@@ -280,7 +289,8 @@ writeDatafileMeta <- function(year, iolevel, dataname, path) {
 #' Load a datetime object for desired data file from local folder.
 #' @description Load a datetime object for desired data file from local folder.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
 #' @param path User-defined local path.
 #' @return A datetime object for desired data file from local folder.

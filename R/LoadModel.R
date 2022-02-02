@@ -3,7 +3,8 @@
 #' @description Load two-region IO data of specified iolevel and year
 #' from user's local directory or the EPA Data Commons.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
 #' "UseTransactions", "FinalDemand", "DomesticUseTransactions", "DomesticFinalDemand",
 #' "CommodityOutput, and "IndustryOutput", "Demand", and "CompleteDemand".
@@ -46,7 +47,8 @@ checkIOLevel <- function(iolevel) {
 #' for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data.frame of SoI's and RoUS' make transactions.
 #' @export
 getTwoRegionMakeTransactions <- function(state, year, iolevel) {
@@ -61,7 +63,8 @@ getTwoRegionMakeTransactions <- function(state, year, iolevel) {
 #' in SoI and its corresponding RoUS for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data.frame of two-region total use transactions.
 #' @export
 getTwoRegionUseTransactions <- function(state, year, iolevel) {
@@ -80,7 +83,8 @@ getTwoRegionUseTransactions <- function(state, year, iolevel) {
 #' @description Load two-region final demand in SoI and RoUS for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data.frame of two-region final demand.
 #' @export
 getTwoRegionFinalDemand <- function(state, year, iolevel) {
@@ -100,7 +104,8 @@ getTwoRegionFinalDemand <- function(state, year, iolevel) {
 #' in SoI and its corresponding RoUS for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data.frame of two-region domestic use transactions.
 #' @export
 getTwoRegionDomesticUseTransactions <- function(state, year, iolevel) {
@@ -119,7 +124,8 @@ getTwoRegionDomesticUseTransactions <- function(state, year, iolevel) {
 #' @description Load two-region domestic final demand in SoI and RoUS for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data.frame of two-region domestic final demand.
 #' @export
 getTwoRegionDomesticFinalDemand <- function(state, year, iolevel) {
@@ -139,7 +145,8 @@ getTwoRegionDomesticFinalDemand <- function(state, year, iolevel) {
 #' for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data.frame of two-region value added.
 #' @export
 getTwoRegionValueAdded <- function(state, year, iolevel) {
@@ -159,7 +166,8 @@ getTwoRegionValueAdded <- function(state, year, iolevel) {
 #' for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data.frame of SoI's and RoUS' commodity output.
 #' @export
 getTwoRegionCommodityOutput <- function(state, year, iolevel) {
@@ -174,7 +182,8 @@ getTwoRegionCommodityOutput <- function(state, year, iolevel) {
 #' for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data.frame of SoI's and RoUS' industry output.
 #' @export
 getTwoRegionIndustryOutput <- function(state, year, iolevel) {
@@ -191,7 +200,8 @@ getTwoRegionIndustryOutput <- function(state, year, iolevel) {
 #' for a given year.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data.frame of SoI's and RoUS' complete demand (trade) tables.
 #' @export
 getTwoRegionDomesticUsewithTrade <- function(state, year, iolevel) {

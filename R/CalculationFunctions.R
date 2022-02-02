@@ -86,7 +86,8 @@ applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
 #' Calculate regional purchase coefficient for specified state and year
 #' @param SoI2SoIUse A data.frame of SoI2SoIUse table.
 #' @param RoUS2SoIUse A data.frame of RoUS2SoIUse table.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data.frame contains by-commodity RPC and overall RPC
 calculateRegionalPurchaseCoefficient <- function(SoI2SoIUse, RoUS2SoIUse, iolevel) {
   import_export_cols <- unlist(sapply(list("Export", "Import"),

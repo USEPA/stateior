@@ -263,7 +263,8 @@ buildStateUseModel <- function(year) {
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @param ICF_sensitivity_analysis A logical value indicating whether to conduct
 #' sensitivity analysis on ICF, default is FALSE.
 #' @param adjust_by A numeric value between 0 and 1 indicating the manual adjustment
@@ -500,7 +501,8 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
 #' Assemble two-region make, use, domestic use, and Use tables as well as commodity and industry outputs.
 #' @description Assemble two-region make and use tables as well as commodity and industry outputs.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A list of two-region make, use, domestic use, and Use tables
 #' as well as commodity and industry outputs by state.
 #' @export
@@ -623,7 +625,8 @@ assembleTwoRegionIO <- function(year, iolevel) {
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A full two-region IO table for specified state and rest of US for a given year.
 #' @export
 buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {

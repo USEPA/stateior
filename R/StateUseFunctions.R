@@ -1,5 +1,6 @@
 #' Get US Use table (intermediaete + final demand) of specified iolevel and year.
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @param year A numeric value specifying the year of interest.
 #' @return The US Use table (intermediaete + final demand) of specified iolevel and year.
 getNationalUse <- function(iolevel, year) {

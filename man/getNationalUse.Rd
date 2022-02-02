@@ -7,7 +7,8 @@
 getNationalUse(iolevel, year)
 }
 \arguments{
-\item{iolevel}{Level of detail, can be "Sector", "Summary, "Detail".}
+\item{iolevel}{BEA sector level of detail, currently can only be "Summary",
+theoretically can be "Detail", or "Sector" in future versions.}
 
 \item{year}{A numeric value specifying the year of interest.}
 }

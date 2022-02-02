@@ -4,7 +4,8 @@
 #' @param SoI A logical variable indicating whether to calculate
 #' local and traded ratios for SoI or RoUS.
 #' @param ioschema A numeric value of either 2012 or 2007.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data frame contains local and traded ratios by BEA sectors
 #' for the specified state.
 calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, iolevel) {
@@ -88,7 +89,8 @@ calculateLocalandTradedRatios <- function (state, year, SoI = TRUE, ioschema, io
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @param ICF_sensitivity_analysis A logical value indicating whether to conduct
 #' sensitivity analysis on ICF, default is FALSE.
 #' @param adjust_by A numeric value between 0 and 1 indicating the manual adjustment

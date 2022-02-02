@@ -11,7 +11,8 @@ calculateRegionalPurchaseCoefficient(SoI2SoIUse, RoUS2SoIUse, iolevel)
 
 \item{RoUS2SoIUse}{A data.frame of RoUS2SoIUse table.}
 
-\item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
+\item{iolevel}{BEA sector level of detail, currently can only be "Summary",
+theoretically can be "Detail", or "Sector" in future versions.}
 }
 \value{
 A data.frame contains by-commodity RPC and overall RPC

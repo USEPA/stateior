@@ -3,7 +3,8 @@
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @param flow_ratio_type Type of commodity flow, can be "domestic", "export", or "import".
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data frame contains commodity flow ratios by BEA.
 calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved FAF4 commodity flow data
@@ -123,7 +124,8 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @param flow_ratio_type Type of commodity flow, can be "export" or "import".
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data frame contains international commodity flow ratios by BEA for all available states.
 calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved state export/import data
