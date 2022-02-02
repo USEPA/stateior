@@ -173,21 +173,43 @@ getFlowsaData <- function(dataname, year) {
   return(df)
 }
 
-#' Find the latest state IO data on Data Commons.
-#' @param filename A string specifying filename "State_Summary_Use_2017".
-#' @return File name of the latest state IO data on Data Commons.
-findLatestStateIODataonDataCommons <- function(filename) {
+#' Get state IO data registry on Data Commons.
+#' @return A dataframe of state IO data registry on Data Commons.
+getStateIODataRegistryonDataCommons <- function() {
   registry_ls <- aws.s3::get_bucket(bucket = "edap-ord-data-commons",
                                     prefix = "stateio")
   registry <- cbind.data.frame(basename(sapply(registry_ls, `[[`, "Key")),
                                sapply(registry_ls, `[[`, "LastModified"),
                                stringsAsFactors = FALSE)
   colnames(registry) <- c("Key", "LastModified")
+  return(registry)
+}
+
+#' Find the latest state IO data on Data Commons.
+#' @param filename A string specifying filename "State_Summary_Use_2017".
+#' @return File name of the latest state IO data on Data Commons.
+findLatestStateIODataonDataCommons <- function(filename) {
+  registry <- getStateIODataRegistryonDataCommons()
   f <- basename(registry[startsWith(registry$Key, filename)& 
                            endsWith(registry$Key, ".rds") &
                            which.max(as.Date(registry$LastModified)),
                          "Key"])
+  if (length(f)==0) {
+    stop(paste(filename, "not avaialble on Data Commons."))
+  }
   return(f)
+}
+
+#' Check if file is available on Data Commons. Stop function execution if not.
+#' @param filename A string specifying filename "State_Summary_Use_2017".
+checkFileonDataCommons <- function(file) {
+  registry <- getStateIODataRegistryonDataCommons()
+  f <- basename(registry[startsWith(registry$Key, file)& 
+                           endsWith(registry$Key, ".rds"),
+                         "Key"])
+  if (length(f)==0) {
+    stop(paste(file, "not avaialble on Data Commons."))
+  }
 }
 
 #' Download state IO data file from Data Commons and stores in a local data directory.
@@ -230,6 +252,7 @@ loadStateIODataFile <- function(filename, ver = NULL) {
   # Download file from Data Commons, or load file from local folder
   if (!file.exists(file.path(rappdirs::user_data_dir(), "stateio", f))) {
     logging::loginfo(paste(f, "not found in local folder, downloading from Data Commons..."))
+    checkFileonDataCommons(f)
     downloadStateIODatafromDataCommons(filename, ver = ver)
   } else {
     logging::loginfo(paste("Loading", f, "from local folder ..."))
