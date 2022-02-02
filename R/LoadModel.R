@@ -22,6 +22,14 @@ loadTwoRegionIOData <- function(year, iolevel, dataname) {
   return(TwoRegionIOData)
 }
 
+#' Check state name. Stop function execution if input parameter is not a valid state name.
+#' @param state A text value specifying state of interest.
+checkStateName <- function(state) {
+  if (!state%in%c(state.name, "District of Columbia", "Overseas")) {
+    stop(paste(state, "is not a valid state name. No data is found."))
+  }
+}
+
 #' Load make transactions of a state of interest (SoI)
 #' and its corresponding rest-of-US (RoUS) for a given year.
 #' @description Load make transactions of a SoI and its correspondingRoUS
@@ -32,6 +40,7 @@ loadTwoRegionIOData <- function(year, iolevel, dataname) {
 #' @return A data.frame of SoI's and RoUS' make transactions.
 #' @export
 getTwoRegionMakeTransactions <- function(state, year, iolevel) {
+  checkStateName(state)
   Make <- loadTwoRegionIOData(year, iolevel, "Make")[[state]]
   return(Make)
 }
@@ -46,6 +55,7 @@ getTwoRegionMakeTransactions <- function(state, year, iolevel) {
 #' @return A data.frame of two-region total use transactions.
 #' @export
 getTwoRegionUseTransactions <- function(state, year, iolevel) {
+  checkStateName(state)
   df <- loadTwoRegionIOData(year, iolevel, "UseTransactions")[[state]]
   row_names <- c(getBEASectorCodeLocation("Commodity", state, iolevel),
                  getBEASectorCodeLocation("Commodity", "RoUS", iolevel))
@@ -64,6 +74,7 @@ getTwoRegionUseTransactions <- function(state, year, iolevel) {
 #' @return A data.frame of two-region final demand.
 #' @export
 getTwoRegionFinalDemand <- function(state, year, iolevel) {
+  checkStateName(state)
   df <- loadTwoRegionIOData(year, iolevel, "FinalDemand")[[state]]
   row_names <- c(getBEASectorCodeLocation("Commodity", state, iolevel),
                  getBEASectorCodeLocation("Commodity", "RoUS", iolevel))
@@ -83,6 +94,7 @@ getTwoRegionFinalDemand <- function(state, year, iolevel) {
 #' @return A data.frame of two-region domestic use transactions.
 #' @export
 getTwoRegionDomesticUseTransactions <- function(state, year, iolevel) {
+  checkStateName(state)
   df <- loadTwoRegionIOData(year, iolevel, "DomesticUseTransactions")[[state]]
   row_names <- c(getBEASectorCodeLocation("Commodity", state, iolevel),
                  getBEASectorCodeLocation("Commodity", "RoUS", iolevel))
@@ -101,6 +113,7 @@ getTwoRegionDomesticUseTransactions <- function(state, year, iolevel) {
 #' @return A data.frame of two-region domestic final demand.
 #' @export
 getTwoRegionDomesticFinalDemand <- function(state, year, iolevel) {
+  checkStateName(state)
   df <- loadTwoRegionIOData(year, iolevel, "DomesticFinalDemand")[[state]]
   row_names <- c(getBEASectorCodeLocation("Commodity", state, iolevel),
                  getBEASectorCodeLocation("Commodity", "RoUS", iolevel))
@@ -120,6 +133,7 @@ getTwoRegionDomesticFinalDemand <- function(state, year, iolevel) {
 #' @return A data.frame of two-region value added.
 #' @export
 getTwoRegionValueAdded <- function(state, year, iolevel) {
+  checkStateName(state)
   df <- loadTwoRegionIOData(year, iolevel, "ValueAdded")[[state]]
   row_names <- c(getBEASectorCodeLocation("ValueAdded", state, iolevel),
                  getBEASectorCodeLocation("ValueAdded", "RoUS", iolevel))
@@ -139,6 +153,7 @@ getTwoRegionValueAdded <- function(state, year, iolevel) {
 #' @return A data.frame of SoI's and RoUS' commodity output.
 #' @export
 getTwoRegionCommodityOutput <- function(state, year, iolevel) {
+  checkStateName(state)
   CommOutput <- loadTwoRegionIOData(year, iolevel, "CommodityOutput")[[state]]
   return(CommOutput)
 }
@@ -153,6 +168,7 @@ getTwoRegionCommodityOutput <- function(state, year, iolevel) {
 #' @return A data.frame of SoI's and RoUS' industry output.
 #' @export
 getTwoRegionIndustryOutput <- function(state, year, iolevel) {
+  checkStateName(state)
   IndOutput <- loadTwoRegionIOData(year, iolevel, "IndustryOutput")[[state]]
   return(IndOutput)
 }
@@ -169,6 +185,9 @@ getTwoRegionIndustryOutput <- function(state, year, iolevel) {
 #' @return A data.frame of SoI's and RoUS' complete demand (trade) tables.
 #' @export
 getTwoRegionDomesticUsewithTrade <- function(state, year, iolevel) {
-  TwoRegionDomesticUsewithTrade <- loadTwoRegionIOData(year, iolevel, "DomesticUsewithTrade")[[state]]
+  checkStateName(state)
+  TwoRegionDomesticUsewithTrade <- loadTwoRegionIOData(year,
+                                                       iolevel,
+                                                       "DomesticUsewithTrade")[[state]]
   return(TwoRegionDomesticUsewithTrade)
 }
