@@ -7,7 +7,7 @@
 downloadStateIODatafromDataCommons(filename, ver = NULL)
 }
 \arguments{
-\item{filename}{A string specifying filename "State_Summary_Use_2017".}
+\item{filename}{A string specifying filename, e.g. "State_Summary_Use_2017".}
 
 \item{ver}{A string specifying version of the data, default is NULL, can be "v0.1.0".}
 }

@@ -7,7 +7,7 @@
 checkFileonDataCommons(file)
 }
 \arguments{
-\item{filename}{A string specifying filename "State_Summary_Use_2017".}
+\item{file}{A string specifying file, e.g. "State_Summary_Use_2017_v0.1.0_rds".}
 }
 \description{
 Check if file is available on Data Commons. Stop function execution if not.

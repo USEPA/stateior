@@ -7,7 +7,7 @@
 findLatestStateIODataonDataCommons(filename)
 }
 \arguments{
-\item{filename}{A string specifying filename "State_Summary_Use_2017".}
+\item{filename}{A string specifying filename, e.g. "State_Summary_Use_2017".}
 }
 \value{
 File name of the latest state IO data on Data Commons.

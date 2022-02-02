@@ -186,7 +186,7 @@ getStateIODataRegistryonDataCommons <- function() {
 }
 
 #' Find the latest state IO data on Data Commons.
-#' @param filename A string specifying filename "State_Summary_Use_2017".
+#' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @return File name of the latest state IO data on Data Commons.
 findLatestStateIODataonDataCommons <- function(filename) {
   registry <- getStateIODataRegistryonDataCommons()
@@ -201,7 +201,7 @@ findLatestStateIODataonDataCommons <- function(filename) {
 }
 
 #' Check if file is available on Data Commons. Stop function execution if not.
-#' @param filename A string specifying filename "State_Summary_Use_2017".
+#' @param file A string specifying file, e.g. "State_Summary_Use_2017_v0.1.0_rds".
 checkFileonDataCommons <- function(file) {
   registry <- getStateIODataRegistryonDataCommons()
   f <- basename(registry[startsWith(registry$Key, file)& 
@@ -213,7 +213,7 @@ checkFileonDataCommons <- function(file) {
 }
 
 #' Download state IO data file from Data Commons and stores in a local data directory.
-#' @param filename A string specifying filename "State_Summary_Use_2017".
+#' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return An .rds data file downloaded from Data Commons and stored in local directory.
 downloadStateIODatafromDataCommons <- function(filename, ver = NULL) {
@@ -237,7 +237,7 @@ downloadStateIODatafromDataCommons <- function(filename, ver = NULL) {
 }
 
 #' Load state IO data file from local data directory.
-#' @param filename A string specifying filename "State_Summary_Use_2017".
+#' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return The pathname to the state IO data file.
 loadStateIODataFile <- function(filename, ver = NULL) {
