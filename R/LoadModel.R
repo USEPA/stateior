@@ -9,6 +9,7 @@
 #' "CommodityOutput, and "IndustryOutput", "Demand", and "CompleteDemand".
 #' @return A list of two-region IO data of specified iolevel and year.
 loadTwoRegionIOData <- function(year, iolevel, dataname) {
+  checkIOLevel(iolevel)
   # Define data file name
   filename <- getTwoRegionDataFileName(year, iolevel, dataname)
   # Adjust filename to fit what is on the Data Commons
@@ -27,6 +28,15 @@ loadTwoRegionIOData <- function(year, iolevel, dataname) {
 checkStateName <- function(state) {
   if (!state%in%c(state.name, "District of Columbia", "Overseas")) {
     stop(paste(state, "is not a valid state name. No data is found."))
+  }
+}
+
+#' Check IO level. Stop function execution if input parameter is not "Summary".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+checkIOLevel <- function(iolevel) {
+  if(iolevel!="Summary"){
+    stop(paste(iolevel, "level data are not available. Only 'Summary' level data are available."))
   }
 }
 
