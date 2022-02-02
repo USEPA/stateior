@@ -178,7 +178,7 @@ findLatestStateIODataonDataCommons <- function(filename) {
   registry_ls <- aws.s3::get_bucket(bucket = "edap-ord-data-commons",
                                     prefix = "stateio")
   registry <- cbind.data.frame(basename(sapply(registry_ls, `[[`, "Key")),
-                               sapply(registry_ls, `[[`, "LastModified"))
+                               sapply(registry_ls, `[[`, "LastModified"),stringsAsFactors=FALSE)
   colnames(registry) <- c("Key", "LastModified")
   f <- basename(registry[startsWith(registry$Key, filename)& 
                            endsWith(registry$Key, ".rds") &
