@@ -10,7 +10,8 @@ calculateStateFedGovExpenditureRatio(year)
 \item{year}{A numeric value between 2008 and 2019 specifying the year of interest.}
 }
 \value{
-A data frame contains state fed government expenditure ratio for all states at a specific year at BEA Summary level.
+A data frame contains state fed government expenditure ratio
+for all states at a specific year at BEA Summary level.
 }
 \description{
 Calculate state fed government expenditure ratio at BEA Summary level.

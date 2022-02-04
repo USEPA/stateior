@@ -623,16 +623,17 @@ calculateUSGovExpenditureWeightFactor <- function(year, defense) {
 
 #' Calculate state fed government expenditure ratio at BEA Summary level.
 #' @param year A numeric value between 2008 and 2019 specifying the year of interest.
-#' @return A data frame contains state fed government expenditure ratio for all states at a specific year at BEA Summary level.
+#' @return A data frame contains state fed government expenditure ratio
+#' for all states at a specific year at BEA Summary level.
 calculateStateFedGovExpenditureRatio <- function(year) {
   # Load state and local government expenditure
   GovExpRatio <- data.frame()
-  sectors <- paste(c("Intermediate", "Structure", "Equipment", "IP"),
-                   rep(c("Defense", "NonDefense"), each = 4), sep = "_")
+  types <- paste(c("Intermediate", "Structure", "Equipment", "IP"),
+                 rep(c("Defense", "NonDefense"), each = 4), sep = "_")
   mapping <- unique(useeior::MasterCrosswalk2012[, c("BEA_2012_Summary_Code",
                                                      "NAICS_2012_Code")])
-  for(sector in sectors) {
-    GovExp <- loadStateIODataFile(paste("FedGovExp", sector, year, sep = "_"))
+  for(type in types) {
+    GovExp <- loadStateIODataFile(paste("FedGovExp", type, year, sep = "_"))
     # Change State to full state name
     for (state in unique(GovExp$State)) {
       GovExp[GovExp$State==state, "State"] <- ifelse(state=="DC", "District of Columbia",
@@ -655,15 +656,26 @@ calculateStateFedGovExpenditureRatio <- function(year) {
     # Transform table from wide to long
     GovExpBEA <- reshape2::melt(GovExpBEA, id.vars = "BEA_2012_Summary_Code",
                                 variable.name = "State", value.name = "Ratio")
-    # Add Sector column
-    GovExpBEA$Sector <- sector
+    # Add Type column
+    GovExpBEA$Type <- type
     GovExpRatio <- rbind(GovExpRatio, GovExpBEA)
   }
   # Transform table from long to wide
-  GovExpRatio <- reshape2::dcast(GovExpRatio, BEA_2012_Summary_Code + State ~ Sector,
+  GovExpRatio <- reshape2::dcast(GovExpRatio, BEA_2012_Summary_Code + State ~ Type,
                                  value.var = "Ratio")
   # Replace NA with 0
   GovExpRatio[is.na(GovExpRatio)] <- 0
+  # For each BEA sector, if each state's expenditure ratio by type == 0,
+  # replace each state' ratio with 1/51 (50 states + DC), while keeping Overseas 0,
+  # so when national total !=0 it can still be allocate to states.
+  for (bea in unique(GovExpRatio$BEA_2012_Summary_Code)) {
+    for (type in types) {
+      if (all(GovExpRatio[GovExpRatio$BEA_2012_Summary_Code==bea, type]==0)) {
+        GovExpRatio[GovExpRatio$BEA_2012_Summary_Code==bea & 
+                      GovExpRatio$State!="Overseas", type] <- 1/51
+      }
+    }
+  }
   # Rename columns
   colnames(GovExpRatio)[c(3:4, 7:10)] <- c("F06E", "F07E", "F06N", "F07N", "F06S", "F07S")
   # Calculate ratios for Consumption expenditures (F06C and F07C)
@@ -681,11 +693,11 @@ calculateStateFedGovExpenditureRatio <- function(year) {
   # Calculate Defense ratios
   W_E_D <- WeightFactor_D[WeightFactor_D$Line==26, as.character(year)]
   W_IC_D <- WeightFactor_D[WeightFactor_D$Line==28, as.character(year)]
-  GovExpRatio[, "F06C"] <- GovExpRatio$Ratio * W_E_D + GovExpRatio$IntermediateDefense * W_IC_D
+  GovExpRatio[, "F06C"] <- GovExpRatio$Ratio * W_E_D + GovExpRatio$Intermediate_Defense * W_IC_D
   # Calculate Non-Defense ratios
   W_E_ND <- WeightFactor_ND[WeightFactor_ND$Line==37, as.character(year)]
   W_IC_ND <- WeightFactor_ND[WeightFactor_ND$Line==39, as.character(year)]
-  GovExpRatio[, "F07C"] <- GovExpRatio$Ratio * W_E_ND + GovExpRatio$IntermediateDefense * W_IC_ND
+  GovExpRatio[, "F07C"] <- GovExpRatio$Ratio * W_E_ND + GovExpRatio$Intermediate_Defense * W_IC_ND
   # Drop unwanted columns
   GovExpRatio <- GovExpRatio[, c("BEA_2012_Summary_Code", "State", "F06C", "F06E",
                                  "F06N", "F06S", "F07C", "F07E", "F07N", "F07S")]
@@ -724,7 +736,7 @@ estimateStateFedGovExpenditure <- function(year) {
                                    by.y = 0, all.y = TRUE)
     # Modify State column
     State_FedGovExp_state$State <- state
-    # Repalce NA with 0
+    # Replace NA with 0
     State_FedGovExp_state[is.na(State_FedGovExp_state)] <- 0
     # Multiply national final demand by state-US ratio
     ratio <- State_FedGovExp_state[, paste0(FedGovDemandCodes, ".x")]
