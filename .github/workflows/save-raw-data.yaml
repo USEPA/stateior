@@ -1,5 +1,5 @@
 # This workflow is designed to be manually triggered only.
-name: Save raw data in parrallel runs
+name: Save raw data in parallel runs
 
 on:
   workflow_dispatch: # allow manual trigger

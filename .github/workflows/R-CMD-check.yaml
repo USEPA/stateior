@@ -10,7 +10,7 @@ on:
       - '**.bib'
       - '**.ya?ml'  # captures both .yml and .yaml
       - '**.png'
-      - '**.Rmd'
+      # - '**.Rmd'
       - 'LICENSE'
       - '.gitignore'
       - '.gitattributes'
@@ -21,7 +21,7 @@ on:
       - '**.bib'
       - '**.ya?ml'
       - '**.png'
-      - '**.Rmd'
+      # - '**.Rmd'
       - 'LICENSE'
       - '.gitignore'
       - '.gitattributes'
@@ -31,7 +31,7 @@ jobs:
   R-CMD-check:
     runs-on: ${{ matrix.config.os }}
 
-    name: ${{ matrix.config.os }} (${{ matrix.config.r }})
+    name: R-CMD-check ${{ matrix.config.os }} (${{ matrix.config.r }})
 
     strategy:
       fail-fast: false
@@ -66,18 +66,9 @@ jobs:
 
       - uses: r-lib/actions/check-r-package@v1
       
-      # - name: Render model validation Rmarkdown files
-      #   run: Rscript -e 'rmarkdown::render("inst/doc/ModelValidation_render.Rmd")'
-
-      #- name: Show testthat output
-      #  if: always()  # step will run even if previous steps fail
-      #  run: find check -name 'testthat.Rout*' -exec cat '{}' \; || true
-      #  shell: bash
-
       - name: Upload check results
         if: failure()  # if any of the previous steps fail, export a log
         uses: actions/upload-artifact@main
         with:
           name: ${{ runner.os }}-r${{ matrix.config.r }}-results
           path: check    
-    
