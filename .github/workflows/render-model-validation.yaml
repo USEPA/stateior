@@ -1,6 +1,6 @@
 # Workflow derived from https://github.com/r-lib/actions/tree/master/examples
 # Need help debugging build failures? Start at https://github.com/r-lib/actions#where-to-find-help
-name: Render Model Validation .Rmd
+name: Model Validation
 
 on:
   push:
@@ -69,7 +69,7 @@ jobs:
       - name: Render model validation Rmarkdown file
         run: |
           install.packages("rmarkdown")
-          for (year in 2012:2012) {
+          for (year in 2012:2017) {
             rmarkdown::render("inst/doc/ValidateModel.Rmd", output_dir = "inst/doc/output", output_file = paste0("ValidateModel_", year, ".html"))
           }
         shell: Rscript {0}
