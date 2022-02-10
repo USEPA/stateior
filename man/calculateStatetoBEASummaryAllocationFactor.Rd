@@ -9,8 +9,8 @@ calculateStatetoBEASummaryAllocationFactor(year, allocationweightsource)
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 
-\item{statetablename}{Name of pre-saved state table,
-can be GVA, Tax, Employment Compensation, and GOS.}
+\item{allocationweightsource}{A string specifying the source being used
+as the weight in the allocation.}
 }
 \value{
 A data frame contains allocation factors

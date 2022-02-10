@@ -1,0 +1,64 @@
+# This workflow is designed to be manually triggered only.
+name: Save intermediate data in parallel runs
+
+on:
+  workflow_dispatch: # allow manual trigger
+
+jobs:
+  generate-save-data:
+    runs-on: ${{ matrix.config.os }}
+
+    name: ${{ matrix.config.os}} (${{ matrix.config.r}})
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - {os: ubuntu-latest, r: 'release'}
+
+    # env:
+      # R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: r-lib/actions/setup-pandoc@v1
+
+      - uses: r-lib/actions/setup-r@v1
+        with:
+          r-version: ${{ matrix.config.r }}
+          http-user-agent: ${{ matrix.config.http-user-agent }}
+          use-public-rspm: true
+      
+      - uses: r-lib/actions/setup-r-dependencies@v1
+        with:
+          extra-packages: devtools
+      
+      # Load package and generate intermediate data
+      - name: Load stateior and generate intermediate data
+        run: |
+          devtools::load_all()
+          source("data-raw/StateIntermediateData.R")
+        shell: Rscript {0}
+      
+      # Upload .rds files
+      - name: Upload .rds files and prepare zip for manual download
+        uses: actions/upload-artifact@v2.3.0
+        with:
+          # Artifact name
+          name: data and metadata
+          # A file, directory or wildcard patter that describes what to upload
+          path: "data/*.rds"
+          if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
+          # retention-days: 5 # cannot exceed the retention limit set by the repository, organization, or enterprise.
+      
+      # Upload .json files 
+      - name: Upload .json files and prepare zip for manual download
+        uses: actions/upload-artifact@v2.3.0
+        with:
+          # Artifact name
+          name: data and metadata
+          # A file, directory or wildcard patter that describes what to upload
+          path: "inst/extdata/metadata/*.json"
+          if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
+          # retention-days: 5 # cannot exceed the retention limit set by the repository, organization, or enterprise.

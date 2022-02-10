@@ -9,9 +9,11 @@ writeDatafileMeta(year, iolevel, dataname, path)
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 
-\item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
+\item{iolevel}{BEA sector level of detail, currently can only be "Summary",
+theoretically can be "Detail", or "Sector" in future versions.}
 
-\item{dataname}{Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".}
+\item{dataname}{Name of desired IO data, can be "Make", "Use", "DomesticUse",
+"CommodityOutput, and "IndustryOutput".}
 
 \item{path}{User-defined local path.}
 }

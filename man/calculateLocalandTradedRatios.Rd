@@ -16,7 +16,8 @@ local and traded ratios for SoI or RoUS.}
 
 \item{ioschema}{A numeric value of either 2012 or 2007.}
 
-\item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
+\item{iolevel}{BEA sector level of detail, currently can only be "Summary",
+theoretically can be "Detail", or "Sector" in future versions.}
 }
 \value{
 A data frame contains local and traded ratios by BEA sectors

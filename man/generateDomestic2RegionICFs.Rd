@@ -20,10 +20,15 @@ generateDomestic2RegionICFs(
 
 \item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
 
-\item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
-}
-\value{
-A data frame contains domestic 2 region ICFs.
+\item{iolevel}{BEA sector level of detail, currently can only be "Summary",
+theoretically can be "Detail", or "Sector" in future versions.}
+
+\item{ICF_sensitivity_analysis}{A logical value indicating whether to conduct
+sensitivity analysis on ICF, default is FALSE.}
+
+\item{adjust_by}{A numeric value between 0 and 1 indicating the manual adjustment
+to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.
+#' @return A data frame contains domestic 2 region ICFs.}
 }
 \description{
 Generate domestic 2 region inter-regional commodity flows (ICFs) table.

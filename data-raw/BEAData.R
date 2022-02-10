@@ -1,35 +1,36 @@
-#' Get BEA state data from 2007-2018.
+#' Get BEA state data from 2007-2017.
 #' @param dataname A text indicating what state data to get.
 #' Can be GVA, employee compensation, taxes, and gross operating surplus.
-#' @return A data frame of BEA state data from 2007-2018.
+#' @return A data frame of BEA state data from 2007-2017.
 getBEAStateData <- function (dataname) {
   # Create the placeholder file
   StateGVAzip <- "inst/extdata/SAGDP.zip"
+  dir <- "inst/extdata/SAGDP"
   # Download all BEA IO tables into the placeholder file
   if(!file.exists(StateGVAzip)) {
-    download.file("https://apps.bea.gov/regional/zip/SAGDP.zip",
-                  StateGVAzip, mode = "wb")
+    utils::download.file("https://apps.bea.gov/regional/zip/SAGDP.zip",
+                         StateGVAzip, mode = "wb")
     # Get the name of all files in the zip archive
     tmp <- unzip(StateGVAzip, list = TRUE)
     fname <- tmp[tmp$Length > 0, ]$Name
     # Unzip the file to the designated directory
-    unzip(StateGVAzip, files = fname, exdir = "inst/extdata/SAGDP",
-          overwrite = TRUE)
+    unzip(StateGVAzip, files = fname, exdir = dir, overwrite = TRUE)
   }
   # Determine data filename
   if (dataname=="GVA") {
-    FileName <- "inst/extdata/SAGDP/SAGDP2N__ALL_AREAS_1997_2019.csv"
+    FileName <- list.files(dir, pattern = "SAGDP2N__ALL_AREAS")
   } else if (dataname=="Tax") {
-    FileName <- "inst/extdata/SAGDP/SAGDP3N__ALL_AREAS_1997_2017.csv"
+    FileName <- list.files(dir, pattern = "SAGDP3N__ALL_AREAS")
   } else if (dataname=="Compensation") {
-    FileName <- "inst/extdata/SAGDP/SAGDP4N__ALL_AREAS_1997_2017.csv"
+    FileName <- list.files(dir, pattern = "SAGDP4N__ALL_AREAS")
   } else if (dataname=="GOS") {
-    FileName <- "inst/extdata/SAGDP/SAGDP7N__ALL_AREAS_1997_2017.csv"
+    FileName <- list.files(dir, pattern = "SAGDP7N__ALL_AREAS")
   }
-  endyear <- substr(FileName, nchar(FileName) - 7, nchar(FileName)-4)
-  year_cols <- as.character(c(2007:endyear))
+  year_cols <- as.character(2007:2017)
   # Load state data
-  StateData <- readCSV(FileName, fill = TRUE)
+  StateData <- utils::read.table(file.path(dir, FileName), sep = ",",
+                                 header = TRUE, stringsAsFactors = FALSE,
+                                 check.names = FALSE, fill = TRUE)
   StateData <- StateData[!is.na(StateData$LineCode), ]
   # Convert values to numeric
   StateData[, year_cols] <- sapply(StateData[, year_cols], as.numeric)
@@ -43,79 +44,44 @@ getBEAStateData <- function (dataname) {
   geo_names <- c(state.name, "District of Columbia", "United States *")
   StateData <- StateData[StateData$GeoName %in%geo_names,
                          c("GeoName", "LineCode", "Description", year_cols)]
-  return(StateData)
+  # Write data to .rds
+  data_name <- paste("State", dataname, "2007_2017",
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = StateData,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = "2007-2017",
+                                source = "US Bureau of Economic Analysis",
+                                url = "https://apps.bea.gov/regional/zip/SAGDP.zip")
 }
-State_GVA_2007_2019 <- getBEAStateData("GVA")
-usethis::use_data(State_GVA_2007_2019, overwrite = TRUE)
-State_Tax_2007_2017 <- getBEAStateData("Tax")
-usethis::use_data(State_Tax_2007_2017, overwrite = TRUE)
-State_Compensation_2007_2017 <- getBEAStateData("Compensation")
-usethis::use_data(State_Compensation_2007_2017, overwrite = TRUE)
-State_GOS_2007_2017 <- getBEAStateData("GOS")
-usethis::use_data(State_GOS_2007_2017, overwrite = TRUE)
-
-#' Get BEA state employment (full-time and part-time) data from 2009-2018
-#' @return A data frame of BEA state employment data from 2009-2018.
-getBEAStateEmployment <- function () {
-  APIkey <- readLines(rappdirs::user_data_dir("BEA_API_KEY.txt"), warn = FALSE)
-  linecodes_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
-                          APIkey,
-                          "&method=GetParameterValuesFiltered",
-                          "&datasetname=Regional",
-                          "&TargetParameter=LineCode",
-                          "&TableName=SAEMP25N",
-                          "&ResultFormat=json")
-  linecodes <- jsonlite::fromJSON(linecodes_txt)
-  StateEmployment <- data.frame()
-  for (linecode in linecodes$BEAAPI$Results$ParamValue$Key) {
-    StateEmployment_linecode_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
-                                           APIkey,
-                                           "&method=GetData",
-                                           "&datasetname=Regional",
-                                           "&TableName=SAEMP25N",
-                                           "&LineCode=", linecode,
-                                           "&GeoFIPS=STATE",
-                                           "&Year=Last10",
-                                           "&ResultFormat=json")
-    StateEmployment_linecode <- jsonlite::fromJSON(StateEmployment_linecode_txt)
-    StateEmployment_linecode <- StateEmployment_linecode$BEAAPI$Results$Data
-    if (is.null(StateEmployment_linecode$NoteRef)) {
-      StateEmployment_linecode$NoteRef <- ""
-    }
-    StateEmployment_linecode$LineCode <- linecode
-    datavalue_new <- as.numeric(gsub(",", "", StateEmployment_linecode$DataValue))
-    StateEmployment_linecode$DataValue <- datavalue_new
-    StateEmployment <- rbind(StateEmployment, StateEmployment_linecode)
-    print(linecode)
-  }
-  # Reshape to wide table
-  StateEmployment <- reshape2::dcast(StateEmployment,
-                                     GeoFips + GeoName + LineCode ~ TimePeriod,
-                                     value.var = "DataValue")
-  return(StateEmployment)
+# Download, save and document 2007-2017 state economic data (from BEA)
+for (dataname in c("GVA", "Tax", "Compensation", "GOS")) {
+  getBEAStateData(dataname)
 }
-State_Employment_2009_2018 <- getBEAStateEmployment()
-usethis::use_data(State_Employment_2009_2018, overwrite = TRUE)
 
 #' Get BEA state PCE (personal consumption expenditures) data from 2007-2018
 #' @return A data frame of BEA state PCE data from 2007-2018.
 getBEAStatePCE <- function () {
   # Create the placeholder file
-  StatePCEzip <- "inst/extdata/SAEXP.zip"
+  StatePCEzip <- "inst/extdata/SAPCE.zip"
+  dir <- "inst/extdata/SAPCE"
   # Download all BEA IO tables into the placeholder file
   if(!file.exists(StatePCEzip)) {
-    download.file("https://apps.bea.gov/regional/zip/SAEXP.zip",
-                  StatePCEzip, mode = "wb")
+    utils::download.file("https://apps.bea.gov/regional/zip/SAPCE.zip",
+                         StatePCEzip, mode = "wb")
     # Get the name of all files in the zip archive
     tmp <- unzip(StatePCEzip, list = TRUE)
     fname <- tmp[tmp$Length > 0, ]$Name
     # Unzip the file to the designated directory
-    unzip(StatePCEzip, files = fname, exdir = "inst/extdata/SAEXP",
-          overwrite = TRUE)
+    unzip(StatePCEzip, files = fname, exdir = dir, overwrite = TRUE)
   }
   # Load state PCE data
-  StatePCE <- readCSV("inst/extdata/SAEXP/SAEXP1__ALL_AREAS_1997_2018.csv",
-                      fill = TRUE)
+  StatePCE <- utils::read.table(file.path(dir, list.files(dir, pattern = "SAPCE1__ALL_AREAS")),
+                                sep = ",", header = TRUE, stringsAsFactors = FALSE,
+                                check.names = FALSE, fill = TRUE)
   StatePCE <- StatePCE[!is.na(StatePCE$Line), ]
   # Replace NA with zero
   StatePCE[is.na(StatePCE)] <- 0
@@ -125,32 +91,48 @@ getBEAStatePCE <- function () {
   # Keep state-level data
   StatePCE <- StatePCE[StatePCE$GeoName %in%
                          c(state.name, "District of Columbia", "United States"),
-                       c("GeoName", "Line", "Description", year_cols)]
-  return(StatePCE)
+                       c("GeoName", "LineCode", "Description", year_cols)]
+  # Write data to .rds
+  data_name <- paste("State_PCE_2007_2018",
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = StatePCE,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = "2007-2018",
+                                source = "US Bureau of Economic Analysis",
+                                url = "https://apps.bea.gov/regional/zip/SAPCE.zip")
 }
-State_PCE_2007_2018 <- getBEAStatePCE()
-usethis::use_data(State_PCE_2007_2018, overwrite = TRUE)
+# Download, save and document 2007-2018 state PCE data (from BEA)
+getBEAStatePCE()
 
 #' Download BEA US Gov Expenditure data (NIPA table) from 2007-2019.
 #' @return A data frame of BEA US Gov Expenditure data (NIPA table) from 2007-2019.
-getBEAGovExpenditure <- function() {
+downloadBEAGovExpenditure <- function() {
   TableName <- "Section3All_xls.xlsx"
-  FileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
+  dir <- "inst/extdata/StateLocalGovFinances"
+  if(!dir.exists(dir)) {
+    dir.create(dir)
+  }
+  FileName <- file.path(dir, TableName)
   url <- "https://apps.bea.gov/national/Release/XLS/Survey/Section3All_xls.xlsx"
   # Download NIPA table file
   if(!file.exists(FileName)) {
     utils::download.file(url, FileName, mode = "wb")
   }
+  return(url)
 }
 
 #' Get US Gov Investment data (Table 3.9.5 annual) from 2007-2019.
 #' @return A data frame of BEA US Gov Investment data from 2007-2019.
 getBEAGovInvestment <- function() {
   # Download US Gov Expenditure (NIPA table) from BEA
-  getBEAGovExpenditure()
+  url <- downloadBEAGovExpenditure()
   # Load Gov Investment table
   TableName <- "Section3All_xls.xlsx"
-  FileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
+  FileName <- file.path("inst/extdata/StateLocalGovFinances", TableName)
   GovInvestment <- as.data.frame(readxl::read_excel(FileName, sheet = "T30905-A",
                                                     col_names = TRUE, skip = 7))
   # Assign column name to the description column
@@ -161,16 +143,27 @@ getBEAGovInvestment <- function() {
                                  c("Line", "Description", year_cols)]
   # Convert values from million $ to $
   GovInvestment[, year_cols] <- GovInvestment[, year_cols]*1E6
-  return(GovInvestment)
+  # Write data to .rds
+  data_name <- paste("GovInvestment_2007_2019",
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = GovInvestment,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = "2007-2019",
+                                source = "US Bureau of Economic Analysis",
+                                url = url)
 }
-GovInvestment_2007_2019 <- getBEAGovInvestment()
-usethis::use_data(GovInvestment_2007_2019, overwrite = TRUE)
+# Download, save and document 2007-2019 state government investment data (from BEA)
+getBEAGovInvestment()
 
 #' Get US Gov Consumption data (Table 3.10.5 annual) from 2007-2019.
 #' @return A data frame of BEA US Gov Consumption data from 2007-2019.
 getBEAGovConsumption <- function() {
   # Download US Gov Expenditure (NIPA table) from BEA
-  getBEAGovExpenditure()
+  url <- downloadBEAGovExpenditure()
   # Load Gov Consumption table
   TableName <- "Section3All_xls.xlsx"
   FileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
@@ -184,13 +177,21 @@ getBEAGovConsumption <- function() {
                                    c("Line", "Description", year_cols)]
   # Convert values from million $ to $
   GovConsumption[, year_cols] <- GovConsumption[, year_cols]*1E6
-  return(GovConsumption)
+  # Write data to .rds
+  data_name <- paste("GovConsumption_2007_2019",
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = GovConsumption,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = "2007-2019",
+                                source = "US Bureau of Economic Analysis",
+                                url = url)
 }
-GovConsumption_2007_2019 <- getBEAGovConsumption()
-usethis::use_data(GovConsumption_2007_2019, overwrite = TRUE)
-
-
-
+# Download, save and document 2007-2019 state government consumption data (from BEA)
+getBEAGovConsumption()
 
 
 
@@ -212,7 +213,7 @@ getBEACountySectorGDP = function(year, state, axis = 0) {
   CountyGDPzip = "inst/extdata/CAGDP2.zip"
   # Download all BEA IO tables into the placeholder file
   if(!file.exists(CountyGDPzip)) {
-    download.file("https://apps.bea.gov/regional/zip/CAGDP2.zip", CountyGDPzip, mode = "wb")
+    utils::download.file("https://apps.bea.gov/regional/zip/CAGDP2.zip", CountyGDPzip, mode = "wb")
     # Get the name of all files in the zip archive
     fname = unzip(CountyGDPzip, list = TRUE)[unzip(CountyGDPzip, list = TRUE)$Length > 0, ]$Name
     # Unzip the file to the designated directory
@@ -221,7 +222,9 @@ getBEACountySectorGDP = function(year, state, axis = 0) {
   # filter for specified state
   fileName = paste0('inst/extdata/CAGDP2/CAGDP2_', paste0(getStateAbbreviation(state),'_2001_2018.csv'))
   # read data 
-  countyData = readCSV(fileName, fill = TRUE)
+  countyData = utils::read.table(fileName, sep = ",", header = TRUE,
+                                 stringsAsFactors = FALSE, check.names = FALSE,
+                                 fill = TRUE)
   # drop last four rows (notes in original file)
   countyData = countyData[!is.na(countyData$Region), ]
   # select only BEA-sector-level rows
@@ -268,11 +271,5 @@ getBEACountySectorGDP = function(year, state, axis = 0) {
   }
 }
 
-CountyGA_BEASectorGDP_2001_2018 = getBEACountySectorGDP(year = 0, state = 'Georgia', axis = 1)
-usethis::use_data(CountyGA_BEASectorGDP_2001_2018, overwrite = TRUE)
-
-
-
-
-
-
+# CountyGA_BEASectorGDP_2001_2018 = getBEACountySectorGDP(year = 0, state = 'Georgia', axis = 1)
+# usethis::use_data(CountyGA_BEASectorGDP_2001_2018, overwrite = TRUE)

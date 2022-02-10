@@ -3,11 +3,12 @@
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @param flow_ratio_type Type of commodity flow, can be "domestic", "export", or "import".
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data frame contains commodity flow ratios by BEA.
 calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved FAF4 commodity flow data
-  FAF <- get(paste("FAF", year, sep = "_"), as.environment("package:stateior"))
+  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"))
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   fips <- FIPS_STATE[FIPS_STATE$State==state, "State_FIPS"]
@@ -123,18 +124,19 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @param flow_ratio_type Type of commodity flow, can be "export" or "import".
 #' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data frame contains international commodity flow ratios by BEA for all available states.
 calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved state export/import data
   if (year<2013) {
-    trade <- get(paste0("Census_USATrade",
-                        Hmisc::capitalize(flow_ratio_type), "_", year),
-                 as.environment("package:stateior"))
+    trade <- loadStateIODataFile(paste0("Census_USATrade",
+                                        Hmisc::capitalize(flow_ratio_type),
+                                        "_", year))
   } else {
-    trade <- get(paste0("Census_State",
-                        Hmisc::capitalize(flow_ratio_type), "_", year),
-                 as.environment("package:stateior"))
+    trade <- loadStateIODataFile(paste0("Census_State",
+                                        Hmisc::capitalize(flow_ratio_type),
+                                        "_", year))
   }
   # Map from NAICS to BEA
   bea_code <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
@@ -271,9 +273,9 @@ calculateWasteManagementServiceFlowRatios <- function (state, year) {
 calculateElectricityFlowRatios <- function (state, year) {
   state_abb <- getStateAbbreviation(state)
   # Load consumption data
-  CodeDesc <- get("EIA_SEDS_CodeDescription", as.environment("package:stateior"))
-  Consumption <- get(paste0("EIA_SEDS_StateElectricityConsumption_", year),
-                     as.environment("package:stateior"))
+  CodeDesc <- loadStateIODataFile("EIA_SEDS_CodeDescription")
+  Consumption <- loadStateIODataFile(paste0("EIA_SEDS_StateElectricityConsumption_",
+                                            year))
   # Subset SoI and RoUS total consumption
   consumption_desc <- "Electricity total consumption (i.e., retail sales)"
   ConsumptionMSN <- CodeDesc[CodeDesc$Description==consumption_desc&
@@ -324,7 +326,7 @@ calculateElectricityFlowRatios <- function (state, year) {
 #' @return A data frame contains domestic interregional utilities flow ratios by state.
 calculateUtilitiesFlowRatios <- function (state, year) {
   # Get state employment for utilities sector
-  BLS_QCEW <- loadDataCommonsfile("Employment", year)
+  BLS_QCEW <- getFlowsaData("Employment", year)
   StateDetailEmp <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Detail")
   StateDetailEmp$State <- mapFIPS5toLocationNames(StateDetailEmp$FIPS, "FIPS")
   utilities <- c("221100", "221200", "221300")

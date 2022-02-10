@@ -6,6 +6,7 @@ NULL
 #' Plot SoI2SoI or RoUS2RoUS ICF and state RPC
 #' @param ICF_df A data.frame contains SoI2SoI ICF ratios
 #' @param RPC_df A data.frame contains state RPC ratios
+#' @param isSoI A logical value indicating whether to plot ICF and RPC of SoI or not.
 #' @export
 plotICFandRPC <- function(ICF_df, RPC_df, isSoI = TRUE) {
   # ICF

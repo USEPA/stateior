@@ -18,7 +18,8 @@ calculateCensusForeignCommodityFlowRatios(
 
 \item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
 
-\item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
+\item{iolevel}{BEA sector level of detail, currently can only be "Summary",
+theoretically can be "Detail", or "Sector" in future versions.}
 }
 \value{
 A data frame contains international commodity flow ratios by BEA for all available states.

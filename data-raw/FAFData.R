@@ -1,18 +1,18 @@
-# Get Freight Analysis Framework (FAF) data from 2013-2018.
+# Get Freight Analysis Framework (FAF) data from 2012-2018.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
-#' @return A data frame contains FAF data from 2013-2018.
+#' @return A data frame contains FAF data from 2012-2018.
 getFAF <- function (year) {
   # Create the placeholder file
   if (year == 2012) {
-    FAFzip <- "inst/extdata/FAF4.5.1_State.zip"
+    FAFzip <- "inst/extdata/FAF4.5.1_csv_State.zip"
   } else if (year %in% c(2013:2018)) {
-    FAFzip <- "inst/extdata/FAF4.5.1_State_2013-2018.zip"
+    FAFzip <- "inst/extdata/FAF4.5.1_csv_State_2013-2018.zip"
   }
   # Download all FAF tables into the placeholder file
   if(!file.exists(FAFzip)) {
-    download.file(paste0("https://faf.ornl.gov/fafweb/Data/",
-                         gsub("inst/extdata/", "", FAFzip)),
-                  FAFzip, mode = "wb")
+    utils::download.file(paste0("https://www.bts.gov/sites/bts.dot.gov/files/legacy/AdditionalAttachmentFiles/",
+                                gsub("inst/extdata/", "", FAFzip)),
+                         FAFzip, mode = "wb")
     # Get the name of all files in the zip archive
     fname <- unzip(FAFzip, list = TRUE)[unzip(FAFzip, list = TRUE)$Length > 0, ]$Name
     # Unzip the file to the designated directory
@@ -20,13 +20,14 @@ getFAF <- function (year) {
   }
   # Specify filename based on year
   if (year == 2012) {
-    filename <- "inst/extdata/FAF4.5.1_State/FAF4.5.1_State.csv"
+    filename <- "inst/extdata/FAF4.5.1_State.csv"
   } else if (year %in% c(2013:2018)) {
-    filename <- paste0("inst/extdata/FAF4.5.1_State_2013-2018/FAF4.5.1_State_",
-                       year, ".csv")
+    filename <- paste0("inst/extdata/FAF4.5.1_State_", year, ".csv")
   }
   # Load state data
-  FAF <- readCSV(filename)
+  FAF <- utils::read.table(filename, sep = ",", header = TRUE,
+                           stringsAsFactors = FALSE,
+                           check.names = FALSE, fill = TRUE)
   # Keep columns for year
   FAF <- FAF[, c(colnames(FAF)[1:9], paste0(c("value_", "tons_", "tmiles_"), year))]
   # Convert value from million $ to $
@@ -35,20 +36,20 @@ getFAF <- function (year) {
   FAF[, paste0("tons_", year)] <- FAF[, paste0("tons_", year)]*1E3
   # Convert wright-distance from million ton-miles to ton-miles
   FAF[, paste0("tmiles_", year)] <- FAF[, paste0("tmiles_", year)]*1E6
-  return(FAF)
+  # Write data to .rds
+  data_name <- paste("FAF", year,
+                     utils::packageDescription("stateior", fields = "Version"),
+                     sep = "_")
+  saveRDS(object = FAF,
+          file = paste0(file.path("data", data_name), ".rds"))
+  # Write metadata to JSON
+  useeior:::writeMetadatatoJSON(package = "stateior",
+                                name = data_name,
+                                year = year,
+                                source = "US Oak Ridge National Laboratory",
+                                url = "https://www.bts.gov/faf/faf4")
 }
-
-FAF_2012 <- getFAF(2012)
-usethis::use_data(FAF_2012, overwrite = TRUE)
-FAF_2013 <- getFAF(2013)
-usethis::use_data(FAF_2013, overwrite = TRUE)
-FAF_2014 <- getFAF(2014)
-usethis::use_data(FAF_2014, overwrite = TRUE)
-FAF_2015 <- getFAF(2015)
-usethis::use_data(FAF_2015, overwrite = TRUE)
-FAF_2016 <- getFAF(2016)
-usethis::use_data(FAF_2016, overwrite = TRUE)
-FAF_2017 <- getFAF(2017)
-usethis::use_data(FAF_2017, overwrite = TRUE)
-FAF_2018 <- getFAF(2018)
-usethis::use_data(FAF_2018, overwrite = TRUE)
+# Download, save and document 2012-2018 state FAF data (from ORNL)
+for (year in 2012:2018) {
+  getFAF(year)
+}

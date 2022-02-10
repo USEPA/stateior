@@ -12,7 +12,8 @@ getTwoRegionIndustryOutput(state, year, iolevel)
 
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 
-\item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
+\item{iolevel}{BEA sector level of detail, currently can only be "Summary",
+theoretically can be "Detail", or "Sector" in future versions.}
 }
 \value{
 A data.frame of SoI's and RoUS' industry output.

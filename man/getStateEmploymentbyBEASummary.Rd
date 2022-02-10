@@ -2,7 +2,7 @@
 % Please edit documentation in R/StateSupplyFunctions.R
 \name{getStateEmploymentbyBEASummary}
 \alias{getStateEmploymentbyBEASummary}
-\title{Load BEA and BLS QCEW State Employment data from pre-saved .rda files and FLOWSA.
+\title{Load BEA and BLS QCEW State Employment data from pre-saved .rds files and FLOWSA.
 Map to BEA Summary sectors.}
 \usage{
 getStateEmploymentbyBEASummary(year)
@@ -14,6 +14,6 @@ getStateEmploymentbyBEASummary(year)
 A data frame contains State Emp by BEA Summary.
 }
 \description{
-Load BEA and BLS QCEW State Employment data from pre-saved .rda files and FLOWSA.
+Load BEA and BLS QCEW State Employment data from pre-saved .rds files and FLOWSA.
 Map to BEA Summary sectors.
 }

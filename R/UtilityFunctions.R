@@ -7,49 +7,6 @@ loadDatafromUSEEIOR <- function(dataset) {
   return(df)
 }
 
-#' Load flowsa FlowByActivity or FlowBySector data from Data Commons
-#' @param dataname A string specifying data name, can be "NOAA_FisheryLandings".
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains state data from FLOWSA.
-loadDataCommonsfile <- function(dataname, year) {
-  # Load metadata
-  if (dataname=="Employment") {
-    meta <- configr::read.config(system.file("extdata/", "FlowBySector_metadata.yml",
-                                             package = "stateior"))
-    filename <- paste(dataname, "state", year, meta[[dataname]], sep = "_")
-    subdirectory <- "flowsa/FlowBySector"
-  } else {
-    meta <- configr::read.config(system.file("extdata/", "FlowByActivity_metadata.yml",
-                                             package = "stateior"))
-    # Define file name and subdirectory
-    if (dataname=="NOAA_FisheryLandings") {
-      year <- "2012-2018"
-      filename <- paste0(paste(dataname, year, sep = "_"), meta[[dataname]])
-    } else {
-      filename <- paste(dataname, year, meta[[dataname]], sep = "_")
-    }
-    subdirectory <- "flowsa/FlowByActivity"
-  }
-  # Define file directory
-  directory <- paste0(rappdirs::user_data_dir(), "/", subdirectory)
-  if (!file.exists(paste0(directory, "/", filename))) {
-    url <- paste0("https://edap-ord-data-commons.s3.amazonaws.com/", subdirectory)
-    logging::loginfo(paste0("file not found, downloading from ", url))
-    # Check for and create directory if necessary
-    if(!file.exists(directory)){
-      dir.create(directory, recursive = TRUE)
-    }
-    # Download file
-    utils::download.file(paste0(url, "/", filename),
-                         paste0(directory, "/", filename), mode = "wb", quiet = TRUE)
-  }
-  # Load FBA
-  df <- as.data.frame(arrow::read_parquet(paste0(directory, "/", filename)))
-  # Keep state-level data, including 50 states and D.C.
-  df <- df[substr(df$Location, 1, 2)<=56 & substr(df$Location, 3, 5)=="000", ]
-  return(df)
-}
-
 #' Read csv files using read.table function from utils package
 #' set header = TRUE, stringsAsFactors = FALSE, and check.names = FALSE
 #' @param filename A string specifying name of the csv file
@@ -63,176 +20,13 @@ readCSV <- function(filename, fill = FALSE) {
   return(df)
 }
 
-#' Load BEA State data (GVA and Employment) to BEA Summary mapping table
-#' @param dataname A string specifying name of the BEA state data
-#' @return The mapping table
-loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
-  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO2012Schema.csv")
-  mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
-  return(mapping)
-}
-
-#' Calculate tolerance for RAS. Takes a target row sum vector and target colsum vector.
-#' Specify either relative difference or absolute difference.
-#' @param t_r A vector setting the target row sums of the matrix.
-#' @param t_c A vector setting the target column sums of the matrix.
-#' @param relative_diff A numeric value setting the relative difference of the two numerical vectors.
-#' @param absolute_diff A numeric value setting the mean absolute difference of the two numerical vectors.
-#' @return A numeric value of relative difference of t_r and t_c.
-setToleranceforRAS <- function(t_r, t_c, relative_diff = NULL, absolute_diff = NULL) {
-  if (!is.null(relative_diff)) {
-    t <- relative_diff
-  } else if (!is.null(absolute_diff)) {
-    t <- absolute_diff/max(abs(t_c), abs(t_r))
-  } else {
-    stop("Set relative_diff or absolute_diff first.")
-  }
-  return(t)
-}
-
-#' Generalized RAS procedure. Takes an initial matrix, a target row sum vector
-#' and target colsum vector. Iterates until all row sums of matrix equal to target row sum vector
-#' and colsums of matrix equal target col sum vector, within a tolerance.
-#' @param m0 A matrix object.
-#' @param t_r A vector setting the target row sums of the matrix.
-#' @param t_c A vector setting the target column sums of the matrix.
-#' @param t A numeric value setting the tolerance of RAS.
-#' @param max_itr A numeric value setting the maximum number of iterations to try for convergence.
-#' Defualt: 1000000.
-#' @return A RAS balanced matrix.
-RAS <- function(m0, t_r, t_c, t, max_itr = 1E6) {
-  m <- m0
-  c_r <- as.vector(rowSums(m0))
-  c_c <- as.vector(colSums(m0))
-  # Check row and column conditions
-  row_condition <- all.equal(t_r, c_r, tolerance = t)
-  col_condition <- all.equal(t_c, c_c, tolerance = t)
-  i <- 0
-  while(!isTRUE(row_condition) | !isTRUE(col_condition)) {
-    if(i>max_itr){
-      break
-    }
-    # Adjust rowwise
-    c_r <- as.vector(rowSums(m))
-    # Replace 0 with 1 in c_r
-    c_r[c_r==0] <- 1
-    r_ratio <- t_r/c_r
-    m <- diag(r_ratio) %*% m
-    # Adjust colwise
-    c_c <- as.vector(colSums(m))
-    # Replace 0 with 1 in c_c
-    c_c[c_c==0] <- 1
-    c_ratio <- t_c/c_c
-    m <- m %*% diag(c_ratio)
-    # Check row and column conditions
-    row_condition <- all.equal(t_r, c_r, tolerance = t)
-    col_condition <- all.equal(t_c, c_c, tolerance = t)
-    i <- i + 1
-  }
-  dimnames(m) <- dimnames(m0)
-  print(paste("RAS converged after", i, "iterations."))
-  return(m)
-}
-
-#' Integrate pre-adjustment of t_r, t_c and t (tolerance level) with RAS function.
-#' @param m0 A matrix object.
-#' @param t_r A vector setting the target row sums of the matrix.
-#' @param t_c A vector setting the target column sums of the matrix.
-#' @param relative_diff A numeric value setting the relative difference of the two numerical vectors.
-#' @param absolute_diff A numeric value setting the mean absolute difference of the two numerical vectors.
-#' @param max_itr A numeric value setting the maximum number of iterations to try for convergence.
-#' Defualt: 1000000.
-#' @return A RAS balanced matrix.
-applyRAS <- function(m0, t_r, t_c, relative_diff, absolute_diff, max_itr) {
-  # Adjust t_c/t_r, make sum(t_c)==sum(t_r)
-  if (sum(t_c) > sum(t_r)) {
-    t_r <- (t_r/sum(t_r))*sum(t_c)
-  } else {
-    t_c <- (t_c/sum(t_c))*sum(t_r)
-  }
-  # Generate t for RAS
-  t <- setToleranceforRAS(t_r, t_c, relative_diff, absolute_diff)
-  # Apply RAS
-  m <- RAS(m0, t_r, t_c, t, max_itr)
-  return(m)
-}
-
-#' Estimate US domestic Use table by adjusting US Use table based on Import matrix.
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @param year A numeric value specifying the year of interest.
-#' @return A US Domestic Use table.
-estimateUSDomesticUse <- function(iolevel, year) {
-  # Load Use table and Import matrix
-  Use <- getNationalUse(iolevel, year)
-  Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
-                                      sep = "_"))*1E6
-  # Sort rows and columns in Import to match those in Use
-  Import <- Import[rownames(Use), colnames(Use)]
-  # Define Export and Import codes
-  ExportCode <- getVectorOfCodes(iolevel, "Export")
-  ImportCode <- getVectorOfCodes(iolevel, "Import")
-  # Calculate ImportCost.
-  # The imports column in the Import matrix is in foreign port value.
-  # But in the Use table it is in domestic port value.
-  # domestic port value = foreign port value + value of all transportation and insurance services to import + customs duties
-  # See documentation of the Import matrix
-  # (https://apps.bea.gov/industry/xls/io-annual/ImportMatrices_Before_Redefinitions_SUM_1997-2019.xlsx)
-  # So, ImportCost <- Use$Imports - Import$Imports
-  ImportCost <- Use[, ImportCode] - Import[, ImportCode]
-  # Calculate row_sum of Use, except for Export and Import, for allocating ImportCost
-  row_sum <- rowSums(Use) - (Use[, ExportCode] + Use[, ImportCode])
-  # Calculate allocation ratios
-  ratio <- sweep(Use, 1, FUN = "/", row_sum)
-  ratio[is.na(ratio)] <- 0
-  # Subtract Import from Use, then allocate ImportCost to each Industry (column), except for Export and Import
-  DomesticUse <- Use - Import + sweep(ratio, 1, FUN = "*", ImportCost)
-  # Adjust Export and Import columns
-  DomesticUse[, ExportCode] <- Use[, ExportCode]
-  DomesticUse[, ImportCode] <- 0
-  return(DomesticUse)
-}
-
-#' Calculate US Domestic Use Ratio (matrix).
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains US Domestic Use Ratio (matrix) at a specific year at BEA Summary level.
-calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
-  # Load US Use table
-  Use <- getNationalUse(iolevel, year)
-  # Load US domestic Use table
-  Domestic_Use <- estimateUSDomesticUse(iolevel, year)
-  # Calculate state Domestic Use ratios
-  Ratio <- Domestic_Use/Use[rownames(Domestic_Use), colnames(Domestic_Use)]
-  Ratio[is.na(Ratio)] <- 0
-  Ratio$F050 <- 0
-  return(Ratio)
-}
-
-#' Calculate US International Transport Margins Ratio (matrix).
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains US International Transport Margins Ratio (matrix) at a specific year at BEA Summary level.
-calculateUSInternationalTransportMarginsRatioMatrix <- function(iolevel, year) {
-  # Load US Use and Import tables
-  US_Use <- getNationalUse(iolevel, year)
-  US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
-                                         sep = "_"))*1E6
-  # Calculate US Domestic Use ratios (w/ International Transport Margins)
-  DomesticUsewIntlTransMarginsRatio <- (US_Use - US_Import[rownames(US_Use), colnames(US_Use)])/US_Use
-  DomesticUsewIntlTransMarginsRatio[is.na(DomesticUsewIntlTransMarginsRatio)] <- 0
-  # Calculate IntlTransportMargins (vector)
-  IntlTransportMargins <- US_Use[, "F050"] - US_Import[, "F050"]
-  # Allocate InternationalMargins to get InternationalMarginsMatrix
-  drop_cols <- c("F040", "F050")
-  DistributionRatio <- sweep(US_Use, 1, FUN = "/",
-                             rowSums(US_Use[, !colnames(US_Use) %in% drop_cols]))
-  DistributionRatio[is.na(DistributionRatio)] <- 0
-  IntlTransportMarginsMatrix <- sweep(DistributionRatio, 1, FUN = "*",
-                                      IntlTransportMargins)
-  # Calculate IntlTransportMarginsRatio
-  IntlTransportMarginsRatio <- IntlTransportMarginsMatrix/US_Use
-  IntlTransportMarginsRatio[is.na(IntlTransportMarginsRatio)] <- 0
-  return(IntlTransportMarginsRatio)
+#' Join strings with slashes
+#'
+#' @param ... text string
+joinStringswithSlashes <- function(...) {
+  items <- list(...)
+  str <- sapply(items, paste, collapse = '/')
+  return(str)
 }
 
 #' Extract desired columns from SchemaInfo, return vectors with strings of codes.
@@ -257,13 +51,14 @@ getFinalDemandCodes <- function(iolevel) {
   return(FinalDemandCodes)
 }
 
-#' Join strings with slashes
-#'
-#' @param ... text string
-joinStringswithSlashes <- function(...) {
-  items <- list(...)
-  str <- sapply(items, paste, collapse = '/')
-  return(str)
+#' This function converts US state name, for example "Alabama",
+#' to a two-character state abbreviation "AL". Can take "District of Columbia".
+#' @param state A string character specifying the full name of a US state.
+#' @return two-character abbreviation of a US state.
+getStateAbbreviation <- function(state) {
+  state_abb <- ifelse(state=="District of Columbia", "DC",
+                      state.abb[state.name == state])
+  return(state_abb)
 }
 
 #' Maps a vector of 5-digit FIPS codes to location names
@@ -288,14 +83,13 @@ mapFIPS5toLocationNames <- function(fipscodes, fipssystem) {
   return(locations)
 }
 
-#' This function converts US state name, for example "Alabama",
-#' to a two-character state abbreviation "AL". Can take "District of Columbia".
-#' @param state A string character specifying the full name of a US state.
-#' @return two-character abbreviation of a US state.
-getStateAbbreviation <- function(state) {
-  state_abb <- ifelse(state=="District of Columbia", "DC",
-                      state.abb[state.name == state])
-  return(state_abb)
+#' Load BEA State data (GVA and Employment) to BEA Summary mapping table
+#' @param dataname A string specifying name of the BEA state data
+#' @return The mapping table
+loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
+  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO2012Schema.csv")
+  mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
+  return(mapping)
 }
 
 #' Combine sector code and location to the form of code/location.
@@ -323,22 +117,219 @@ getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
   return(code_loc)
 }
 
-#' Calculate regional purchase coefficient for specified state and year
-#' @param state Name of desired state, like "Georgia".
+#' Generate two-region data filename with .rds as suffix.
+#' @description Generate two-region data filename with .rds as suffix.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data.frame contains by-commodity RPC and overall RPC
-calculateRegionalPurchaseCoefficient <- function(SoI2SoIUse, RoUS2SoIUse, iolevel) {
-  import_export_cols <- unlist(sapply(list("Export", "Import"),
-                                      getVectorOfCodes, iolevel = iolevel))
-  LocallyProducedConsumption <- rowSums(SoI2SoIUse) - rowSums(SoI2SoIUse[, import_export_cols])
-  ImportedConsumption <- rowSums(RoUS2SoIUse) - rowSums(RoUS2SoIUse[, import_export_cols])
-  TotalConsumption <- LocallyProducedConsumption + ImportedConsumption
-  rpc <- cbind.data.frame(LocallyProducedConsumption/TotalConsumption,
-                          sum(LocallyProducedConsumption)/sum(TotalConsumption))
-  colnames(rpc) <- c("RPC", "OverallRPC")
-  rpc[is.na(rpc)] <- 1
-  return(rpc)
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
+#' "CommodityOutput, and "IndustryOutput".
+#' @return A string of two-region data filename with .rds as suffix.
+getTwoRegionDataFileName <- function(year, iolevel, dataname) {
+  filename <- paste("TwoRegion", iolevel, dataname, year, sep = "_")
+  return(filename)
 }
+
+#' Load flowsa FlowByActivity or FlowBySector data from Data Commons
+#' @param dataname A string specifying data name, can be "NOAA_FisheryLandings".
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @return A data frame contains state data from FLOWSA.
+getFlowsaData <- function(dataname, year) {
+  # Load metadata
+  if (dataname=="Employment") {
+    meta <- configr::read.config(system.file("extdata/", "FlowBySector_metadata.yml",
+                                             package = "stateior"))
+    filename <- paste(dataname, "state", year, meta[[dataname]], sep = "_")
+    subdirectory <- "flowsa/FlowBySector"
+  } else {
+    meta <- configr::read.config(system.file("extdata/", "FlowByActivity_metadata.yml",
+                                             package = "stateior"))
+    # Define file name and subdirectory
+    if (dataname=="NOAA_FisheryLandings") {
+      year <- "2012-2018"
+      filename <- paste0(paste(dataname, year, sep = "_"), meta[[dataname]])
+    } else {
+      filename <- paste(dataname, year, meta[[dataname]], sep = "_")
+    }
+    subdirectory <- "flowsa/FlowByActivity"
+  }
+  # Define file directory
+  directory <- file.path(rappdirs::user_data_dir(), subdirectory)
+  if (!file.exists(file.path(directory, filename))) {
+    url <- paste0("https://edap-ord-data-commons.s3.amazonaws.com/", subdirectory)
+    logging::loginfo(paste0("file not found, downloading from ", url))
+    # Check for and create directory if necessary
+    if(!file.exists(directory)){
+      dir.create(directory, recursive = TRUE)
+    }
+    # Download file
+    utils::download.file(file.path(url, filename),
+                         file.path(directory, filename), mode = "wb", quiet = TRUE)
+  }
+  # Load FBA
+  df <- as.data.frame(arrow::read_parquet(file.path(directory, filename)))
+  # Keep state-level data, including 50 states and D.C.
+  df <- df[substr(df$Location, 1, 2)<=56 & substr(df$Location, 3, 5)=="000", ]
+  return(df)
+}
+
+#' Get state IO data registry on Data Commons.
+#' @return A dataframe of state IO data registry on Data Commons.
+getStateIODataRegistryonDataCommons <- function() {
+  registry_ls <- aws.s3::get_bucket(bucket = "edap-ord-data-commons",
+                                    prefix = "stateio")
+  registry <- cbind.data.frame(basename(sapply(registry_ls, `[[`, "Key")),
+                               sapply(registry_ls, `[[`, "LastModified"),
+                               stringsAsFactors = FALSE)
+  colnames(registry) <- c("Key", "LastModified")
+  return(registry)
+}
+
+#' Find the latest state IO data on Data Commons.
+#' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
+#' @return File name of the latest state IO data on Data Commons.
+findLatestStateIODataonDataCommons <- function(filename) {
+  registry <- getStateIODataRegistryonDataCommons()
+  f <- basename(registry[startsWith(registry$Key, filename)& 
+                           endsWith(registry$Key, ".rds") &
+                           which.max(as.Date(registry$LastModified)),
+                         "Key"])
+  if (length(f)==0) {
+    stop(paste(filename, "not avaialble on Data Commons."))
+  }
+  return(f)
+}
+
+#' Check if file is available on Data Commons. Stop function execution if not.
+#' @param file A string specifying file, e.g. "State_Summary_Use_2017_v0.1.0_rds".
+checkFileonDataCommons <- function(file) {
+  registry <- getStateIODataRegistryonDataCommons()
+  f <- basename(registry[startsWith(registry$Key, file)& 
+                           endsWith(registry$Key, ".rds"),
+                         "Key"])
+  if (length(f)==0) {
+    stop(paste(file, "not avaialble on Data Commons."))
+  }
+}
+
+#' Download state IO data file from Data Commons and stores in a local data directory.
+#' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
+#' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
+#' @return An .rds data file downloaded from Data Commons and stored in local directory.
+downloadStateIODatafromDataCommons <- function(filename, ver = NULL) {
+  # Define local directory
+  directory <- file.path(rappdirs::user_data_dir(), "stateio")
+  if (!file.exists(directory)) {
+    dir.create(directory, recursive = TRUE)
+  }
+  # Define file name
+  if (is.null(ver)) {
+    # Look for the latest file
+    f <- findLatestStateIODataonDataCommons(filename)
+  } else {
+    # Look for file under specific version
+    f <- paste0(paste(filename, ver, sep = "_"), ".rds")
+  }
+  # Download file
+  url <- "https://edap-ord-data-commons.s3.amazonaws.com/stateio"
+  utils::download.file(file.path(url, f),
+                       file.path(directory, f), mode = "wb", quiet = TRUE)
+}
+
+#' Load state IO data file from local data directory.
+#' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
+#' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
+#' @return The pathname to the state IO data file.
+loadStateIODataFile <- function(filename, ver = NULL) {
+  # Define file name
+  if (is.null(ver)) {
+    # Look for the latest file
+    f <- findLatestStateIODataonDataCommons(filename)
+  } else {
+    # Look for file under specific version
+    f <- paste0(paste(filename, ver, sep = "_"), ".rds")
+  }
+  # Download file from Data Commons, or load file from local folder
+  if (!file.exists(file.path(rappdirs::user_data_dir(), "stateio", f))) {
+    logging::loginfo(paste(f, "not found in local folder, downloading from Data Commons..."))
+    checkFileonDataCommons(f)
+    downloadStateIODatafromDataCommons(filename, ver = ver)
+  } else {
+    logging::loginfo(paste("Loading", f, "from local folder ..."))
+  }
+  df <- readRDS(file.path(rappdirs::user_data_dir(), "stateio", f))
+  return(df)
+}
+
+#' Get a datetime object for desired data file on the DataCommons server.
+#' @description Get a datetime object for desired data file on the DataCommons server.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
+#' "CommodityOutput, and "IndustryOutput".
+#' @return A datetime object for desired data file on the DataCommons server.
+getFileUpdateTimefromDataCommons <- function(year, iolevel, dataname) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  base_url <- "https://xri9ebky5b.execute-api.us-east-1.amazonaws.com/api/?"
+  url <- paste0(base_url, "searchvalue=", datafile, "&place=&searchfields=filename")
+  date_str <- jsonlite::fromJSON(url)[, "LastModified"]
+  file_upload_datetime <- as.POSIXct(date_str)
+  return(file_upload_datetime)
+}
+
+#' Get a datetime object for desired data file from local folder.
+#' @description Get a datetime object for desired data file from local folder.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
+#' "CommodityOutput, and "IndustryOutput".
+#' @param path User-defined local path.
+#' @return A datetime object for desired data file from local folder.
+getFileUpdateTimefromLocal <- function(year, iolevel, dataname, path) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  meta <- read_datafile_meta(datafile, path)
+  file_upload_datetime <- dt.datetime.strptime(meta["LastUpdated"], '%Y-%m-%d %H:%M:%S%z')
+  return(file_upload_datetime)
+}
+
+#' Write a datetime object for desired data file to local folder.
+#' @description Get a datetime object for desired data file to local folder.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
+#' "CommodityOutput, and "IndustryOutput".
+#' @param path User-defined local path.
+#' @return A datetime object for desired data file to local folder. 
+writeDatafileMeta <- function(year, iolevel, dataname, path) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  file_upload_dt <- getFileUpdateTimefromDataCommons(year, iolevel, dataname)
+  write(jsonlite::toJSON(file_upload_dt), paste0(path, "/", datafile, "_metadata.json"))
+}
+
+#' Load a datetime object for desired data file from local folder.
+#' @description Load a datetime object for desired data file from local folder.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param path User-defined local path.
+#' @return A datetime object for desired data file from local folder.
+readDatafileMeta <- function(year, iolevel, dataname, path) {
+  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
+  if (file.exists(datafile)) {
+    metadata <- jsonlite::fromJSON(paste0(path, "/", datafile, "_metadata.json"))
+  } else {
+    logging::logerror(paste("Local metadata file for", datafile, "is missing."))
+  }
+  return(metadata)
+}
+
+##############################################################
+### All functions below are archived and need modification ###
+##############################################################
 
 #' getCountyFIPS (MODIFIED)
 #' 
@@ -455,73 +446,3 @@ createMatrixForRASM0 = function(matrixKEY, matrix) {
 }
 
 
-#' Generate two-region data filename with .rda as suffix.
-#' @description Generate two-region data filename with .rda as suffix.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @return A string of two-region data filename with .rda as suffix.
-getTwoRegionDataFileName <- function(year, iolevel, dataname) {
-  filename <- paste("TwoRegion", iolevel, dataname, year, sep = "_")
-  return(filename)
-}
-
-#' Get a datetime object for desired data file on the DataCommons server.
-#' @description Get a datetime object for desired data file on the DataCommons server.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @return A datetime object for desired data file on the DataCommons server.
-getFileUpdateTimefromDataCommons <- function(year, iolevel, dataname) {
-  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
-  base_url <- "https://xri9ebky5b.execute-api.us-east-1.amazonaws.com/api/?"
-  url <- paste0(base_url, "searchvalue=", datafile, "&place=&searchfields=filename")
-  date_str <- jsonlite::fromJSON(url)[, "LastModified"]
-  file_upload_datetime <- as.POSIXct(date_str)
-  return(file_upload_datetime)
-}
-
-
-#' Get a datetime object for desired data file from local folder.
-#' @description Get a datetime object for desired data file from local folder.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @param path User-defined local path.
-#' @return A datetime object for desired data file from local folder.
-getFileUpdateTimefromLocal <- function(year, iolevel, dataname, path) {
-  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
-  meta <- read_datafile_meta(datafile, path)
-  file_upload_datetime <- dt.datetime.strptime(meta["LastUpdated"], '%Y-%m-%d %H:%M:%S%z')
-  return(file_upload_datetime)
-}
-
-#' Write a datetime object for desired data file to local folder.
-#' @description Get a datetime object for desired data file to local folder.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @param path User-defined local path.
-#' @return A datetime object for desired data file to local folder. 
-writeDatafileMeta <- function(year, iolevel, dataname, path) {
-  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
-  file_upload_dt <- getFileUpdateTimefromDataCommons(year, iolevel, dataname)
-  write(jsonlite::toJSON(file_upload_dt), paste0(path, "/", datafile, "_metadata.json"))
-}
-
-#' Load a datetime object for desired data file from local folder.
-#' @description Load a datetime object for desired data file from local folder.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
-#' @param path User-defined local path.
-#' @return A datetime object for desired data file from local folder.
-readDatafileMeta <- function(year, iolevel, dataname, path) {
-  datafile <- getTwoRegionDataFileName(year, iolevel, dataname)
-  if (file.exists(datafile)) {
-    metadata <- jsonlite::fromJSON(paste0(path, "/", datafile, "_metadata.json"))
-  } else {
-    logging::logerror(paste("Local metadata file for", datafile, "is missing."))
-  }
-  return(metadata)
-}
