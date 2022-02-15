@@ -264,8 +264,6 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
                      ifelse(iolevel=="Detail", "F05100", "F051"))
   # All sectors except international imports
   industries <- getVectorOfCodes(iolevel, "Industry")
-  # import_col <- c(getVectorOfCodes(iolevel, "Import"),
-  #                 ifelse(iolevel=="Detail", "F05100", "F051"))
   import_col <- getVectorOfCodes(iolevel, "Import")
   nonimport_cols <- c(industries, FD_cols[-which(FD_cols%in%import_col)],
                       ifelse(iolevel=="Detail", "F05100", "F051"))
@@ -489,6 +487,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   VA_rows <- getVectorOfCodes(iolevel, "ValueAdded")
   FD_cols <- getFinalDemandCodes(iolevel)
+  ITA_col <- ifelse(iolevel=="Detail", "F05100", "F051")
   # Load US Make table
   US_Make <- getNationalMake(iolevel, year)
   US_DomesticUse <- generateUSDomesticUse(iolevel, year)
@@ -528,25 +527,25 @@ assembleTwoRegionIO <- function(year, iolevel) {
     ## Two-region Use and Domestic Use table
     TwoRegionUseModel <- buildTwoRegionUseModel(state, year, ioschema = 2012,
                                                 iolevel = iolevel, domestic = FALSE)
-    TwoRegionUse <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
-                                TwoRegionUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
-                          rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
-                                TwoRegionUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
+    TwoRegionUse <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols, ITA_col)],
+                                TwoRegionUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols, ITA_col)]),
+                          rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols, ITA_col)],
+                                TwoRegionUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols, ITA_col)]))
     TwoRegionDomesticUseModel <- buildTwoRegionUseModel(state, year, ioschema = 2012,
                                                         iolevel = iolevel, domestic = TRUE)
-    TwoRegionDomesticUse <- cbind(rbind(TwoRegionDomesticUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
-                                        TwoRegionDomesticUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
-                                  rbind(TwoRegionDomesticUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
-                                        TwoRegionDomesticUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
+    TwoRegionDomesticUse <- cbind(rbind(TwoRegionDomesticUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols, ITA_col)],
+                                        TwoRegionDomesticUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols, ITA_col)]),
+                                  rbind(TwoRegionDomesticUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols, ITA_col)],
+                                        TwoRegionDomesticUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols, ITA_col)]))
     
     rownames(TwoRegionUse) <- apply(cbind(commodities,
                                           rep(c(paste0("US-", state_abb), "RoUS"),
                                               each = length(commodities))),
                                     1, FUN = joinStringswithSlashes)
     rownames(TwoRegionDomesticUse) <- rownames(TwoRegionUse)
-    colnames(TwoRegionUse) <- apply(cbind(c(industries, FD_cols),
+    colnames(TwoRegionUse) <- apply(cbind(c(industries, FD_cols, ITA_col),
                                           rep(c(paste0("US-", state_abb), "RoUS"),
-                                              each = length(c(industries, FD_cols)))),
+                                              each = length(c(industries, FD_cols, ITA_col)))),
                                     1, FUN = joinStringswithSlashes)
     colnames(TwoRegionDomesticUse) <- colnames(TwoRegionUse)
     TwoRegionIO[["Use"]][[state]] <- TwoRegionUse
