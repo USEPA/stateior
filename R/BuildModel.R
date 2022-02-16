@@ -532,12 +532,13 @@ assembleTwoRegionIO <- function(year, iolevel) {
                                         TwoRegionDomesticUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
                                   rbind(TwoRegionDomesticUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
                                         TwoRegionDomesticUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
-    
     rownames(TwoRegionUse) <- c(getBEASectorCodeLocation("Commodity", state, iolevel),
                                 getBEASectorCodeLocation("Commodity", "RoUS", iolevel))
     rownames(TwoRegionDomesticUse) <- rownames(TwoRegionUse)
     colnames(TwoRegionUse) <- c(getBEASectorCodeLocation("Industry", state, iolevel),
-                                getBEASectorCodeLocation("Industry", "RoUS", iolevel))
+                                getBEASectorCodeLocation("FinalDemand", state, iolevel),
+                                getBEASectorCodeLocation("Industry", "RoUS", iolevel),
+                                getBEASectorCodeLocation("FinalDemand", state, iolevel))
     colnames(TwoRegionDomesticUse) <- colnames(TwoRegionUse)
     TwoRegionIO[["Use"]][[state]] <- TwoRegionUse
     TwoRegionIO[["DomesticUse"]][[state]] <- TwoRegionDomesticUse
