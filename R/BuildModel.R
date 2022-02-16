@@ -505,18 +505,13 @@ assembleTwoRegionIO <- function(year, iolevel) {
   # Assemble two-region IO tables
   TwoRegionIO <- list()
   for (state in sort(c(state.name, "District of Columbia"))) {
-    state_abb <- getStateAbbreviation(state)
     ## Two-region Make
     SoI_Make <- State_Make_ls[[state]]
-    rownames(SoI_Make) <- apply(cbind(industries, paste0("US-", state_abb)), 1,
-                                FUN = joinStringswithSlashes)
-    colnames(SoI_Make) <- apply(cbind(commodities, paste0("US-", state_abb)), 1,
-                                FUN = joinStringswithSlashes)
+    rownames(SoI_Make) <- getBEASectorCodeLocation("Industry", state, iolevel)
+    colnames(SoI_Make) <- getBEASectorCodeLocation("Commodity", state, iolevel)
     RoUS_Make <- US_Make - SoI_Make
-    rownames(RoUS_Make) <- apply(cbind(industries, "RoUS"), 1,
-                                 FUN = joinStringswithSlashes)
-    colnames(RoUS_Make) <- apply(cbind(commodities, "RoUS"), 1,
-                                 FUN = joinStringswithSlashes)
+    rownames(RoUS_Make) <- getBEASectorCodeLocation("Industry", "RoUS", iolevel)
+    colnames(RoUS_Make) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel)
     # Form two-region Make
     TwoRegionMake <- SoI_Make
     TwoRegionMake[rownames(RoUS_Make), colnames(RoUS_Make)] <- RoUS_Make
@@ -527,36 +522,30 @@ assembleTwoRegionIO <- function(year, iolevel) {
     ## Two-region Use and Domestic Use table
     TwoRegionUseModel <- buildTwoRegionUseModel(state, year, ioschema = 2012,
                                                 iolevel = iolevel, domestic = FALSE)
-    TwoRegionUse <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols, ITA_col)],
-                                TwoRegionUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols, ITA_col)]),
-                          rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols, ITA_col)],
-                                TwoRegionUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols, ITA_col)]))
+    TwoRegionUse <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
+                                TwoRegionUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
+                          rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
+                                TwoRegionUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
     TwoRegionDomesticUseModel <- buildTwoRegionUseModel(state, year, ioschema = 2012,
                                                         iolevel = iolevel, domestic = TRUE)
-    TwoRegionDomesticUse <- cbind(rbind(TwoRegionDomesticUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols, ITA_col)],
-                                        TwoRegionDomesticUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols, ITA_col)]),
-                                  rbind(TwoRegionDomesticUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols, ITA_col)],
-                                        TwoRegionDomesticUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols, ITA_col)]))
+    TwoRegionDomesticUse <- cbind(rbind(TwoRegionDomesticUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
+                                        TwoRegionDomesticUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
+                                  rbind(TwoRegionDomesticUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
+                                        TwoRegionDomesticUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
     
-    rownames(TwoRegionUse) <- apply(cbind(commodities,
-                                          rep(c(paste0("US-", state_abb), "RoUS"),
-                                              each = length(commodities))),
-                                    1, FUN = joinStringswithSlashes)
+    rownames(TwoRegionUse) <- c(getBEASectorCodeLocation("Commodity", state, iolevel),
+                                getBEASectorCodeLocation("Commodity", "RoUS", iolevel))
     rownames(TwoRegionDomesticUse) <- rownames(TwoRegionUse)
-    colnames(TwoRegionUse) <- apply(cbind(c(industries, FD_cols, ITA_col),
-                                          rep(c(paste0("US-", state_abb), "RoUS"),
-                                              each = length(c(industries, FD_cols, ITA_col)))),
-                                    1, FUN = joinStringswithSlashes)
+    colnames(TwoRegionUse) <- c(getBEASectorCodeLocation("Industry", state, iolevel),
+                                getBEASectorCodeLocation("Industry", "RoUS", iolevel))
     colnames(TwoRegionDomesticUse) <- colnames(TwoRegionUse)
     TwoRegionIO[["Use"]][[state]] <- TwoRegionUse
     TwoRegionIO[["DomesticUse"]][[state]] <- TwoRegionDomesticUse
     
     ## Two-region Value Added
     SoI_VA <- State_Use_ls[[state]][VA_rows, industries]
-    rownames(SoI_VA) <- apply(cbind(VA_rows, paste0("US-", state_abb)),
-                              1, FUN = joinStringswithSlashes)
-    colnames(SoI_VA) <- apply(cbind(industries, paste0("US-", state_abb)),
-                              1, FUN = joinStringswithSlashes)
+    rownames(SoI_VA) <- getBEASectorCodeLocation("ValueAdded", state, iolevel)
+    colnames(SoI_VA) <- getBEASectorCodeLocation("Industry", state, iolevel)
     RoUS_VA <- (Reduce("+", State_Use_ls) - State_Use_ls[[state]])[VA_rows, industries]
     rownames(RoUS_VA) <- apply(cbind(VA_rows, "RoUS"), 1, joinStringswithSlashes)
     colnames(RoUS_VA) <- apply(cbind(industries, "RoUS"), 1, joinStringswithSlashes)
@@ -576,20 +565,23 @@ assembleTwoRegionIO <- function(year, iolevel) {
     MakeUseDiff <- colSums(US_Make) - rowSums(US_DomesticUse[, c(columns, "F040")])
     RoUS_CommodityOutput$Output <- RoUS_CommodityOutput$Output - MakeUseDiff
     TwoRegionCommodityOutput <- c(SoI_CommodityOutput$Output, RoUS_CommodityOutput$Output)
-    names(TwoRegionCommodityOutput) <- apply(cbind(commodities,
-                                                   rep(c(paste0("US-", state_abb), "RoUS"),
-                                                       each = length(commodities))),
-                                             1, FUN = joinStringswithSlashes)
+    names(TwoRegionCommodityOutput) <- c(getBEASectorCodeLocation("Commodity", state, iolevel),
+                                         getBEASectorCodeLocation("Commodity", "RoUS", iolevel))
     TwoRegionIO[["CommodityOutput"]][[state]] <- TwoRegionCommodityOutput
     
     ## Two-region Industry Output
     TwoRegionIndustryOutput <- c(State_IndustryOutput_ls[[state]][, "Output"],
                                  rowSums(US_Make) - State_IndustryOutput_ls[[state]][, "Output"])
-    names(TwoRegionIndustryOutput) <- apply(cbind(industries,
-                                                  rep(c(paste0("US-", state_abb), "RoUS"),
-                                                      each = length(industries))),
-                                            1, FUN = joinStringswithSlashes)
+    names(TwoRegionIndustryOutput) <- c(getBEASectorCodeLocation("Industry", state, iolevel),
+                                        getBEASectorCodeLocation("Industry", "RoUS", iolevel))
     TwoRegionIO[["IndustryOutput"]][[state]] <- TwoRegionIndustryOutput
+    
+    ## Two-region International Trade Adjustment
+    SoI_ITA <- State_Use_ls[[state]][commodities, ITA_col]
+    names(SoI_ITA) <- getBEASectorCodeLocation("Commodity", state, iolevel)
+    RoUS_ITA <- Reduce("+", State_Use_ls)[commodities, ITA_col] - SoI_ITA
+    names(RoUS_ITA) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel)
+    TwoRegionIO[["InternationalTradeAdjustment"]][[state]] <- c(SoI_ITA, RoUS_ITA)
     
     print(state)
   }
