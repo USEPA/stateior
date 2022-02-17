@@ -8,17 +8,18 @@ Each two-region matrix has a four-quadrant structure. In each matrix, `SoI` is r
 
 ## Data
 
-| Item                    | Data Structure | Description |
-| ----------------------- | -------------- | ----------- |
-| Make                    | matrix         | [The two-region Make Transactions](#Two-Region-Make-Transactions) |
-| Use                     | matrix         | [The two-region Use Transactions](#Two-Region-Use-Transactions) |
-| Domestic Use            | matrix         | [The two-region Domestic Use Transactions](#Two-Region-Use-Transactions) |
-| Final Demand            | matrix         | [The two-region Final Demand](#Two-Region-Final-Demand-Transactions) |
-| Domestic Final Demand   | matrix         | [The two-region Domestic Final Demand](#Two-Region-Final-Demand-Transactions) |
-| Value Added             | matrix         | [The two-region Value Added](#Two-Region-Value-Added-Transactions) |
-| Commodity Output        | numeric vector | [Two-region total output by commodity](#Two-Region-Output-Vectors) |
-| Industry Output         | numeric vector | [Two-region total output by industry](#Two-Region-Output-Vectors) |
-| Domestic Use with trade | list           | [The two-region Domestic Use with interregional trade](#Two-Region-Domestic-Use-with-Trade) |
+| Item                           | Data Structure | Description |
+| ------------------------------ | -------------- | ----------- |
+| Make                           | matrix         | [The two-region Make Transactions](#Two-Region-Make-Transactions) |
+| Use                            | matrix         | [The two-region Use Transactions](#Two-Region-Use-Transactions) |
+| Domestic Use                   | matrix         | [The two-region Domestic Use Transactions](#Two-Region-Use-Transactions) |
+| Final Demand                   | matrix         | [The two-region Final Demand](#Two-Region-Final-Demand) |
+| Domestic Final Demand          | matrix         | [The two-region Domestic Final Demand](#Two-Region-Final-Demand) |
+| International Trade Adjustment | numeric vector | [The two-region International Trade Adjustment](#Two-Region-International-Trade-Adjustment) |
+| Value Added                    | matrix         | [The two-region Value Added](#Two-Region-Value-Added) |
+| Commodity Output               | numeric vector | [Two-region total output by commodity](#Two-Region-Output-Vectors) |
+| Industry Output                | numeric vector | [Two-region total output by industry](#Two-Region-Output-Vectors) |
+| Domestic Use with trade        | list           | [The two-region Domestic Use with interregional trade](#Two-Region-Domestic-Use-with-Trade) |
 
 ### Two Region Make Transactions
 The two-region Make Transactions is an `industry x commodity` matrix with amounts of commodities (in model year USD) being made by industries.
@@ -63,6 +64,12 @@ The two-region Final Demand is a `commodity x final demand` matrix with amounts 
  commodities/RoUS  |                  |                  |
                    |                  |                  |
                    +-------------------------------------+
+```
+
+### Two Region International Trade Adjustment
+The two-region international trade adjustment vector `mu` contains value of all transportation and insurance services to import and customs duties in model year USD. 
+```
+commodities/US-ST, commodities/RoUS +----mu----+
 ```
 
 ### Two Region Value Added
