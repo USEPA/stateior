@@ -26,65 +26,19 @@ devtools::install_github("USEPA/stateior@v0.1.0")
 To load the two-region (SoI, State of Interest, and RoUS, Rest of the US) IO data created by stateior, use the following functions.
 Details of the data are described [here](https://github.com/USEPA/stateior/blob/dev/format_specs/TwoRegionData.md#data).
 
-#### Two-region Make
+| Data                                | Function                                              | Parameters (example) |
+| ----------------------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
+| Make                                | `stateior::getTwoRegionMakeTransactions`              | `state = "Geogia", year = 2017, iolevel = "Summary"` |
+| Use                                 | `stateior::getTwoRegionUseTransactions`               | `state = "Geogia", year = 2017, iolevel = "Summary"` |
+| Final Demand                        | `stateior::getTwoRegionFinalDemand`                   | `state = "Geogia", year = 2017, iolevel = "Summary"` |
+| Domestic Use                        | `stateior::getTwoRegionDomesticUseTransactions`       | `state = "Geogia", year = 2017, iolevel = "Summary"` |
+| Domestic Final Demand               | `stateior::getTwoRegionDomesticFinalDemand`           | `state = "Geogia", year = 2017, iolevel = "Summary"` |
+| International Trade Adjustment      | `stateior::getTwoRegionInternationalTradeAdjustment`  | `state = "Geogia", year = 2017, iolevel = "Summary"` |
+| Value Added                         | `stateior::getTwoRegionValueAdded`                    | `state = "Geogia", year = 2017, iolevel = "Summary"` |
+| Commodity Output                    | `stateior::getTwoRegionCommodityOutput`               | `state = "Geogia", year = 2017, iolevel = "Summary"` |
+| Industry Output                     | `stateior::getTwoRegionIndustryOutput`                | `state = "Geogia", year = 2017, iolevel = "Summary"` |
+| Domestic Use w/ Interregional Trade | `stateior::getTwoRegionDomesticUsewithTrade`          | `state = "Geogia", year = 2017, iolevel = "Summary"` |
 
-```
-stateior::getTwoRegionMakeTransactions(state = "Geogia", year = 2017, iolevel = "Summary")
-```
-
-#### Two-region Use (intermediate consumption only)
-
-```
-stateior::getTwoRegionUseTransactions(state = "Geogia", year = 2017, iolevel = "Summary")
-```
-
-#### Two-region Final Demand
-
-```
-stateior::getTwoRegionFinalDemand(state = "Geogia", year = 2017, iolevel = "Summary")
-```
-
-#### Two-region Domestic Use (intermediate consumption only)
-
-```
-stateior::getTwoRegionDomesticUseTransactions(state = "Geogia", year = 2017, iolevel = "Summary")
-```
-
-#### Two-region Domestic Final Demand
-
-```
-stateior::getTwoRegionDomesticFinalDemand(state = "Geogia", year = 2017, iolevel = "Summary")
-```
-
-#### Two-region International Trade Adjustment
-
-```
-stateior::getTwoRegionInternationalTradeAdjustment(state = "Geogia", year = 2017, iolevel = "Summary")
-```
-
-#### Two-region Value Added
-
-```
-stateior::getTwoRegionCommodityOutput(state = "Geogia", year = 2017, iolevel = "Summary")
-```
-
-#### Two-region Commodity Output
-
-```
-stateior::getTwoRegionUseTransactions(state = "Geogia", year = 2017, iolevel = "Summary")
-```
-
-#### Two-region Industry Output
-
-```
-stateior::getTwoRegionIndustryOutput(state = "Geogia", year = 2017, iolevel = "Summary")
-```
-
-#### Two-region Domestic Use with Interregional Trade
-
-```
-stateior::getTwoRegionDomesticUsewithTrade(state = "Geogia", year = 2017, iolevel = "Summary")
-```
 
 ## Disclaimer
 
