@@ -24,7 +24,7 @@ devtools::install_github("USEPA/stateior@v0.1.0")
 ## Usage
 
 To load the two-region (SoI, State of Interest, and RoUS, Rest of the US) IO data created by stateior, use the following functions.
-Details of the data are described [here](https://github.com/USEPA/stateior/blob/dev/format_specs/TwoRegionData.md#data).
+Details of the data are described [here](https://github.com/USEPA/stateior/blob/master/format_specs/TwoRegionData.md#data).
 
 | Data                                | Function                                              | Parameters (example) |
 | ----------------------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
