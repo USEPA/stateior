@@ -39,6 +39,11 @@ Details of the data are described [here](https://github.com/USEPA/stateior/blob/
 | Industry Output                     | `stateior::getTwoRegionIndustryOutput`                | `state = "Geogia", year = 2017, iolevel = "Summary"` |
 | Domestic Use w/ Interregional Trade | `stateior::getTwoRegionDomesticUsewithTrade`          | `state = "Geogia", year = 2017, iolevel = "Summary"` |
 
+#### Example
+
+```
+df <- stateior::getTwoRegionMakeTransactions(state = "Geogia", year = 2017, iolevel = "Summary")
+```
 
 ## Disclaimer
 
