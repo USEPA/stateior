@@ -2,8 +2,8 @@
 title: "Validating `r year` State IO Model"
 date: "`r Sys.Date()`"
 output:
-  html_document:
-    keep_md: yes
+  md_document:
+    variant: markdown_github
 editor_options: 
   chunk_output_type: console
 ---

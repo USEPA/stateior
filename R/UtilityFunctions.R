@@ -102,7 +102,11 @@ loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
 getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
   # Get code
   if (sector_type!="FinalDemand") {
-    code <- getVectorOfCodes(iolevel, sector_type)
+    if (sector_type=="InternationalTradeAdjustment") {
+      code <- ifelse(iolevel=="Detail", "F05100", "F051")
+    } else {
+      code <- getVectorOfCodes(iolevel, sector_type)
+    }
   } else {
     code <- getFinalDemandCodes(iolevel)
   }

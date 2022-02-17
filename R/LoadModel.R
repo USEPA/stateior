@@ -6,8 +6,9 @@
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
-#' "UseTransactions", "FinalDemand", "DomesticUseTransactions", "DomesticFinalDemand",
-#' "CommodityOutput, and "IndustryOutput", "Demand", and "CompleteDemand".
+#' "UseTransactions", "FinalDemand", "InternationalTradeAdjustment,
+#' "DomesticUseTransactions", "DomesticFinalDemand",
+#' "CommodityOutput, "IndustryOutput", and "DomesticUsewithTrade".
 #' @return A list of two-region IO data of specified iolevel and year.
 loadTwoRegionIOData <- function(year, iolevel, dataname) {
   checkIOLevel(iolevel)
@@ -137,6 +138,22 @@ getTwoRegionDomesticFinalDemand <- function(state, year, iolevel) {
                  getBEASectorCodeLocation("FinalDemand", "RoUS", iolevel))
   DomesticFinalDemand <- df[row_names, col_names]
   return(DomesticFinalDemand)
+}
+
+#' Load two-region international trade adjustment
+#' in state of interest (SoI) and its corresponding rest-of-US (RoUS) for a given year.
+#' @description Load two-region international trade adjustment vector
+#' in SoI and its corresponding RoUS for a given year.
+#' @param state A text value specifying state of interest.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' theoretically can be "Detail", or "Sector" in future versions.
+#' @return A data.frame of two-region international trade adjustment.
+#' @export
+getTwoRegionInternationalTradeAdjustment <- function(state, year, iolevel) {
+  checkStateName(state)
+  ITA <- loadTwoRegionIOData(year, iolevel, "InternationalTradeAdjustment")[[state]]
+  return(ITA)
 }
 
 #' Load two-region value added in state of interest (SoI)
