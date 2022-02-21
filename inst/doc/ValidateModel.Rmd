@@ -14,6 +14,7 @@ This document presents validation results of `r year` summary-level state IO mod
 knitr::opts_chunk$set(echo = FALSE,
                       message = FALSE,
                       results = "asis")
+logging::basicConfig(level = 30)
 ```
 
 ```{r report-function}
@@ -139,7 +140,7 @@ for (state in states) {
 reportValidationResult(failures)
 ```
 
-#### 7. Sum of each cell across all state Use tables must almost equal (<= 1^7, or $10 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
+#### 7. Sum of each cell across all state Use tables must almost equal (<= 0.001) the same cell in US Use table. This validates that Total state demand == Total national demand.
 Note: failures associated with 'F050 - Imports' are acceptable. Because state imports are not directly derived from US imports, a gap in imports between state sum and national total is reasonable.
 ```{r check7}
 # Create a function to implement the validation
@@ -155,7 +156,7 @@ validateStateUseAgainstNationlUse <- function(domestic = FALSE) {
   rownames(df1) <- gsub(".*\\.", "", rownames(df1))
   df1 <- df1[rownames(df0), colnames(df0)]
   # Compare aggregated state Use table against US Use table
-  failures <- formatValidationResult(df1-df0, abs_diff = TRUE, tolerance = 1E7)[["Failure"]]
+  failures <- formatValidationResult(df1-df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
   rownames(failures) <- NULL
   colnames(failures) <- c("Commodity", "Industry/Final Demand")
   return(failures)
