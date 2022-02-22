@@ -78,7 +78,7 @@ buildStateSupplyModel <- function(year) {
   }
   
   logging::loginfo("Preparing state Make table for RAS balancing ...")
-  # Vertically stack all state Make trascation tables.
+  # Vertically stack all state Make transaction tables.
   State_Make <- do.call(rbind, State_Make_ls)
   rownames(State_Make) <- paste(rep(names(State_Make_ls),
                                     each = nrow(State_Make_ls[[1]])),
@@ -88,7 +88,7 @@ buildStateSupplyModel <- function(year) {
   colnames(State_Make) <- colnames(US_Make)
   
   logging::loginfo("Performing RAS balancing on state Make table ...")
-  # Separate the state Make trascation table by industry (row) into 71 matrices.
+  # Separate the state Make transaction table by industry (row) into 71 matrices.
   # Each matrix, m0, has dimensions of 52x73 (states x commodities)
   # Apply RAS till m0 is balanced subject to t_r and t_c and becomes m1.
   m1_ls <- list()
@@ -181,7 +181,7 @@ buildStateUseModel <- function(year) {
                             estimateStateExport(year)[row_names, , drop = FALSE],
                             State_Import[row_names, , drop = FALSE],
                             estimateStateFedGovExpenditure(year)[row_names, ],
-                            estimateStateSLGovExpenditure(year))[row_names, ]
+                            estimateStateSLGovExpenditure(year)[row_names, ])
   StateFinalDemand$State <- gsub("\\..*", "", rownames(StateFinalDemand))
   StateFinalDemand$Commodity <- gsub(".*\\.", "", rownames(StateFinalDemand))
   
