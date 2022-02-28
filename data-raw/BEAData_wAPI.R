@@ -12,7 +12,7 @@ getBEAStateEmployment <- function () {
   linecodes <- jsonlite::fromJSON(linecodes_txt)
   StateEmployment <- data.frame()
   keys <- as.numeric(linecodes$BEAAPI$Results$ParamValue$Key)
-  for (linecode in keys[keys>=50]) {
+  for (linecode in keys) {
     StateEmployment_linecode_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
                                            APIkey,
                                            "&method=GetData",
