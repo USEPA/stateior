@@ -198,7 +198,7 @@ calculateStateUSVARatiobyLineCode <- function(year) {
   # Calculate the state-US ValueAdded ratios by LineCode
   VA_Ratio_df$Ratio <- VA_Ratio_df[, paste0(year, ".x")]/VA_Ratio_df[, paste0(year, ".y")]
   VA_Ratio_df <- VA_Ratio_df[order(VA_Ratio_df$LineCode, VA_Ratio_df$GeoName),
-                                         c("LineCode", "GeoName", "Ratio")]
+                             c("LineCode", "GeoName", "Ratio")]
   return(VA_Ratio_df)
 }
 
@@ -261,8 +261,8 @@ getStateEmploymentbyBEASummary <- function(year) {
   BEAStateEmp <- merge(BEAStateEmp, EmptoBEAmapping, by = "LineCode")
   # Aggregate StateEmployment by BEA
   BEAStateEmp <- stats::aggregate(BEAStateEmp[, as.character(year)],
-                                         by = list(BEAStateEmp$BEA_2012_Summary_Code,
-                                                   BEAStateEmp$GeoName), sum)
+                                  by = list(BEAStateEmp$BEA_2012_Summary_Code,
+                                            BEAStateEmp$GeoName), sum)
   colnames(BEAStateEmp) <- c("BEA_2012_Summary_Code", "State", "Emp")
   # BLS QCEW Emp
   BLS_QCEW <- getFlowsaData("Employment", year)
@@ -465,7 +465,7 @@ finalizeStateUSValueAddedRatio <- function(year) {
   # Generate list of states
   states <- unique(state_US_VA_ratio$GeoName)
   State_Summary_IndustryOutput_ls <- list()
-  for (state in c(states, "Overseas")) {
+  for (state in states) {
     # Subset the state_US_VA_ratio for specified state
     VA_ratio <- state_US_VA_ratio[state_US_VA_ratio$GeoName==state, ]
     # Replace NA with zero
