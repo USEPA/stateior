@@ -53,27 +53,56 @@ getStatePCE <- function(year) {
 }
 
 #' Calculate state-US Commodity Output ratios at BEA Summary level.
+#' Apply row sum to state and US Make tables to get commodity output vectors and
+#' then Commodity Output Ratio (COR).
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state-US Commodity Output ratios at BEA Summary level.
 calculateStateCommodityOutputRatio <- function(year) {
-  # Load state Commodity output
-  State_CommodityOutput_ls <- loadStateIODataFile(paste0("State_Summary_CommodityOutput_",
-                                                         year))
-  states <- names(State_CommodityOutput_ls)
+  # Load state Make table
+  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
+  states <- names(StateMake_ls)
   # Load US Commodity output
-  US_MakeTransaction <- getNationalMake("Summary", year)
-  US_CommodityOutput <- colSums(US_MakeTransaction)
+  US_Make <- getNationalMake("Summary", year)
   # Calculate state Commodity output ratio
   State_COR <- data.frame()
   for (state in states) {
-    COR <- cbind.data.frame(names(US_CommodityOutput), state,
-                            State_CommodityOutput_ls[[state]]/US_CommodityOutput,
+    COR <- cbind.data.frame(names(colSums(US_Make)), state,
+                            colSums(StateMake_ls[[state]])/colSums(US_Make),
                             stringsAsFactors = FALSE)
     rownames(COR) <- NULL
     colnames(COR) <- c("BEA_2012_Summary_Code", "State", "Ratio")
     State_COR <- rbind(State_COR, COR)
   }
   return(State_COR)
+}
+
+#' Estimate state Intermediate Consumption at BEA Summary level.
+#' For each state and industry, calculate state_US_IndustryOutput_ratio,
+#' then multiply US_Use_Intermediate by the ratio to get State_Use_Intermediate.
+#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @return A list of data.frames containing state Intermediate Consumption.
+estimateStateIntermediateConsumption <- function(year) {
+  # Define industries, commodities and # Define final demand columns
+  industries <- getVectorOfCodes("Summary", "Industry")
+  commodities <- getVectorOfCodes("Summary", "Commodity")
+  
+  # Load state Make table
+  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
+  # Load US Make and Use tables
+  US_Make <- getNationalMake("Summary", year)
+  US_Use <- getNationalUse("Summary", year)
+  
+  logging::loginfo("Estimating state intermediate consumption ...")
+  # For each state and industry, calculate state_US_IndustryOutput_ratio
+  # Multiply US_Use_Intermediate by state_US_IndustryOutput_ratio 
+  State_Use_Intermediate_ls <- list()
+  for (state in names(StateMake_ls)) {
+    IOR <- rowSums(StateMake_ls[[state]])/rowSums(US_Make)
+    State_Use_Intermediate <- as.matrix(US_Use[commodities, industries]) %*% diag(IOR)
+    colnames(State_Use_Intermediate) <- colnames(US_Use[commodities, industries])
+    State_Use_Intermediate_ls[[state]] <- as.data.frame(State_Use_Intermediate)
+  }
+  return(State_Use_Intermediate_ls)
 }
 
 #' Adjust EmpComp, Tax, and GOS to fill NA and make them consistent with GVA
@@ -175,6 +204,7 @@ assembleStateSummaryGrossValueAdded <- function(year) {
   GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
   allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
                                           duplicated(GVAtoBEAmapping$LineCode, fromLast = TRUE), ]
+  logging::loginfo("Estimating state value added ...")
   StateGVA <- data.frame()
   for (sector in c("EmpCompensation", "Tax", "GOS")) {
     # Generate Value Added tables by BEA
@@ -195,36 +225,75 @@ assembleStateSummaryGrossValueAdded <- function(year) {
     sector_code <- ifelse(sector=="EmpCompensation", "V001",
                           ifelse(sector=="Tax", "V002",
                                  ifelse(sector=="GOS", "V003")))
+    GVAComponent <- adjustGVAComponent(year, sector)
+    GVAComponent <- reshape2::dcast(GVAComponent, GeoName ~ LineCode, value.var = as.character(year))
+    rownames(GVAComponent) <- GVAComponent$GeoName
+    GVAComponent$GeoName <- NULL
+    GVAComponent["Overseas", ] <- GVAComponent[rownames(GVAComponent)=="United States *", ] -
+      colSums(GVAComponent[rownames(GVAComponent)!="United States *", ])
     # Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors
     for (linecode in unique(allocation_sectors$LineCode)) {
       # Determine BEA sectors that need allocation
       BEA_sectors <- allocation_sectors[allocation_sectors$LineCode==linecode, "BEA_2012_Summary_Code"]
-      # Create m0
+      # Create m0, t_r and t_c
       m0 <- as.matrix(df[, BEA_sectors])
-      # Create t_r
-      GVAComponent <- adjustGVAComponent(year, sector)
-      GVAComponent <- reshape2::dcast(GVAComponent, GeoName ~ LineCode, value.var = as.character(year))
-      rownames(GVAComponent) <- GVAComponent$GeoName
-      GVAComponent$GeoName <- NULL
-      GVAComponent["Overseas", ] <- GVAComponent[rownames(GVAComponent)=="United States *", ] -
-        colSums(GVAComponent[rownames(GVAComponent)!="United States *", ])
       t_r <- GVAComponent[rownames(m0), linecode]
-      # Create t_c
       t_c <- as.numeric(US_Use[sector_code, BEA_sectors])
       # Apply RAS
       m <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1, max_itr = 1E6)
       # Replace values in df with m
       df[rownames(m), colnames(m)] <- m
     }
-    # Allocate US value added to states by values in df
+    # Create df_ratio based on df, replace NaNs caused by colSums(df)==0 with 1/nrow(df)
     df_ratio <- sweep(df, 2, colSums(df), FUN = "/")
+    df_ratio[is.na(df_ratio)] <- 1/nrow(df)
+    # Allocate US value added to states by values in df
     StateGVA_sector <- sweep(df_ratio, 2, as.numeric(US_Use[sector_code, industries]), FUN = "*")
     rownames(StateGVA_sector) <- paste(rownames(StateGVA_sector), sector_code, sep = ".")
     StateGVA <- rbind(StateGVA, StateGVA_sector)
   }
-  # Replace NA with 0
-  StateGVA[is.na(StateGVA)] <- 0
-  return (StateGVA)
+  
+  logging::loginfo("Balancing state value added ...")
+  # Balance StateGVA with (rowSums(Make) - colSums(Use))
+  # Step 1. Balance VA-by-state table
+  # Sum StateGVA to get VA-by-state table
+  StateGVA_sum <- as.data.frame(rowSums(StateGVA))
+  colnames(StateGVA_sum) <- "Value"
+  StateGVA_sum$State <- sub("\\..*", "", rownames(StateGVA_sum))
+  StateGVA_sum$Sector <- sub(".*\\.", "", rownames(StateGVA_sum))
+  StateGVA_sum_table <- reshape2::dcast(StateGVA_sum, Sector ~ State, value.var = "Value")
+  rownames(StateGVA_sum_table) <- StateGVA_sum_table$Sector
+  StateGVA_sum_table$Sector <- NULL
+  # Prepare m0, t_r and t_c
+  StateGVA_sum_m0 <- as.matrix(StateGVA_sum_table)
+  t_r <- as.numeric(rowSums(US_Use[c("V001", "V002", "V003"), industries]))
+  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
+  State_Use_Intermediate_ls <- estimateStateIntermediateConsumption(year)
+  t_c <- as.numeric(unlist(lapply(names(StateMake_ls),
+                                  function(x) sum(StateMake_ls[[x]]))) -
+                      unlist(lapply(names(State_Use_Intermediate_ls),
+                                    function(x) sum(State_Use_Intermediate_ls[[x]]))))
+  # Apply RAS to get m
+  StateGVA_sum_m <- applyRAS(StateGVA_sum_m0, t_r, t_c, relative_diff = NULL,
+                             absolute_diff = 1, max_itr = 1E6)
+  # Step 2. Balance each state's VA-by-Industry table
+  StateGVA_balanced <- data.frame()
+  for (state in names(StateMake_ls)) {
+    m0 <- as.matrix(StateGVA[gsub("\\..*", "", rownames(StateGVA))==state, ])
+    t_r <- StateGVA_sum_m[, state]
+    t_c <- rowSums(StateMake_ls[[state]]) - colSums(State_Use_Intermediate_ls[[state]])
+    m <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1, max_itr = 1E6)
+    StateGVA_balanced <- rbind(StateGVA_balanced, as.data.frame(m))
+    # Validation - interrupt if industry output (x) from Make != x from Use by 1E-5
+    GVA <- StateGVA_balanced[gsub("\\..*", "", rownames(StateGVA_balanced))==state, ]
+    x_make <- rowSums(StateMake_ls[[state]])
+    x_use <- colSums(as.data.frame(GVA)) + colSums(State_Use_Intermediate_ls[[state]])
+    rel_diff <- (x_use - x_make)/x_make
+    if(max(abs(rel_diff), na.rm = TRUE)>1E-5&&state!="Overseas") {
+      stop(paste0(state, "'s Make and Use tables are not balanced."))
+    }
+  }
+  return (StateGVA_balanced)
 }
 
 #' Calculate state total PCE (personal consumption expenditures) at BEA Summary level.
@@ -411,9 +480,13 @@ estimateStateExport <- function(year) {
   State_Export <- State_Export[, "F040", drop = FALSE]
   
   # Adjust state international exports to avoid state exports > state commodity output
-  State_CommOutput <- do.call(rbind,
-                              loadStateIODataFile(paste0("State_Summary_CommodityOutput_",
-                                                         year)))
+  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
+  State_CommOutput <- as.data.frame(unlist(lapply(names(StateMake_ls),
+                                                  function(x) colSums(StateMake_ls[[x]]))))
+  rownames(State_CommOutput) <- paste(rep(names(StateMake_ls), each = ncol(StateMake_ls[[1]])),
+                                      colnames(StateMake_ls[[1]]),
+                                      sep = ".")
+  colnames(State_CommOutput) <- "Output"
   State_CommOutput <- State_CommOutput[rownames(State_Export), , drop = FALSE]
   # Prepare vectors of commodities and states that will be examined and adjusted
   commodities <- setdiff(unique(gsub(".*\\.", "", rownames(State_CommOutput))),
@@ -425,7 +498,7 @@ estimateStateExport <- function(year) {
   
   # Determine original condition:
   # Compare state commodity output against the sum of state export and following FD sectors
-  # whose state values are derived using COR (or ratios similar to COR, e.g. gross output raios)
+  # whose state values are derived using COR (or ratios similar to COR, e.g. gross output ratios)
   # F02S - Nonresidential private fixed investment in structures
   # F02N - Nonresidential private fixed investment in intellectual property products
   # F030 - Change in private inventories
@@ -435,12 +508,12 @@ estimateStateExport <- function(year) {
   
   # For each problematic commodity, apply the adjustment
   for (comm in unique(gsub(".*\\.", "", states_comms[original_condition]))) {
+    # Set i and states_comm
+    i <- 1
     states_comm <- paste(states, comm, sep = ".")
     # Enter the while loop as long as there are state exports + state PI > commodity output
     max_itr <- 1E3
     while(any(State_Export[states_comm, ] + StatePI_sum[states_comm] > State_CommOutput[states_comm, ])) {
-      # Set i and states_comm
-      i <- 1
       # Determine new condition for each iteration in while loop
       new_condition <- State_Export[states_comm, ] + StatePI_sum[states_comm] > State_CommOutput[states_comm, ]
       # Set state and trouble_rows
@@ -462,7 +535,7 @@ estimateStateExport <- function(year) {
       State_Export[trouble_rows, ] <- US_Export[comm, ]*comm_output_ratio
       i <- i + 1
       if (i >= max_itr) {
-        stop("Allocation of export residuals exceeds maximum iteration")
+        stop("Allocation of export residuals exceeds maximum iteration.")
       }
     }
   }
