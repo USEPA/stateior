@@ -1,5 +1,5 @@
 # This workflow is designed to be manually triggered only.
-name: Save intermediate data in parallel runs
+name: Save state use intermediate data in parallel runs
 
 on:
   workflow_dispatch: # allow manual trigger
@@ -8,13 +8,20 @@ jobs:
   generate-save-data:
     runs-on: ${{ matrix.config.os }}
 
-    name: ${{ matrix.config.os}} (${{ matrix.config.r}})
+    name: ${{ matrix.year }} (${{ matrix.config.os}}, ${{ matrix.config.r}})
     
     strategy:
       fail-fast: false
       matrix:
         config:
           - {os: ubuntu-latest, r: 'release'}
+        year:
+          - 2012
+          - 2013
+          - 2014
+          - 2015
+          - 2016
+          - 2017
 
     # env:
       # R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -38,7 +45,8 @@ jobs:
       - name: Load stateior and generate intermediate data
         run: |
           devtools::load_all()
-          source("data-raw/StateIntermediateData.R")
+          year <- ${{ matrix.year }}
+          source("data-raw/StateUseIntermediateData.R")
         shell: Rscript {0}
       
       # Upload .rds files
