@@ -48,7 +48,7 @@ buildStateSupplyModel <- function(year) {
   logging::loginfo("Adjusting state Make table ...")
   # Adjust estimated state commodity output and calculate state commodity adjustment ratio
   # Based on reported state commodity output from alternative sources.
-  for (state in states) {
+  for (state in setdiff(states, "Overseas")) {
     # Adjust estimated state commodity output
     # Calculate state/US commodity output ratio * US Summary Comm Output
     AdjustedStateCommOutput <- merge(US_CommodityOutput,
@@ -106,20 +106,13 @@ buildStateSupplyModel <- function(year) {
   State_Make_balanced <- do.call(rbind.data.frame, m1_ls)
   State_Make_balanced <- State_Make_balanced[rownames(State_Make), ]
   
-  logging::loginfo("Finalizing state Make table, industry and commodity output...")
+  logging::loginfo("Finalizing state Make table...")
   model <- list()
   for (state in states) {
     Make <- State_Make_balanced[gsub("\\..*", "",
                                      rownames(State_Make_balanced))==state, ]
     model[["Make"]][[state]] <- Make
-    State_IndustryOutput_ls[[state]] <- as.data.frame(rowSums(Make))
-    colnames(State_IndustryOutput_ls[[state]]) <- "Output"
-    State_CommodityOutput_ls[[state]] <- as.data.frame(colSums(Make))
-    colnames(State_CommodityOutput_ls[[state]]) <- "Output"
   }
-  model[["IndustryOutput"]] <- State_IndustryOutput_ls
-  model[["CommodityOutput"]] <- State_CommodityOutput_ls
-  
   logging::loginfo("Model build complete.")
   return(model)
 }
@@ -135,43 +128,17 @@ buildStateUseModel <- function(year) {
   # Define industries, commodities and # Define final demand columns
   industries <- getVectorOfCodes("Summary", "Industry")
   commodities <- getVectorOfCodes("Summary", "Commodity")
-  FinalDemand_columns <- getFinalDemandCodes("Summary")
-  
-  logging::loginfo("Loading state and US industry output ...")
-  # State industry output
-  State_IndustryOutput_ls <- loadStateIODataFile(paste0("State_Summary_IndustryOutput_",
-                                                        year))
-  states <- names(State_IndustryOutput_ls)
-  # US industry output
-  US_Make <- getNationalMake("Summary", year)
-  US_IndustryOutput <- rowSums(US_Make)
-  
-  logging::loginfo("Loading US Use table ...")
-  # Load US Summary Use table for given year
-  US_Use <- getNationalUse("Summary", year)
-  # Generate US Summary Use Transaction
-  US_Use_Intermediate <- US_Use[commodities, industries]
-  # Generate US international trade adjustment
-  US_ITA <- generateInternationalTradeAdjustmentVector("Summary", year)
-  
-  logging::loginfo("Calculating state-to-US industry output ratios ...")
+  FD_cols <- getFinalDemandCodes("Summary")
+  VA_rows <- getVectorOfCodes("Summary", "ValueAdded")
+  # Prepare State Intermediate Consumption tables
   logging::loginfo("Estimating state intermediate consumption ...")
-  # For each state and industry, calculate state_US_IndustryOutput_ratio
-  # Multiply US_Use_Intermediate by state_US_IndustryOutput_ratio 
-  State_Use_Intermediate_ls <- list()
-  for (state in states) {
-    IOR <- State_IndustryOutput_ls[[state]][, 1]/US_IndustryOutput
-    State_Use_Intermediate <- as.matrix(US_Use_Intermediate) %*% diag(IOR)
-    colnames(State_Use_Intermediate) <- colnames(US_Use_Intermediate)
-    State_Use_Intermediate_ls[[state]] <- State_Use_Intermediate
-  }
-  
+  State_Use_Intermediate_ls <- estimateStateIntermediateConsumption(year)
+  states <- names(State_Use_Intermediate_ls)
+  # Prepare State Final Demand
   logging::loginfo("Estimating state personal consumption expenditure ...")
   State_PCE <- estimateStateHouseholdDemand(year)
-  
   logging::loginfo("Estimating state final demand ...")
-  # Assemble final demand columns
-  # Create a temporary State_Import as placeholder
+  # Assemble final demand columns and create a temporary State_Import as placeholder
   State_Import <- State_PCE
   colnames(State_Import) <- "F050"
   State_Import$F050 <- 0
@@ -194,8 +161,7 @@ buildStateUseModel <- function(year) {
   for (state in states) {
     # Assemble state Use table
     State_Use <- cbind(State_Use_Intermediate_ls[[state]],
-                       StateFinalDemand[StateFinalDemand$State==state,
-                                        FinalDemand_columns])
+                       StateFinalDemand[StateFinalDemand$State==state, FD_cols])
     # Calculate state domestic Use table
     State_DomesticUse <- State_Use*DomesticUse_ratios
     # Update Import in state Use table
@@ -212,9 +178,14 @@ buildStateUseModel <- function(year) {
     model[["Use"]][[state]] <- State_Use
     model[["DomesticUse"]][[state]] <- State_DomesticUse
   }
+  logging::loginfo("Finalizing state Use table, industry and commodity output...")
   # Append international trade adjustment to state Use and DomesticUse tables
   #!This step has to be executed after 'model' is complete in order to derive 'ratio'.
   State_Import_sum <- Reduce("+", model[["Use"]])[commodities, "F050"]
+  # Generate US international trade adjustment
+  US_ITA <- generateInternationalTradeAdjustmentVector("Summary", year)
+  # Load US Summary Use table for given year
+  US_Use <- getNationalUse("Summary", year)
   for (state in states) {
     ratio <- model[["Use"]][[state]][commodities, "F050"]/State_Import_sum
     ratio[is.na(ratio)] <- 0
@@ -222,14 +193,18 @@ buildStateUseModel <- function(year) {
     # If a commodity has non-zero national ITA but zero in state/US import ratios, 
     # replace the zeros in the ratios with total consumption (rowSums of Use excluding Imports) ratios.
     for (comm in intersect(names(US_ITA[US_ITA!=0]), names(ratio[ratio==0]))) {
-      state_total_cons <- sum(model[["Use"]][[state]][comm, setdiff(c(industries, FinalDemand_columns), "F050")])
-      US_total_cons <- sum(US_Use[comm, setdiff(c(industries, FinalDemand_columns), "F050")])
+      state_total_cons <- sum(model[["Use"]][[state]][comm, setdiff(c(industries, FD_cols), "F050")])
+      US_total_cons <- sum(US_Use[comm, setdiff(c(industries, FD_cols), "F050")])
       ratio[comm] <- state_total_cons/US_total_cons
     }
     model[["Use"]][[state]][commodities, "F051"] <- US_ITA*ratio
     model[["DomesticUse"]][[state]][commodities, "F051"] <- US_ITA*ratio
+    x <- as.data.frame(colSums(model[["Use"]][[state]][c(commodities, VA_rows), industries]))
+    q <- as.data.frame(rowSums(model[["Use"]][[state]][commodities, c(industries, FD_cols)]))
+    colnames(x) <- colnames(q) <- "Output"
+    model[["IndustryOutput"]][[state]] <- x
+    model[["CommodityOutput"]][[state]] <- q
   }
-  
   logging::loginfo("Model build complete.")
   return(model)
 }
