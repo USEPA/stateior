@@ -1,4 +1,4 @@
-# Generate and save state Use and Domestic Use tables
+# Generate and save state Use and Domestic Use tables and Industry and Commodity Output
 for (year in 2012:2017) {
   # Build model
   StateUseModel <- buildStateUseModel(year)

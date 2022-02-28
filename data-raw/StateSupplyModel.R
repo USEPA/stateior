@@ -1,4 +1,4 @@
-# Generate and save state Make tables and Industry and Commodity Output
+# Generate and save state Make tables
 for (year in 2012:2017) {
   # Build model
   StateSupplyModel <- buildStateSupplyModel(year)
