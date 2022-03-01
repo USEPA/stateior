@@ -70,7 +70,7 @@ jobs:
         run: |
           install.packages("rmarkdown")
           for (year in 2012:2017) {
-            rmarkdown::render("inst/doc/ValidateModel.Rmd", output_dir = "inst/doc/output", output_file = paste0("ValidateModel_", year, ".html"))
+            rmarkdown::render("inst/doc/ValidateModel.Rmd", output_dir = "inst/doc/output", output_file = paste0("ValidateModel_", year, ".md"))
           }
         shell: Rscript {0}
         
