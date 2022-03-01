@@ -3,7 +3,7 @@ title: "Validating `r year` State IO Model"
 date: "`r Sys.Date()`"
 output:
   md_document:
-    variant: markdown_github
+    variant: gfm
 editor_options: 
   chunk_output_type: console
 ---
