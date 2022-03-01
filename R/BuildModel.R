@@ -6,6 +6,7 @@
 #' @return A list of state supply model components: Make, commodity and industry output.
 #' @export
 buildStateSupplyModel <- function(year) {
+  startLogging()
   logging::loginfo("Loading RAS-balanced state-to-US value added (VA) ratios ...")
   StateUS_VA_Ratio <- loadStateIODataFile(paste0("StateUS_VA_Ratio_", year))
   states <- unique(StateUS_VA_Ratio$GeoName)
@@ -132,6 +133,7 @@ buildStateSupplyModel <- function(year) {
 #' @return A list of state use model components: Use table and Domestic Use table.
 #' @export
 buildStateUseModel <- function(year) {
+  startLogging()
   # Define industries, commodities and # Define final demand columns
   industries <- getVectorOfCodes("Summary", "Industry")
   commodities <- getVectorOfCodes("Summary", "Commodity")
@@ -253,6 +255,7 @@ buildStateUseModel <- function(year) {
 buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
                                    ICF_sensitivity_analysis = FALSE,
                                    adjust_by = 0, domestic = TRUE) {
+  startLogging()
   # 0 - Define commodities and desired columns
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   FD_cols <- getFinalDemandCodes(iolevel)
@@ -482,6 +485,7 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
 #' as well as commodity and industry outputs by state.
 #' @export
 assembleTwoRegionIO <- function(year, iolevel) {
+  startLogging()
   # Define industries, commodities, valueadded and finaldemand
   industries <- getVectorOfCodes(iolevel, "Industry")
   commodities <- getVectorOfCodes(iolevel, "Commodity")
@@ -599,6 +603,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
 #' @return A full two-region IO table for specified state and rest of US for a given year.
 #' @export
 buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
+  startLogging()
   # Define industries and commodities
   industries <- getVectorOfCodes(iolevel, "Industry")
   commodities <- getVectorOfCodes(iolevel, "Commodity")
