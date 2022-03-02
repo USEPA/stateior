@@ -513,7 +513,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
     colnames(TwoRegionUse) <- c(getBEASectorCodeLocation("Industry", state, iolevel),
                                 getBEASectorCodeLocation("FinalDemand", state, iolevel),
                                 getBEASectorCodeLocation("Industry", "RoUS", iolevel),
-                                getBEASectorCodeLocation("FinalDemand", state, iolevel))
+                                getBEASectorCodeLocation("FinalDemand", "RoUS", iolevel))
     colnames(TwoRegionDomesticUse) <- colnames(TwoRegionUse)
     TwoRegionIO[["Use"]][[state]] <- TwoRegionUse
     TwoRegionIO[["DomesticUse"]][[state]] <- TwoRegionDomesticUse
