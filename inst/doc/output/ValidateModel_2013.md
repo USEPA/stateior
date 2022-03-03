@@ -5,6 +5,8 @@ model.
 
 #### 0\. Load state and two-region IO data.
 
+State and two-region IO data successfully loaded.
+
 ### Check state IO tables
 
 #### 1\. Check if industry output from state Make and Use are almost equal (\<= 0.001).
@@ -21,6 +23,7 @@ There are no failures.
 
 Note: only exception being Overseas, which isn’t used for further
 calculations, and if the same cell in US Make table is also negative.
+
 There are no failures.
 
 #### 4\. Sum of each industry’s output across all states must almost equal(\<= 0.001) industry output in US Make Table.
@@ -166,20 +169,88 @@ There are 58 failures, and they are
 | 66 | 81        | colSums(US\_Summary\_Make) |
 | 72 | Used      | colSums(US\_Summary\_Make) |
 
-#### 6\. Sum of each commodity’s output across all states must almost equal (\<= 1.11^7, or $11.1 million by commodity) commodity output in US Use Table minus International Imports (commodity specific). Even if the threshold is met, track the difference for each commodity. Save result as a type of quality control check
+#### 6\. Sum of each commodity’s output across all states must almost equal (\<= 1E^7, or $10 million by commodity) commodity output in US Use Table minus International Imports (commodity specific).
 
-There are 8 failures, and they are
+Note: even if the threshold is met, track the difference for each
+commodity. Save result as a type of quality control check.
 
-|    | Commodity |                                   |
-| -- | :-------- | --------------------------------- |
-| 4  | 212       | rowSums(US\_Summary\_DomesticUse) |
-| 27 | 42        | rowSums(US\_Summary\_DomesticUse) |
-| 32 | 481       | rowSums(US\_Summary\_DomesticUse) |
-| 33 | 482       | rowSums(US\_Summary\_DomesticUse) |
-| 34 | 483       | rowSums(US\_Summary\_DomesticUse) |
-| 35 | 484       | rowSums(US\_Summary\_DomesticUse) |
-| 38 | 487OS     | rowSums(US\_Summary\_DomesticUse) |
-| 46 | 524       | rowSums(US\_Summary\_DomesticUse) |
+There are no failures.
+
+|        | q\_state\_sum - q\_US\_use |
+| ------ | -------------------------: |
+| 111CA  |                \-1.221e-04 |
+| 113FF  |                \-1.000e+06 |
+| 211    |                  2.000e+06 |
+| 212    |                \-1.530e-05 |
+| 213    |                  0.000e+00 |
+| 22     |                \-6.000e+06 |
+| 23     |                  0.000e+00 |
+| 321    |                \-2.000e+06 |
+| 327    |                  2.000e+06 |
+| 331    |                  3.050e-05 |
+| 332    |                \-1.000e+06 |
+| 333    |                  2.000e+06 |
+| 334    |                  5.000e+06 |
+| 335    |                \-2.000e+06 |
+| 3361MV |                \-1.000e+06 |
+| 3364OT |                  2.000e+06 |
+| 337    |                  1.000e+06 |
+| 339    |                \-1.000e+06 |
+| 311FT  |                  1.000e+06 |
+| 313TT  |                  7.600e-06 |
+| 315AL  |                  4.000e+06 |
+| 322    |                \-6.000e+06 |
+| 323    |                \-1.000e+06 |
+| 324    |                  3.000e+06 |
+| 325    |                  1.000e+06 |
+| 326    |                  0.000e+00 |
+| 42     |                  2.441e-04 |
+| 441    |                  6.100e-05 |
+| 445    |                \-3.050e-05 |
+| 452    |                  0.000e+00 |
+| 4A0    |                  2.441e-04 |
+| 481    |                \-2.000e+06 |
+| 482    |                  0.000e+00 |
+| 483    |                  7.600e-06 |
+| 484    |                \-6.100e-05 |
+| 485    |                  1.530e-05 |
+| 486    |                  7.600e-06 |
+| 487OS  |                  3.000e+06 |
+| 493    |                  0.000e+00 |
+| 511    |                  5.000e+06 |
+| 512    |                \-2.000e+06 |
+| 513    |                  5.000e+06 |
+| 514    |                \-3.000e+06 |
+| 521CI  |                  1.000e+06 |
+| 523    |                  6.000e+06 |
+| 524    |                \-1.000e+06 |
+| 525    |                  3.050e-05 |
+| HS     |                \-2.441e-04 |
+| ORE    |                  2.441e-04 |
+| 532RL  |                  1.221e-04 |
+| 5411   |                  2.000e+06 |
+| 5415   |                  6.100e-05 |
+| 5412OP |                \-3.000e+06 |
+| 55     |                \-6.100e-05 |
+| 561    |                \-2.000e+06 |
+| 562    |                  2.000e+06 |
+| 61     |                  6.100e-05 |
+| 621    |                  0.000e+00 |
+| 622    |                  0.000e+00 |
+| 623    |                  3.050e-05 |
+| 624    |                  0.000e+00 |
+| 711AS  |                \-1.000e+06 |
+| 713    |                \-6.100e-05 |
+| 721    |                  0.000e+00 |
+| 722    |                \-3.662e-04 |
+| 81     |                  2.000e+06 |
+| GFGD   |                \-1.221e-04 |
+| GFGN   |                  6.100e-05 |
+| GFE    |                  1.000e+06 |
+| GSLG   |                  0.000e+00 |
+| GSLE   |                  0.000e+00 |
+| Used   |                  1.000e+06 |
+| Other  |                  2.000e+06 |
 
 #### 7\. All cells that are zero in US Make table must remain zero in state Make tables. Find zero values in US Make table.
 
@@ -189,8 +260,11 @@ There are no failures.
 
 Note: failures associated with ‘F050 - Imports’ are acceptable. Because
 state imports are not directly derived from US imports, a gap in imports
-between state sum and national total is reasonable. \#\#\#\#\# 7.1 State
-Use tables There are 42 failures, and they are
+between state sum and national total is reasonable.
+
+##### 8.1 State Use tables
+
+There are 42 failures, and they are
 
 | Commodity | Industry/Final Demand |
 | :-------- | :-------------------- |
@@ -237,7 +311,7 @@ Use tables There are 42 failures, and they are
 | Used      | F050                  |
 | Other     | F050                  |
 
-##### 7.2 State Domestic Use tables
+##### 8.2 State Domestic Use tables
 
 There are no failures.
 
