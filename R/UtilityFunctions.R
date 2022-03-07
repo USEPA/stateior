@@ -1,3 +1,9 @@
+#' Start logging 
+startLogging <- function () {
+  #http://logging.r-forge.r-project.org/sample_session.php
+  logging::basicConfig()
+}
+
 #' Load data from useeior using flexible dataset name
 #' @param dataset A string specifying name of the data to load
 #' @return The data loaded from useeior
@@ -259,7 +265,7 @@ loadStateIODataFile <- function(filename, ver = NULL) {
     checkFileonDataCommons(f)
     downloadStateIODatafromDataCommons(filename, ver = ver)
   } else {
-    logging::loginfo(paste("Loading", f, "from local folder ..."))
+    logging::loginfo(paste("Loading", f, "from local folder..."))
   }
   df <- readRDS(file.path(rappdirs::user_data_dir(), "stateio", f))
   return(df)

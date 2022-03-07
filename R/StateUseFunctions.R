@@ -92,7 +92,7 @@ estimateStateIntermediateConsumption <- function(year) {
   US_Make <- getNationalMake("Summary", year)
   US_Use <- getNationalUse("Summary", year)
   
-  logging::loginfo("Estimating state intermediate consumption ...")
+  logging::loginfo("Estimating state intermediate consumption...")
   # For each state and industry, calculate state_US_IndustryOutput_ratio
   # Multiply US_Use_Intermediate by state_US_IndustryOutput_ratio 
   State_Use_Intermediate_ls <- list()
@@ -204,7 +204,7 @@ assembleStateSummaryGrossValueAdded <- function(year) {
   GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
   allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
                                           duplicated(GVAtoBEAmapping$LineCode, fromLast = TRUE), ]
-  logging::loginfo("Estimating state value added ...")
+  logging::loginfo("Estimating state value added...")
   StateGVA <- data.frame()
   for (sector in c("EmpCompensation", "Tax", "GOS")) {
     # Generate Value Added tables by BEA
@@ -253,7 +253,7 @@ assembleStateSummaryGrossValueAdded <- function(year) {
     StateGVA <- rbind(StateGVA, StateGVA_sector)
   }
   
-  logging::loginfo("Balancing state value added ...")
+  logging::loginfo("Balancing state value added...")
   # Balance StateGVA with (rowSums(Make) - colSums(Use))
   # Step 1. Balance VA-by-state table
   # Sum StateGVA to get VA-by-state table
@@ -290,7 +290,8 @@ assembleStateSummaryGrossValueAdded <- function(year) {
     x_use <- colSums(as.data.frame(GVA)) + colSums(State_Use_Intermediate_ls[[state]])
     rel_diff <- (x_use - x_make)/x_make
     if(max(abs(rel_diff), na.rm = TRUE)>1E-5&&state!="Overseas") {
-      stop(paste0(state, "'s Make and Use tables are not balanced."))
+      stop(paste0(state, "'s Make and Use tables are not balanced ",
+                  "in terms of industry output."))
     }
   }
   return (StateGVA_balanced)
