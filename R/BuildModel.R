@@ -7,7 +7,7 @@
 #' @export
 buildStateSupplyModel <- function(year) {
   startLogging()
-  logging::loginfo("Loading RAS-balanced state-to-US value added (VA) ratios...")
+  logging::loginfo("Loading RAS-balanced state-to-US value added (VA) ratios ...")
   StateUS_VA_Ratio <- loadStateIODataFile(paste0("StateUS_VA_Ratio_", year))
   states <- unique(StateUS_VA_Ratio$GeoName)
   
