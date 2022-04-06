@@ -47,6 +47,9 @@ State_Summary_CommodityOutput_ls <- loadStateIODataFile(paste0("State_Summary_Co
 # Load two-region tables
 TwoRegionTable_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_DomesticUsewithTrade_", year))
 cat("State and two-region IO data successfully loaded.")
+commodities <- getVectorOfCodes(iolevel, "Commodity")
+industries <- getVectorOfCodes(iolevel, "Industry")
+FD_cols <- getFinalDemandCodes(iolevel)
 ```
 
 ### Check state IO tables
@@ -77,6 +80,8 @@ failures <- c()
 for (state in states[states!="Overseas"]) {
   # Calculate Commodity Output (q) from Make and Use
   q_make <- colSums(State_Summary_Make_ls[[state]])
+  q_use <- rowSums(TwoRegionTable_ls[[state]][["SoI2SoI"]][, c(industries, FD_cols)]) +
+    rowSums(TwoRegionTable_ls[[state]][["RoUS2SoI"]][, c(industries, FD_cols)])
   q_use <- rowSums(State_Summary_Use_ls[[state]][rownames(US_Summary_Use), colnames(US_Summary_Use)])
   # Calculate relative differences in q_make and q_use
   rel_diff <- (q_use - q_make)/q_make
@@ -134,11 +139,12 @@ reportValidationResult(failures)
 #### 5. Sum of each industry's output across all states must almost equal(<= 0.001) industry output in US Make Table.
 ```{r check5}
 df0 <- as.data.frame(rowSums(US_Summary_Make))
+# df1 <- Reduce("+", lapply(State_Summary_Make_ls, function(x) rowSums(x)))
 df1 <- Reduce("+", State_Summary_IndustryOutput_ls)
 rownames(df1) <- gsub(".*\\.", "", rownames(df1))
 df1 <- df1[rownames(df0), ]
 # Compare aggregated state industry output against US industry output
-failures <- formatValidationResult(df1-df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
+failures <- formatValidationResult((df1-df0)/df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
 colnames(failures) <- c("Industry", "")
 reportValidationResult(failures)
 ```
@@ -286,7 +292,7 @@ for (state in states[states!="Overseas"]) {
 reportValidationResult(failures)
 ```
 
-#### 13. Check row sum of SoI2SoI <= state commodity supply. Row sum of RoUS2RoUS <= national commodity supply.
+#### 13. Check row sum of SoI2SoI <= state commodity supply. Row sum of RoUS2RoUS <= RoUS commodity supply.
 ```{r check13}
 failures <- data.frame()
 for (state in states[states!="Overseas"]) {
