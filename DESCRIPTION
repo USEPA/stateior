@@ -21,6 +21,7 @@ Imports:
     configr (>= 0.3.4),
     dplyr (>= 1.0.6),
     ggplot2 (>= 3.0),
+    glue (>= 1.6.2),
     jsonlite (>= 1.6),
     Hmisc (>= 4.6-0),
     logging (>= 0.10),
