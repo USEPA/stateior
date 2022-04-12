@@ -98,6 +98,19 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
       df[df$GeoName==state& df$LineCode==linecode, "AllocationFactor"] <- factor
     }
   }
+  # Check if allocation factors add up to 1 (±1E-10)
+  df_agg <- stats::aggregate(df$AllocationFactor,
+                             by = list(df$GeoName, df$LineCode),
+                             sum)
+  colnames(df_agg) <- c("GeoName", "LineCode", "Value")
+  check_condition <- abs(df_agg$Value - 1) > 1E-10
+  if (any(check_condition)) {
+    geoname <- df_agg[check_condition, "GeoName"]
+    linecode <- df_agg[check_condition, "LineCode"]
+    logging::logwarn(glue::glue("In {geoname}, allocation factors from {linecode}",
+                                "to BEA industries do not add up to 1."))
+    stop("Allocation factors do not add up to 1.")
+  }
   return(df)
 }
 
@@ -117,12 +130,30 @@ allocateStateTabletoBEASummary <- function(statetablename, year, allocationweigh
   StateTableBEA <- mapStateTabletoBEASummary(statetablename, year)
   # Generate allocation factor
   allocation_df <- calculateStatetoBEASummaryAllocationFactor(year, allocationweightsource)
+  total_before_allocation <- unique(StateTableBEA[StateTableBEA$LineCode %in% allocation_df$LineCode,
+                                                   c("GeoName", "LineCode", year_col)])
   # Merge StateTableBEA with allocation_df
   StateTableBEA_allocation <- merge(StateTableBEA, allocation_df,
                                     by = c("LineCode", "GeoName", BEA_col))
   # Modify value in StateTableBEA_allocation
   value <- StateTableBEA_allocation[, year_col]*StateTableBEA_allocation$AllocationFactor
   StateTableBEA_allocation[, year_col] <- value
+  # Check if allocated amount add up to total (±1E-3) before proceeding to next step
+  check_df <- stats::aggregate(StateTableBEA_allocation[, year_col],
+                               by = list(StateTableBEA_allocation$GeoName,
+                                         StateTableBEA_allocation$LineCode),
+                               sum)
+  colnames(check_df) <- c("GeoName", "LineCode", "Value")
+  check_df <- merge(check_df, total_before_allocation,
+                    by = c("GeoName", "LineCode"))
+  check_condition <- abs(check_df$Value - check_df[, year_col]) > 1E-3
+  if (any(check_condition)) {
+    geoname <- check_df[check_condition, "GeoName"]
+    linecode <- check_df[check_condition, "LineCode"]
+    logging::logwarn(glue::glue("In {geoname}, allocated amount from {linecode}",
+                                "to BEA industries do not add up to the total before allocation."))
+    stop("Allocated amount do not add up to the total before allocation.")
+  }
   # Append StateTableBEA_allocation to un-allocated StateTableBEA
   StateTableBEA <- rbind(StateTableBEA_allocation[, c("GeoName", BEA_col, year_col)],
                          StateTableBEA[!StateTableBEA$LineCode%in%StateTableBEA_allocation$LineCode,
