@@ -187,6 +187,16 @@ adjustGVAComponent <- function(year, return) {
   compareTable <- compareTable %>% 
     dplyr::mutate(dif = GVA - EmpCompensation - Tax - GOS, errorRate = abs(dif) / GVA) # recompute errorRate
   
+  # Check if GVA = EmpCompensation + Tax + GOS, with tolerance of $10 million
+  check_condition <- abs(compareTable$dif) > 1E7
+  if (any(check_condition)) {
+    geoname <- compareTable[check_condition, "GeoName"]
+    linecode <- compareTable[check_condition, "LineCode"]
+    logging::logwarn(glue::glue("In {geoname} for {linecode}",
+                                "GVA components do not add up to total GVA."))
+    stop("GVA components by line code do not add up to total GVA by line code.")
+  }
+  
   #Output
   switch_return <- switch(return, 'GVA'=1, 'EmpCompensation'=2, 'Tax'=3, 'GOS'=4)
   output <- compareTable %>% dplyr::select(1, 2, switch_return + 2)
@@ -224,7 +234,7 @@ assembleStateSummaryGrossValueAdded <- function(year) {
     # Modify row names
     sector_code <- ifelse(sector=="EmpCompensation", "V001",
                           ifelse(sector=="Tax", "V002",
-                                 ifelse(sector=="GOS", "V003")))
+                                 ifelse(sector=="GOS", "V003", NULL)))
     GVAComponent <- adjustGVAComponent(year, sector)
     GVAComponent <- reshape2::dcast(GVAComponent, GeoName ~ LineCode, value.var = as.character(year))
     rownames(GVAComponent) <- GVAComponent$GeoName
