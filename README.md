@@ -28,21 +28,21 @@ Details of the data are described [here](https://github.com/USEPA/stateior/blob/
 
 | Data                                | Function                                              | Parameters (example) |
 | ----------------------------------- | ----------------------------------------------------- | ---------------------------------------------------- |
-| Make                                | `stateior::getTwoRegionMakeTransactions`              | `state = "Geogia", year = 2017, iolevel = "Summary"` |
-| Use                                 | `stateior::getTwoRegionUseTransactions`               | `state = "Geogia", year = 2017, iolevel = "Summary"` |
-| Final Demand                        | `stateior::getTwoRegionFinalDemand`                   | `state = "Geogia", year = 2017, iolevel = "Summary"` |
-| Domestic Use                        | `stateior::getTwoRegionDomesticUseTransactions`       | `state = "Geogia", year = 2017, iolevel = "Summary"` |
-| Domestic Final Demand               | `stateior::getTwoRegionDomesticFinalDemand`           | `state = "Geogia", year = 2017, iolevel = "Summary"` |
-| International Trade Adjustment      | `stateior::getTwoRegionInternationalTradeAdjustment`  | `state = "Geogia", year = 2017, iolevel = "Summary"` |
-| Value Added                         | `stateior::getTwoRegionValueAdded`                    | `state = "Geogia", year = 2017, iolevel = "Summary"` |
-| Commodity Output                    | `stateior::getTwoRegionCommodityOutput`               | `state = "Geogia", year = 2017, iolevel = "Summary"` |
-| Industry Output                     | `stateior::getTwoRegionIndustryOutput`                | `state = "Geogia", year = 2017, iolevel = "Summary"` |
-| Domestic Use w/ Interregional Trade | `stateior::getTwoRegionDomesticUsewithTrade`          | `state = "Geogia", year = 2017, iolevel = "Summary"` |
+| Make                                | `stateior::getTwoRegionMakeTransactions`              | `state = "Georgia", year = 2017, iolevel = "Summary"` |
+| Use                                 | `stateior::getTwoRegionUseTransactions`               | `state = "Georgia", year = 2017, iolevel = "Summary"` |
+| Final Demand                        | `stateior::getTwoRegionFinalDemand`                   | `state = "Georgia", year = 2017, iolevel = "Summary"` |
+| Domestic Use                        | `stateior::getTwoRegionDomesticUseTransactions`       | `state = "Georgia", year = 2017, iolevel = "Summary"` |
+| Domestic Final Demand               | `stateior::getTwoRegionDomesticFinalDemand`           | `state = "Georgia", year = 2017, iolevel = "Summary"` |
+| International Trade Adjustment      | `stateior::getTwoRegionInternationalTradeAdjustment`  | `state = "Georgia", year = 2017, iolevel = "Summary"` |
+| Value Added                         | `stateior::getTwoRegionValueAdded`                    | `state = "Georgia", year = 2017, iolevel = "Summary"` |
+| Commodity Output                    | `stateior::getTwoRegionCommodityOutput`               | `state = "Georgia", year = 2017, iolevel = "Summary"` |
+| Industry Output                     | `stateior::getTwoRegionIndustryOutput`                | `state = "Georgia", year = 2017, iolevel = "Summary"` |
+| Domestic Use w/ Interregional Trade | `stateior::getTwoRegionDomesticUsewithTrade`          | `state = "Georgia", year = 2017, iolevel = "Summary"` |
 
 #### Example
 
 ```
-df <- stateior::getTwoRegionMakeTransactions(state = "Geogia", year = 2017, iolevel = "Summary")
+df <- stateior::getTwoRegionMakeTransactions(state = "Georgia", year = 2017, iolevel = "Summary")
 ```
 
 ## Disclaimer
