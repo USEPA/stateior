@@ -1,0 +1,27 @@
+Model: "StateIOv1.0.0-75" # 75 represents Summary level disaggregated model (73 + 2 = 75 commodities & 71 + 2 = 73 industries)
+BaseIOSchema: 2012
+BaseIOLevel: &BaseIOLevel "Summary"
+IOYear:
+  - 2012
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+GeoScale:
+  - "State"
+  - "TwoRegion" # SoI and RoUS
+IODataSource: "BEA"
+BasePriceType: "PRO"
+BasewithRedefinitions: FALSE
+ScrapIncluded: FALSE
+DisaggregationSpecs: TBD
+
+DataProduct:
+  - "Make"
+  - "Use"
+  - "DomesticUse"
+  - "DomesticUsewithTrade"
+  - "InternationalTradeAdjustment"
+  - "CommodityOutput"
+  - "IndustryOutput"
