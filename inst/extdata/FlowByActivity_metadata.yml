@@ -1,5 +1,3 @@
-BLS_QCEW:
-  Extension: "v0.0.2_5d6373b.parquet"
 USDA_ERS_FIWS:
   Extension: "v0.0.2_5d6373b.parquet"
 NOAA_FisheryLandings:
