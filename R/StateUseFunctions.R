@@ -111,25 +111,25 @@ estimateStateIntermediateConsumption <- function(year) {
 #' @importFrom magrittr %>%
 #' @return A data frame contains adjusted EmpComp, Tax, GOS, and GVA
 adjustGVAComponent <- function(year, return) {
-  #load data
+  # Load data
   gva <- getStateGVA(year)
   comp <- getStateEmpCompensation(year)
   tax <- getStateTax(year)
   gos <- getStateGOS(year)
   
-  #join into one table
+  # Join into one table
   compareTable <- gva %>% 
     dplyr::left_join(., comp, by=c('GeoName','LineCode')) %>% 
     dplyr::left_join(., tax, by=c('GeoName','LineCode')) %>%
     dplyr::left_join(., gos, by=c('GeoName','LineCode')) 
   colnames(compareTable)[3:6] <- c('GVA','EmpCompensation','Tax','GOS')
   
-  #adjust NA in Tax (simple, add/subtract)
+  # Adjust NA in Tax (simple, add/subtract)
   compareTable[is.na(compareTable$Tax),]$Tax <- compareTable[is.na(compareTable$Tax),]$GVA - 
     compareTable[is.na(compareTable$Tax),]$EmpCompensation - 
     compareTable[is.na(compareTable$Tax),]$GOS
   
-  #adjust NA in gva (simple, add/subtract)
+  # Adjust NA in gva (simple, add/subtract)
   compareTable[is.na(compareTable$GVA),]$GVA <- compareTable[is.na(compareTable$GVA),]$Tax +
     compareTable[is.na(compareTable$GVA),]$EmpCompensation + 
     compareTable[is.na(compareTable$GVA),]$GOS
@@ -156,14 +156,17 @@ adjustGVAComponent <- function(year, return) {
     }
   }
   
-  #adjust NA in EmpComp and GOS 
+  # Adjust NA in EmpComp and GOS 
   ## Step 1: calculate EmpComp-GVA ratio and GOS-GVA ratio for each LineCode
-  ratioTable <- compareTable %>% stats::na.omit() %>% 
-    dplyr::mutate(compRatio = EmpCompensation / GVA, gosRatio = GOS / GVA) %>% stats::na.omit() %>%
+  ratioTable <- compareTable %>%
+    stats::na.omit() %>% 
+    dplyr::mutate(compRatio = EmpCompensation / GVA, gosRatio = GOS / GVA) %>%
+    stats::na.omit() %>%
     dplyr::group_by(LineCode) %>%
     dplyr::summarise(avgCompRatio = mean(compRatio), avgGOSRatio = mean(gosRatio))
-  ## Step 2: assign new EmpComp and GOS value to NAs
-  position <- which(is.na(compareTable$EmpCompensation) == TRUE)
+  ## Step 2: impute EmpComp and GOS values
+  position <- union(which(is.na(compareTable$EmpCompensation) == TRUE),
+                    which(is.na(compareTable$GOS) == TRUE))
   for (i in position) {
     if (compareTable$GVA[i] != 0) {
       # EmpComp
@@ -173,8 +176,13 @@ adjustGVAComponent <- function(year, return) {
       ratio_gos <- ratioTable[ratioTable$LineCode == compareTable$LineCode[i],]$avgGOSRatio
       compareTable$GOS[i] <- compareTable$GVA[i] * ratio_gos
     } else if (compareTable$GVA[i] == 0) {
-      compareTable$EmpCompensation[i] <- 0
-      compareTable$GOS[i] <- 0
+      if (compareTable$Tax[i] == 0) {
+        compareTable$EmpCompensation[i] <- 0
+        compareTable$GOS[i] <- 0
+      } else {
+        compareTable$EmpCompensation[i] <- 0
+        compareTable$GOS[i] <- 0 - compareTable$Tax[i]
+      }
     }
   }
   ## Step 3: check row sum and apply adjustment factor to estiamted rows 
@@ -225,8 +233,6 @@ assembleStateSummaryGrossValueAdded <- function(year) {
     rownames(df) <- df$GeoName
     # Drop GeoName column
     df$GeoName <- NULL
-    # Replace NA with 0
-    df[is.na(df)] <- 0
     # Calculate Value Added for Overseas
     df["Overseas", ] <- df[rownames(df)=="United States *", ] - colSums(df[rownames(df)!="United States *", ])
     # Drop US values
