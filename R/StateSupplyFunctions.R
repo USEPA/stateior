@@ -71,9 +71,11 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
       allocation_factors[allocation_factors$LineCode==linecode, "factor"] <- weight_vector/sum(weight_vector)
     }
     # Load BEA state Emp
-    BEAStateEmp <- loadStateIODataFile("State_Employment_2009_2018")[, c("GeoName", "LineCode", year_col)]
+    BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year))
     # Map BEA state Emp (from LineCode) to BEA Summary
-    BEAStateEmp <- merge(BEAStateEmp[BEAStateEmp$GeoName %in% c(state.name, "District of Columbia"), ],
+    BEAStateEmp <- merge(BEAStateEmp[BEAStateEmp$GeoName %in%
+                                       c(state.name, "District of Columbia"),
+                                     c("GeoName", "LineCode", year_col)],
                          allocation_factors[, c(BEA_col, "LineCode", "factor")],
                          by = "LineCode")
     # Adjust BEA state Emp value based on allocation factor
@@ -296,11 +298,10 @@ getStateCommodityOutputRatioEstimates <- function(year) {
 #' @return A data frame contains State Emp by BEA Summary.
 getStateEmploymentbyBEASummary <- function(year) {
   # BEA State Emp
-  BEAStateEmp <- loadStateIODataFile("State_Employment_2009_2018")[, c("GeoName",
-                                                                       "LineCode",
-                                                                       as.character(year))]
+  BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year))
   EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
-  BEAStateEmp <- merge(BEAStateEmp, EmptoBEAmapping, by = "LineCode")
+  BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
+                       EmptoBEAmapping, by = "LineCode")
   # Aggregate StateEmployment by BEA
   BEAStateEmp <- stats::aggregate(BEAStateEmp[, as.character(year)],
                                   by = list(BEAStateEmp$BEA_2012_Summary_Code,
