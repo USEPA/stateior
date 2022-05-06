@@ -166,6 +166,17 @@ allocateStateTabletoBEASummary <- function(statetablename, year, allocationweigh
 }
 
 #' Calculate state-US GVA (value added) ratios at BEA Summary level.
+#' There are two prerequisite steps embedded in thus function.
+#' Prerequisite #1: state_GVA is calculated from the SAGDP state GVA data,
+#' via getStateGVA(year), which is originally by LineCode then mapped to
+#' BEA industries using mapStateTabletoBEASummary("GVA", year).
+#' Prerequisite #2: where GVA must be allocated from one LineCode to multiple
+#' BEA industries, including sectors of retail, real estate, fed gov non-defense,
+#' and state & local gov, allocation factors are calculated using
+#' calculateStatetoBEASummaryAllocationFactor(year, "Employment")).
+#' When using state employment (from BEA) as source for allocation,
+#' introduce national GVA to disaggregate state employment
+#' in real estate and gov industries from LineCode to BEA Summary.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains ratios of state/US GVA (value added)
 #' for all states at a specific year at BEA Summary level.
@@ -453,95 +464,4 @@ getFAFCommodityOutput <- function(year) {
   # Drop rows where Ratio==0
   FAF <- FAF[FAF$Ratio>0, ]
   return(FAF)
-}
-
-#' Finalize state-US value added ratios using RAS balancing method
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains RAS-balanced state-US value added ratios
-finalizeStateUSValueAddedRatio <- function(year) {
-  #' 0 - Define BEA_col and year_col
-  BEA_col <- "BEA_2012_Summary_Code"
-  year_col <- as.character(year)
-  
-  #' 1 - Load US Summary Make table for given year
-  #' Generate US Summary Industry Output from the Make
-  US_Summary_Make <- getNationalMake("Summary", year)
-  US_Summary_IndustryOutput <- rowSums(US_Summary_Make)
-  
-  #' 2 - Calculate state_US_VA_ratio
-  #' For each state and each industry, divide state_VA by US_VA to get state_US_VA_ratio.
-  #' For each state, estimate industry output based on US industry output and
-  #' state_US_VA_ratio.
-  
-  #' There are several prerequisite steps for deriving state_US_VA_ratio.
-  #' They all have been embedded in the calculateStateUSValueAddedRatio function.
-  
-  #' Prerequisite #1: state_VA is calculated from the SAGDP state GVA data,
-  #' via getStateGVA(year), which is originally by LineCode then mapped to
-  #' BEA industries using mapStateTabletoBEASummary("GVA", year).
-  
-  #' Prerequisite #2: where VA must be allocated from one LineCode to multiple
-  #' BEA industries, including sectors of retail, real estate, fed gov non-defense,
-  #' and state & local gov, allocation factors are calculated using
-  #' calculateStatetoBEASummaryAllocationFactor(year, "Employment")).
-  #' When using state employment (from BEA) as source for allocation,
-  #' introduce national GVA to disaggregate state employment
-  #' in real estate and gov industries from LineCode to BEA Summary.
-  
-  # Calculate state_US_VA_ratio
-  state_US_VA_ratio <- calculateStateUSValueAddedRatio(year)
-  # Generate list of states
-  states <- unique(state_US_VA_ratio$GeoName)
-  State_Summary_IndustryOutput_ls <- list()
-  for (state in states) {
-    # Subset the state_US_VA_ratio for specified state
-    VA_ratio <- state_US_VA_ratio[state_US_VA_ratio$GeoName == state, ]
-    # Replace NA with zero
-    VA_ratio[is.na(VA_ratio$Ratio), "Ratio"] <- 0
-    # Re-order state_US_VA_ratio
-    rownames(VA_ratio) <- VA_ratio[, BEA_col]
-    VA_ratio <- VA_ratio[rownames(US_Summary_Make), ]
-    # Calculate State_Summary_IndustryOutput
-    State_Summary_IndustryOutput_ls[[state]] <- US_Summary_IndustryOutput*VA_ratio$Ratio
-  }
-  
-  #' 3 - Apply RAS balancing to adjust VA_ratio of the disaggregated sectors.
-  #' Instead of directly adjusting the VA_ratio, RAS is actually applied to
-  #' adjust the state industry output created in the previous step.
-  #' The idea behind this is, VA is used as a proxy for industry output to derive
-  #' state/US ratios, now a draft state industry output is created, it should be
-  #' used to replace VA for deriving the ratios.
-  
-  # Load State GVA to BEA Summary mapping table
-  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
-  # Determine BEA line codes and sectors where ratios need adjustment
-  allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
-                                          duplicated(GVAtoBEAmapping$LineCode,
-                                                     fromLast = TRUE), ]
-  # Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors
-  for (linecode in unique(allocation_sectors$LineCode)) {
-    # Determine BEA sectors that need allocation
-    BEA_sectors <- allocation_sectors[allocation_sectors$LineCode == linecode, BEA_col]
-    t_r <- as.data.frame(US_Summary_IndustryOutput)[BEA_sectors, ]
-    # Generate industry output by LineCode by State, a vector/df of 1x52,
-    # Calculated by state_US_VA_ratio_LineCode * sum(US industry output Linecode sectors)
-    StateIndustryOutputbyLineCode <- calculateStateIndustryOutputbyLineCode(year)
-    t_c <- StateIndustryOutputbyLineCode[StateIndustryOutputbyLineCode$LineCode == linecode,
-                                         year_col]
-    # Generate another vector of US industry output for the LineCode by BEA Summary
-    # Create m0
-    EstimatedStateIndustryOutput <- do.call(cbind.data.frame, State_Summary_IndustryOutput_ls)
-    colnames(EstimatedStateIndustryOutput) <- names(State_Summary_IndustryOutput_ls)
-    m0 <- as.matrix(EstimatedStateIndustryOutput[BEA_sectors, ])
-    # Apply RAS
-    m <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1, max_itr = 1E6)
-    # Re-calculate state_US_VA_ratio for the disaggregated sectors
-    state_US_VA_ratio_linecode <- m/rowSums(m)
-    # Replace the ratio values in state_US_VA_ratio with the re-calculated ratio
-    for (sector in rownames(state_US_VA_ratio_linecode)) {
-      ratio <- state_US_VA_ratio_linecode[sector, ]
-      state_US_VA_ratio[state_US_VA_ratio[, BEA_col] == sector, "Ratio"] <- ratio
-    }
-  }
-  return(state_US_VA_ratio)
 }
