@@ -212,105 +212,40 @@ adjustGVAComponent <- function(year, return) {
   return(output)
 }
 
-#' Assemble Summary-level gross value added sectors (V001, V002, V003) for all states at a specific year.
+#' Assemble Summary-level gross value added sectors (V001, V002, V003)
+#' for all states at a specific year. For each value added sector, the same set of
+#' state/US GVA ratios is used to regionalize US VA to states.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains Summary-level gross value added (V001, V002, V003) for all states at a specific year.
+#' @return A data frame contains Summary-level gross value added (V001, V002, V003)
+#' for all states at a specific year.
 assembleStateSummaryGrossValueAdded <- function(year) {
+  # Prepare US_Use, industries, and VA_rows
   US_Use <- loadDatafromUSEEIOR(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
   industries <- getVectorOfCodes("Summary", "Industry")
-  # Determine BEA line codes and sectors where ratios need adjustment
-  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
-  allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
-                                          duplicated(GVAtoBEAmapping$LineCode, fromLast = TRUE), ]
+  VA_rows <- getVectorOfCodes("Summary", "ValueAdded")
+  
+  # Calculate state/US VA ratio
   logging::loginfo("Estimating state value added...")
+  state_US_VA_ratio <- calculateStateUSValueAddedRatio(year)
+  va_ratio <- reshape2::dcast(state_US_VA_ratio, GeoName ~ BEA_2012_Summary_Code,
+                              value.var = "Ratio")
+  rownames(va_ratio) <- va_ratio$GeoName
+  va_ratio$GeoName <- NULL
+  va_ratio <- va_ratio[, industries]
+  
+  # Estimate state value added components using the same state/US total GVA ratio
   StateGVA <- data.frame()
   for (sector in c("EmpCompensation", "Tax", "GOS")) {
-    # Generate Value Added tables by BEA
-    df <- allocateStateTabletoBEASummary(sector, year, allocationweightsource = "Employment")
-    # Convert table from long to wide
-    df <- reshape2::dcast(df, GeoName ~ BEA_2012_Summary_Code, value.var = as.character(year))
-    # Assign row names
-    rownames(df) <- df$GeoName
-    # Drop GeoName column
-    df$GeoName <- NULL
-    # Calculate Value Added for Overseas
-    df["Overseas", ] <- df[rownames(df)=="United States *", ] - colSums(df[rownames(df)!="United States *", ])
-    # Drop US values
-    df <- df[rownames(df)!="United States *", industries]
     # Modify row names
-    sector_code <- ifelse(sector=="EmpCompensation", "V001",
-                          ifelse(sector=="Tax", "V002",
-                                 ifelse(sector=="GOS", "V003", NULL)))
-    GVAComponent <- adjustGVAComponent(year, sector)
-    GVAComponent <- reshape2::dcast(GVAComponent, GeoName ~ LineCode, value.var = as.character(year))
-    rownames(GVAComponent) <- GVAComponent$GeoName
-    GVAComponent$GeoName <- NULL
-    GVAComponent["Overseas", ] <- GVAComponent[rownames(GVAComponent)=="United States *", ] -
-      colSums(GVAComponent[rownames(GVAComponent)!="United States *", ])
-    # Apply RAS balancing method to adjust VA_ratio of the disaggregated sectors
-    for (linecode in unique(allocation_sectors$LineCode)) {
-      # Determine BEA sectors that need allocation
-      BEA_sectors <- allocation_sectors[allocation_sectors$LineCode==linecode, "BEA_2012_Summary_Code"]
-      # Create m0, t_r and t_c
-      m0 <- as.matrix(df[, BEA_sectors])
-      t_r <- GVAComponent[rownames(m0), linecode]
-      t_c <- as.numeric(US_Use[sector_code, BEA_sectors])
-      # Apply RAS
-      m <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1, max_itr = 1E6)
-      # Replace values in df with m
-      df[rownames(m), colnames(m)] <- m
-    }
-    # Create df_ratio based on df, replace NaNs caused by colSums(df)==0 with 1/nrow(df)
-    df_ratio <- sweep(df, 2, colSums(df), FUN = "/")
-    df_ratio[is.na(df_ratio)] <- 1/nrow(df)
+    code <- ifelse(sector=="EmpCompensation", "V001",
+                   ifelse(sector=="Tax", "V002",
+                          ifelse(sector=="GOS", "V003", NULL)))
     # Allocate US value added to states by values in df
-    StateGVA_sector <- sweep(df_ratio, 2, as.numeric(US_Use[sector_code, industries]), FUN = "*")
-    rownames(StateGVA_sector) <- paste(rownames(StateGVA_sector), sector_code, sep = ".")
+    StateGVA_sector <- sweep(va_ratio, 2, as.numeric(US_Use[code, industries]), FUN = "*")
+    rownames(StateGVA_sector) <- paste(rownames(StateGVA_sector), code, sep = ".")
     StateGVA <- rbind(StateGVA, StateGVA_sector)
   }
-  
-  logging::loginfo("Balancing state value added...")
-  # Balance StateGVA with (rowSums(Make) - colSums(Use))
-  # Step 1. Balance VA-by-state table
-  # Sum StateGVA to get VA-by-state table
-  StateGVA_sum <- as.data.frame(rowSums(StateGVA))
-  colnames(StateGVA_sum) <- "Value"
-  StateGVA_sum$State <- sub("\\..*", "", rownames(StateGVA_sum))
-  StateGVA_sum$Sector <- sub(".*\\.", "", rownames(StateGVA_sum))
-  StateGVA_sum_table <- reshape2::dcast(StateGVA_sum, Sector ~ State, value.var = "Value")
-  rownames(StateGVA_sum_table) <- StateGVA_sum_table$Sector
-  StateGVA_sum_table$Sector <- NULL
-  # Prepare m0, t_r and t_c
-  StateGVA_sum_m0 <- as.matrix(StateGVA_sum_table)
-  t_r <- as.numeric(rowSums(US_Use[c("V001", "V002", "V003"), industries]))
-  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
-  State_Use_Intermediate_ls <- estimateStateIntermediateConsumption(year)
-  t_c <- as.numeric(unlist(lapply(names(StateMake_ls),
-                                  function(x) sum(StateMake_ls[[x]]))) -
-                      unlist(lapply(names(State_Use_Intermediate_ls),
-                                    function(x) sum(State_Use_Intermediate_ls[[x]]))))
-  # Apply RAS to get m
-  StateGVA_sum_m <- applyRAS(StateGVA_sum_m0, t_r, t_c, relative_diff = NULL,
-                             absolute_diff = 1, max_itr = 1E6)
-  # Step 2. Balance each state's VA-by-Industry table
-  StateGVA_balanced <- data.frame()
-  for (state in names(StateMake_ls)) {
-    m0 <- as.matrix(StateGVA[gsub("\\..*", "", rownames(StateGVA))==state, ])
-    t_r <- StateGVA_sum_m[, state]
-    t_c <- rowSums(StateMake_ls[[state]]) - colSums(State_Use_Intermediate_ls[[state]])
-    m <- applyRAS(m0, t_r, t_c, relative_diff = NULL, absolute_diff = 1, max_itr = 1E6)
-    StateGVA_balanced <- rbind(StateGVA_balanced, as.data.frame(m))
-    # Validation - interrupt if industry output (x) from Make != x from Use by 1E-5
-    GVA <- StateGVA_balanced[gsub("\\..*", "", rownames(StateGVA_balanced))==state, ]
-    x_make <- rowSums(StateMake_ls[[state]])
-    x_use <- colSums(as.data.frame(GVA)) + colSums(State_Use_Intermediate_ls[[state]])
-    rel_diff <- (x_use - x_make)/x_make
-    if(max(abs(rel_diff), na.rm = TRUE)>1E-5&&state!="Overseas") {
-      stop(paste0(state, "'s Make and Use tables are not balanced ",
-                  "in terms of industry output."))
-    }
-  }
-  return (StateGVA_balanced)
+  return(StateGVA)
 }
 
 #' Calculate state total PCE (personal consumption expenditures) at BEA Summary level.
