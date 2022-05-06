@@ -1,13 +1,14 @@
-#' Get BEA state data from 2007-2017.
+#' Get BEA state GDP data (including GVA, Employment Compensation, Tax, and GOS)
+#' from 2010 to the latest year available.
 #' @param dataname A text indicating what state data to get.
 #' Can be GVA, employee compensation, taxes, and gross operating surplus.
-#' @return A data frame of BEA state data from 2007-2017.
-getBEAStateData <- function (dataname) {
+#' @return A data frame of BEA state data from 2010 to the latest year available.
+getBEAStateGDPData <- function(dataname) {
   # Create the placeholder file
   StateGVAzip <- "inst/extdata/SAGDP.zip"
   dir <- "inst/extdata/SAGDP"
   # Download all BEA IO tables into the placeholder file
-  if(!file.exists(StateGVAzip)) {
+  if (!file.exists(StateGVAzip)) {
     utils::download.file("https://apps.bea.gov/regional/zip/SAGDP.zip",
                          StateGVAzip, mode = "wb")
     # Get the name of all files in the zip archive
@@ -17,59 +18,83 @@ getBEAStateData <- function (dataname) {
     unzip(StateGVAzip, files = fname, exdir = dir, overwrite = TRUE)
   }
   # Determine data filename
-  if (dataname=="GVA") {
-    FileName <- list.files(dir, pattern = "SAGDP2N__ALL_AREAS")
-  } else if (dataname=="Tax") {
-    FileName <- list.files(dir, pattern = "SAGDP3N__ALL_AREAS")
-  } else if (dataname=="Compensation") {
-    FileName <- list.files(dir, pattern = "SAGDP4N__ALL_AREAS")
-  } else if (dataname=="GOS") {
-    FileName <- list.files(dir, pattern = "SAGDP7N__ALL_AREAS")
+  if (dataname == "GVA") {
+    FileName <- list.files(dir, pattern = "SAGDP2N__ALL_AREAS.*\\.csv")
+  } else if (dataname == "Tax") {
+    FileName <- list.files(dir, pattern = "SAGDP3N__ALL_AREAS.*\\.csv")
+  } else if (dataname == "Compensation") {
+    FileName <- list.files(dir, pattern = "SAGDP4N__ALL_AREAS.*\\.csv")
+  } else if (dataname == "GOS") {
+    FileName <- list.files(dir, pattern = "SAGDP7N__ALL_AREAS.*\\.csv")
   }
-  year_cols <- as.character(2007:2017)
+  FullFileName <- file.path(dir, FileName)
+  # Get date_accessed and date_last_modified
+  date_accessed <- as.character(as.Date(file.mtime(StateGVAzip)))
+  date_last_modified <- as.character(as.Date(file.mtime(FullFileName)))
+  # Find latest data year
+  file_split <- unlist(stringr::str_split(FileName, pattern = "_"))
+  end_year <- sub(".csv", "", file_split[length(file_split)])
+  # Create year_cols
+  year_cols <- as.character(2010:end_year)
+  
   # Load state data
-  StateData <- utils::read.table(file.path(dir, FileName), sep = ",",
+  StateData <- utils::read.table(FullFileName, sep = ",",
                                  header = TRUE, stringsAsFactors = FALSE,
                                  check.names = FALSE, fill = TRUE)
   StateData <- StateData[!is.na(StateData$LineCode), ]
-  # Convert values to numeric
+  # Assign NaN to (L) Less than $50,000.
+  StateData[StateData == "(L)"] <- NaN
+  # Assign NA to (D) Not shown to avoid disclosure of confidential information;
+  # estimates are included in higher-level totals.
+  StateData[StateData == "(D)"] <- NA
+  # Replace (NA) with NA
+  StateData[StateData == "(NA)"] <- NA
+  # Convert all the other values to numeric
   StateData[, year_cols] <- sapply(StateData[, year_cols], as.numeric)
   # Convert values to current US $
-  if (unique(StateData$Unit)=="Millions of current dollars") {
+  if (unique(StateData$Unit) == "Millions of current dollars") {
     StateData[, year_cols] <- StateData[, year_cols]*1E6
-  } else if (unique(StateData$Unit)=="Thousands of dollars") {
+  } else if (unique(StateData$Unit) == "Thousands of dollars") {
     StateData[, year_cols] <- StateData[, year_cols]*1E3
   }
   # Keep state-level data
   geo_names <- c(state.name, "District of Columbia", "United States *")
-  StateData <- StateData[StateData$GeoName %in%geo_names,
-                         c("GeoName", "LineCode", "Description", year_cols)]
-  # Write data to .rds
-  data_name <- paste("State", dataname, "2007_2017",
-                     utils::packageDescription("stateior", fields = "Version"),
-                     sep = "_")
-  saveRDS(object = StateData,
-          file = paste0(file.path("data", data_name), ".rds"))
-  # Write metadata to JSON
-  useeior:::writeMetadatatoJSON(package = "stateior",
-                                name = data_name,
-                                year = "2007-2017",
-                                source = "US Bureau of Economic Analysis",
-                                url = "https://apps.bea.gov/regional/zip/SAGDP.zip")
+  # Save data
+  for (year in year_cols) {
+    df <- StateData[StateData$GeoName %in% geo_names,
+                    c("GeoName", "LineCode", "Description", year)]
+    # Write data to .rds
+    data_name <- paste("State", dataname, year,
+                       utils::packageDescription("stateior", fields = "Version"),
+                       sep = "_")
+    saveRDS(object = df,
+            file = paste0(file.path("data", data_name), ".rds"))
+    # Write metadata to JSON
+    useeior:::writeMetadatatoJSON(package = "stateior",
+                                  name = data_name,
+                                  year = year,
+                                  source = "US Bureau of Economic Analysis",
+                                  url = "https://apps.bea.gov/regional/zip/SAGDP.zip",
+                                  date_last_modified = date_last_modified,
+                                  date_accessed = date_accessed)
+  }
 }
-# Download, save and document 2007-2017 state economic data (from BEA)
+# Download, save and document BEA state economic data
+# from 2010 to the latest year available
 for (dataname in c("GVA", "Tax", "Compensation", "GOS")) {
-  getBEAStateData(dataname)
+  getBEAStateGDPData(dataname)
 }
 
-#' Get BEA state PCE (personal consumption expenditures) data from 2007-2018
-#' @return A data frame of BEA state PCE data from 2007-2018.
-getBEAStatePCE <- function () {
+#' Get BEA state PCE (personal consumption expenditures) data from 2010 to the
+#' latest year available.
+#' @return A data frame of BEA state PCE data from 2010 to the latest year
+#' available.
+getBEAStatePCE <- function() {
   # Create the placeholder file
   StatePCEzip <- "inst/extdata/SAPCE.zip"
   dir <- "inst/extdata/SAPCE"
   # Download all BEA IO tables into the placeholder file
-  if(!file.exists(StatePCEzip)) {
+  if (!file.exists(StatePCEzip)) {
     utils::download.file("https://apps.bea.gov/regional/zip/SAPCE.zip",
                          StatePCEzip, mode = "wb")
     # Get the name of all files in the zip archive
@@ -78,34 +103,50 @@ getBEAStatePCE <- function () {
     # Unzip the file to the designated directory
     unzip(StatePCEzip, files = fname, exdir = dir, overwrite = TRUE)
   }
+  # Define FileName and FullFileName
+  FileName <- list.files(dir, pattern = "SAPCE1__ALL_AREAS")
+  FullFileName <- file.path(dir, FileName)
+  # Get date_accessed and date_last_modified
+  date_accessed <- as.character(as.Date(file.mtime(StatePCEzip)))
+  date_last_modified <- as.character(as.Date(file.mtime(FullFileName)))
+  # Find latest data year
+  file_split <- unlist(stringr::str_split(FileName, pattern = "_"))
+  end_year <- sub(".csv", "", file_split[length(file_split)])
+  # Create year_cols
+  year_cols <- as.character(2010:end_year)
+  
   # Load state PCE data
-  StatePCE <- utils::read.table(file.path(dir, list.files(dir, pattern = "SAPCE1__ALL_AREAS")),
-                                sep = ",", header = TRUE, stringsAsFactors = FALSE,
+  StatePCE <- utils::read.table(FullFileName, sep = ",",
+                                header = TRUE, stringsAsFactors = FALSE,
                                 check.names = FALSE, fill = TRUE)
   StatePCE <- StatePCE[!is.na(StatePCE$Line), ]
   # Replace NA with zero
   StatePCE[is.na(StatePCE)] <- 0
   # Convert values to current US $
-  year_cols <- as.character(2007:2018)
   StatePCE[, year_cols] <- StatePCE[, year_cols]*1E6
   # Keep state-level data
-  StatePCE <- StatePCE[StatePCE$GeoName %in%
-                         c(state.name, "District of Columbia", "United States"),
-                       c("GeoName", "LineCode", "Description", year_cols)]
-  # Write data to .rds
-  data_name <- paste("State_PCE_2007_2018",
-                     utils::packageDescription("stateior", fields = "Version"),
-                     sep = "_")
-  saveRDS(object = StatePCE,
-          file = paste0(file.path("data", data_name), ".rds"))
-  # Write metadata to JSON
-  useeior:::writeMetadatatoJSON(package = "stateior",
-                                name = data_name,
-                                year = "2007-2018",
-                                source = "US Bureau of Economic Analysis",
-                                url = "https://apps.bea.gov/regional/zip/SAPCE.zip")
+  geo_names <- c(state.name, "District of Columbia", "United States *")
+  # Save data
+  for (year in year_cols) {
+    df <- StatePCE[StatePCE$GeoName %in% geo_names,
+                   c("GeoName", "LineCode", "Description", year_cols)]
+    # Write data to .rds
+    data_name <- paste("State_PCE", year,
+                       utils::packageDescription("stateior", fields = "Version"),
+                       sep = "_")
+    saveRDS(object = df,
+            file = paste0(file.path("data", data_name), ".rds"))
+    # Write metadata to JSON
+    useeior:::writeMetadatatoJSON(package = "stateior",
+                                  name = data_name,
+                                  year = year,
+                                  source = "US Bureau of Economic Analysis",
+                                  url = "https://apps.bea.gov/regional/zip/SAPCE.zip",
+                                  date_last_modified = date_last_modified,
+                                  date_accessed = date_accessed)
+  }
 }
-# Download, save and document 2007-2018 state PCE data (from BEA)
+# Download, save and document BEA state PCE from 2010 to the latest year available.
 getBEAStatePCE()
 
 #' Download BEA US Gov Expenditure data (NIPA table) from 2007-2019.
@@ -113,84 +154,121 @@ getBEAStatePCE()
 downloadBEAGovExpenditure <- function() {
   TableName <- "Section3All_xls.xlsx"
   dir <- "inst/extdata/StateLocalGovFinances"
-  if(!dir.exists(dir)) {
+  if (!dir.exists(dir)) {
     dir.create(dir)
   }
-  FileName <- file.path(dir, TableName)
+  FullFileName <- file.path(dir, TableName)
   url <- "https://apps.bea.gov/national/Release/XLS/Survey/Section3All_xls.xlsx"
   # Download NIPA table file
-  if(!file.exists(FileName)) {
-    utils::download.file(url, FileName, mode = "wb")
+  if (!file.exists(FullFileName)) {
+    utils::download.file(url, FullFileName, mode = "wb")
   }
-  return(url)
+  # Create output
+  ls <- list("url" = url,
+             "date_accessed" = as.character(as.Date(file.mtime(FullFileName))))
+  return(ls)
 }
 
-#' Get US Gov Investment data (Table 3.9.5 annual) from 2007-2019.
-#' @return A data frame of BEA US Gov Investment data from 2007-2019.
+#' Get BEA US Gov Investment data by state (Table 3.9.5 annual) from 2010 to the
+#' latest year available.
+#' @return A data frame of BEA US Gov Investment data from 2010 to the latest
+#' year available.
 getBEAGovInvestment <- function() {
   # Download US Gov Expenditure (NIPA table) from BEA
-  url <- downloadBEAGovExpenditure()
+  url <- downloadBEAGovExpenditure()[["url"]]
+  date_accessed <- downloadBEAGovExpenditure()[["date_accessed"]]
   # Load Gov Investment table
   TableName <- "Section3All_xls.xlsx"
-  FileName <- file.path("inst/extdata/StateLocalGovFinances", TableName)
-  GovInvestment <- as.data.frame(readxl::read_excel(FileName, sheet = "T30905-A",
-                                                    col_names = TRUE, skip = 7))
+  FullFileName <- file.path("inst/extdata/StateLocalGovFinances", TableName)
+  # Get date_last_modified
+  date_last_modified <- as.character(as.Date(file.mtime(FullFileName)))
+  
+  # Load data
+  GovInvestment <- as.data.frame(readxl::read_excel(FullFileName,
+                                                    sheet = "T30905-A",
+                                                    col_names = TRUE,
+                                                    skip = 7))
   # Assign column name to the description column
   colnames(GovInvestment)[2] <- "Description"
-  # Keep wanted columns
-  year_cols <- as.character(2007:2019)
-  GovInvestment <- GovInvestment[complete.cases(GovInvestment),
-                                 c("Line", "Description", year_cols)]
-  # Convert values from million $ to $
-  GovInvestment[, year_cols] <- GovInvestment[, year_cols]*1E6
-  # Write data to .rds
-  data_name <- paste("GovInvestment_2007_2019",
-                     utils::packageDescription("stateior", fields = "Version"),
-                     sep = "_")
-  saveRDS(object = GovInvestment,
-          file = paste0(file.path("data", data_name), ".rds"))
-  # Write metadata to JSON
-  useeior:::writeMetadatatoJSON(package = "stateior",
-                                name = data_name,
-                                year = "2007-2019",
-                                source = "US Bureau of Economic Analysis",
-                                url = url)
+  # Find latest data year
+  end_year <- colnames(GovInvestment)[ncol(GovInvestment)]
+  # Create year_cols
+  year_cols <- as.character(2010:end_year)
+  # Save data
+  for (year in year_cols) {
+    df <- GovInvestment[complete.cases(GovInvestment),
+                        c("Line", "Description", year)]
+    # Convert values from million $ to $
+    df[, year] <- df[, year]*1E6
+    # Write data to .rds
+    data_name <- paste("GovInvestment", year,
+                       utils::packageDescription("stateior", fields = "Version"),
+                       sep = "_")
+    saveRDS(object = df,
+            file = paste0(file.path("data", data_name), ".rds"))
+    # Write metadata to JSON
+    useeior:::writeMetadatatoJSON(package = "stateior",
+                                  name = data_name,
+                                  year = year,
+                                  source = "US Bureau of Economic Analysis",
+                                  url = url,
+                                  date_last_modified = date_last_modified,
+                                  date_accessed = date_accessed)
+  }
 }
-# Download, save and document 2007-2019 state government investment data (from BEA)
+# Download, save and document BEA US government investment by state data from
+# 2010 to the latest year available.
 getBEAGovInvestment()
 
-#' Get US Gov Consumption data (Table 3.10.5 annual) from 2007-2019.
-#' @return A data frame of BEA US Gov Consumption data from 2007-2019.
+#' Get BEA US Gov Consumption data by state (Table 3.10.5 annual) from 2010
+#' to the latest year available.
+#' @return A data frame of BEA US Gov Consumption by state data from 2010
+#' to the latest year available.
 getBEAGovConsumption <- function() {
   # Download US Gov Expenditure (NIPA table) from BEA
-  url <- downloadBEAGovExpenditure()
+  url <- downloadBEAGovExpenditure()[["url"]]
+  date_accessed <- downloadBEAGovExpenditure()[["date_accessed"]]
   # Load Gov Consumption table
   TableName <- "Section3All_xls.xlsx"
-  FileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
-  GovConsumption <- as.data.frame(readxl::read_excel(FileName, sheet = "T31005-A",
-                                                     col_names = TRUE, skip = 7))
+  FullFileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
+  # Get date_last_modified
+  date_last_modified <- as.character(as.Date(file.mtime(FullFileName)))
+  
+  # Load data
+  GovConsumption <- as.data.frame(readxl::read_excel(FullFileName,
+                                                     sheet = "T31005-A",
+                                                     col_names = TRUE,
+                                                     skip = 7))
   # Assign column name to the description column
   colnames(GovConsumption)[2] <- "Description"
-  # Keep wanted columns
-  year_cols <- as.character(2007:2019)
-  GovConsumption <- GovConsumption[complete.cases(GovConsumption),
-                                   c("Line", "Description", year_cols)]
-  # Convert values from million $ to $
-  GovConsumption[, year_cols] <- GovConsumption[, year_cols]*1E6
-  # Write data to .rds
-  data_name <- paste("GovConsumption_2007_2019",
-                     utils::packageDescription("stateior", fields = "Version"),
-                     sep = "_")
-  saveRDS(object = GovConsumption,
-          file = paste0(file.path("data", data_name), ".rds"))
-  # Write metadata to JSON
-  useeior:::writeMetadatatoJSON(package = "stateior",
-                                name = data_name,
-                                year = "2007-2019",
-                                source = "US Bureau of Economic Analysis",
-                                url = url)
+  # Find latest data year
+  end_year <- colnames(GovConsumption)[ncol(GovConsumption)]
+  # Create year_cols
+  year_cols <- as.character(2010:end_year)
+  # Save data
+  for (year in year_cols) {
+    df <- GovConsumption[complete.cases(GovConsumption),
+                         c("Line", "Description", year)]
+    # Convert values from million $ to $
+    GovConsumption[, year_cols] <- GovConsumption[, year]*1E6
+    # Write data to .rds
+    data_name <- paste("GovConsumption", year,
+                       utils::packageDescription("stateior", fields = "Version"),
+                       sep = "_")
+    saveRDS(object = df,
+            file = paste0(file.path("data", data_name), ".rds"))
+    # Write metadata to JSON
+    useeior:::writeMetadatatoJSON(package = "stateior",
+                                  name = data_name,
+                                  year = year,
+                                  source = "US Bureau of Economic Analysis",
+                                  url = url,
+                                  date_last_modified = date_last_modified,
+                                  date_accessed = date_accessed)
+  }
 }
-# Download, save and document 2007-2019 state government consumption data (from BEA)
+# Download, save and document BEA US government consumption by state data from
+# 2010 to the latest year available.
 getBEAGovConsumption()
 
 
