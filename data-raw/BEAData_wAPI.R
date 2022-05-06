@@ -45,8 +45,6 @@ getBEAStateEmployment <- function() {
     DateLastModified_linecode <- stringr::str_match(toString(notes),
                                                     "Last updated: (.*?)--")[2]
     DateLastModified <- rbind(DateLastModified, DateLastModified_linecode)
-    print(linecode)
-    print(DateLastModified_linecode)
   }
   
   # Save data
@@ -68,7 +66,7 @@ getBEAStateEmployment <- function() {
                                   source = "US Bureau of Economic Analysis",
                                   url = "https://apps.bea.gov/api",
                                   date_last_modified = unique(DateLastModified[, 1]),
-                                  date_accessed = class(as.character(Sys.Date())))
+                                  date_accessed = as.character(Sys.Date()))
   }
 }
 # Download, save and document BEA state employment data from the earliest to the
