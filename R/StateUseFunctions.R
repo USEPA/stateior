@@ -112,16 +112,18 @@ estimateStateIntermediateConsumption <- function(year) {
 #' @importFrom magrittr %>%
 #' @return A data frame contains adjusted EmpComp, Tax, GOS, and GVA.
 adjustGVAComponent <- function(year, return) {
-  # Load data
+  # 0. Load data
   gva <- getStateGVA(year)
   comp <- getStateEmpCompensation(year)
   tax <- getStateTax(year)
   gos <- getStateGOS(year)
   
-  # Join into one table
-  # Note #1: NA represents (L), meaning Less than $50,000.
-  # Note #2: NaN represents (D), meaning Not shown to avoid disclosure of
+  # 1. Join into one table
+  # Note #1: NaN represents (L), meaning Less than $50,000.
+  # Note #2: NA represents (D), meaning Not shown to avoid disclosure of
   # confidential information; estimates are included in higher-level totals.
+  # Normally, there should not be (D), i.e. NA, in GVA for states or US, so the
+  # nest step will focus on impute NaNs in GVA.
   compareTable <- gva %>% 
     dplyr::left_join(., comp, by = c("GeoName", "LineCode")) %>% 
     dplyr::left_join(., tax, by = c("GeoName", "LineCode")) %>%
@@ -129,46 +131,50 @@ adjustGVAComponent <- function(year, return) {
   colnames(compareTable)[3:6] <- c("GVA", "EmpCompensation", "Tax", "GOS")
   detail_gva_cols <- c("EmpCompensation", "Tax", "GOS")
   
-  # Adjust NA in gva
-  # Because NA represents (L), meaning Less than $50,000, NA in GVA is assigned
+  # 2. Adjust NaN in GVA
+  # Because NaN represents (L), meaning Less than $50,000, NaN in GVA is assigned
   # $25,000 by default, unless the sum of EmpCompensation, Tax, and Tax is greater
-  # than $25,000 while less than $50,000
-  for (row in rownames(compareTable[is.na(compareTable$GVA), ])) {
-    if (any(sapply(compareTable[row, detail_gva_cols], is.nan))) {
-      # If there is NaN (nondislosed value) in detail GVA columns, impute GVA with
-      # the following assumption:
-      # 1. If sum of non-NA detail GVA values < $50,000, the upper limit of (L)),
-      # GVA = the larger number between the sum and $25,000 (mean of 0 and $50,000).
-      # 2. If the sum >= $50,000, GVA = the larger number between $49,999 and $25,000.
-      gva_sum <- sum(compareTable[row, detail_gva_cols],
-                     na.rm = TRUE)
-      if (gva_sum < 50000) {
-        gva_possible_values <- c(25000, gva_sum)
+  # than $25,000 while less than $50,000.
+  # To find all 
+  if (any(is.nan(compareTable$GVA))) {
+    for (row in rownames(compareTable[is.nan(compareTable$GVA), ])) {
+      if (any(sapply(compareTable[row, detail_gva_cols], is.na))) {
+        # If there is NaN (nondislosed value) in detail GVA columns, impute GVA with
+        # the following assumption:
+        # 1. If sum of non-NA detail GVA values < $50,000, the upper limit of (L)),
+        # GVA = the larger number between the sum and $25,000 (mean of 0 and $50,000).
+        # 2. If the sum >= $50,000, GVA = the larger number between $49,999 and $25,000.
+        gva_sum <- sum(compareTable[row, detail_gva_cols],
+                       na.rm = TRUE)
+        if (gva_sum < 50000) {
+          gva_possible_values <- c(25000, gva_sum)
+        } else {
+          gva_possible_values <- 49999
+        }
+        compareTable[row, "GVA"] <- max(gva_possible_values)
       } else {
-        gva_possible_values <- 49999
+        # If there is NOT NaN (nondislosed value) in detail GVA columns, impute GVA
+        # by summing GVA components
+        compareTable[row, "GVA"] <- sum(compareTable[row, detail_gva_cols])
       }
-      compareTable[row, "GVA"] <- max(gva_possible_values)
-    } else {
-      # If there is NOT NaN (nondislosed value) in detail GVA columns, impute GVA
-      # by summing GVA components
-      compareTable[row, "GVA"] <- sum(compareTable[row, detail_gva_cols])
     }
   }
   
-  # Adjust NA in Tax (simple, add/subtract)
+  # 3. Adjust NA (not disclosed value) in GVA components
+  # 3.1. Adjust NA in Tax (simple, add/subtract)
   compareTable[is.na(compareTable$Tax), "Tax"] <- compareTable[is.na(compareTable$Tax), "GVA"] - 
     compareTable[is.na(compareTable$Tax), "EmpCompensation"] - 
     compareTable[is.na(compareTable$Tax), "GOS"]
   
-  # Adjust NA in EmpComp and GOS 
-  ## Step 1: calculate EmpComp-GVA ratio and GOS-GVA ratio for each LineCode
+  # 3.2. Adjust NA (not disclosed value) in EmpComp and GOS 
+  # 3.2.1. Calculate EmpComp-GVA ratio and GOS-GVA ratio for each LineCode
   ratioTable <- compareTable %>%
     stats::na.omit() %>% 
     dplyr::mutate(compRatio = EmpCompensation / GVA, gosRatio = GOS / GVA) %>%
     stats::na.omit() %>%
     dplyr::group_by(LineCode) %>%
     dplyr::summarise(avgCompRatio = mean(compRatio), avgGOSRatio = mean(gosRatio))
-  ## Step 2: impute EmpComp and GOS values
+  # 3.2.2. impute EmpComp and GOS values
   position <- union(which(is.na(compareTable$EmpCompensation) == TRUE),
                     which(is.na(compareTable$GOS) == TRUE))
   for (i in position) {
@@ -189,7 +195,7 @@ adjustGVAComponent <- function(year, return) {
       }
     }
   }
-  ## Step 3: check row sum and apply adjustment factor to estiamted rows 
+  # 3.2.3. check row sum and apply adjustment factor to estimated rows 
   compareTable <- compareTable %>% 
     dplyr::mutate(dif = GVA - EmpCompensation - Tax - GOS, errorRate = abs(dif) / GVA)
   shrinkfactor <- 1.0 + compareTable$dif[position] / (compareTable$EmpCompensation[position] + compareTable$GOS[position])
@@ -199,7 +205,7 @@ adjustGVAComponent <- function(year, return) {
   compareTable <- compareTable %>% 
     dplyr::mutate(dif = GVA - EmpCompensation - Tax - GOS, errorRate = abs(dif) / GVA)
   
-  # Check if GVA = EmpCompensation + Tax + GOS, with tolerance of $10 million
+  # 4. Check if GVA = EmpCompensation + Tax + GOS, with tolerance of $10 million
   check_condition <- abs(compareTable$dif) > 1E7
   if (any(check_condition)) {
     geoname <- compareTable[check_condition, "GeoName"]
@@ -209,7 +215,7 @@ adjustGVAComponent <- function(year, return) {
     stop("GVA components by line code do not add up to total GVA by line code.")
   }
   
-  # Output
+  # 5. Output
   switch_return <- switch(return, "GVA" = 1, "EmpCompensation" = 2, "Tax" = 3, "GOS" = 4)
   output <- compareTable %>% dplyr::select(1, 2, switch_return + 2)
   colnames(output)[3] <- as.character(year)
