@@ -17,7 +17,7 @@ getNationalUse <- function(iolevel, year) {
 #' @return A data frame contains state Compensation for all states at a specific year.
 getStateEmpCompensation <- function(year) {
   # Load pre-saved state Compensation 2007-2017
-  StateEmpCompensation <- loadStateIODataFile("State_Compensation_2007_2017")
+  StateEmpCompensation <- loadStateIODataFile(paste0("State_Compensation_", year))
   StateEmpCompensation <- StateEmpCompensation[, c("GeoName", "LineCode", as.character(year))]
   return(StateEmpCompensation)
 }
@@ -27,7 +27,7 @@ getStateEmpCompensation <- function(year) {
 #' @return A data frame contains state Tax for all states at a specific year.
 getStateTax <- function(year) {
   # Load pre-saved state Tax 2007-2017
-  StateTax <- loadStateIODataFile("State_Tax_2007_2017")
+  StateTax <- loadStateIODataFile(paste0("State_Tax_", year))
   StateTax <- StateTax[, c("GeoName", "LineCode", as.character(year))]
   return(StateTax)
 }
@@ -37,7 +37,7 @@ getStateTax <- function(year) {
 #' @return A data frame contains state GOS for all states at a specific year.
 getStateGOS <- function(year) {
   # Load pre-saved state GOS 2007-2017
-  StateGOS <- loadStateIODataFile("State_GOS_2007_2017")
+  StateGOS <- loadStateIODataFile(paste0("State_GOS_", year))
   StateGOS <- StateGOS[, c("GeoName", "LineCode", as.character(year))]
   return(StateGOS)
 }
@@ -47,7 +47,7 @@ getStateGOS <- function(year) {
 #' @return A data frame contains state PCE for all states at a specific year.
 getStatePCE <- function(year) {
   # Load pre-saved state PCE 2007-2018
-  StatePCE <- loadStateIODataFile("State_PCE_2007_2018")
+  StatePCE <- loadStateIODataFile(paste0("State_PCE_", year))
   StatePCE <- StatePCE[, c("GeoName", "LineCode", as.character(year))]
   return(StatePCE)
 }
@@ -633,8 +633,8 @@ calculateStateUSEmpCompensationRatio <- function(year) {
 #' @return A data frame contains weighting factor of each expenditure component over US total gov expenditure.
 calculateUSGovExpenditureWeightFactor <- function(year, defense) {
   # Load data
-  GovConsumption <- loadStateIODataFile("GovConsumption_2007_2019")
-  GovInvestment <- loadStateIODataFile("GovInvestment_2007_2019")
+  GovConsumption <- loadStateIODataFile(paste0("GovConsumption_", year))
+  GovInvestment <- loadStateIODataFile(paste0("GovInvestment_", year))
   # Keep rows by line code
   if (defense) {
     GovConsumption <- GovConsumption[GovConsumption$Line%in%c(26, 28), ]
