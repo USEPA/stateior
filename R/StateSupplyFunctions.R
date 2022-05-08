@@ -55,20 +55,21 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
                                                      fromLast = TRUE), ]
   allocation_codes <- allocation_sectors[, BEA_col]
   # Generate a mapping table only for allocation_codes based on MasterCrosswalk2012
-  crosswalk <- useeior::MasterCrosswalk2012[useeior::MasterCrosswalk2012[, BEA_col]%in%allocation_codes, ]
+  crosswalk <- useeior::MasterCrosswalk2012[useeior::MasterCrosswalk2012[, BEA_col]
+                                            %in% allocation_codes, ]
   # Generate allocation_weight df based on pre-saved data
-  if (allocationweightsource=="Employment") {
+  if (allocationweightsource == "Employment") {
     # Load BEA State Emp to BEA Summary mapping
     EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
-    sectors <- unique(crosswalk[crosswalk$BEA_2012_Sector_Code%in%c("44RT", "FIRE", "G"), BEA_col])
-    EmptoBEAmapping <- EmptoBEAmapping[EmptoBEAmapping[, BEA_col]%in%sectors, ]
+    sectors <- unique(crosswalk[crosswalk$BEA_2012_Sector_Code %in% c("44RT", "FIRE", "G"), BEA_col])
+    EmptoBEAmapping <- EmptoBEAmapping[EmptoBEAmapping[, BEA_col] %in% sectors, ]
     # For real estate (FIRE) and gov (G) sectors, calculate allocation factors using US GVA by industry
     allocation_factors <- merge(EmptoBEAmapping,
                                 useeior::Summary_ValueAdded_IO[, year_col, drop = FALSE],
                                 by.x = BEA_col, by.y = 0)
     for (linecode in unique(allocation_factors$LineCode)) {
-      weight_vector <- allocation_factors[allocation_factors$LineCode==linecode, year_col]
-      allocation_factors[allocation_factors$LineCode==linecode, "factor"] <- weight_vector/sum(weight_vector)
+      weight_vector <- allocation_factors[allocation_factors$LineCode == linecode, year_col]
+      allocation_factors[allocation_factors$LineCode == linecode, "factor"] <- weight_vector/sum(weight_vector)
     }
     # Load BEA state Emp
     BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year))
@@ -95,9 +96,9 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   df <- merge(rbind(allocation_weight, US_GrossOutput), allocation_sectors, by = BEA_col)
   for (state in unique(df$GeoName)) {
     for (linecode in unique(df$LineCode)) {
-      weight_vector <- df[df$GeoName==state&df$LineCode==linecode, "Weight"]
+      weight_vector <- df[df$GeoName == state & df$LineCode == linecode, "Weight"]
       factor <- weight_vector/sum(weight_vector)
-      df[df$GeoName==state& df$LineCode==linecode, "AllocationFactor"] <- factor
+      df[df$GeoName == state & df$LineCode == linecode, "AllocationFactor"] <- factor
     }
   }
   # Check if allocation factors add up to 1 (±1E-10)
@@ -133,7 +134,7 @@ allocateStateTabletoBEASummary <- function(statetablename, year, allocationweigh
   # Generate allocation factor
   allocation_df <- calculateStatetoBEASummaryAllocationFactor(year, allocationweightsource)
   total_before_allocation <- unique(StateTableBEA[StateTableBEA$LineCode %in% allocation_df$LineCode,
-                                                   c("GeoName", "LineCode", year_col)])
+                                                  c("GeoName", "LineCode", year_col)])
   # Merge StateTableBEA with allocation_df
   StateTableBEA_allocation <- merge(StateTableBEA, allocation_df,
                                     by = c("LineCode", "GeoName", BEA_col))
@@ -158,7 +159,7 @@ allocateStateTabletoBEASummary <- function(statetablename, year, allocationweigh
   }
   # Append StateTableBEA_allocation to un-allocated StateTableBEA
   StateTableBEA <- rbind(StateTableBEA_allocation[, c("GeoName", BEA_col, year_col)],
-                         StateTableBEA[!StateTableBEA$LineCode%in%StateTableBEA_allocation$LineCode,
+                         StateTableBEA[!StateTableBEA$LineCode %in% StateTableBEA_allocation$LineCode,
                                        c("GeoName", BEA_col, year_col)])
   # Sort StateTableBEA
   StateTableBEA <- StateTableBEA[order(StateTableBEA$GeoName, StateTableBEA[, BEA_col]), ]
@@ -189,9 +190,9 @@ calculateStateUSValueAddedRatio <- function(year) {
   # Generate state GVA (value added) table
   StateValueAdded <- allocateStateTabletoBEASummary("GVA", year, "Employment")
   # Extract US value added
-  US_VA <- StateValueAdded[StateValueAdded$GeoName=="United States *", ]
+  US_VA <- StateValueAdded[StateValueAdded$GeoName == "United States *", ]
   # Extract state value added
-  StateVA <- StateValueAdded[StateValueAdded$GeoName!="United States *", ]
+  StateVA <- StateValueAdded[StateValueAdded$GeoName != "United States *", ]
   # Generate sum of state GVA (value added)
   StateVA_sum <- stats::aggregate(StateVA[, year_col], by = list(StateVA[, BEA_col]), sum)
   colnames(StateVA_sum) <- c(BEA_col, "StateVA_sum")
@@ -218,15 +219,14 @@ calculateStateUSValueAddedRatio <- function(year) {
 #' @return A data frame contains ratios of state/US GVA (value added)
 #' for all states at a specific year by BEA State LineCode.
 calculateStateUSVARatiobyLineCode <- function(year) {
-  # Define BEA_col and year_col
-  BEA_col <- "BEA_2012_Summary_Code"
+  # Define year_col
   year_col <- as.character(year)
   # Load LineCode-coded State ValueAdded
   ValueAdded <- getStateGVA(year)
   # Extract US value added
-  US_VA <- ValueAdded[ValueAdded$GeoName=="United States *", ]
+  US_VA <- ValueAdded[ValueAdded$GeoName == "United States *", ]
   # Generate sum of State ValueAdded table
-  StateVA <- ValueAdded[ValueAdded$GeoName!="United States *", ]
+  StateVA <- ValueAdded[ValueAdded$GeoName != "United States *", ]
   StateVA_sum <- stats::aggregate(StateVA[, year_col], by = list(StateVA$LineCode),
                                   sum, na.rm = TRUE)
   colnames(StateVA_sum) <- c("LineCode", year_col)
@@ -315,7 +315,7 @@ getStateEmploymentbyBEASummary <- function(year) {
   EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary")
   EmpFBS$State <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
   # Prioritize BEAStateEmp, replace NAs in Emp with values from EmpFBS
-  StateEmp <- merge(BEAStateEmp[BEAStateEmp$State%in%EmpFBS$State, ],
+  StateEmp <- merge(BEAStateEmp[BEAStateEmp$State %in% EmpFBS$State, ],
                     EmpFBS, by = c("State", "BEA_2012_Summary_Code"), all = TRUE)
   StateEmp[is.na(StateEmp$Emp), "Emp"] <- StateEmp[is.na(StateEmp$Emp), "FlowAmount"]
   # Replace the remaining NAs in Emp with zero
@@ -335,7 +335,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   # Load USDA_ERS_FIWS data from flowsa
   USDA_ERS_FIWS <- getFlowsaData("USDA_ERS_FIWS", year)
   # Select All Commodities as Ag products
-  Ag <- USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy=="All Commodities", ]
+  Ag <- USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy == "All Commodities", ]
   # Convert State_FIPS to numeric values
   Ag$State_FIPS <- as.numeric(substr(Ag$Location, 1, 2))
   # Map to state names
@@ -351,7 +351,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   # Load Fishery Landings and Forestry CutValue data from flowsa
   Fishery <- getFlowsaData("NOAA_FisheryLandings", year)
   FisheryForestry <- rbind(Fishery,
-                           USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy=="All Species", ])
+                           USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy == "All Species", ])
   # Convert State_FIPS to numeric values
   FisheryForestry$State_FIPS <- as.numeric(substr(FisheryForestry$Location, 1, 2))
   # Map to state names
@@ -385,7 +385,7 @@ getFAFCommodityOutput <- function(year) {
   # Load pre-saved FAF4 commodity flow data
   FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"))
   # Keep domestic and export trade, keep useful columns, then rename
-  FAF <- FAF[FAF$trade_type%in%c(1, 3),
+  FAF <- FAF[FAF$trade_type %in% c(1, 3),
              c("dms_origst", "sctg2", paste0("value_", year))]
   colnames(FAF) <- c("State_FIPS", "SCTG", "Value")
   # Calculate state commodity output by SCTG
@@ -394,14 +394,16 @@ getFAFCommodityOutput <- function(year) {
   colnames(FAF) <- c("SCTG", "State", "Value")
   # Map FAF from SCTG to BEA Summary commodities
   # Load SCTGtoBEA mapping table
-  SCTGtoBEA <- unique(readCSV(system.file("extdata", "Crosswalk_SCTGtoBEA.csv",
-                                          package = "stateior")))[, c("SCTG", BEA_col)]
+  SCTGtoBEA_filename <- system.file("extdata",
+                                    "Crosswalk_SCTGtoBEA.csv",
+                                    package = "stateior")
+  SCTGtoBEA <- unique(readCSV(SCTGtoBEA_filename))[, c("SCTG", BEA_col)]
   FAF <- merge(FAF, SCTGtoBEA, by = "SCTG")
   # Determine BEA sectors that need allocation
   allocation_sectors <- SCTGtoBEA[duplicated(SCTGtoBEA$SCTG) |
                                     duplicated(SCTGtoBEA$SCTG, fromLast = TRUE), ]
   allocation_sectors <- allocation_sectors[!allocation_sectors[, BEA_col]
-                                           %in%c("111CA", "113FF", "311FT"), ]
+                                           %in% c("111CA", "113FF", "311FT"), ]
   # Use State Emp to allocate
   StateEmp <- getStateEmploymentbyBEASummary(year)
   # Merge StateEmp with allocation_sectors
@@ -411,19 +413,19 @@ getFAFCommodityOutput <- function(year) {
   AgFisheryForestry <- getAgFisheryForestryCommodityOutput(year)
   FAF_state_ls <- list()
   for (state in unique(FAF$State)) {
-    FAF_state <- FAF[FAF$State==state, ]
+    FAF_state <- FAF[FAF$State == state, ]
     # Step 1. Calculate foods (311FT) as
     # 311FT = (111CA + 113FF + 311FT) - (Ag + ForestryandFishery)
-    FAF_total <- sum(FAF[FAF[, BEA_col]%in%c("111CA", "113FF", "311FT"), "Value"])
-    AFF_total <- sum(AgFisheryForestry[AgFisheryForestry$State==state, "Value"])
-    FAF_state[FAF_state$BEA=="331FT", "Value"] <- FAF_total - AFF_total
+    FAF_total <- sum(FAF[FAF[, BEA_col] %in% c("111CA", "113FF", "311FT"), "Value"])
+    AFF_total <- sum(AgFisheryForestry[AgFisheryForestry$State == state, "Value"])
+    FAF_state[FAF_state$BEA == "331FT", "Value"] <- FAF_total - AFF_total
     # Drop "111CA" and "113FF" from FAF
-    FAF_state <- FAF_state[! FAF_state[, BEA_col]%in%c("111CA", "113FF"), ]
+    FAF_state <- FAF_state[!FAF_state[, BEA_col] %in% c("111CA", "113FF"), ]
     # Step 2. Separate FAF_state to
     # FAF_state_1 (does not need allocation)
     # FAF_state_2 (needs allocation)
-    FAF_state_1 <- FAF_state[!FAF_state$SCTG%in%allocation_sectors$SCTG, ]
-    FAF_state_2 <- FAF_state[FAF_state$SCTG%in%allocation_sectors$SCTG, ]
+    FAF_state_1 <- FAF_state[!FAF_state$SCTG %in% allocation_sectors$SCTG, ]
+    FAF_state_2 <- FAF_state[FAF_state$SCTG %in% allocation_sectors$SCTG, ]
     # Step 2.1. Aggregate FAF_state_1 by BEA industries
     FAF_state_1 <- stats::aggregate(FAF_state_1$Value,
                                     by = list(FAF_state_1$State,
@@ -431,16 +433,16 @@ getFAFCommodityOutput <- function(year) {
                                     sum)
     colnames(FAF_state_1) <- c("State", BEA_col, "Value")
     # Step 2.2. Allocate FAF_state_2 from SCTG to BEA using BEA state employment
-    Emp <- StateEmp[StateEmp$State==state, ]
+    Emp <- StateEmp[StateEmp$State == state, ]
     # Merge with FAF_state_2
     FAF_state_2 <- merge(FAF_state_2, Emp, by = c("State", "SCTG", BEA_col))
     for (sctg in unique(FAF_state_2$SCTG)) {
       # Calculate allocation factor
-      weight_vector <- FAF_state_2[FAF_state_2$SCTG==sctg, "Emp"]
+      weight_vector <- FAF_state_2[FAF_state_2$SCTG == sctg, "Emp"]
       allocation_factor <- weight_vector/sum(weight_vector, na.rm = TRUE)
       # Allocate Value
-      value <- FAF_state_2[FAF_state_2$SCTG==sctg, "Value"]*allocation_factor
-      FAF_state_2[FAF_state_2$SCTG==sctg, "Value"] <- value
+      value <- FAF_state_2[FAF_state_2$SCTG == sctg, "Value"]*allocation_factor
+      FAF_state_2[FAF_state_2$SCTG == sctg, "Value"] <- value
       # Aggregate by BEA
       FAF_state_2 <- stats::aggregate(FAF_state_2$Value,
                                       by = list(FAF_state_2$State,
@@ -461,11 +463,11 @@ getFAFCommodityOutput <- function(year) {
   FAF <- do.call(rbind, FAF_state_ls)
   # Calculate total commodity output ratio
   for (commodity in unique(FAF[, BEA_col])) {
-    commodity_total <- sum(FAF[FAF[, BEA_col]==commodity, "Value"])
-    ratio <- FAF[FAF[, BEA_col]==commodity, "Value"]/commodity_total
-    FAF[FAF[, BEA_col]==commodity, "Ratio"] <- ratio
+    commodity_total <- sum(FAF[FAF[, BEA_col] == commodity, "Value"])
+    ratio <- FAF[FAF[, BEA_col] == commodity, "Value"]/commodity_total
+    FAF[FAF[, BEA_col] == commodity, "Ratio"] <- ratio
   }
   # Drop rows where Ratio==0
-  FAF <- FAF[FAF$Ratio>0, ]
+  FAF <- FAF[FAF$Ratio > 0, ]
   return(FAF)
 }

@@ -247,9 +247,9 @@ assembleStateSummaryGrossValueAdded <- function(year) {
   StateGVA <- data.frame()
   for (sector in c("EmpCompensation", "Tax", "GOS")) {
     # Modify row names
-    code <- ifelse(sector=="EmpCompensation", "V001",
-                   ifelse(sector=="Tax", "V002",
-                          ifelse(sector=="GOS", "V003", NULL)))
+    code <- ifelse(sector == "EmpCompensation", "V001",
+                   ifelse(sector == "Tax", "V002",
+                          ifelse(sector == "GOS", "V003", NULL)))
     # Allocate US value added to states by values in df
     StateGVA_sector <- sweep(va_ratio, 2, as.numeric(US_Use[code, industries]), FUN = "*")
     rownames(StateGVA_sector) <- paste(rownames(StateGVA_sector), code, sep = ".")
@@ -265,11 +265,12 @@ calculateStateTotalPCE <- function(year) {
   # Load state and US PCE
   PCE <- getStatePCE(year)
   # Extract state total PCE
-  StateTotalPCE <- PCE[PCE$Line==1 & PCE$GeoName!="United States", ]
+  StateTotalPCE <- PCE[PCE$Line == 1 & PCE$GeoName != "United States", ]
   rownames(StateTotalPCE) <- StateTotalPCE$GeoName
   StateTotalPCE <- StateTotalPCE[, as.character(year), drop = FALSE]
   # Extract US total PCE
-  USPCE <- sum(PCE[PCE$GeoName=="United States" & PCE$Line==1, as.character(year)])
+  USPCE <- sum(PCE[PCE$GeoName == "United States" & PCE$Line == 1,
+                   as.character(year)])
   # Calculate PCE total in Overseas and append it to the state total table
   StateTotalPCE["Overseas", as.character(year)] <- USPCE - sum(StateTotalPCE[, as.character(year)])
   return(StateTotalPCE)
@@ -282,12 +283,12 @@ calculateStateUSPCERatio <- function(year) {
   # Load state and US PCE
   PCE <- getStatePCE(year)
   # Extract State PCE
-  StatePCE <- PCE[PCE$GeoName!="United States", ]
+  StatePCE <- PCE[PCE$GeoName != "United States", ]
   # Generate sum of state PCE
   StatePCE_sum <- stats::aggregate(StatePCE[, as.character(year)], by = list(StatePCE$Line), sum)
   colnames(StatePCE_sum) <- c("LineCode", as.character(year))
   # Extract US PCE
-  USPCE <- PCE[PCE$GeoName=="United States", c("LineCode", as.character(year))]
+  USPCE <- PCE[PCE$GeoName == "United States", c("LineCode", as.character(year))]
   # Merge sum of state PCE with US PCE to get PCE of Overseas region
   OverseasPCE <- merge(StatePCE_sum, USPCE, by = "LineCode")
   OverseasPCE[, as.character(year)] <- OverseasPCE[, paste0(year, ".y")] - OverseasPCE[, paste0(year, ".x")]
@@ -301,16 +302,16 @@ calculateStateUSPCERatio <- function(year) {
   # Map to BEA Summary
   filename <- "Crosswalk_StatePCEtoBEASummaryIO2012Schema.csv"
   StatePCEtoBEASummary <- readCSV(system.file("extdata", filename, package = "stateior"))
-  StateUSPCE <- merge(StatePCEtoBEASummary[!StatePCEtoBEASummary$BEA_2012_Summary_Code=="", ],
+  StateUSPCE <- merge(StatePCEtoBEASummary[!StatePCEtoBEASummary$BEA_2012_Summary_Code == "", ],
                       StateUSPCE, by.x = "Line", by.y = "LineCode")
   # Adjust Ratio based on state PCE
   for (state in unique(StateUSPCE$GeoName)) {
     for (sector in unique(StateUSPCE$BEA_2012_Summary_Code)) {
-      df <- StateUSPCE[StateUSPCE$GeoName==state&
-                         StateUSPCE$BEA_2012_Summary_Code==sector, ]
+      df <- StateUSPCE[StateUSPCE$GeoName  == state &
+                         StateUSPCE$BEA_2012_Summary_Code == sector, ]
       adjustedratio <- weighted.mean(df$Ratio, df[, paste0(year, ".x")])
-      StateUSPCE[StateUSPCE$GeoName==state&
-                   StateUSPCE$BEA_2012_Summary_Code==sector, "Ratio"] <- adjustedratio
+      StateUSPCE[StateUSPCE$GeoName == state &
+                   StateUSPCE$BEA_2012_Summary_Code == sector, "Ratio"] <- adjustedratio
     }
   }
   # Replace NaN with zero
@@ -337,7 +338,7 @@ estimateStateHouseholdDemand <- function(year) {
   State_HouseholdDemand <- data.frame()
   for (state in unique(PCE_ratio$State)) {
     # Merge PCE_ratio with US_HouseholdDemand to keep all commodities
-    HouseholdDemand <- merge(US_HouseholdDemand, PCE_ratio[PCE_ratio$State==state, ],
+    HouseholdDemand <- merge(US_HouseholdDemand, PCE_ratio[PCE_ratio$State == state, ],
                              by.x = 0, by.y = "BEA_2012_Summary_Code", all.x = TRUE)
     # Calculate state HouseholdDemand
     HouseholdDemand$F010 <- HouseholdDemand$F010*HouseholdDemand$Ratio
@@ -367,7 +368,7 @@ estimateStatePrivateInvestment <- function(year) {
   # Separate US_PrivateInvestment into Residential (F02R) and NonResidential (F02S, F02E, F02N, and F030)
   US_ResidentialInvestment <- US_PrivateInvestment[getVectorOfCodes("Summary", "Commodity"), "F02R", drop = FALSE]
   US_NonResidentialInvestment <- US_PrivateInvestment[getVectorOfCodes("Summary", "Commodity"),
-                                                      colnames(US_PrivateInvestment)!="F02R"]
+                                                      colnames(US_PrivateInvestment) != "F02R"]
   # Apply state PCE ratio to F02R.
   # Generate state PCE ratio
   PCE_ratio <- calculateStateUSPCERatio(year)
@@ -379,7 +380,7 @@ estimateStatePrivateInvestment <- function(year) {
   State_NonResidentialInvestment <- data.frame()
   for (state in unique(PCE_ratio$State)) {
     # Residential
-    ResidentialInvestment <- merge(US_ResidentialInvestment, PCE_ratio[PCE_ratio$State==state, ],
+    ResidentialInvestment <- merge(US_ResidentialInvestment, PCE_ratio[PCE_ratio$State == state, ],
                                    by.x = 0, by.y = "BEA_2012_Summary_Code", all.x = TRUE)
     rownames(ResidentialInvestment) <- ResidentialInvestment$Row.names
     ResidentialInvestment$F02R <- ResidentialInvestment$F02R * ResidentialInvestment$Ratio
@@ -389,7 +390,7 @@ estimateStatePrivateInvestment <- function(year) {
     State_ResidentialInvestment <- rbind.data.frame(State_ResidentialInvestment, ResidentialInvestment)
     # NonResidential
     NonResidentialInvestment <- merge(US_NonResidentialInvestment,
-                                      CommOutput_ratio[CommOutput_ratio$State==state, ],
+                                      CommOutput_ratio[CommOutput_ratio$State == state, ],
                                       by.x = 0, by.y = "BEA_2012_Summary_Code")
     columns <- colnames(US_NonResidentialInvestment)
     NonResidentialInvestment[, columns] <- NonResidentialInvestment[, columns] * NonResidentialInvestment$Ratio
@@ -433,8 +434,8 @@ estimateStateExport <- function(year) {
   ratio_replacement <- State_export_ratio[is.na(State_export_ratio$SoITradeRatio), "Ratio"]
   State_export_ratio[is.na(State_export_ratio$SoITradeRatio), "SoITradeRatio"] <- ratio_replacement
   # Adjust SoITradeRatio of oil and gas products
-  ratio_oilgas <- State_export_ratio[State_export_ratio[, BEA_col]==211, "Ratio"]
-  State_export_ratio[State_export_ratio[, BEA_col]==211, "SoITradeRatio"] <- ratio_oilgas
+  ratio_oilgas <- State_export_ratio[State_export_ratio[, BEA_col] == 211, "Ratio"]
+  State_export_ratio[State_export_ratio[, BEA_col] == 211, "SoITradeRatio"] <- ratio_oilgas
   # Calculate state export
   State_Export <- merge(US_Export, State_export_ratio, by.x = 0, by.y = BEA_col)
   State_Export$F040 <- State_Export$F040 * State_Export$SoITradeRatio
@@ -475,15 +476,15 @@ estimateStateExport <- function(year) {
     states_comm <- paste(states, comm, sep = ".")
     # Enter the while loop as long as there are state exports + state PI > commodity output
     max_itr <- 1E3
-    while(any(State_Export[states_comm, ] + StatePI_sum[states_comm] > State_CommOutput[states_comm, ])) {
+    while (any(State_Export[states_comm, ] + StatePI_sum[states_comm] > State_CommOutput[states_comm, ])) {
       # Determine new condition for each iteration in while loop
       new_condition <- State_Export[states_comm, ] + StatePI_sum[states_comm] > State_CommOutput[states_comm, ]
       # Set state and trouble_rows
       state <- unique(gsub("\\..*", "", states_comm[new_condition]))
       trouble_rows <- paste(state, comm, sep = ".")
       # Calculate total residual
-      comm_output_ratio <- CommOutput_ratio[CommOutput_ratio[, BEA_col]==comm&
-                                              CommOutput_ratio$State%in%state, "Ratio"]
+      comm_output_ratio <- CommOutput_ratio[CommOutput_ratio[, BEA_col] == comm &
+                                              CommOutput_ratio$State %in% state, "Ratio"]
       residual <- sum(State_Export[trouble_rows, ] - US_Export[comm, ]*comm_output_ratio)
       # Determine allocate_to_rows
       allocate_to_rows <- paste(setdiff(states, state), comm, sep = ".")
@@ -552,7 +553,7 @@ estimateStateSLGovExpenditure <- function(year) {
   State_SLGovExp <- data.frame()
   for (state in unique(SLGovExp_ratio$State)) {
     # Merge US_SLGovExp and SLGovExp_ratio
-    State_SLGovExp_state <- merge(SLGovExp_ratio[SLGovExp_ratio$State==state, ],
+    State_SLGovExp_state <- merge(SLGovExp_ratio[SLGovExp_ratio$State == state, ],
                                   US_SLGovExp, by.x = "BEA_2012_Summary_Code",
                                   by.y = 0, all.y = TRUE)
     # Modify State column
@@ -583,10 +584,10 @@ calculateStateUSEmpCompensationRatio <- function(year) {
   # Generate state Employee Compensation table
   StateEmpComp <- allocateStateTabletoBEASummary("EmpCompensation", year, "Employment")
   # Separate into state Employee Compensation
-  StateEmpComp <- StateEmpComp[StateEmpComp$GeoName!="United States *", ]
+  StateEmpComp <- StateEmpComp[StateEmpComp$GeoName != "United States *", ]
   # Map US Employee Compensation to BEA
   USEmpComp <- getStateEmpCompensation(year)
-  USEmpComp <- USEmpComp[USEmpComp$GeoName=="United States *", ]
+  USEmpComp <- USEmpComp[USEmpComp$GeoName == "United States *", ]
   GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
   allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
                                           duplicated(GVAtoBEAmapping$LineCode, fromLast = TRUE), ]
@@ -595,10 +596,10 @@ calculateStateUSEmpCompensationRatio <- function(year) {
                      by.x = BEA_col, by.y = 0)
   USEmpComp[, as.character(year)] <- USEmpComp[, paste0(year, ".x")]
   for (linecode in unique(allocation_sectors$LineCode)) {
-    value_vector <- USEmpComp[USEmpComp$LineCode==linecode, paste0(year, ".x")]
-    weight_vector <- USEmpComp[USEmpComp$LineCode==linecode, paste0(year, ".y")]
+    value_vector <- USEmpComp[USEmpComp$LineCode == linecode, paste0(year, ".x")]
+    weight_vector <- USEmpComp[USEmpComp$LineCode == linecode, paste0(year, ".y")]
     ratio <- value_vector*(weight_vector/sum(weight_vector))
-    USEmpComp[USEmpComp$LineCode==linecode, as.character(year)] <- ratio
+    USEmpComp[USEmpComp$LineCode == linecode, as.character(year)] <- ratio
   }
   USEmpComp <- USEmpComp[, c(BEA_col, as.character(year))]
   # Generate sum of state Employee Compensation
@@ -637,11 +638,11 @@ calculateUSGovExpenditureWeightFactor <- function(year, defense) {
   GovInvestment <- loadStateIODataFile(paste0("GovInvestment_", year))
   # Keep rows by line code
   if (defense) {
-    GovConsumption <- GovConsumption[GovConsumption$Line%in%c(26, 28), ]
-    GovInvestment <- GovInvestment[GovInvestment$Line%in%c(20:21, 23:24), ]
+    GovConsumption <- GovConsumption[GovConsumption$Line %in% c(26, 28), ]
+    GovInvestment <- GovInvestment[GovInvestment$Line %in% c(20:21, 23:24), ]
   } else {
-    GovConsumption <- GovConsumption[GovConsumption$Line%in%c(37, 39), ]
-    GovInvestment <- GovInvestment[GovInvestment$Line%in%c(28:29, 31:32), ]
+    GovConsumption <- GovConsumption[GovConsumption$Line %in% c(37, 39), ]
+    GovInvestment <- GovInvestment[GovInvestment$Line %in% c(28:29, 31:32), ]
   }
   # 
   # Calculate weight factors and stack dfs together
@@ -667,12 +668,13 @@ calculateStateFedGovExpenditureRatio <- function(year) {
                  rep(c("Defense", "NonDefense"), each = 4), sep = "_")
   mapping <- unique(useeior::MasterCrosswalk2012[, c("BEA_2012_Summary_Code",
                                                      "NAICS_2012_Code")])
-  for(type in types) {
+  for (type in types) {
     GovExp <- loadStateIODataFile(paste("FedGovExp", type, year, sep = "_"))
     # Change State to full state name
     for (state in unique(GovExp$State)) {
-      GovExp[GovExp$State==state, "State"] <- ifelse(state=="DC", "District of Columbia",
-                                                     state.name[which(state.abb==state)])
+      GovExp[GovExp$State == state, "State"] <- ifelse(state == "DC",
+                                                       "District of Columbia",
+                                                       state.name[which(state.abb == state)])
     }
     # Map to BEA Summary sectors
     GovExpBEA <- merge(mapping, GovExp, by.x = "NAICS_2012_Code", by.y = "NAICS")
@@ -684,7 +686,7 @@ calculateStateFedGovExpenditureRatio <- function(year) {
                                  value.var = "Amount")
     GovExpBEA[is.na(GovExpBEA)] <- 0
     # Calculate ratios
-    GovExpBEA[rowSums(GovExpBEA[, -1])==0, 2:ncol(GovExpBEA)] <- 1
+    GovExpBEA[rowSums(GovExpBEA[, -1]) == 0, 2:ncol(GovExpBEA)] <- 1
     GovExpBEA[, -1] <- GovExpBEA[, -1]/rowSums(GovExpBEA[, -1])
     # Add missing states
     GovExpBEA[, c(setdiff(state.name, colnames(GovExpBEA[, -1])), "Overseas")] <- 0
@@ -705,9 +707,9 @@ calculateStateFedGovExpenditureRatio <- function(year) {
   # so when national total !=0 it can still be allocate to states.
   for (bea in unique(GovExpRatio$BEA_2012_Summary_Code)) {
     for (type in types) {
-      if (all(GovExpRatio[GovExpRatio$BEA_2012_Summary_Code==bea, type]==0)) {
-        GovExpRatio[GovExpRatio$BEA_2012_Summary_Code==bea & 
-                      GovExpRatio$State!="Overseas", type] <- 1/51
+      if (all(GovExpRatio[GovExpRatio$BEA_2012_Summary_Code == bea, type] == 0)) {
+        GovExpRatio[GovExpRatio$BEA_2012_Summary_Code == bea & 
+                      GovExpRatio$State != "Overseas", type] <- 1/51
       }
     }
   }
@@ -726,12 +728,12 @@ calculateStateFedGovExpenditureRatio <- function(year) {
   WeightFactor_D <- calculateUSGovExpenditureWeightFactor(year, defense = TRUE)
   WeightFactor_ND <- calculateUSGovExpenditureWeightFactor(year, defense = FALSE)
   # Calculate Defense ratios
-  W_E_D <- WeightFactor_D[WeightFactor_D$Line==26, as.character(year)]
-  W_IC_D <- WeightFactor_D[WeightFactor_D$Line==28, as.character(year)]
+  W_E_D <- WeightFactor_D[WeightFactor_D$Line == 26, as.character(year)]
+  W_IC_D <- WeightFactor_D[WeightFactor_D$Line == 28, as.character(year)]
   GovExpRatio[, "F06C"] <- GovExpRatio$Ratio * W_E_D + GovExpRatio$Intermediate_Defense * W_IC_D
   # Calculate Non-Defense ratios
-  W_E_ND <- WeightFactor_ND[WeightFactor_ND$Line==37, as.character(year)]
-  W_IC_ND <- WeightFactor_ND[WeightFactor_ND$Line==39, as.character(year)]
+  W_E_ND <- WeightFactor_ND[WeightFactor_ND$Line == 37, as.character(year)]
+  W_IC_ND <- WeightFactor_ND[WeightFactor_ND$Line == 39, as.character(year)]
   GovExpRatio[, "F07C"] <- GovExpRatio$Ratio * W_E_ND + GovExpRatio$Intermediate_Defense * W_IC_ND
   # Drop unwanted columns
   GovExpRatio <- GovExpRatio[, c("BEA_2012_Summary_Code", "State", "F06C", "F06E",
@@ -759,14 +761,14 @@ estimateStateFedGovExpenditure <- function(year) {
   commodities <- unique(setdiff(CommOutput_ratio$BEA_2012_Summary_Code,
                                 FedGovExp_ratio$BEA_2012_Summary_Code))
   # Add CommOutput_ratio of commodities to FedGovExp_ratio
-  tmp <- CommOutput_ratio[CommOutput_ratio$BEA_2012_Summary_Code%in%commodities, ]
+  tmp <- CommOutput_ratio[CommOutput_ratio$BEA_2012_Summary_Code %in% commodities, ]
   tmp[, FedGovDemandCodes] <- tmp$Ratio
   FedGovExp_ratio <- rbind(FedGovExp_ratio, tmp[, colnames(FedGovExp_ratio)])
   # Calculate State_FedGovExp
   State_FedGovExp <- data.frame()
   for (state in unique(FedGovExp_ratio$State)) {
     # Merge US_FedGovExp and FedGovExp_ratio
-    State_FedGovExp_state <- merge(FedGovExp_ratio[FedGovExp_ratio$State==state, ],
+    State_FedGovExp_state <- merge(FedGovExp_ratio[FedGovExp_ratio$State == state, ],
                                    US_FedGovExp, by.x = "BEA_2012_Summary_Code",
                                    by.y = 0, all.y = TRUE)
     # Modify State column

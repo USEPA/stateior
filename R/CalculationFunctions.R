@@ -34,20 +34,20 @@ RAS <- function(m0, t_r, t_c, t, max_itr = 1E6) {
   row_condition <- all.equal(t_r, c_r, tolerance = t)
   col_condition <- all.equal(t_c, c_c, tolerance = t)
   i <- 0
-  while(!isTRUE(row_condition) | !isTRUE(col_condition)) {
-    if(i>max_itr){
+  while (!isTRUE(row_condition) | !isTRUE(col_condition)) {
+    if (i > max_itr) {
       break
     }
     # Adjust rowwise
     c_r <- as.vector(rowSums(m))
     # Replace 0 with 1 in c_r
-    c_r[c_r==0] <- 1
+    c_r[c_r == 0] <- 1
     r_ratio <- t_r/c_r
     m <- diag(r_ratio) %*% m
     # Adjust colwise
     c_c <- as.vector(colSums(m))
     # Replace 0 with 1 in c_c
-    c_c[c_c==0] <- 1
+    c_c[c_c == 0] <- 1
     c_ratio <- t_c/c_c
     m <- m %*% diag(c_ratio)
     # Check row and column conditions

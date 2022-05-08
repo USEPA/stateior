@@ -12,7 +12,7 @@ generateUSDomesticUse <- function(iolevel, year) {
   # Adjust Import column in DomesticUse to 0
   DomesticUse[, getVectorOfCodes(iolevel, "Import")] <- 0
   # Append international trade adjustment as the last column in DomesticUse table
-  if (iolevel=="Detail") {
+  if (iolevel == "Detail") {
     DomesticUse[, "F05100"] <- generateInternationalTradeAdjustmentVector(iolevel, year)
   } else {
     DomesticUse[, "F051"] <- generateInternationalTradeAdjustmentVector(iolevel, year)
