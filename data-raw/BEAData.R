@@ -125,7 +125,7 @@ getBEAStatePCE <- function() {
   # Convert values to current US $
   StatePCE[, year_cols] <- StatePCE[, year_cols]*1E6
   # Keep state-level data
-  geo_names <- c(state.name, "District of Columbia", "United States *")
+  geo_names <- c(state.name, "District of Columbia", "United States")
   # Save data
   for (year in year_cols) {
     df <- StatePCE[StatePCE$GeoName %in% geo_names,
