@@ -7,8 +7,8 @@
 #' @export
 buildStateSupplyModel <- function(year) {
   startLogging()
-  logging::loginfo("Loading RAS-balanced state-to-US value added (VA) ratios ...")
-  StateUS_VA_Ratio <- loadStateIODataFile(paste0("StateUS_VA_Ratio_", year))
+  logging::loginfo("Calculate state/US Gross Value Added (GVA) ratios...")
+  StateUS_VA_Ratio <- calculateStateUSValueAddedRatio(year)
   states <- unique(StateUS_VA_Ratio$GeoName)
   
   logging::loginfo("Estimating state Make table and commodity output...")
@@ -23,7 +23,7 @@ buildStateSupplyModel <- function(year) {
   US_CommodityOutput <- colSums(US_Make)
   for (state in states) {
     # Subset the StateUS_VA_Ratio for specified state
-    VA_ratio <- StateUS_VA_Ratio[StateUS_VA_Ratio$GeoName==state, ]
+    VA_ratio <- StateUS_VA_Ratio[StateUS_VA_Ratio$GeoName == state, ]
     # Replace NA with zero
     VA_ratio[is.na(VA_ratio$Ratio), "Ratio"] <- 0
     # Re-order StateUS_VA_Ratio
@@ -43,8 +43,8 @@ buildStateSupplyModel <- function(year) {
     colnames(State_CommodityOutputRatio_ls[[state]]) <- "OutputRatio"
   }
   
-  logging::loginfo("Loading state commodity output ratios from alternative data...")
-  AlternativeStateCOR <- loadStateIODataFile(paste0("AlternativeStateCommodityOutputRatio_", year))
+  logging::loginfo("Estimating state/US commodity output ratios using data from alternative data...")
+  AlternativeStateCOR <- estimateStateCommodityOutputRatiofromAlternativeSources(year)
   
   logging::loginfo("Adjusting state Make table...")
   # Adjust estimated state commodity output and calculate state commodity adjustment ratio
@@ -53,19 +53,19 @@ buildStateSupplyModel <- function(year) {
     # Adjust estimated state commodity output
     # Calculate state/US commodity output ratio * US Summary Comm Output
     AdjustedStateCommOutput <- merge(US_CommodityOutput,
-                                     AlternativeStateCOR[AlternativeStateCOR$State==state, ],
+                                     AlternativeStateCOR[AlternativeStateCOR$State == state, ],
                                      by.x = 0, by.y = "BEA_2012_Summary_Code")
     AdjustedStateCommOutput$Output <- AdjustedStateCommOutput$x*AdjustedStateCommOutput$Ratio
     # Replace commodity output value in State_CommodityOutput_ls
     commodities <- AdjustedStateCommOutput$Row.names
-    output <- AdjustedStateCommOutput[AdjustedStateCommOutput$Row.names%in%commodities, "Output"]
+    output <- AdjustedStateCommOutput[AdjustedStateCommOutput$Row.names %in% commodities, "Output"]
     State_CommodityOutput_ls[[state]][commodities, ] <- output
     
     # Calculate state commodity adjustment ratio
     # Divide current state commodity output ratio by alternative state COR.
     # Merge two sets of state-US commodity output ratio
     COR_df <- merge(State_CommodityOutputRatio_ls[[state]],
-                    AlternativeStateCOR[AlternativeStateCOR$State==state, ],
+                    AlternativeStateCOR[AlternativeStateCOR$State == state, ],
                     by.x = 0, by.y = "BEA_2012_Summary_Code", all.x = TRUE)
     # Replace NA in Ratio with values in OutputRatio
     COR_df[is.na(COR_df$Ratio), "Ratio"] <- COR_df[is.na(COR_df$Ratio), "OutputRatio"]
@@ -73,7 +73,7 @@ buildStateSupplyModel <- function(year) {
     COR_df <- COR_df[colnames(State_Make_ls[[state]]), ]
     # Adjust state Make based on adjusted commodity ratios
     CORAdjustmentRatio <- COR_df$Ratio/COR_df$OutputRatio
-    AdjustedStateMake <- State_Make_ls[[state]]%*%diag(CORAdjustmentRatio)
+    AdjustedStateMake <- State_Make_ls[[state]] %*% diag(CORAdjustmentRatio)
     colnames(AdjustedStateMake) <- rownames(COR_df)
     State_Make_ls[[state]] <- AdjustedStateMake
   }
@@ -94,7 +94,7 @@ buildStateSupplyModel <- function(year) {
   # Apply RAS till m0 is balanced subject to t_r and t_c and becomes m1.
   m1_ls <- list()
   for (industry in rownames(US_Make)) {
-    m0 <- State_Make[gsub(".*\\.", "", rownames(State_Make))==industry, ]
+    m0 <- State_Make[gsub(".*\\.", "", rownames(State_Make)) == industry, ]
     t_r <- as.numeric(do.call(cbind, State_IndustryOutput_ls)[industry, ])
     t_c <- as.numeric(US_Make[industry, ])
     print(industry)
@@ -111,7 +111,7 @@ buildStateSupplyModel <- function(year) {
   model <- list()
   for (state in states) {
     Make <- State_Make_balanced[gsub("\\..*", "",
-                                     rownames(State_Make_balanced))==state, ]
+                                     rownames(State_Make_balanced)) == state, ]
     model[["Make"]][[state]] <- Make
   }
   logging::loginfo("State Supply model build complete.")
@@ -154,17 +154,17 @@ buildStateUseModel <- function(year) {
   StateFinalDemand$State <- gsub("\\..*", "", rownames(StateFinalDemand))
   StateFinalDemand$Commodity <- gsub(".*\\.", "", rownames(StateFinalDemand))
   
-  logging::loginfo("Assembling state use table (intermediate consumption + final demand)...")
-  logging::loginfo("Estimating state domestic use table...")
+  logging::loginfo("Assembling state Use table (intermediate consumption + final demand)...")
+  logging::loginfo("Estimating state domestic Use table...")
   DomesticUse_ratios <- calculateUSDomesticUseRatioMatrix("Summary", year)
-  logging::loginfo("Appending value added to state Use tables...")
-  StateGVA <- loadStateIODataFile(paste0("State_Summary_GrossValueAdded_", year))
+  logging::loginfo("Estimating state value added, appending it to state Use table...")
+  StateGVA <- assembleStateSummaryGrossValueAdded(year)
   StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
   model <- list()
   for (state in states) {
     # Assemble state Use table
     State_Use <- cbind(State_Use_Intermediate_ls[[state]],
-                       StateFinalDemand[StateFinalDemand$State==state, FD_cols])
+                       StateFinalDemand[StateFinalDemand$State == state, FD_cols])
     # Calculate state domestic Use table
     State_DomesticUse <- State_Use*DomesticUse_ratios
     # Update Import in state Use table
@@ -173,12 +173,12 @@ buildStateUseModel <- function(year) {
     q_make <- colSums(StateMake_ls[[state]])
     q_use <- rowSums(State_Use)
     rel_diff <- (q_use - q_make)/q_make
-    if(max(abs(rel_diff), na.rm = TRUE)>1E-5&&state!="Overseas") {
+    if(max(abs(rel_diff), na.rm = TRUE) > 1E-5 && state != "Overseas") {
       stop(paste0(state, "'s Make and Use tables are not balanced ",
                   "in terms of commodity output."))
     }
     # Append value added rows to state Use tables
-    GVA <- StateGVA[gsub("\\..*", "", rownames(StateGVA))==state, ]
+    GVA <- StateGVA[gsub("\\..*", "", rownames(StateGVA)) == state, ]
     rownames(GVA) <- gsub(".*\\.", "", rownames(GVA))
     State_Use[rownames(GVA), industries] <- GVA
     State_DomesticUse[rownames(GVA), industries] <- GVA
@@ -206,7 +206,7 @@ buildStateUseModel <- function(year) {
     names(ratio) <- commodities
     # If a commodity has non-zero national ITA but zero in state/US import ratios, 
     # replace the zeros in the ratios with total consumption (rowSums of Use excluding Imports) ratios.
-    for (comm in intersect(names(US_ITA[US_ITA!=0]), names(ratio[ratio==0]))) {
+    for (comm in intersect(names(US_ITA[US_ITA != 0]), names(ratio[ratio == 0]))) {
       state_total_cons <- sum(model[["Use"]][[state]][comm, setdiff(c(industries, FD_cols), "F050")])
       US_total_cons <- sum(US_Use[comm, setdiff(c(industries, FD_cols), "F050")])
       ratio[comm] <- state_total_cons/US_total_cons
@@ -252,13 +252,13 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   tradable_cols <- c(unlist(sapply(list("Industry", "HouseholdDemand"),
                                    getVectorOfCodes, iolevel = iolevel)),
                      FD_cols[substr(FD_cols, nchar(FD_cols),
-                                    nchar(FD_cols))%in%c("C", "E", "R", "N")],
-                     ifelse(iolevel=="Detail", "F05100", "F051"))
+                                    nchar(FD_cols)) %in% c("C", "E", "R", "N")],
+                     ifelse(iolevel == "Detail", "F05100", "F051"))
   # All sectors except international imports
   industries <- getVectorOfCodes(iolevel, "Industry")
   import_col <- getVectorOfCodes(iolevel, "Import")
-  nonimport_cols <- c(industries, FD_cols[-which(FD_cols%in%import_col)],
-                      ifelse(iolevel=="Detail", "F05100", "F051"))
+  nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)],
+                      ifelse(iolevel == "Detail", "F05100", "F051"))
   
   # 1 - Load state domestic Use for the specified year
   logging::loginfo("Loading state Domestic Use table...")
@@ -272,8 +272,8 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   ICF <- generateDomestic2RegionICFs(state, year, ioschema, iolevel,
                                      ICF_sensitivity_analysis, adjust_by)
   # Only allocate "error" to rows (commodities) that does not have ICF of 1 or 0
-  commodities_notrade <- ICF[ICF$SoI2SoI==1&ICF$SoI2RoUS==0 &
-                               ICF$RoUS2RoUS==1&ICF$RoUS2SoI==0, 1]
+  commodities_notrade <- ICF[ICF$SoI2SoI == 1 & ICF$SoI2RoUS == 0 &
+                               ICF$RoUS2RoUS == 1 & ICF$RoUS2SoI == 0, 1]
   rows_allocation <- setdiff(commodities, commodities_notrade)
   
   # 3 - Generate SoI2SoI domestic Use
@@ -319,13 +319,13 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   logging::loginfo("Allocating negative interregional exports in SoI2SoI Use and RoUS2RoUS Use...")
   for (i in rows_allocation) {
     # SoI2SoI
-    if (SoI2SoI_Use[i, "InterregionalExports"]<0) {
+    if (SoI2SoI_Use[i, "InterregionalExports"] < 0) {
       value <- SoI2SoI_Use[i, "InterregionalExports"]
       weight <- SoI2SoI_Use[i, tradable_cols]
       SoI2SoI_Use[i, tradable_cols] <- weight + value*(weight/sum(weight))
     }
     # RoUS2RoUS
-    if (RoUS2RoUS_Use[i, "InterregionalExports"]<0) {
+    if (RoUS2RoUS_Use[i, "InterregionalExports"] < 0) {
       value <- RoUS2RoUS_Use[i, "InterregionalExports"]
       weight <- RoUS2RoUS_Use[i, tradable_cols]
       RoUS2RoUS_Use[i, tradable_cols] <- weight + value*(weight/sum(weight))
@@ -350,16 +350,16 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   for (i in rows_allocation) {
     SoIweight <- SoI2SoI_Use[i, tradable_cols]
     RoUSweight <- RoUS2RoUS_Use[i, tradable_cols]
-    SoI_residual_1[i] <- ifelse(abs(SoI_residual[i])<sum(SoIweight), SoI_residual[i],
-                                ifelse(SoI_residual[i]<0,
+    SoI_residual_1[i] <- ifelse(abs(SoI_residual[i]) < sum(SoIweight), SoI_residual[i],
+                                ifelse(SoI_residual[i] < 0,
                                        sum(SoIweight)*-1, sum(SoIweight)))
-    SoI_residual_2[i] <- ifelse(SoI_residual_1[i]!=SoI_residual[i], SoI_residual_1[i]/2, SoI_residual[i])
+    SoI_residual_2[i] <- ifelse(SoI_residual_1[i] != SoI_residual[i], SoI_residual_1[i]/2, SoI_residual[i])
     RoUS_residual[i] <- residual[i] - SoI_residual_2[i]
     # If sum of SoI and RoUS weight != 0, allocate residual to each cell
-    if (sum(SoIweight)!=0) {
+    if (sum(SoIweight) != 0) {
       SoI2SoI_Use[i, tradable_cols] <- SoIweight + SoI_residual_2[i]*(SoIweight/sum(SoIweight))
     }
-    if (sum(RoUSweight)!=0) {
+    if (sum(RoUSweight) != 0) {
       RoUS2RoUS_Use[i, tradable_cols] <- RoUSweight - RoUS_residual[i]*(RoUSweight/sum(RoUSweight))
     }
   }
@@ -419,7 +419,7 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   validation_check <- validation[, c("SoI2SoI$InterregionalImports - RoUS2RoUS$InterregionalExports",
                                      "SoI2SoI$InterregionalExports - RoUS2RoUS$InterregionalImports",
                                      "SoI2SoI$NetExports + RoUS2RoUS$NetExports")]
-  if (max(abs(validation_check))>1E-3) {
+  if (max(abs(validation_check)) > 1E-3) {
     stop("two-region domestic Use table did not pass validation.")
   }
   
@@ -480,7 +480,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   VA_rows <- getVectorOfCodes(iolevel, "ValueAdded")
   FD_cols <- getFinalDemandCodes(iolevel)
-  ITA_col <- ifelse(iolevel=="Detail", "F05100", "F051")
+  ITA_col <- ifelse(iolevel == "Detail", "F05100", "F051")
   # Load US Make table
   US_Make <- getNationalMake(iolevel, year)
   US_DomesticUse <- generateUSDomesticUse(iolevel, year)
@@ -555,7 +555,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
     ## Two-region Commodity Output
     SoI_CommodityOutput <- State_CommodityOutput_ls[[state]]
     RoUS_CommodityOutput <- colSums(US_Make) - SoI_CommodityOutput
-    columns <- colnames(US_DomesticUse)[!colnames(US_DomesticUse)%in%c("F040", "F050")]
+    columns <- colnames(US_DomesticUse)[!colnames(US_DomesticUse) %in% c("F040", "F050")]
     MakeUseDiff <- colSums(US_Make) - rowSums(US_DomesticUse[, c(columns, "F040")])
     RoUS_CommodityOutput$Output <- RoUS_CommodityOutput$Output - MakeUseDiff
     TwoRegionCommodityOutput <- c(SoI_CommodityOutput$Output, RoUS_CommodityOutput$Output)
@@ -618,7 +618,7 @@ buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   # RoUS domestic Use
   SoI_DomesticUse <- loadStateIODataFile(paste0("State_", iolevel,
                                                 "_DomesticUse_", year))[[state]]
-  columns <- colnames(SoI_DomesticUse)[!colnames(SoI_DomesticUse)%in%c("F040", "F050")]
+  columns <- colnames(SoI_DomesticUse)[!colnames(SoI_DomesticUse) %in% c("F040", "F050")]
   US_DomesticUse <- generateUSDomesticUse(iolevel, year)
   RoUS_DomesticUse <- US_DomesticUse - SoI_DomesticUse[commodities, ]
   # RoUS commodity output
