@@ -278,11 +278,13 @@ calculateStateIndustryOutputbyLineCode <- function(year) {
   return(StateGrossOutput)
 }
 
-#' Estimate state commodity output from alternative sources, calculate ratios.
+#' Estimate state commodity output and ratios from alternative sources, including
+#' USDA Census of Agriculture, NOAA Fisheries, USFS Forestry Inventory, and ORNL
+#' Feight Analysis Framework (FAF).
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains state commodity output
-#' for specified state with row names being BEA sector code.
-getStateCommodityOutputRatioEstimates <- function(year) {
+#' @return A data frame contains state commodity output from alternative sources
+#' and calculated state/US commodity ratios for each state.
+estimateStateCommodityOutputRatiofromAlternativeSources <- function(year) {
   # Generate Ag, Fishery, Forestry commodity output
   AgFisheryForestry <- getAgFisheryForestryCommodityOutput(year)
   # Generate FAF commodity output
