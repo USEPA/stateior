@@ -292,10 +292,11 @@ getStateCommodityOutputRatioEstimates <- function(year) {
   return(StateCommodityOutputRatio)
 }
 
-#' Load BEA and BLS QCEW State Employment data from pre-saved .rds files and FLOWSA.
+#' Load BEA State Employment data from pre-saved .rds files and State Employment
+#' FlowBySector data from flowsa.
 #' Map to BEA Summary sectors.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains State Emp by BEA Summary.
+#' @return A data frame contains State Employment by BEA Summary.
 getStateEmploymentbyBEASummary <- function(year) {
   # BEA State Emp
   BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year))
@@ -307,13 +308,13 @@ getStateEmploymentbyBEASummary <- function(year) {
                                   by = list(BEAStateEmp$BEA_2012_Summary_Code,
                                             BEAStateEmp$GeoName), sum)
   colnames(BEAStateEmp) <- c("BEA_2012_Summary_Code", "State", "Emp")
-  # BLS QCEW Emp
-  BLS_QCEW <- getFlowsaData("Employment", year)
-  BLS_QCEW <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Summary")
-  BLS_QCEW$State <- mapFIPS5toLocationNames(BLS_QCEW$FIPS, "FIPS")
-  # Prioritize BEAStateEmp, replace NAs in Emp with values from BLS_QCEW
-  StateEmp <- merge(BEAStateEmp[BEAStateEmp$State%in%BLS_QCEW$State, ],
-                    BLS_QCEW, by = c("State", "BEA_2012_Summary_Code"), all = TRUE)
+  # Employment FlowBySector from flowsa
+  EmpFBS <- getFlowsaData("Employment", year)
+  EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary")
+  EmpFBS$State <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
+  # Prioritize BEAStateEmp, replace NAs in Emp with values from EmpFBS
+  StateEmp <- merge(BEAStateEmp[BEAStateEmp$State%in%EmpFBS$State, ],
+                    EmpFBS, by = c("State", "BEA_2012_Summary_Code"), all = TRUE)
   StateEmp[is.na(StateEmp$Emp), "Emp"] <- StateEmp[is.na(StateEmp$Emp), "FlowAmount"]
   # Replace the remaining NAs in Emp with zero
   StateEmp[is.na(StateEmp$Emp), "Emp"] <- 0

@@ -326,8 +326,8 @@ calculateElectricityFlowRatios <- function (state, year) {
 #' @return A data frame contains domestic interregional utilities flow ratios by state.
 calculateUtilitiesFlowRatios <- function (state, year) {
   # Get state employment for utilities sector
-  BLS_QCEW <- getFlowsaData("Employment", year)
-  StateDetailEmp <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Detail")
+  EmploymentFBS <- getFlowsaData("Employment", year)
+  StateDetailEmp <- mapFlowBySectorfromNAICStoBEA(EmploymentFBS, year, "Detail")
   StateDetailEmp$State <- mapFIPS5toLocationNames(StateDetailEmp$FIPS, "FIPS")
   utilities <- c("221100", "221200", "221300")
   StateUtilitiesEmp <- StateDetailEmp[StateDetailEmp$BEA_2012_Detail_Code%in%utilities &
