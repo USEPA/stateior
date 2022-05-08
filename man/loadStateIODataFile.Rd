@@ -2,7 +2,7 @@
 % Please edit documentation in R/UtilityFunctions.R
 \name{loadStateIODataFile}
 \alias{loadStateIODataFile}
-\title{Load state IO data file from local data directory.}
+\title{Load state IO data file from Data Commons or local data directory.}
 \usage{
 loadStateIODataFile(filename, ver = NULL)
 }
@@ -15,5 +15,5 @@ loadStateIODataFile(filename, ver = NULL)
 The pathname to the state IO data file.
 }
 \description{
-Load state IO data file from local data directory.
+Load state IO data file from Data Commons or local data directory.
 }

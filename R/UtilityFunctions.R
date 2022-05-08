@@ -246,15 +246,56 @@ downloadStateIODatafromDataCommons <- function(filename, ver = NULL) {
                        file.path(directory, f), mode = "wb", quiet = TRUE)
 }
 
-#' Load state IO data file from local data directory.
+#' Find the latest state IO data in local data directory.
+#' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
+#' @return File name of the latest state IO data in local data directory.
+findLatestStateIODatainLocalDirectory <- function(filename) {
+  files <- list.files(path = file.path(rappdirs::user_data_dir(), "stateio"),
+                      pattern = paste0(filename, ".*\\.rds"),
+                      full.names = TRUE)
+  f <- basename(files[which.max(as.Date(file.mtime(files)))])
+  if (length(f) == 0) {
+    stop(paste(filename, "not avaialble in local data directory."))
+  }
+  return(f)
+}
+
+#' Load state IO data file from Data Commons or local data directory.
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return The pathname to the state IO data file.
 loadStateIODataFile <- function(filename, ver = NULL) {
   # Define file name
   if (is.null(ver)) {
-    # Look for the latest file
-    f <- findLatestStateIODataonDataCommons(filename)
+    # Look for the latest file in Data Commons first.
+    tryCatch(
+      expr = {
+        f <- findLatestStateIODataonDataCommons(filename)
+      },
+      error = function(e) {
+        logging::logwarn(paste(filename, "not found on Data Commons.",
+                               "Looking in local data directory now..."))
+      }
+    )
+    # If filename not found in Data Commons, look for it in local data directory.
+    tryCatch(
+      expr = {
+        f <- findLatestStateIODatainLocalDirectory(filename)
+      },
+      error = function(e) {
+        logging::logwarn(paste(filename,
+                               "not found in local data directory, either."))
+        message("Please confirm ", filename, " is correctly spelled. ",
+                "You should be able to find the correctly spelled file on ",
+                "https://edap-ord-data-commons.s3.amazonaws.com/index.html?prefix=stateio/. ",
+                "If it's not found there, please open an issue at ",
+                "https://github.com/USEPA/stateior/issues/new and inform package maintainers.\n",
+                "Process terminated.")
+        opt <- options(show.error.messages = FALSE)
+        on.exit(options(opt))
+        stop()
+      }
+    )
   } else {
     # Look for file under specific version
     f <- paste0(paste(filename, ver, sep = "_"), ".rds")
