@@ -28,9 +28,8 @@ getBEAStateGDPData <- function(dataname) {
     FileName <- list.files(dir, pattern = "SAGDP7N__ALL_AREAS.*\\.csv")
   }
   FullFileName <- file.path(dir, FileName)
-  # Get date_accessed and date_last_modified
+  # Get date_accessed
   date_accessed <- as.character(as.Date(file.mtime(StateGVAzip)))
-  date_last_modified <- as.character(as.Date(file.mtime(FullFileName)))
   # Find latest data year
   file_split <- unlist(stringr::str_split(FileName, pattern = "_"))
   end_year <- sub(".csv", "", file_split[length(file_split)])
@@ -41,6 +40,11 @@ getBEAStateGDPData <- function(dataname) {
   StateData <- utils::read.table(FullFileName, sep = ",",
                                  header = TRUE, stringsAsFactors = FALSE,
                                  check.names = FALSE, fill = TRUE)
+  # Get date_last_modified
+  date_last_modified <- stringr::str_match(StateData[grep("Last updated: ",
+                                                          StateData$GeoFIPS),
+                                                     "GeoFIPS"],
+                                           "Last updated: (.*?)--")[2]
   StateData <- StateData[!is.na(StateData$LineCode), ]
   # Assign NaN to (L) Less than $50,000.
   StateData[StateData == "(L)"] <- NaN
@@ -106,9 +110,8 @@ getBEAStatePCE <- function() {
   # Define FileName and FullFileName
   FileName <- list.files(dir, pattern = "SAPCE1__ALL_AREAS")
   FullFileName <- file.path(dir, FileName)
-  # Get date_accessed and date_last_modified
+  # Get date_accessed
   date_accessed <- as.character(as.Date(file.mtime(StatePCEzip)))
-  date_last_modified <- as.character(as.Date(file.mtime(FullFileName)))
   # Find latest data year
   file_split <- unlist(stringr::str_split(FileName, pattern = "_"))
   end_year <- sub(".csv", "", file_split[length(file_split)])
@@ -119,6 +122,11 @@ getBEAStatePCE <- function() {
   StatePCE <- utils::read.table(FullFileName, sep = ",",
                                 header = TRUE, stringsAsFactors = FALSE,
                                 check.names = FALSE, fill = TRUE)
+  # Get date_last_modified
+  date_last_modified <- stringr::str_match(StatePCE[grep("Last updated: ",
+                                                         StatePCE$GeoFIPS),
+                                                     "GeoFIPS"],
+                                           "Last updated: (.*?)--")[2]
   StatePCE <- StatePCE[!is.na(StatePCE$Line), ]
   # Replace NA with zero
   StatePCE[is.na(StatePCE)] <- 0
@@ -181,7 +189,13 @@ getBEAGovInvestment <- function() {
   TableName <- "Section3All_xls.xlsx"
   FullFileName <- file.path("inst/extdata/StateLocalGovFinances", TableName)
   # Get date_last_modified
-  date_last_modified <- as.character(as.Date(file.mtime(FullFileName)))
+  notes <- as.data.frame(readxl::read_excel(FullFileName,
+                                            sheet = "T30905-A",
+                                            range = "A1:A7"))
+  date_last_modified <- stringr::str_match(notes[grep("File created ",
+                                                      notes[, 1]),
+                                                 1],
+                                           "File created (.*?)  ")[2]
   
   # Load data
   GovInvestment <- as.data.frame(readxl::read_excel(FullFileName,
@@ -232,7 +246,13 @@ getBEAGovConsumption <- function() {
   TableName <- "Section3All_xls.xlsx"
   FullFileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
   # Get date_last_modified
-  date_last_modified <- as.character(as.Date(file.mtime(FullFileName)))
+  notes <- as.data.frame(readxl::read_excel(FullFileName,
+                                            sheet = "T31005-A",
+                                            range = "A1:A7"))
+  date_last_modified <- stringr::str_match(notes[grep("File created ",
+                                                      notes[, 1]),
+                                                 1],
+                                           "File created (.*?)  ")[2]
   
   # Load data
   GovConsumption <- as.data.frame(readxl::read_excel(FullFileName,
