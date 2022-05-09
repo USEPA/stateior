@@ -1,6 +1,8 @@
-#' Get BEA state employment (full-time and part-time) data from 2009-2018
-#' @return A data frame of BEA state employment data from 2009-2018.
-getBEAStateEmployment <- function () {
+#' Get BEA state employment (full-time and part-time) data from the earliest to
+#' the latest year available.
+#' @return A data frame of BEA state employment data from the earliest to the
+#' latest year available.
+getBEAStateEmployment <- function() {
   APIkey <- readLines(rappdirs::user_data_dir("BEA_API_KEY.txt"), warn = FALSE)
   linecodes_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
                           APIkey,
@@ -10,10 +12,13 @@ getBEAStateEmployment <- function () {
                           "&TableName=SAEMP25N",
                           "&ResultFormat=json")
   linecodes <- jsonlite::fromJSON(linecodes_txt)
-  StateEmployment <- data.frame()
   keys <- as.numeric(linecodes$BEAAPI$Results$ParamValue$Key)
-  for (linecode in keys[keys>=50]) {
-    StateEmployment_linecode_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
+  geo_names <- c(state.name, "District of Columbia", "United States")
+  # Download data
+  StateEmp <- data.frame()
+  DateLastModified <- data.frame()
+  for (linecode in keys) {
+    StateEmp_linecode_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
                                            APIkey,
                                            "&method=GetData",
                                            "&datasetname=Regional",
@@ -22,33 +27,48 @@ getBEAStateEmployment <- function () {
                                            "&GeoFIPS=STATE",
                                            "&Year=Last10",
                                            "&ResultFormat=json")
-    StateEmployment_linecode <- jsonlite::fromJSON(StateEmployment_linecode_txt)
-    StateEmployment_linecode <- StateEmployment_linecode$BEAAPI$Results$Data
-    if (is.null(StateEmployment_linecode$NoteRef)) {
-      StateEmployment_linecode$NoteRef <- ""
+    response <- jsonlite::fromJSON(StateEmp_linecode_txt)
+    # Get employment data by linecode
+    StateEmp_linecode <- response$BEAAPI$Results$Data
+    if (is.null(StateEmp_linecode$NoteRef)) {
+      StateEmp_linecode$NoteRef <- ""
     }
-    StateEmployment_linecode$LineCode <- linecode
-    datavalue_new <- as.numeric(gsub(",", "", StateEmployment_linecode$DataValue))
-    StateEmployment_linecode$DataValue <- datavalue_new
-    StateEmployment <- rbind(StateEmployment, StateEmployment_linecode)
-    # print(linecode)
+    StateEmp_linecode$LineCode <- linecode
+    # Keep US and states only
+    StateEmp_linecode <- StateEmp_linecode[StateEmp_linecode$GeoName %in% geo_names, ]
+    # Convert data value to numeric
+    StateEmp_linecode$DataValue <- as.numeric(gsub(",", "",
+                                                   StateEmp_linecode$DataValue))
+    StateEmp <- rbind(StateEmp, StateEmp_linecode)
+    # Get date_last_modified by linecode
+    notes <- unlist(response$BEAAPI$Results$Notes)
+    DateLastModified_linecode <- stringr::str_match(toString(notes),
+                                                    "Last updated: (.*?)--")[2]
+    DateLastModified <- rbind(DateLastModified, DateLastModified_linecode)
   }
-  # Reshape to wide table
-  StateEmployment <- reshape2::dcast(StateEmployment,
-                                     GeoFips + GeoName + LineCode ~ TimePeriod,
-                                     value.var = "DataValue")
-  # Write data to .rds
-  data_name <- paste("State_Employment_2009_2018",
-                     utils::packageDescription("stateior", fields = "Version"),
-                     sep = "_")
-  saveRDS(object = StateEmployment,
-          file = paste0(file.path("data", data_name), ".rds"))
-  # Write metadata to JSON
-  useeior:::writeMetadatatoJSON(package = "stateior",
-                                name = data_name,
-                                year = "2009-2018",
-                                source = "US Bureau of Economic Analysis",
-                                url = "https://apps.bea.gov/api")
+  
+  # Save data
+  for (year in min(StateEmp$TimePeriod):max(StateEmp$TimePeriod)) {
+    # Reshape to wide table
+    df <- reshape2::dcast(StateEmp,
+                          GeoFips + GeoName + LineCode ~ TimePeriod,
+                          value.var = "DataValue")
+    # Write data to .rds
+    data_name <- paste("State_Employment", year,
+                       utils::packageDescription("stateior", fields = "Version"),
+                       sep = "_")
+    saveRDS(object = df,
+            file = paste0(file.path("data", data_name), ".rds"))
+    # Write metadata to JSON
+    useeior:::writeMetadatatoJSON(package = "stateior",
+                                  name = data_name,
+                                  year = year,
+                                  source = "US Bureau of Economic Analysis",
+                                  url = "https://apps.bea.gov/api",
+                                  date_last_modified = unique(DateLastModified[, 1]),
+                                  date_accessed = as.character(Sys.Date()))
+  }
 }
-# Download, save and document 2009-2018 state employment data (from BEA)
+# Download, save and document BEA state employment data from the earliest to the
+# latest year available.
 getBEAStateEmployment()

@@ -12,6 +12,7 @@ validateResult <- function(result, abs_diff = TRUE, tolerance) {
     validation <- as.data.frame(result <= tolerance)
   }
   validation$rownames <- rownames(validation)
+  validation$result <- round(result, abs(log10(tolerance)))
   return(validation)
 }
 
@@ -20,14 +21,14 @@ validateResult <- function(result, abs_diff = TRUE, tolerance) {
 #' @param failure A logical value indicating whether to report failure or not
 #' @return A data.frame contains validation results
 extractValidationResult <- function(validation, failure = TRUE) {
-  df <- reshape2::melt(validation, id.vars = "rownames")
+  df <- reshape2::melt(validation, id.vars = c("rownames", "result"))
   if (failure) {
-    result <- df[df$value==FALSE, c("rownames", "variable")]
+    val_result <- df[df$value == FALSE, c("rownames", "result", "variable")]
   } else {
-    result <- df[df$value==TRUE, c("rownames", "variable")]
+    val_result <- df[df$value == TRUE, c("rownames", "result", "variable")]
   }
-  result[] <- sapply(result, as.character)
-  return(result)
+  val_result$variable <- as.character(val_result$variable)
+  return(val_result)
 }
 
 #' Format validation result
