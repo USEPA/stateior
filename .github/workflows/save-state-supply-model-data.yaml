@@ -34,6 +34,14 @@ jobs:
         with:
           extra-packages: devtools
       
+      # Release disk space on runners
+      - name: Release disk space on runners
+        run: |
+          sudo rm -rf /usr/share/dotnet # will release about 20GB if you don't need .NET
+          sudo rm -rf /opt/ghc
+          sudo rm -rf "/usr/local/share/boost"
+          sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+
       # Load package and generate state supply IO data
       - name: Load stateior, generate and save state supply IO data
         run: |
