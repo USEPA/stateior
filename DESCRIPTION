@@ -39,7 +39,7 @@ Imports:
 Depends:
   R (>= 3.6)
 Remotes:
-  github::USEPA/useeior@master
+  github::USEPA/useeior@updateIO
 License: file LICENSE
 Encoding: UTF-8
 LazyData: true
