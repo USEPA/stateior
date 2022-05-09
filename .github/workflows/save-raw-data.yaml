@@ -47,7 +47,7 @@ jobs:
       
       # Release disk space on runners
       - name: Release disk space on runners
-        run:
+        run: |
           sudo rm -rf /usr/share/dotnet # will release about 20GB if you don't need .NET
           sudo rm -rf /opt/ghc
           sudo rm -rf "/usr/local/share/boost"
