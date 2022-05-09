@@ -275,26 +275,26 @@ loadStateIODataFile <- function(filename, ver = NULL) {
       error = function(e) {
         logging::logwarn(paste(filename, "not found on Data Commons.",
                                "Looking in local data directory now..."))
-      }
-    )
-    # If filename not found in Data Commons, look for it in local data directory.
-    tryCatch(
-      expr = {
-        f <- findLatestStateIODatainLocalDirectory(filename)
-      },
-      error = function(e) {
-        logging::logwarn(paste(filename,
-                               "not found in local data directory, either."))
-        message("Please confirm ", filename, " is correctly spelled. ",
-                "You should be able to find the correctly spelled file on ",
-                "https://edap-ord-data-commons.s3.amazonaws.com/index.html?prefix=stateio/. ",
-                "If it's not found there, please open an issue at ",
-                "https://github.com/USEPA/stateior/issues/new ",
-                "and inform package maintainers.\n",
-                "Process terminated.")
-        opt <- options(show.error.messages = FALSE)
-        on.exit(options(opt))
-        stop()
+        # If filename not found in Data Commons, look for it in local data directory.
+        tryCatch(
+          expr = {
+            f <- findLatestStateIODatainLocalDirectory(filename)
+          },
+          error = function(e) {
+            logging::logwarn(paste(filename,
+                                   "not found in local data directory, either."))
+            message("Please confirm ", filename, " is correctly spelled. ",
+                    "You should be able to find the correctly spelled file on ",
+                    "https://edap-ord-data-commons.s3.amazonaws.com/index.html?prefix=stateio/. ",
+                    "If it's not found there, please open an issue at ",
+                    "https://github.com/USEPA/stateior/issues/new ",
+                    "and inform package maintainers.\n",
+                    "Process terminated.")
+            opt <- options(show.error.messages = FALSE)
+            on.exit(options(opt))
+            stop()
+          }
+        )
       }
     )
   } else {
