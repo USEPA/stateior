@@ -13,11 +13,6 @@ getFedGovSpending <- function(year) {
                  PSC[PSC$Final_Demand_Category == "Intellectual_Property", "4_Digit_PSC"],
                  PSC[PSC$Final_Demand_Category == "Structures", "4_Digit_PSC"])
   names(psc_ls) <- c("Intermediate", "Equipment", "IP", "Structure")
-  # Load NAICS table
-  NAICStoPull <- utils::read.csv(system.file("extdata",
-                                             "USASpending_NAICStoPull.csv",
-                                             package = "stateior"),
-                                 stringsAsFactors = FALSE, check.names = FALSE)
   
   # Because the original data is by fiscal year (Oct-Sept) instead of calendar year (Jan-Dec)
   # Download and load data from all years to compile complete data by calendar year
@@ -26,11 +21,12 @@ getFedGovSpending <- function(year) {
   df_ls <- list()
   df_ls[as.character(year_range)] <- data.frame()
   # Get data_date for archived award data
+  # Assume it is the date last modified
+  # Use date available in database_download as a proxy
   notes <- readLines("https://files.usaspending.gov/database_download")
-  tmp <- readLines("https://www.usaspending.gov/download_center/award_data_archive")
-  data_date <- gsub("-", "",
-                    stringr::str_match(notes[grep("USAspending Database", notes)],
-                                       "Database (.*?) zip")[2])
+  date_last_modified <- stringr::str_match(notes[grep("USAspending Database", notes)],
+                                           "Database (.*?) zip")[2]
+  data_date <- gsub("-", "", date_last_modified)
   for (year_N in year_range) {
     # Create the placeholder file
     FedGovExpzip <- paste0("inst/extdata/FY", year_N, "_All_Contracts_Full_",
@@ -113,7 +109,7 @@ getFedGovSpending <- function(year) {
                                     year = year,
                                     source = "USA spending",
                                     url = "https://www.usaspending.gov/download_center/award_data_archive",
-                                    date_last_modified = "unknown",
+                                    date_last_modified = date_last_modified,
                                     date_accessed = as.character(Sys.Date()))
     }
   }

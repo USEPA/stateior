@@ -19,6 +19,11 @@ getFAF <- function(year) {
     # Unzip the file to the designated directory
     unzip(FAFzip, files = fname, exdir = paste0("inst/extdata"), overwrite = TRUE)
   }
+  # Use published date on www.bts.gov as the date last modified for FAF data
+  notes <- readLines("https://www.bts.gov/faf/faf4")
+  date_note <- notes[grep("About the Freight Analysis Framework", notes) - 4]
+  date_last_modified <- stringr::str_match(date_note, "Monday, (.*?)</div>")[2]
+  
   # Specify filename based on year
   if (year == 2012) {
     filename <- "inst/extdata/FAF4.5.1_State.csv"
@@ -51,7 +56,7 @@ getFAF <- function(year) {
                                 year = year,
                                 source = "US Oak Ridge National Laboratory",
                                 url = "https://www.bts.gov/faf/faf4",
-                                date_last_modified = "unknown",
+                                date_last_modified = date_last_modified,
                                 date_accessed = date_accessed)
 }
 # Download, save and document 2012-2018 state FAF data (from ORNL)

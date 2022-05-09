@@ -8,6 +8,9 @@ getEIASEDSCodeDescription <- function() {
   if (!file.exists(CodeDescFile)) {
     utils::download.file(url, CodeDescFile, mode = "wb")
   }
+  notes <- readLines("https://www.eia.gov/state/seds/seds-technical-notes-complete.php?sid=US")
+  date_last_modified <- stringr::str_match(toString(notes),
+                                           "Released: (.*?)<br/>")[2]
   date_accessed <- as.character(as.Date(file.mtime(CodeDescFile)))
   CodeDesc <- as.data.frame(readxl::read_excel(CodeDescFile,
                                                sheet = "MSN Descriptions",
@@ -24,7 +27,7 @@ getEIASEDSCodeDescription <- function() {
                                 year = NULL,
                                 source = "US Energy Information Administration",
                                 url = url,
-                                date_last_modified = "unknown",
+                                date_last_modified = date_last_modified,
                                 date_accessed = date_accessed)
 }
 # Download, save and document state electricity consumption code and description (from EIA)
