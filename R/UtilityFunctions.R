@@ -278,7 +278,7 @@ loadStateIODataFile <- function(filename, ver = NULL) {
         # If filename not found in Data Commons, look for it in local data directory.
         tryCatch(
           expr = {
-            f <- findLatestStateIODatainLocalDirectory(filename)
+            f <<- findLatestStateIODatainLocalDirectory(filename)
           },
           error = function(e) {
             logging::logwarn(paste(filename,
