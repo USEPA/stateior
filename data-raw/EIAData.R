@@ -36,7 +36,6 @@ getEIASEDSCodeDescription()
 #' Get state electricity consumption data (total consumption and interstate trade,
 #' in million kilowatt hours) from EIA State Energy Data Systems (SEDS), from
 #' 2012 to the latest year available 
-#' @param year A numeric value specifying year of interest.
 #' @return A data frame of state electricity consumption data (total consumption
 #' and interstate trade, in million kilowatt hours) from EIA SEDS.
 getEIASEDSStateElectricityConsumption <- function() {
@@ -46,6 +45,10 @@ getEIASEDSStateElectricityConsumption <- function() {
   if (!file.exists(ConsumptionFile)) {
     utils::download.file(url, ConsumptionFile, mode = "wb")
   }
+  notes <- readLines("https://www.eia.gov/state/seds/seds-data-complete.php?sid=US")
+  date_last_modified <- stringr::str_match(toString(notes),
+                                           "Released:</strong> (.*?)&nbsp;")[2]
+  date_accessed <- as.character(as.Date(file.mtime(ConsumptionFile)))
   Consumption <- utils::read.table(ConsumptionFile, sep = ",", header = TRUE,
                                    stringsAsFactors = FALSE, check.names = FALSE,
                                    fill = TRUE)
@@ -74,4 +77,4 @@ getEIASEDSStateElectricityConsumption <- function() {
 }
 # Download, save and document EIA's state electricity consumption from 2012 to
 # the latest year available 
-getEIASEDSStateElectricityConsumption(year)
+getEIASEDSStateElectricityConsumption()
