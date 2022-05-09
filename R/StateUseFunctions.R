@@ -117,7 +117,7 @@ adjustGVAComponent <- function(year, return) {
   comp <- getStateEmpCompensation(year)
   tax <- getStateTax(year)
   gos <- getStateGOS(year)
-  
+
   # 1. Join into one table
   # Note #1: NaN represents (L), meaning Less than $50,000.
   # Note #2: NA represents (D), meaning Not shown to avoid disclosure of
