@@ -32,6 +32,11 @@ reportValidationResult <- function(failures) {
 #### 0. Load state and two-region IO data.
 ```{r load-data}
 devtools::load_all()
+# Define basic IO variabls
+commodities <- getVectorOfCodes("Summary", "Commodity")
+industries <- getVectorOfCodes("Summary", "Industry")
+FD_cols <- getFinalDemandCodes("Summary")
+VA_rows <- getVectorOfCodes("Summary", "ValueAdded")
 # Load Us Make, Use, and DomesticUse
 US_Summary_Make <- getNationalMake("Summary", year)
 US_Summary_Use <- getNationalUse("Summary", year)
@@ -47,9 +52,6 @@ State_Summary_CommodityOutput_ls <- loadStateIODataFile(paste0("State_Summary_Co
 # Load two-region tables
 TwoRegionTable_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_DomesticUsewithTrade_", year))
 cat("State and two-region IO data successfully loaded.")
-commodities <- getVectorOfCodes(iolevel, "Commodity")
-industries <- getVectorOfCodes(iolevel, "Industry")
-FD_cols <- getFinalDemandCodes(iolevel)
 ```
 
 ### Check state IO tables
@@ -111,7 +113,6 @@ reportValidationResult(failures)
 
 #### 4. There should not be any negative values in state Make table, unless they are negative in US Make table.
 Note: only exception being Overseas, which isn't used for further calculations, and if the same cell in US Make table is also negative.
-
 ```{r check3}
 US_failures <- formatValidationResult(US_Summary_Make - abs(US_Summary_Make),
                                       abs_diff = TRUE, tolerance = 0)[["Failure"]]
@@ -125,38 +126,41 @@ for (state in states[states != "Overseas"]) {
                                            tolerance = 0)[["Failure"]]
   colnames(failures_state) <- c("Industry", "Commodity")
   # If failure is in US Make table, remove it from state failures
-  failures_state$index <- paste(sub(".*\\.", "", failures_state$Industry),
-                                failures_state$Commodity)
-  US_state_diff <- setdiff(failures_state$index,
-                           paste(US_failures$Industry, US_failures$Commodity))
-  failures_state <- failures_state[failures_state$index %in% US_state_diff, ]
+  if (nrow(failures_state) > 0) {
+    failures_state$index <- paste(sub(".*\\.", "", failures_state$Industry),
+                                  failures_state$Commodity)
+    US_state_diff <- setdiff(failures_state$index,
+                             paste(US_failures$Industry, US_failures$Commodity))
+    failures_state <- failures_state[failures_state$index %in% US_state_diff, ]
+  }
   failures_state$index <- rownames(failures_state) <- NULL
   failures <- rbind(failures, failures_state)
 }
 reportValidationResult(failures)
 ```
 
-#### 5. Sum of each industry's output across all states must almost equal(<= 0.001) industry output in US Make Table.
+#### 5. Sum of each industry's output across all states must almost equal (<= 1E7, or $10 million by industry) the industry output in US Make Table.
+The threshold is set to 1E7 because there are differences (within +/- $10 million) between US industry output summed from Make and that summed from Use, comparing sum of state industry output (summed from state Use) to US industry output summed from US Make should account for those inherent differences at the national level.
 ```{r check5}
 df0 <- as.data.frame(rowSums(US_Summary_Make))
-# df1 <- Reduce("+", lapply(State_Summary_Make_ls, function(x) rowSums(x)))
 df1 <- Reduce("+", State_Summary_IndustryOutput_ls)
 rownames(df1) <- gsub(".*\\.", "", rownames(df1))
 df1 <- df1[rownames(df0), ]
 # Compare aggregated state industry output against US industry output
-failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
+failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 1E7)[["Failure"]]
 colnames(failures) <- c("Industry", "")
 reportValidationResult(failures)
 ```
 
-#### 6. Sum of each commodity's output across all states must almost equal(<= 0.001) commodity output in US Make Table.
+#### 6. Sum of each commodity's output across all states must almost equal (<= 1E7, or $10 million by commodity) the commodity output in US Make Table.
+The threshold is set to 1E7 because there are differences (within +/- $10 million) between US industry output summed from Make and that summed from Use, comparing sum of state industry output (summed from state Use) to US industry output summed from US Make should account for those inherent differences at the national level.
 ```{r check6}
 df0 <- as.data.frame(colSums(US_Summary_Make))
 df1 <- Reduce("+", State_Summary_CommodityOutput_ls)
 rownames(df1) <- gsub(".*\\.", "", rownames(df1))
 df1 <- df1[rownames(df0), ]
 # Compare aggregated state commodity output against US commodity output
-failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
+failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 1E7)[["Failure"]]
 colnames(failures) <- c("Commodity", "")
 reportValidationResult(failures)
 ```
@@ -188,7 +192,7 @@ for (state in states) {
   # Find zero values in state Make table
   state_zeros <- formatValidationResult(State_Summary_Make_ls[[state]] - 0,
                                         abs_diff = TRUE, tolerance = 0)[["Pass"]]
-  colnames(state_zeros) <- c("Industry", "Commodity")
+  colnames(state_zeros)[1:2] <- c("Industry", "Commodity")
   state_zeros$index <- paste(sub(".*\\.", "", state_zeros$Industry), state_zeros$Commodity)
   # Find difference between state_zeros and US_zeros: zeros in US that are not zeros in state
   US_state_diff <- setdiff(paste(US_zeros$Industry, US_zeros$Commodity), state_zeros$index)
