@@ -199,6 +199,7 @@ adjustGVAComponent <- function(year, return) {
   compareTable <- compareTable %>% 
     dplyr::mutate(dif = GVA - EmpCompensation - Tax - GOS, errorRate = abs(dif) / GVA)
   shrinkfactor <- 1.0 + compareTable$dif[position] / (compareTable$EmpCompensation[position] + compareTable$GOS[position])
+  shrinkfactor[is.nan(shrinkfactor)] <- 1.0
   compareTable$EmpCompensation[position] <- compareTable$EmpCompensation[position]*shrinkfactor
   compareTable$GOS[position] <- compareTable$GOS[position]*shrinkfactor
   # Re-calculate errorRate
