@@ -14,7 +14,7 @@ This document presents validation results of `r year` summary-level state IO mod
 knitr::opts_chunk$set(echo = FALSE,
                       message = FALSE,
                       results = "asis")
-logging::basicConfig(level = 30)
+logging::basicConfig(level = 40)
 ```
 
 ```{r report-function}
