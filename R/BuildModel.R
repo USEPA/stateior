@@ -245,20 +245,19 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
                                    ICF_sensitivity_analysis = FALSE,
                                    adjust_by = 0, domestic = TRUE) {
   startLogging()
-  # 0 - Define commodities and desired columns
+  # 0 - Define commodities, industries, final demand columns, import column, and
+  # international trade adjustment column
   commodities <- getVectorOfCodes(iolevel, "Commodity")
+  industries <- getVectorOfCodes(iolevel, "Industry")
   FD_cols <- getFinalDemandCodes(iolevel)
+  import_col <- getVectorOfCodes(iolevel, "Import")
   # All tradable sectors
   tradable_cols <- c(unlist(sapply(list("Industry", "HouseholdDemand"),
                                    getVectorOfCodes, iolevel = iolevel)),
                      FD_cols[substr(FD_cols, nchar(FD_cols),
-                                    nchar(FD_cols)) %in% c("C", "E", "R", "N")],
-                     ifelse(iolevel == "Detail", "F05100", "F051"))
+                                    nchar(FD_cols)) %in% c("C", "E", "R", "N")])
   # All sectors except international imports
-  industries <- getVectorOfCodes(iolevel, "Industry")
-  import_col <- getVectorOfCodes(iolevel, "Import")
-  nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)],
-                      ifelse(iolevel == "Detail", "F05100", "F051"))
+  nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
   
   # 1 - Load state domestic Use for the specified year
   logging::loginfo("Loading state Domestic Use table...")
@@ -475,7 +474,8 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
 #' @export
 assembleTwoRegionIO <- function(year, iolevel) {
   startLogging()
-  # Define industries, commodities, valueadded and finaldemand
+  # Define industries, commodities, value added rows, final demand columns, and
+  # international trade adjustment column
   industries <- getVectorOfCodes(iolevel, "Industry")
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   VA_rows <- getVectorOfCodes(iolevel, "ValueAdded")
