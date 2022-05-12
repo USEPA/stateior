@@ -435,8 +435,8 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
     SoI_Use <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year))[[state]]
     RoUS_Use <- US_Use - SoI_Use[commodities, c(industries, FD_cols)]
     # Calculate SoI_Import and RoUS_Import
-    SoI_Import <- SoI_Use - SoI_DomesticUse
-    RoUS_Import <- RoUS_Use - RoUS_DomesticUse
+    SoI_Import <- SoI_Use[commodities, c(industries, FD_cols)] - SoI_DomesticUse[commodities, c(industries, FD_cols)]
+    RoUS_Import <- RoUS_Use[commodities, c(industries, FD_cols)] - RoUS_DomesticUse[commodities, c(industries, FD_cols)]
     # Add SoI and RoUS Import to the two-region Domestic Use
     logging::loginfo("Generating two-region Use with imports...")
     SoI2SoI_Use <- cbind(SoI2SoI_Use[, colnames(SoI_Import)] + SoI_Import,
