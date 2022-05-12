@@ -55,7 +55,11 @@ calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
   # Calculate state Domestic Use ratios
   Ratio <- DomesticUse[rownames(Use), colnames(Use)]/Use
   Ratio[is.na(Ratio)] <- 0
-  Ratio$F050 <- 0
+  if (iolevel == "Detail") {
+    Ratio$F05000 <- 0
+  } else {
+    Ratio$F050 <- 0
+  }
   return(Ratio)
 }
 
