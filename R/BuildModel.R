@@ -433,7 +433,7 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
     # Load US and SoI Use, calcuate RoUS_Use
     US_Use <- getNationalUse("Summary", year)
     SoI_Use <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year))[[state]]
-    RoUS_Use <- US_Use - SoI_Use[industries, c(commodities, FD_cols)]
+    RoUS_Use <- US_Use - SoI_Use[commodities, c(industries, FD_cols)]
     # Calculate SoI_Import and RoUS_Import
     SoI_Import <- SoI_Use - SoI_DomesticUse
     RoUS_Import <- RoUS_Use - RoUS_DomesticUse
