@@ -422,35 +422,29 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
     stop("two-region domestic Use table did not pass validation.")
   }
   
-  # 13 - If domestic==FALSE, generate SoI2SoI, SoI2RoUS, RoUS2RoUS, and RoUS2SoI Import matrix
-  # then add them to SoI2SoI, SoI2RoUS, RoUS2RoUS, and RoUS2SoI domestic Use
+  # 13 - If domestic == FALSE, two-region total Use table is generated.
+  # The first step is to create SoI and RoUS import matrix by subtracting SoI
+  # DomesticUse from SoI Use and subtracting RoUS DomesticUse from RoUS Use.
+  # Because we assumed international import is not for trade between SoI and RoUS,
+  # SoI_Import and RoUS_Import are only added to SoI2SoI_Use and RoUS2RoUS_Use,
+  # respectively, while leaving SoI2RoUS_Use and RoUS2SoI_Use unchanged,
+  # to form two-region total Use table.
   if (!domestic) {
-    # Generate US_Import
-    US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
-                                           sep = "_"))[, c(industries, FD_cols)]*1E6
-    # Sum the two-region Domestic Use
-    DomesticUse_sum <- Reduce("+", lapply(list(SoI2SoI_Use, SoI2RoUS_Use, RoUS2SoI_Use, RoUS2RoUS_Use),
-                                          "[", c(industries, FD_cols)))
-    # Generate two-region Import by allocating each value in US_Import to four values
-    # based on the shares of two-region domestic Use in DomesticUse_sum
-    SoI2SoI_Import <- US_Import*(SoI2SoI_Use[, colnames(DomesticUse_sum)]/DomesticUse_sum)
-    SoI2RoUS_Import <- US_Import*(SoI2RoUS_Use[, colnames(DomesticUse_sum)]/DomesticUse_sum)
-    RoUS2SoI_Import <- US_Import*(RoUS2SoI_Use[, colnames(DomesticUse_sum)]/DomesticUse_sum)
-    RoUS2RoUS_Import <- US_Import*(RoUS2RoUS_Use[, colnames(DomesticUse_sum)]/DomesticUse_sum)
-    SoI2SoI_Import[is.na(SoI2SoI_Import)] <- 0
-    SoI2RoUS_Import[is.na(SoI2RoUS_Import)] <- 0
-    RoUS2SoI_Import[is.na(RoUS2SoI_Import)] <- 0
-    RoUS2RoUS_Import[is.na(RoUS2RoUS_Import)] <- 0
-    # Add two-region Import to the two-region Domestic Use
+    # Load US and SoI Use, calcuate RoUS_Use
+    US_Use <- getNationalUse("Summary", year)
+    SoI_Use <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year))[[state]]
+    RoUS_Use <- US_Use - SoI_Use[industries, c(commodities, FD_cols)]
+    # Calculate SoI_Import and RoUS_Import
+    SoI_Import <- SoI_Use - SoI_DomesticUse
+    RoUS_Import <- RoUS_Use - RoUS_DomesticUse
+    # Add SoI and RoUS Import to the two-region Domestic Use
     logging::loginfo("Generating two-region Use with imports...")
-    SoI2SoI_Use <- cbind(SoI2SoI_Use[, colnames(SoI2SoI_Import)] + SoI2SoI_Import,
-                         SoI2SoI_Use[, setdiff(colnames(SoI2SoI_Use), colnames(SoI2SoI_Import))])
-    SoI2RoUS_Use <- cbind(SoI2RoUS_Use[, colnames(SoI2RoUS_Import)] + SoI2RoUS_Import,
-                          SoI2RoUS_Use[, setdiff(colnames(SoI2RoUS_Use), colnames(SoI2RoUS_Import))])
-    RoUS2SoI_Use <- cbind(RoUS2SoI_Use[, colnames(RoUS2SoI_Import)] + RoUS2SoI_Import,
-                          RoUS2SoI_Use[, setdiff(colnames(RoUS2SoI_Use), colnames(RoUS2SoI_Import))])
-    RoUS2RoUS_Use <- cbind(RoUS2RoUS_Use[, colnames(RoUS2RoUS_Import)] + RoUS2RoUS_Import,
-                           RoUS2RoUS_Use[, setdiff(colnames(RoUS2RoUS_Use), colnames(RoUS2RoUS_Import))])
+    SoI2SoI_Use <- cbind(SoI2SoI_Use[, colnames(SoI_Import)] + SoI_Import,
+                         SoI2SoI_Use[, setdiff(colnames(SoI2SoI_Use), colnames(SoI_Import))])
+    RoUS2RoUS_Use <- cbind(RoUS2RoUS_Use[, colnames(RoUS_Import)] + RoUS_Import,
+                           RoUS2RoUS_Use[, setdiff(colnames(RoUS2RoUS_Use), colnames(RoUS_Import))])
+    # Note: F051 - ITA has been carried over from SoI_Use and RoUS_Use to
+    # SoI2SoI_Use and RoUS2RoUS_Use, respectively.
   }
   
   # 14 - Assemble SoI2SoI and RoUS2RoUS total or domestic Use
