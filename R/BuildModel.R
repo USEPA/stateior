@@ -202,11 +202,14 @@ buildStateUseModel <- function(year) {
   logging::loginfo("Finalizing state Use table, industry and commodity output...")
   for (state in states) {
     ratio <- model[["Use"]][[state]][commodities, "F050"]/State_Import_sum
-    ratio[is.na(ratio)] <- 0
-    names(ratio) <- commodities
-    # If a commodity has non-zero national ITA but zero in state/US import ratios, 
-    # replace the zeros in the ratios with total consumption (rowSums of Use excluding Imports) ratios.
-    for (comm in intersect(names(US_ITA[US_ITA != 0]), names(ratio[ratio == 0]))) {
+    # Replace a commodity's state/US import ratio with total consumption
+    # (rowSums of Use excluding Imports) ratio, if the commodity meets either
+    # condition below:
+    # 1. It has state/US import ratio that is negative or larger than 1,
+    # 2. It has non-zero national ITA but zero in state/US import ratio.
+    comms <- union(names(ratio[which(ratio < 0 | ratio > 1)]),
+                   intersect(names(US_ITA[US_ITA != 0]), names(ratio[ratio == 0])))
+    for (comm in comms) {
       state_total_cons <- sum(model[["Use"]][[state]][comm, setdiff(c(industries, FD_cols), "F050")])
       US_total_cons <- sum(US_Use[comm, setdiff(c(industries, FD_cols), "F050")])
       ratio[comm] <- state_total_cons/US_total_cons
