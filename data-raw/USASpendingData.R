@@ -14,9 +14,9 @@ getFedGovSpending <- function(year) {
                  PSC[PSC$Final_Demand_Category == "Structures", "4_Digit_PSC"])
   names(psc_ls) <- c("Intermediate", "Equipment", "IP", "Structure")
   
-  # Because the original data is by fiscal year (Oct-Sept) instead of calendar year (Jan-Dec)
-  # Download and load data from all years to compile complete data by calendar year
-  # Need get 2012-2017 data, extend the range to 2011-2018 to retrieve complete records
+  # Because the original data is by fiscal year (Oct-Sept) instead of calendar year,
+  # download data from three years (year - 1, year, year + 1). For example,
+  # need 2012 data, extend the range to 2011-2013 to retrieve complete records.
   year_range <- (year - 1):(year + 1)
   df_ls <- list()
   df_ls[as.character(year_range)] <- data.frame()
@@ -114,5 +114,5 @@ getFedGovSpending <- function(year) {
     }
   }
 }
-# Download, save and document 2012-2017 federal government spending data by state (from USASpending)
+# Download, save and document federal government spending data by state
 getFedGovSpending(year)
