@@ -200,18 +200,26 @@ buildStateUseModel <- function(year) {
   # Load US Summary Use table for given year
   US_Use <- getNationalUse("Summary", year)
   logging::loginfo("Finalizing state Use table, industry and commodity output...")
+  ratio_ls <- list()
+  comm_ls <- list()
   for (state in states) {
     ratio <- model[["Use"]][[state]][commodities, "F050"]/State_Import_sum
     names(ratio) <- commodities
-    # Replace a commodity's state/US import ratio with total consumption
-    # (rowSums of Use excluding Imports) ratio, if the commodity meets any
-    # condition below:
+    ratio_ls[[state]] <- ratio
+    # Find commodities meet any condition below:
     # 1. Its state/US import ratio == NA,
     # 2. It has state/US import ratio that is negative or larger than 1,
     # 3. It has non-zero national ITA but zero in state/US import ratio.
-    comms <- unique(c(names(ratio[is.na(ratio)]),
-                      names(ratio[which(ratio < 0 | ratio > 1)]),
-                      intersect(names(US_ITA[US_ITA != 0]), names(ratio[ratio == 0]))))
+    comm_ls[[state]] <- unique(c(names(ratio[is.na(ratio)]),
+                                 names(ratio[which(ratio < 0 | ratio > 1)]),
+                                 intersect(names(US_ITA[US_ITA != 0]),
+                                           names(ratio[ratio == 0]))))
+  }
+  comms <- unique(unlist(comm_ls))
+  for (state in states) {
+    ratio <- ratio_ls[[state]]
+    # For each commodity in the comm_ls, replace its state/US import ratio
+    # with total consumption (rowSums of Use excluding Imports) ratio.
     for (comm in comms) {
       state_total_cons <- sum(model[["Use"]][[state]][comm, setdiff(c(industries, FD_cols), "F050")])
       US_total_cons <- sum(US_Use[comm, setdiff(c(industries, FD_cols), "F050")])
