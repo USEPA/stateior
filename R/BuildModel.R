@@ -168,12 +168,12 @@ buildStateUseModel <- function(year) {
     # Calculate state domestic Use table
     State_DomesticUse <- State_Use*DomesticUse_ratios
     # Update Import in state Use table
-    State_Use$F050 <- colSums(StateMake_ls[[state]]) - rowSums(State_Use - State_Use$F050)
+    State_Use$F050 <- colSums(StateMake_ls[[state]]) - rowSums(State_Use)
     # Validation - interrupt if commodity output (q) from Make != q from Use by 1E-5
     q_make <- colSums(StateMake_ls[[state]])
     q_use <- rowSums(State_Use)
     rel_diff <- (q_use - q_make)/q_make
-    if(max(abs(rel_diff), na.rm = TRUE) > 1E-5 && state != "Overseas") {
+    if (max(abs(rel_diff), na.rm = TRUE) > 1E-5 && state != "Overseas") {
       stop(paste0(state, "'s Make and Use tables are not balanced ",
                   "in terms of commodity output."))
     }
