@@ -1,5 +1,5 @@
 # Get Freight Analysis Framework (FAF) data since 2012.
-#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying year of interest.
 #' @return A data frame contains FAF data since 2012.
 getFAF <- function(year) {
   if (year <= 2018) {
@@ -31,11 +31,12 @@ getFAF <- function(year) {
       filename <- "inst/extdata/FAF5.3_State.csv"
     }
     file_baseurl <- "https://faf.ornl.gov/faf5/data/download_files/"
-    # Use last modified date on www.faf.ornl.gov as the date last modified for FAF data
+    # Use last modified date on www.faf.ornl.gov
     url <- "https://faf.ornl.gov/faf5"
     notes <- readLines(url)
     date_note <- notes[grep("Last modified:", notes)]
-    date_last_modified <- stringr::str_match(date_note, "Last modified: <br />(.*?)</small>")[2]
+    date_last_modified <- stringr::str_match(date_note,
+                                             "Last modified: <br />(.*?)</small>")[2]
   }
   
   # Download all FAF tables into the placeholder file
@@ -53,29 +54,34 @@ getFAF <- function(year) {
   FAF <- utils::read.table(filename, sep = ",", header = TRUE,
                            stringsAsFactors = FALSE,
                            check.names = FALSE, fill = TRUE)
-  # Keep columns for year
-  FAF <- FAF[, c(colnames(FAF)[1:9],
-                 paste(c("value", "tons", "tmiles"), year, sep = "_"))]
-  # Convert value from million $ to $
-  FAF[, paste0("value_", year)] <- FAF[, paste0("value_", year)]*1E6
-  # Convert weight from thousand tons to tons
-  FAF[, paste0("tons_", year)] <- FAF[, paste0("tons_", year)]*1E3
-  # Convert wright-distance from million ton-miles to ton-miles
-  FAF[, paste0("tmiles_", year)] <- FAF[, paste0("tmiles_", year)]*1E6
-  # Write data to .rds
-  data_name <- paste("FAF", year,
-                     utils::packageDescription("stateior", fields = "Version"),
-                     sep = "_")
-  saveRDS(object = FAF,
-          file = paste0(file.path("data", data_name), ".rds"))
-  # Write metadata to JSON
-  useeior:::writeMetadatatoJSON(package = "stateior",
-                                name = data_name,
-                                year = year,
-                                source = "US Oak Ridge National Laboratory",
-                                url = url,
-                                date_last_modified = date_last_modified,
-                                date_accessed = date_accessed)
+  if (year %in% gsub(".*_", "", colnames(FAF))) {
+    # Keep columns for year
+    FAF <- FAF[, c(colnames(FAF)[1:9],
+                   paste(c("value", "tons", "tmiles"), year, sep = "_"))]
+    # Convert value from million $ to $
+    FAF[, paste0("value_", year)] <- FAF[, paste0("value_", year)]*1E6
+    # Convert weight from thousand tons to tons
+    FAF[, paste0("tons_", year)] <- FAF[, paste0("tons_", year)]*1E3
+    # Convert wright-distance from million ton-miles to ton-miles
+    FAF[, paste0("tmiles_", year)] <- FAF[, paste0("tmiles_", year)]*1E6
+    # Write data to .rds
+    data_name <- paste("FAF", year,
+                       utils::packageDescription("stateior", fields = "Version"),
+                       sep = "_")
+    saveRDS(object = FAF,
+            file = paste0(file.path("data", data_name), ".rds"))
+    # Write metadata to JSON
+    useeior:::writeMetadatatoJSON(package = "stateior",
+                                  name = data_name,
+                                  year = year,
+                                  source = "US Oak Ridge National Laboratory",
+                                  url = url,
+                                  date_last_modified = date_last_modified,
+                                  date_accessed = date_accessed)
+  } else {
+    logging::logwarn(paste(year, "FAF data is not avaliable from ORNL.",
+                           "Nothing is returned."))
+  }
 }
 # Download, save and document state FAF data
 getFAF(year)
