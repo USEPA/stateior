@@ -34,11 +34,13 @@ getEIASEDSCodeDescription <- function() {
 getEIASEDSCodeDescription()
 
 #' Get state electricity consumption data (total consumption and interstate trade,
-#' in million kilowatt hours) from EIA State Energy Data Systems (SEDS), from
-#' 2012 to the latest year available 
+#' in million kilowatt hours) from EIA State Energy Data Systems (SEDS), for a
+#' specified year.
+#' @param year A numeric value specifying year of interest.
 #' @return A data frame of state electricity consumption data (total consumption
-#' and interstate trade, in million kilowatt hours) from EIA SEDS.
-getEIASEDSStateElectricityConsumption <- function() {
+#' and interstate trade, in million kilowatt hours) from EIA SEDS for the specified
+#' year.
+getEIASEDSStateElectricityConsumption <- function(year) {
   # Download state electricity consumption data from EIA State Energy Data Systems (SEDS)
   ConsumptionFile <- "inst/extdata/EIA_SEDS_consumption.csv"
   url <- "https://www.eia.gov/state/seds/sep_use/total/csv/use_all_phy.csv"
@@ -52,12 +54,8 @@ getEIASEDSStateElectricityConsumption <- function() {
   Consumption <- utils::read.table(ConsumptionFile, sep = ",", header = TRUE,
                                    stringsAsFactors = FALSE, check.names = FALSE,
                                    fill = TRUE)
-  # Find latest data year
-  end_year <- colnames(Consumption)[ncol(Consumption)]
-  # Create year_cols
-  year_cols <- as.character(2012:end_year)
-  # Save data
-  for (year in year_cols) {
+  if (year %in% colnames(Consumption)) {
+    # Save data
     df <- Consumption[, c("State", "MSN",  year)]
     # Write data to .rds
     data_name <- paste("EIA_SEDS_StateElectricityConsumption", year,
@@ -73,8 +71,10 @@ getEIASEDSStateElectricityConsumption <- function() {
                                   url = url,
                                   date_last_modified = date_last_modified,
                                   date_accessed = date_accessed)
+  } else {
+    logging::logwarn(paste(year, "state electricity consumption data is not",
+                           "avaliable from EIA SEDS. Nothing is returned."))
   }
 }
-# Download, save and document EIA's state electricity consumption from 2012 to
-# the latest year available 
-getEIASEDSStateElectricityConsumption()
+# Download, save and document EIA SEDS state electricity consumption
+getEIASEDSStateElectricityConsumption(year)
