@@ -66,8 +66,8 @@ jobs:
       # Generate data and save as .rds files
       - name: Generate data and save as .rds files (metadata saved as .json files)
         run: |
-          year <- ${{ matrix.script-run.year }}
-          source("${{ matrix.script-run.script }}")
+          year <- ${{ matrix.data-year }}
+          source("${{ matrix.script-run }}")
         shell: Rscript {0}
       
       # Upload .rds files
