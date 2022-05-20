@@ -157,10 +157,21 @@ buildStateUseModel <- function(year) {
   logging::loginfo("Assembling state Use table (intermediate consumption + final demand)...")
   logging::loginfo("Estimating state domestic Use table...")
   logging::loginfo("Estimating state value added, appending it to state Use table...")
-  US_Import <- loadDatafromUSEEIOR(paste("Summary_Import", year, "BeforeRedef",
-                                         sep = "_"))[commodities, c(industries, FD_cols)]*1E6
   StateGVA <- assembleStateSummaryGrossValueAdded(year)
   StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
+  # Derive a commodity_import_ratio matrix from US Import matrix
+  US_Import <- loadDatafromUSEEIOR(paste("Summary_Import", year, "BeforeRedef",
+                                         sep = "_"))[commodities, c(industries, FD_cols)]*1E6
+  US_Import_wo_F050 <- US_Import
+  US_Import_wo_F050$F050 <- 0
+  commodity_import_ratio <- US_Import_wo_F050/rowSums(US_Import_wo_F050)
+  # Replace NaN with 1/(71 + 20 - 1): industries + final demand except imports
+  for (i in 1:nrow(commodity_import_ratio)) {
+    if (all(commodity_import_ratio[i, ] == "NaN")) {
+      commodity_import_ratio[i, ] <- 1/(71 + 20 - 1)
+    }
+  }
+  
   model <- list()
   for (state in states) {
     # Assemble state Use table
@@ -180,7 +191,7 @@ buildStateUseModel <- function(year) {
     # Generate state domestic Use table
     US_Import_wo_F050 <- US_Import
     US_Import_wo_F050$F050 <- 0
-    State_Import_m <- State_Use$F050 * (US_Import_wo_F050/rowSums(US_Import_wo_F050))
+    State_Import_m <- State_Use$F050 * commodity_import_ratio
     State_DomesticUse <- State_Use + State_Import_m
     State_DomesticUse$F050 <- 0
     State_DomesticUse[is.na(State_DomesticUse)] <- 0
