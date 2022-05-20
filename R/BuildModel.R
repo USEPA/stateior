@@ -156,8 +156,9 @@ buildStateUseModel <- function(year) {
   
   logging::loginfo("Assembling state Use table (intermediate consumption + final demand)...")
   logging::loginfo("Estimating state domestic Use table...")
-  DomesticUse_ratios <- calculateUSDomesticUseRatioMatrix("Summary", year)
   logging::loginfo("Estimating state value added, appending it to state Use table...")
+  US_Import <- loadDatafromUSEEIOR(paste("Summary_Import", year, "BeforeRedef",
+                                         sep = "_"))[commodities, c(industries, FD_cols)]*1E6
   StateGVA <- assembleStateSummaryGrossValueAdded(year)
   StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
   model <- list()
@@ -165,10 +166,9 @@ buildStateUseModel <- function(year) {
     # Assemble state Use table
     State_Use <- cbind(State_Use_Intermediate_ls[[state]],
                        StateFinalDemand[StateFinalDemand$State == state, FD_cols])
-    # Calculate state domestic Use table
-    State_DomesticUse <- State_Use*DomesticUse_ratios
     # Update Import in state Use table
     State_Use$F050 <- colSums(StateMake_ls[[state]]) - rowSums(State_Use)
+    State_Use[is.na(State_Use)] <- 0
     # Validation - interrupt if commodity output (q) from Make != q from Use by 1E-5
     q_make <- colSums(StateMake_ls[[state]])
     q_use <- rowSums(State_Use)
@@ -177,14 +177,25 @@ buildStateUseModel <- function(year) {
       stop(paste0(state, "'s Make and Use tables are not balanced ",
                   "in terms of commodity output."))
     }
+    # Generate state domestic Use table
+    US_Import_wo_F050 <- US_Import
+    US_Import_wo_F050$F050 <- 0
+    State_Import_m <- State_Use$F050 * (US_Import_wo_F050/rowSums(US_Import_wo_F050))
+    State_DomesticUse <- State_Use + State_Import_m
+    State_DomesticUse$F050 <- 0
+    State_DomesticUse[is.na(State_DomesticUse)] <- 0
+    # Validation - interrupt if commodity output (q) from Make != q from Domestic Use by 1E-5
+    q_domuse <- rowSums(State_DomesticUse)
+    rel_diff <- (q_domuse - q_make)/q_make
+    if (max(abs(rel_diff), na.rm = TRUE) > 1E-5 && state != "Overseas") {
+      stop(paste0(state, "'s Make and Domestic Use tables are not balanced ",
+                  "in terms of commodity output."))
+    }
     # Append value added rows to state Use tables
     GVA <- StateGVA[gsub("\\..*", "", rownames(StateGVA)) == state, ]
     rownames(GVA) <- gsub(".*\\.", "", rownames(GVA))
     State_Use[rownames(GVA), industries] <- GVA
     State_DomesticUse[rownames(GVA), industries] <- GVA
-    # Replace NA with zero
-    State_Use[is.na(State_Use)] <- 0
-    State_DomesticUse[is.na(State_DomesticUse)] <- 0
     # Add to model
     model[["Use"]][[state]] <- State_Use
     model[["DomesticUse"]][[state]] <- State_DomesticUse
