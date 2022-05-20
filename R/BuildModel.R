@@ -357,13 +357,21 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
     if (SoI2SoI_Use[i, "InterregionalExports"] < 0) {
       value <- SoI2SoI_Use[i, "InterregionalExports"]
       weight <- SoI2SoI_Use[i, tradable_cols]
-      SoI2SoI_Use[i, tradable_cols] <- weight + value*(weight/sum(weight))
+      if (sum(weight) == 0) {
+        SoI2SoI_Use[i, tradable_cols] <- value*(1/length(weight))
+      } else {
+        SoI2SoI_Use[i, tradable_cols] <- weight + value*(weight/sum(weight))
+      }
     }
     # RoUS2RoUS
     if (RoUS2RoUS_Use[i, "InterregionalExports"] < 0) {
       value <- RoUS2RoUS_Use[i, "InterregionalExports"]
       weight <- RoUS2RoUS_Use[i, tradable_cols]
-      RoUS2RoUS_Use[i, tradable_cols] <- weight + value*(weight/sum(weight))
+      if (sum(weight) == 0) {
+        RoUS2RoUS_Use[i, tradable_cols] <- value*(1/length(weight))
+      } else {
+        RoUS2RoUS_Use[i, tradable_cols] <- weight + value*(weight/sum(weight))
+      }
     }
   }
   SoI2SoI_Use$InterregionalImports <- rowSums(SoI_DomesticUse[, tradable_cols]) - rowSums(SoI2SoI_Use[, tradable_cols])
