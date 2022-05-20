@@ -11,7 +11,8 @@ getBEAStateGDPData <- function(dataname, year) {
   # Download all BEA IO tables into the placeholder file
   if (!file.exists(StateGVAzip)) {
     utils::download.file("https://apps.bea.gov/regional/zip/SAGDP.zip",
-                         StateGVAzip, mode = "wb")
+                         StateGVAzip, mode = "wb",
+                         timeout = max(1000, getOption("timeout")))
     # Get the name of all files in the zip archive
     tmp <- unzip(StateGVAzip, list = TRUE)
     fname <- tmp[tmp$Length > 0, ]$Name
@@ -102,7 +103,8 @@ getBEAStatePCE <- function(year) {
   # Download all BEA IO tables into the placeholder file
   if (!file.exists(StatePCEzip)) {
     utils::download.file("https://apps.bea.gov/regional/zip/SAPCE.zip",
-                         StatePCEzip, mode = "wb")
+                         StatePCEzip, mode = "wb",
+                         timeout = max(1000, getOption("timeout")))
     # Get the name of all files in the zip archive
     tmp <- unzip(StatePCEzip, list = TRUE)
     fname <- tmp[tmp$Length > 0, ]$Name
@@ -173,7 +175,8 @@ downloadBEAGovExpenditure <- function() {
   url <- "https://apps.bea.gov/national/Release/XLS/Survey/Section3All_xls.xlsx"
   # Download NIPA table file
   if (!file.exists(FullFileName)) {
-    utils::download.file(url, FullFileName, mode = "wb")
+    utils::download.file(url, FullFileName, mode = "wb",
+                         timeout = max(1000, getOption("timeout")))
   }
   # Create output
   ls <- list("url" = url,

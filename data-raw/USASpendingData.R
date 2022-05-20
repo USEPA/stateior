@@ -38,7 +38,7 @@ getFedGovSpending <- function(year) {
         utils::download.file(paste0("https://files.usaspending.gov/award_data_archive/FY",
                                     year_N, "_All_Contracts_Full_", data_date, ".zip"),
                              FedGovExpzip, mode = "wb",
-                             timeout = max(500, getOption("timeout")))
+                             timeout = max(1000, getOption("timeout")))
       }
       # Get the name of all files in the zip archive
       fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name

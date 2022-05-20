@@ -66,8 +66,11 @@ getCensusStateExportbyNAICS <- function(year) {
   # Download table and convert to dataframe
   tryCatch(
     exp = {
+      default_options <- options()
+      options(timeout = 1E4)
       export <- as.data.frame(jsonlite::fromJSON(url),
                               stringsAsFactors = FALSE)[-1, -6]
+      options(default_options)
       # Add column names
       colnames(export) <- c("NAICS", "CountryName", "State", "Value", "Year")
       # Convert specific columns to numeric format
@@ -120,8 +123,11 @@ getCensusStateImportbyNAICS <- function(year) {
   tryCatch(
     exp = {
       # Download table and convert to dataframe
+      default_options <- options()
+      options(timeout = 1E4)
       import <- as.data.frame(jsonlite::fromJSON(url),
                               stringsAsFactors = FALSE)[-1, -6]
+      options(default_options)
       # Add column names
       colnames(import) <- c("NAICS", "CountryName", "State", "Value", "Year")
       # Convert specific columns to numeric format
@@ -186,7 +192,8 @@ getStateLocalGovExpenditure <- function(year) {
         FullFileName <- file.path(directory, TableName)
         # Download file
         if (!file.exists(FullFileName)) {
-          suppressWarnings(utils::download.file(url, FullFileName, mode = "wb"))
+          suppressWarnings(utils::download.file(url, FullFileName, mode = "wb",
+                                                timeout = max(1000, getOption("timeout"))))
         }
         date_accessed <- as.character(as.Date(file.mtime(FullFileName)))
         # Specify rows to skip based on year
@@ -245,6 +252,4 @@ getStateLocalGovExpenditure <- function(year) {
 }
 # Download, save and document Census state local government expenditure data
 # for specified year
-if (year >= 2013) {
-  getStateLocalGovExpenditure(year)
-}
+getStateLocalGovExpenditure(year)
