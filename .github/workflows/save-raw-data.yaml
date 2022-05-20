@@ -21,11 +21,6 @@ jobs:
           - data-raw/EIAData.R
           - data-raw/FAFData.R
           - data-raw/USASpendingData.R
-          - data-raw/USASpendingData.R
-          - data-raw/USASpendingData.R
-          - data-raw/USASpendingData.R
-          - data-raw/USASpendingData.R
-          - data-raw/USASpendingData.R
         data-year:
           # - 2012
           # - 2013
