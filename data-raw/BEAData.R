@@ -163,7 +163,7 @@ getBEAStatePCE(year)
 
 #' Download BEA US Gov Expenditure data (NIPA table).
 #' @return A data frame of BEA US Gov Expenditure data (NIPA table).
-downloadBEAGovExpenditure <- function(year) {
+downloadBEAGovExpenditure <- function() {
   TableName <- "Section3All_xls.xlsx"
   dir <- "inst/extdata/StateLocalGovFinances"
   if (!dir.exists(dir)) {
@@ -269,7 +269,7 @@ getBEAGovConsumption <- function(year) {
   # Create year_col
   year_col <- as.character(year)
   # Save data
-  if (year %in% colnames(GovInvestment)) {
+  if (year %in% colnames(GovConsumption)) {
     df <- GovConsumption[complete.cases(GovConsumption),
                          c("Line", "Description", year_col)]
     # Convert values from million $ to $
