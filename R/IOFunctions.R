@@ -42,27 +42,6 @@ generateInternationalTradeAdjustmentVector <- function(iolevel, year) {
   names(InternationalTradeAdjustment) <- rownames(Use)
   return(InternationalTradeAdjustment)
 }
-
-#' Calculate US Domestic Use Ratio (matrix).
-#' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A data frame contains US Domestic Use Ratio (matrix) at a specific year at BEA Summary level.
-calculateUSDomesticUseRatioMatrix <- function(iolevel, year) {
-  # Load US Use table
-  Use <- getNationalUse(iolevel, year)
-  # Load US domestic Use table
-  DomesticUse <- generateUSDomesticUse(iolevel, year)
-  # Calculate state Domestic Use ratios
-  Ratio <- DomesticUse[rownames(Use), colnames(Use)]/Use
-  Ratio[is.na(Ratio)] <- 0
-  if (iolevel == "Detail") {
-    Ratio$F05000 <- 0
-  } else {
-    Ratio$F050 <- 0
-  }
-  return(Ratio)
-}
-
 #' Calculate US International Transport Margins Ratio (matrix).
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
