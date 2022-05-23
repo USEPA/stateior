@@ -50,10 +50,12 @@ State_Summary_DomesticUse_ls <- loadStateIODataFile(paste0("State_Summary_Domest
 State_Summary_IndustryOutput_ls <- loadStateIODataFile(paste0("State_Summary_IndustryOutput_", year))
 State_Summary_CommodityOutput_ls <- loadStateIODataFile(paste0("State_Summary_CommodityOutput_", year))
 # Load two-region tables
+TwoRegionMake_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_Make_", year))
 TwoRegionCommodityOutput_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_CommodityOutput_", year))
 TwoRegionIndustryOutput_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_IndustryOutput_", year))
 TwoRegionDomesticUse_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_DomesticUse_", year))
 TwoRegionDomesticUsewithTrade_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_DomesticUsewithTrade_", year))
+TwoRegionITA_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_InternationalTradeAdjustment_", year))
 cat("State and two-region IO data successfully loaded.")
 ```
 
@@ -107,7 +109,7 @@ failures <- c()
 for (state in states[states != "Overseas"]) {
   # Calculate Commodity Output (q) from Make and Use
   q <- TwoRegionCommodityOutput_ls[[state]]
-  q_2r_use <- rowSums(TwoRegionDomesticUse_ls[[state]])
+  q_2r_use <- rowSums(TwoRegionDomesticUse_ls[[state]]) + TwoRegionITA_ls[[state]] + c(TwoRegionDomesticUsewithTrade_ls[[state]][["SoI2SoI"]][, "ExportResidual"], TwoRegionDomesticUsewithTrade_ls[[state]][["RoUS2RoUS"]][, "ExportResidual"])
   # Calculate relative differences in q_make and q_use
   rel_diff <- (q - q_2r_use[names(q)])/q_2r_use[names(q)]
   # Compare rel_diff against 0 with a tolerance of 1E-3
@@ -482,9 +484,11 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   state_abb <- state.abb[which(state.name == state)]
   logging::loginfo("Generating A matrix of SoI Make table ...")
   # SoI Make
-  SoI_Make <- State_Summary_Make_ls[[state]]
+  TwoRegionMake <- TwoRegionMake_ls[[state]]
+  SoI_Make <- TwoRegionMake[endsWith(rownames(TwoRegionMake), state_abb),
+                            endsWith(colnames(TwoRegionMake), state_abb)]
   # SoI commodity output
-  SoI_Commodity_Output <- State_Summary_CommodityOutput_ls[[state]]
+  # SoI_Commodity_Output <- State_Summary_CommodityOutput_ls[[state]]
   TwoRegionCommodityOutput <- TwoRegionCommodityOutput_ls[[state]]
   SoI_Commodity_Output <- TwoRegionCommodityOutput[endsWith(names(TwoRegionCommodityOutput),
                                                             state_abb)]
@@ -499,11 +503,12 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   
   logging::loginfo("Generating A matrix of RoUS Make table ...")
   # RoUS Make
-  US_Make <- getNationalMake(iolevel, year)
-  RoUS_Make <- US_Make - SoI_Make
+  RoUS_Make <- TwoRegionMake[endsWith(rownames(TwoRegionMake), "RoUS"),
+                             endsWith(colnames(TwoRegionMake), "RoUS")]
   # RoUS commodity output
   RoUS_Commodity_Output <- TwoRegionCommodityOutput[endsWith(names(TwoRegionCommodityOutput),
                                                             "RoUS")]
+  
   # RoUS A matrix
   RoUS_A <- useeior:::normalizeIOTransactions(RoUS_Make, RoUS_Commodity_Output)
   # Check column sums of RoUS_A
@@ -594,15 +599,11 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
               SoI_Industry_Output, RoUS_Industry_Output)
   validation <- as.data.frame(L %*% y - output)
   colnames(validation) <- "L*y-output"
-  validation$rel_diff <- validation$`L*y-output`/c(SoI_Commodity_Output,
-                                                   RoUS_Commodity_Output,
-                                                   SoI_Industry_Output,
-                                                   RoUS_Industry_Output)
+  
+  validation$rel_diff <- validation$`L*y-output`/output
   validation$Ly <- as.numeric(L %*% y)
-  validation$output <- c(SoI_Commodity_Output$Output,
-                         RoUS_Commodity_Output$Output,
-                         SoI_Industry_Output$Output,
-                         RoUS_Industry_Output$Output)
+  validation$output <- output
+  validation[validation$output == 1, "rel_diff"] <- 0
   
   logging::loginfo("Validation complete.")
   return(list(A = A, L = L, y = y, Validation = validation))
