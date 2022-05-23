@@ -512,13 +512,15 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
 #' @export
 assembleTwoRegionIO <- function(year, iolevel) {
   startLogging()
-  # Define industries, commodities, value added rows, final demand columns, and
-  # international trade adjustment column
+  # Define industries, commodities, value added rows, final demand columns,
+  # international trade adjustment column, and non-import columns
   industries <- getVectorOfCodes(iolevel, "Industry")
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   VA_rows <- getVectorOfCodes(iolevel, "ValueAdded")
   FD_cols <- getFinalDemandCodes(iolevel)
   ITA_col <- ifelse(iolevel == "Detail", "F05100", "F051")
+  import_col <- getVectorOfCodes(iolevel, "Import")
+  nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
   # Load US Make table
   US_Make <- getNationalMake(iolevel, year)
   US_DomesticUse <- generateUSDomesticUse(iolevel, year)
@@ -593,8 +595,7 @@ assembleTwoRegionIO <- function(year, iolevel) {
     ## Two-region Commodity Output
     SoI_CommodityOutput <- State_CommodityOutput_ls[[state]]
     RoUS_CommodityOutput <- colSums(US_Make) - SoI_CommodityOutput
-    columns <- colnames(US_DomesticUse)[!colnames(US_DomesticUse) %in% c("F040", "F050")]
-    MakeUseDiff <- colSums(US_Make) - rowSums(US_DomesticUse[, c(columns, "F040")])
+    MakeUseDiff <- colSums(US_Make) - rowSums(US_DomesticUse[, nonimport_cols])
     RoUS_CommodityOutput$Output <- RoUS_CommodityOutput$Output - MakeUseDiff
     TwoRegionCommodityOutput <- c(SoI_CommodityOutput$Output, RoUS_CommodityOutput$Output)
     names(TwoRegionCommodityOutput) <- c(getBEASectorCodeLocation("Commodity", state, iolevel),
@@ -631,9 +632,12 @@ assembleTwoRegionIO <- function(year, iolevel) {
 #' @export
 buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   startLogging()
-  # Define industries and commodities
+  # Define industries, commodities, final demand columns, and non-import columns
   industries <- getVectorOfCodes(iolevel, "Industry")
   commodities <- getVectorOfCodes(iolevel, "Commodity")
+  FD_cols <- getFinalDemandCodes(iolevel)
+  import_col <- getVectorOfCodes(iolevel, "Import")
+  nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
   
   logging::loginfo("Generating SoI Make table...")
   # SoI Make
@@ -656,7 +660,6 @@ buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   # RoUS domestic Use
   SoI_DomesticUse <- loadStateIODataFile(paste0("State_", iolevel,
                                                 "_DomesticUse_", year))[[state]]
-  columns <- colnames(SoI_DomesticUse)[!colnames(SoI_DomesticUse) %in% c("F040", "F050")]
   US_DomesticUse <- generateUSDomesticUse(iolevel, year)
   RoUS_DomesticUse <- US_DomesticUse - SoI_DomesticUse[commodities, ]
   # RoUS commodity output
@@ -664,7 +667,7 @@ buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   RoUS_CommodityOutput <- US_CommodityOutput - SoI_CommodityOutput
   colnames(RoUS_CommodityOutput) <- "Output"
   # Adjust RoUS_CommodityOutput
-  MakeUseDiff <- US_CommodityOutput - rowSums(US_DomesticUse[, c(columns, "F040")])
+  MakeUseDiff <- US_CommodityOutput - rowSums(US_DomesticUse[, nonimport_cols])
   RoUS_CommodityOutput$Output <- RoUS_CommodityOutput$Output - MakeUseDiff
   
   logging::loginfo("Generating two-region Domestic Use tables...")
