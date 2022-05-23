@@ -12,6 +12,24 @@ validateResult <- function(result, abs_diff = TRUE, tolerance) {
     validation <- as.data.frame(result <= tolerance)
   }
   validation$rownames <- rownames(validation)
+  if (ncol(validation) <= 3) {
+    validation$result <- round(result, abs(log10(tolerance)))
+    validation <- reshape2::melt(validation,
+                                 id.vars = c("rownames", "result"),
+                                 variable.name = "check")
+  } else {
+    validation_self <- validation
+    validation_result <- round(result, abs(log10(tolerance)))
+    validation_result$rownames <- rownames(validation_result)
+    validation_self <- reshape2::melt(validation_self,
+                                      id.vars = "rownames")
+    validation_result <- reshape2::melt(validation_result,
+                                        id.vars = "rownames",
+                                        value.name = "result")
+    validation <- merge(validation_self, validation_result,
+                        by = c("rownames", "variable"))
+    validation$check <- "abs(result) <= tolerance"
+  }
   return(validation)
 }
 
@@ -20,14 +38,15 @@ validateResult <- function(result, abs_diff = TRUE, tolerance) {
 #' @param failure A logical value indicating whether to report failure or not
 #' @return A data.frame contains validation results
 extractValidationResult <- function(validation, failure = TRUE) {
-  df <- reshape2::melt(validation, id.vars = "rownames")
   if (failure) {
-    result <- df[df$value==FALSE, c("rownames", "variable")]
+    val_result <- validation[validation$value == FALSE,
+                             setdiff(colnames(validation), "value")]
   } else {
-    result <- df[df$value==TRUE, c("rownames", "variable")]
+    val_result <- validation[validation$value == TRUE,
+                             setdiff(colnames(validation), "value")]
   }
-  result[] <- sapply(result, as.character)
-  return(result)
+  val_result$check <- as.character(val_result$check)
+  return(val_result)
 }
 
 #' Format validation result

@@ -2,7 +2,9 @@
 % Please edit documentation in R/StateUseFunctions.R
 \name{assembleStateSummaryGrossValueAdded}
 \alias{assembleStateSummaryGrossValueAdded}
-\title{Assemble Summary-level gross value added sectors (V001, V002, V003) for all states at a specific year.}
+\title{Assemble Summary-level gross value added sectors (V001, V002, V003)
+for all states at a specific year. For each value added sector, the same set of
+state/US GVA ratios is used to regionalize US VA to states.}
 \usage{
 assembleStateSummaryGrossValueAdded(year)
 }
@@ -10,8 +12,11 @@ assembleStateSummaryGrossValueAdded(year)
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 }
 \value{
-A data frame contains Summary-level gross value added (V001, V002, V003) for all states at a specific year.
+A data frame contains Summary-level gross value added (V001, V002, V003)
+for all states at a specific year.
 }
 \description{
-Assemble Summary-level gross value added sectors (V001, V002, V003) for all states at a specific year.
+Assemble Summary-level gross value added sectors (V001, V002, V003)
+for all states at a specific year. For each value added sector, the same set of
+state/US GVA ratios is used to regionalize US VA to states.
 }

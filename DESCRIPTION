@@ -21,6 +21,7 @@ Imports:
     configr (>= 0.3.4),
     dplyr (>= 1.0.6),
     ggplot2 (>= 3.0),
+    glue (>= 1.6.2),
     jsonlite (>= 1.6),
     Hmisc (>= 4.6-0),
     logging (>= 0.10),
@@ -38,7 +39,7 @@ Imports:
 Depends:
   R (>= 3.6)
 Remotes:
-  github::USEPA/useeior@master
+  github::USEPA/useeior@updateIO
 License: file LICENSE
 Encoding: UTF-8
 LazyData: true
