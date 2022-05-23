@@ -147,8 +147,13 @@ generateDomestic2RegionICFs <- function(state, year, ioschema, iolevel,
                all.y = TRUE)
   if (iolevel == "Summary") {
     # Adjust utilities
+    
+    ## Adjust for disaggregation:
+    
+    
     ICF[ICF[, bea] == "22", cols] <- calculateUtilitiesFlowRatios(state, year)[, cols]
     ICF[ICF[, bea] == "22", "source"] <- "EIA"
+    
     # Adjust waste management and remediation services
     ICF[ICF[, bea] == "562", cols] <- calculateWasteManagementServiceFlowRatios(state, year)[, cols]
     ICF[ICF[, bea] == "562", "source"] <- "RCRAInfo and SMP"

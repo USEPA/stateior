@@ -285,6 +285,10 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   # international trade adjustment column
   commodities <- getVectorOfCodes(iolevel, "Commodity")
   industries <- getVectorOfCodes(iolevel, "Industry")
+
+  ## Disaggregate objects:
+  # commodities, industries
+  
   FD_cols <- getFinalDemandCodes(iolevel)
   import_col <- getVectorOfCodes(iolevel, "Import")
   # All tradable sectors
@@ -301,6 +305,8 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
                                                 iolevel,
                                                 "_DomesticUse_",
                                                 year))[[state]][commodities, ]
+  
+  # Disaggregate SoI_DomesticUse
   
   # 2 - Generate 2-region ICFs
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios...")
@@ -507,10 +513,11 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
+#' @param disagg TEMPORARY boolean to trigger disaggregation.
 #' @return A list of two-region make, use, domestic use, and Use tables
 #' as well as commodity and industry outputs by state.
 #' @export
-assembleTwoRegionIO <- function(year, iolevel) {
+assembleTwoRegionIO <- function(year, iolevel, disagg=FALSE) {
   startLogging()
   # Define industries, commodities, value added rows, final demand columns,
   # international trade adjustment column, and non-import columns
@@ -535,6 +542,12 @@ assembleTwoRegionIO <- function(year, iolevel) {
                                                          iolevel,
                                                          "_CommodityOutput_",
                                                          year))
+
+  ## Disaggregate model objects:
+  # State_CommodityOutput_ls, State_IndustryOutput_ls, State_Make_ls, State_Use_ls
+  # US_Make, US_DomesticUse
+  # commodities, industries
+  
   # Assemble two-region IO tables
   TwoRegionIO <- list()
   for (state in sort(c(state.name, "District of Columbia"))) {
