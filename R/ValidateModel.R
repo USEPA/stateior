@@ -13,6 +13,9 @@ validateResult <- function(result, abs_diff = TRUE, tolerance) {
   }
   validation$rownames <- rownames(validation)
   if (ncol(validation) <= 3) {
+    if (class(result) == "data.frame") {
+      result <- result[, 1]
+    }
     validation$result <- round(result, abs(log10(tolerance)))
     validation <- reshape2::melt(validation,
                                  id.vars = c("rownames", "result"),

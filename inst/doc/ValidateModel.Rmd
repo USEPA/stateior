@@ -81,9 +81,8 @@ cat("\n")
 reportValidationResult(failures)
 ```
 
-#### 2. Check commodity output
-#### 2.1. Check if commodity output from state Make and Use are almost equal (<= 0.01).
-```{r check2.1}
+#### 2. Check if commodity output from state Make and Use are almost equal (<= 0.01).
+```{r check2}
 failures <- c()
 for (state in states[states != "Overseas"]) {
   # Calculate Commodity Output (q) from Make and Use
@@ -102,28 +101,6 @@ for (state in states[states != "Overseas"]) {
 cat("\n")
 reportValidationResult(failures)
 ```
-
-#### 2.2. Check if commodity output from state Use and TwoRegion Use are almost equal (<= 0.01).
-```{r check2}
-failures <- c()
-for (state in states[states != "Overseas"]) {
-  # Calculate Commodity Output (q) from Make and Use
-  q <- TwoRegionCommodityOutput_ls[[state]]
-  q_2r_use <- rowSums(TwoRegionDomesticUse_ls[[state]]) + TwoRegionITA_ls[[state]] + c(TwoRegionDomesticUsewithTrade_ls[[state]][["SoI2SoI"]][, "ExportResidual"], TwoRegionDomesticUsewithTrade_ls[[state]][["RoUS2RoUS"]][, "ExportResidual"])
-  # Calculate relative differences in q_make and q_use
-  rel_diff <- (q - q_2r_use[names(q)])/q_2r_use[names(q)]
-  # Compare rel_diff against 0 with a tolerance of 1E-3
-  failures_state <- formatValidationResult(rel_diff, abs_diff = TRUE, tolerance = 0.01)[["Failure"]]
-  if (nrow(failures_state) > 0) {
-    failures_state$State <- state
-  }
-  colnames(failures_state)[1:3] <- c("Commodity", "Relative Diff", "Validation")
-  failures <- rbind(failures, failures_state)
-}
-cat("\n")
-reportValidationResult(failures)
-```
-
 
 ### Compare state to US IO tables (negativity in the same cell & state sum == US totals)
 #### 3. Sum of each cell across all state Make tables must almost equal (<= 0.001) the same cell in US Make table.
@@ -409,8 +386,8 @@ for (state in states[states != "Overseas"]) {
 reportValidationResult(failures)
 ```
 
-#### 16. Total state commodity supply == state demand by intermediate consumption, plus final demand (except imports and international trade adjustment) + Interregional Exports + Export Residual. Difference must be <= 0.001.
-```{r check16}
+#### 16.1. Total state commodity supply == state demand by intermediate consumption, plus final demand (except imports and international trade adjustment) + Interregional Exports + Export Residual. Difference must be <= 0.001.
+```{r check16.1}
 failures <- data.frame()
 for (state in states[states != "Overseas"]) {
   # Prepare domestic 2-region Use tables
@@ -431,6 +408,27 @@ for (state in states[states != "Overseas"]) {
   }
   failures <- rbind(failures, failures_state)
 }
+reportValidationResult(failures)
+```
+
+#### 16.2. Total SoI and RoUS commodity supply (output) == SoI and RoUS demand (domestic intermediate consumption + ITA + Export Residual).
+```{r check16.2}
+failures <- c()
+for (state in states[states != "Overseas"]) {
+  # Calculate Commodity Output (q) from Make and Use
+  q <- TwoRegionCommodityOutput_ls[[state]]
+  q_2r_use <- rowSums(TwoRegionDomesticUse_ls[[state]]) + TwoRegionITA_ls[[state]] + c(TwoRegionDomesticUsewithTrade_ls[[state]][["SoI2SoI"]][, "ExportResidual"], TwoRegionDomesticUsewithTrade_ls[[state]][["RoUS2RoUS"]][, "ExportResidual"])
+  # Calculate relative differences in q_make and q_use
+  rel_diff <- (q - q_2r_use[names(q)])/q_2r_use[names(q)]
+  # Compare rel_diff against 0 with a tolerance of 1E-3
+  failures_state <- formatValidationResult(rel_diff, abs_diff = TRUE, tolerance = 0.01)[["Failure"]]
+  if (nrow(failures_state) > 0) {
+    failures_state$State <- state
+  }
+  colnames(failures_state)[1:3] <- c("Commodity", "Relative Diff", "Validation")
+  failures <- rbind(failures, failures_state)
+}
+cat("\n")
 reportValidationResult(failures)
 ```
 
