@@ -451,7 +451,7 @@ for (state in states[states != "Overseas"]) {
   columns <- c(getVectorOfCodes("Summary", "Industry"),
                setdiff(getFinalDemandCodes("Summary"),
                        getVectorOfCodes("Summary", "Import")),
-               "InterregionalExports", "ExportResidual")
+               "F051", "InterregionalExports", "ExportResidual")
   # Prepare df0 and df1
   df0 <- State_Summary_CommodityOutput_ls[[state]][, "Output", drop = FALSE]
   df1 <- as.data.frame(rowSums(TwoRegionTable_state[["SoI2SoI"]][, columns]))
