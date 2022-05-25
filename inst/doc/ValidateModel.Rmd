@@ -228,12 +228,12 @@ for (state in states) {
 reportValidationResult(failures)
 ```
 
-#### 9. Sum of each cell across all state Use tables must almost equal (<= 0.001) the same cell in US Use table. This validates that Total state demand == Total national demand.
+#### 9. Sum of each cell across all state Use tables must almost equal (<= 1E5, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
 Note: failures associated with 'F050 - Imports' are acceptable. Because state imports are not directly derived from US imports, a gap in imports between state sum and national total is reasonable.
 
 ```{r check9}
 # Create a function to implement the validation
-validateStateUseAgainstNationlUse <- function(domestic = FALSE) {
+validateStateUseAgainstNationlUse <- function(domestic = FALSE, rel_diff = FALSE) {
   if (domestic) {
     Use_ls <- State_Summary_DomesticUse_ls
     df0 <- US_Summary_DomesticUse
@@ -245,20 +245,54 @@ validateStateUseAgainstNationlUse <- function(domestic = FALSE) {
   rownames(df1) <- gsub(".*\\.", "", rownames(df1))
   df1 <- df1[rownames(df0), colnames(df0)]
   # Compare aggregated state Use table against US Use table
-  failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
-  rownames(failures) <- NULL
-  colnames(failures) <- c("Commodity", "Industry/Final Demand")
+  if (rel_diff) {
+    failures <- formatValidationResult((df1 - df0)/df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
+    rownames(failures) <- NULL
+    colnames(failures) <- c("Commodity", "Industry/Final Demand", "Relative Diff", "Validation")
+    # Provide values in df0 and df1 for failures
+    if (nrow(failures) > 0) {
+      failures[, c("US", "StateSum")] <- 0
+      for (i in 1:nrow(failures)) {
+        row <- failures[i, "Commodity"]
+        col <- failures[i, "Industry/Final Demand"]
+        failures[i, "US"] <- df0[row, col]
+        failures[i, "StateSum"] <- df1[row, col]
+      }
+    }
+  } else {
+    failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 5E6)[["Failure"]]
+    rownames(failures) <- NULL
+    colnames(failures) <- c("Commodity", "Industry/Final Demand", "Absolute Diff", "Validation")
+    # Compare failures to US values
+    if (nrow(failures) > 0) {
+      failures[, "AbsDiffPortioninNationalTotals"] <- 0
+      for (i in 1:nrow(failures)) {
+        row <- failures[i, "Commodity"]
+        col <- failures[i, "Industry/Final Demand"]
+        failures[i, "AbsDiffPortioninNationalTotals"] <- failures[i, "Absolute Diff"]/df0[row, col]
+      }
+    }
+  }
+  
   return(failures)
 }
-StateUseValidationFailures <- validateStateUseAgainstNationlUse(domestic = FALSE)
-StateDomesticUseValidationFailures <- validateStateUseAgainstNationlUse(domestic = TRUE)
+StateUseValidationFailures_absdiff <- validateStateUseAgainstNationlUse(domestic = FALSE, rel_diff = FALSE)
+StateDomesticUseValidationFailures_absdiff <- validateStateUseAgainstNationlUse(domestic = TRUE, rel_diff = FALSE)
+StateUseValidationFailures_reldiff <- validateStateUseAgainstNationlUse(domestic = FALSE, rel_diff = TRUE)
+StateDomesticUseValidationFailures_reldiff <- validateStateUseAgainstNationlUse(domestic = TRUE, rel_diff = TRUE)
 
 # State Use tables
-cat("##### 9.1 State Use tables\n")
-reportValidationResult(StateUseValidationFailures)
+cat("##### 9.1 State Use tables (checking absolute differences)\n")
+reportValidationResult(StateUseValidationFailures_absdiff)
 # State Domestic Use tables
-cat("##### 9.2 State Domestic Use tables\n")
-reportValidationResult(StateDomesticUseValidationFailures)
+cat("##### 9.2 State Domestic Use tables (checking absolute differences)\n")
+reportValidationResult(StateDomesticUseValidationFailures_absdiff)
+# State Use tables
+cat("##### 9.3 State Use tables (checking relative differences)\n")
+reportValidationResult(StateUseValidationFailures_reldiff)
+# State Domestic Use tables
+cat("##### 9.4 State Domestic Use tables (checking relative differences)\n")
+reportValidationResult(StateDomesticUseValidationFailures_reldiff)
 ```
 
 ### Check two-region model results
@@ -520,7 +554,7 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   } else {
     logging::logwarn("Column sums of A matrix of SoI Make table != 1")
   }
-  
+
   logging::loginfo("Generating A matrix of RoUS Make table ...")
   # RoUS Make
   RoUS_Make <- TwoRegionMake[endsWith(rownames(TwoRegionMake), "RoUS"),
@@ -528,7 +562,7 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   # RoUS commodity output
   RoUS_Commodity_Output <- TwoRegionCommodityOutput[endsWith(names(TwoRegionCommodityOutput),
                                                             "RoUS")]
-  
+
   # RoUS A matrix
   RoUS_A <- useeior:::normalizeIOTransactions(RoUS_Make, RoUS_Commodity_Output)
   # Check column sums of RoUS_A
@@ -537,7 +571,7 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   } else {
     logging::logerror("Column sums of A matrix of RoUS Make table != 1")
   }
-  
+
   # Two-region A matrix
   #                       Commodity                Commodity                  Industry                     Industry
   #                          SoI                     RoUS                        SoI                         RoUS
@@ -551,7 +585,7 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   # Industry  RoUS|           0           |norm(RoUS_Make, RoUS_TCO)|             0             |             0              |
   #               +-----------------------+-------------------------+---------------------------+----------------------------+
   #                           Total column sum must equal 1                 Total column sum can but shouldn't equal 1
-  
+
   logging::loginfo("Generating two-region Domestic Use tables ...")
   ls <- TwoRegionDomesticUsewithTrade_ls[[state]]
   TwoRegionIndustryOutput <- TwoRegionIndustryOutput_ls[[state]]
@@ -561,23 +595,23 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
                                                           "RoUS")]
   # If industry/comm output == 0, it's not viable to generate A matrix, hence set it to 1.
   SoI_Industry_Output[SoI_Industry_Output == 0] <- 1
-  
+
   logging::loginfo("Generating A matrix of SoI2SoI Domestic Use table ...")
   SoI2SoI_A <- useeior:::normalizeIOTransactions(ls[["SoI2SoI"]][, industries],
                                                  SoI_Industry_Output)
-  
+
   logging::loginfo("Generating A matrix of RoUS2SoI Domestic Use table ...")
   RoUS2SoI_A <- useeior:::normalizeIOTransactions(ls[["RoUS2SoI"]][, industries],
                                                   SoI_Industry_Output)
-  
+
   logging::loginfo("Generating A matrix of SoI2RoUS Domestic Use table ...")
   SoI2RoUS_A <- useeior:::normalizeIOTransactions(ls[["SoI2RoUS"]][, industries],
                                                   RoUS_Industry_Output)
-  
+
   logging::loginfo("Generating A matrix of RoUS2RoUS Domestic Use table ...")
   RoUS2RoUS_A <- useeior:::normalizeIOTransactions(ls[["RoUS2RoUS"]][, industries],
                                                    RoUS_Industry_Output)
-  
+
   logging::loginfo("Assembling the complete A matrix ...")
   # Assemble A matrix
   A_top <- cbind(diag(rep(0, length(commodities)*2)),
@@ -595,12 +629,12 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
                          rep("Industry", length(industries)*2)),
                        sep = ".")
   colnames(A) <- rownames(A)
-  
+
   logging::loginfo("Generating the L matrix ...")
   # Calculate L matrix
   I <- diag(nrow(A))
   L <- solve(I - A, tol = 1E-20)
-  
+
   logging::loginfo("Calculating y (Final Demand totals) of SoI and RoUS ...")
   # Calculate Final Demand (y)
   FD_columns  <- getFinalDemandCodes("Summary")
@@ -611,7 +645,7 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   RoUS2RoUS_y <- rowSums(ls[["RoUS2RoUS"]][, c(FD_columns, ita_column, "ExportResidual")])
   y <- c(SoI2SoI_y + SoI2RoUS_y, RoUS2SoI_y + RoUS2RoUS_y, rep(0, length(industries)*2))
   names(y) <- rownames(L)
-  
+
   logging::loginfo("Validating L*y == commodity and industry output ...")
   # Validate L * y == Output
   # Output = c(SoI_TCO, RoUS_TCO, SoI_TIO, RoUS_TIO)
@@ -619,12 +653,12 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
               SoI_Industry_Output, RoUS_Industry_Output)
   validation <- as.data.frame(L %*% y - output)
   colnames(validation) <- "L*y-output"
-  
+
   validation$rel_diff <- validation$`L*y-output`/output
   validation$Ly <- as.numeric(L %*% y)
   validation$output <- output
   validation[validation$output == 1, "rel_diff"] <- 0
-  
+
   logging::loginfo("Validation complete.")
   return(list(A = A, L = L, y = y, Validation = validation))
 }
