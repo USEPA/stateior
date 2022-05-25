@@ -26,9 +26,11 @@ validateResult <- function(result, abs_diff = TRUE, tolerance) {
     validation_result$rownames <- rownames(validation_result)
     validation_self <- reshape2::melt(validation_self,
                                       id.vars = "rownames")
+    validation_self$variable <- as.character(validation_self$variable)
     validation_result <- reshape2::melt(validation_result,
                                         id.vars = "rownames",
                                         value.name = "result")
+    validation_result$variable <- as.character(validation_result$variable)
     validation <- merge(validation_self, validation_result,
                         by = c("rownames", "variable"))
     validation$check <- "abs(result) <= tolerance"
