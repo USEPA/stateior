@@ -11,7 +11,13 @@ validateResult <- function(result, abs_diff = TRUE, tolerance) {
   } else {
     validation <- as.data.frame(result <= tolerance)
   }
-  validation$rownames <- rownames(validation)
+  if (!is.null(rownames(result))) {
+    validation$rownames <- rownames(result)
+  } else if (!is.null(names(result))) {
+    validation$rownames <- names(result)
+  } else {
+    validation$rownames <- rownames(validation)
+  }
   if (ncol(validation) <= 3) {
     if (class(result) == "data.frame") {
       result <- result[, 1]
