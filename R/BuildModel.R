@@ -227,9 +227,9 @@ buildStateUseModel <- function(year) {
   # The rationale is: first, generate a state Import matrix, then, add it to state Use.
   # The matrix is created by expanding an import vector to a matrix based on national
   # commodity/total_import ratio.
-  # In this matrix, "row sum of non-import columns" should = "the import column
-  # (F050)" (with a +/- X million $ difference), as this is the observation in
-  # US Import matrix and we assume this equation still holds at state level.
+  # In this matrix, "row sum of non-import columns" should perfectly offset
+  # "the import column (F050)" (with a +/- X million $ difference), as this is
+  # the observation in US Import matrix and we assume it still holds at state level.
   # Therefore, to create the state import matrix, the import column F050 needs
   # to be determined first.
   # To do so, we reuse the equation for calculating US ITA:
