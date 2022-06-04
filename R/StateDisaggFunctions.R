@@ -91,6 +91,8 @@ disaggregateStateModel <- function(model, state){
     # Format for UseFileDF...
     
     model$MakeTransactions <- disaggregateMakeTable(model, disagg)
+    # TODO: Fix error in above function call: there is a formatting error due to the abscence of /US in the Make table row/column names.
+    # Happens in the applyAllocation function in the useeior DisaggregateFunctions.R script.
     
   }
   
