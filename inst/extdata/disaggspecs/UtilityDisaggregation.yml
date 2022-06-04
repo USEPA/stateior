@@ -1,0 +1,9 @@
+Disaggregation:
+  22/US:
+    OriginalSectorCode: "22/US"
+    OrignalSectorName: "Utilities"
+    DisaggregationType: "Userdefined"
+    SectorFile: UtilityDisaggregation_Sectors.csv
+    MakeFile: UtilityDisaggregationDetail_Make.csv
+    UseFile: UtilityDisaggregationDetail_Use.csv
+    EnvFile: UtilityDisaggregation_Env.csv 
