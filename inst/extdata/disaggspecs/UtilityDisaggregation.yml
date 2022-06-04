@@ -4,6 +4,6 @@ Disaggregation:
     OrignalSectorName: "Utilities"
     DisaggregationType: "Userdefined"
     SectorFile: UtilityDisaggregation_Sectors.csv
-    MakeFile: UtilityDisaggregationDetail_Make.csv
-    UseFile: UtilityDisaggregationDetail_Use.csv
-    EnvFile: UtilityDisaggregation_Env.csv 
+    MakeFile: UtilityDisaggregationSummary_Make.csv
+    UseFile: UtilityDisaggregationSummary_Use.csv
+    EnvFile: UtilityDisaggregationSummary_Env.csv 
