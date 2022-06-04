@@ -550,18 +550,39 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
   temp <- 1 # for debugging
   if(disaggState == TRUE){
     
-    configfile <- "UtilityDisaggregation.yml"
-    disaggConfigpath <- system.file(paste0("extdata/disaggspecs/"), configfile, package = "stateior")
+    # Functions that need to be exported from useeior package?
+    getDisaggregationSpecs <- utils::getFromNamespace("getDisaggregationSpecs","useeior")
+    
     # Disaggregate each state 
     for (state in sort(c(state.name, "District of Columbia"))) {
+     
+      # Initialize model for every state
+      model <- list() 
+      configfile <- "UtilityDisaggregation"
+      disaggConfigpath <- system.file(paste0("extdata/disaggspecs/"), paste0(configfile,".yml"), package = "stateior")
       
+      model$specs$DisaggregationSpecs <- configfile
       
+       #model <- getStateDisaggregationSpecs(model, disaggConfigpath)
+      model <- getDisaggregationSpecs(model, disaggConfigpath)
+      
+      if(length(model$DisaggregationSpecs)!=0){
+        
+        model$MakeTransactions <- State_Make_ls[[state]]
+        model$UseTransactions <- State_Use_ls[[state]]
+        #assign other model objects to disaggregate...
+        
+        model <- disaggregateStateModel(model, state)
+      }
+      
+        
+      temp <- 2 # for debugging, end of for loop
     }
-    temp <- 2 # for debugging, end of code for disagg
-    # Assemble two-region IO tables
-    
-  }# End of Disagg if 
+
+    temp <- 3 # for debugging, end of code for disagg
+  }# End of Disagg   }
   
+  # Assemble two-region IO tables 
   TwoRegionIO <- list()
   for (state in sort(c(state.name, "District of Columbia"))) {
     ## Two-region Make
