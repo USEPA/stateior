@@ -513,11 +513,11 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
-#' @param disagg TEMPORARY boolean to trigger disaggregation.
+#' @param disaggState TEMPORARY boolean to trigger disaggregation.
 #' @return A list of two-region make, use, domestic use, and Use tables
 #' as well as commodity and industry outputs by state.
 #' @export
-assembleTwoRegionIO <- function(year, iolevel, disagg=FALSE) {
+assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
   startLogging()
   # Define industries, commodities, value added rows, final demand columns,
   # international trade adjustment column, and non-import columns
@@ -547,8 +547,21 @@ assembleTwoRegionIO <- function(year, iolevel, disagg=FALSE) {
   # State_CommodityOutput_ls, State_IndustryOutput_ls, State_Make_ls, State_Use_ls
   # US_Make, US_DomesticUse
   # commodities, industries
+  temp <- 1 # for debugging
+  if(disaggState == TRUE){
+    
+    configfile <- "UtilityDisaggregation.yml"
+    disaggConfigpath <- system.file(paste0("extdata/disaggspecs/"), configfile, package = "stateior")
+    # Disaggregate each state 
+    for (state in sort(c(state.name, "District of Columbia"))) {
+      
+      
+    }
+    temp <- 2 # for debugging, end of code for disagg
+    # Assemble two-region IO tables
+    
+  }# End of Disagg if 
   
-  # Assemble two-region IO tables
   TwoRegionIO <- list()
   for (state in sort(c(state.name, "District of Columbia"))) {
     ## Two-region Make
