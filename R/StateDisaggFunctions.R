@@ -77,21 +77,9 @@ disaggregateStateModel <- function(model, state){
   for (disagg in model$DisaggregationSpecs){
     # TODO: add call to other disaggregation functions
     
-    
-    # # Format stateior model objects to conform to useeior disaggregation formats
-    # # Format for MakeFileDF
-    # oldIndIndeces <- which(!(disagg$MakeFileDF$IndustryCode %in% disagg$DisaggregatedSectorCodes)) # Find Ind indeces for MakeFileDF which do not contain new sectors 
-    # disagg$MakeFileDF$IndustryCode[oldIndIndeces] <- gsub("\\/.*", "",disagg$MakeFileDF$IndustryCode[oldIndIndeces]) # remove the /US from oldIndIndces
-    # disagg$MakeFileDF$IndustryCode[oldIndIndeces] <- paste0(state,".",disagg$MakeFileDF$IndustryCode[oldIndIndeces]) # add state name to oldIndIndeces sectors
-    # 
-    # #same as above, but for commodity codes in the make table
-    # oldComIndeces <- which(!(disagg$MakeFileDF$CommodityCode %in% disagg$DisaggregatedSectorCodes))
-    # disagg$MakeFileDF$CommodityCode[oldComIndeces] <- gsub("\\/.*", "",disagg$MakeFileDF$CommodityCode[oldComIndeces]) # remove the /US from oldIndIndces
-    # 
-    # # Format for UseFileDF...
-    
     logging::loginfo(paste0("Disaggregating ", disagg$OrignalSectorName," for ", state))
     
+    # Formatting Make row and column names according to useeior disaggregation formats
     # For make rows
     rowLabels <- rownames(model$MakeTransactions)
     rowLabels <- gsub(".*\\.", "", rowLabels)
@@ -107,8 +95,6 @@ disaggregateStateModel <- function(model, state){
     
     
     model$MakeTransactions <- disaggregateMakeTable(model, disagg)
-    # TODO: Fix error in above function call: there is a formatting error due to the abscence of /US in the Make table row/column names.
-    # Happens in the applyAllocation function in the useeior DisaggregateFunctions.R script.
     
     temp <- 1
     
