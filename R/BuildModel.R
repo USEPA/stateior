@@ -550,21 +550,11 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
   temp <- 1 # for debugging
   if(disaggState == TRUE){
     
-    # Functions that need to be exported from useeior package?
-    getDisaggregationSpecs <- utils::getFromNamespace("getDisaggregationSpecs","useeior")
-    
     # Disaggregate each state 
     for (state in sort(c(state.name, "District of Columbia"))) {
      
       # Initialize model for every state
-      model <- list() 
-      configfile <- "UtilityDisaggregation"
-      disaggConfigpath <- system.file(paste0("extdata/disaggspecs/"), paste0(configfile,".yml"), package = "stateior")
-      
-      model$specs$DisaggregationSpecs <- configfile
-      
-       #model <- getStateDisaggregationSpecs(model, disaggConfigpath)
-      model <- getDisaggregationSpecs(model, disaggConfigpath)
+      model <- getStateModelDisaggSpecs()
       
       if(length(model$DisaggregationSpecs)!=0){
         
@@ -581,6 +571,7 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
 
     temp <- 3 # for debugging, end of code for disagg
   }# End of Disagg   }
+  temp <- 4
   
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
