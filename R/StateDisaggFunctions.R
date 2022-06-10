@@ -25,41 +25,53 @@ disaggregateStateModel <- function(model, state){
   # Need to export all disagg functions from useeior package? 
 #  disaggregateMakeTable <- utils::getFromNamespace("disaggregateMakeTable","useeior")
   
-
-  
   for (disagg in model$DisaggregationSpecs){
     # TODO: add call to other disaggregation functions
     
     logging::loginfo(paste0("Disaggregating ", disagg$OrignalSectorName," for ", state))
     
     # Formatting Make row and column names according to useeior disaggregation formats
-    # For make rows
-    rowLabels <- rownames(model$MakeTransactions)
-    rowLabels <- gsub(".*\\.", "", rowLabels)
-    rowLabels <- paste0(rowLabels, "/US")
-    
-    # For make cols
-    colLabels <- colnames(model$MakeTransactions)
-    colLabels <- paste0(colLabels, "/US")
-    
-    # Replace names with new labels
-    rownames(model$MakeTransactions) <- rowLabels
-    colnames(model$MakeTransactions) <- colLabels
-    
-    
-    #model$MakeTransactions <- disaggregateMakeTable(model, disagg)
+    model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state)
     model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
     
     temp <- 1
     
   }
   
-  
-
-  
   temp <- 2
   
   return(model)
+  
+  
+} 
+
+
+#' @param model An stateior model object with model specs and specific IO tables loaded
+#' @param state A string value that indicates the state model being disaggregated
+#' @return A stateior make table formatted for disaggregation with useeior functions
+formatMakeFromStateToUSEEIO <- function(model, state){
+  # Formatting Make row and column names according to useeior disaggregation formats
+  # For make rows
+  rowLabels <- rownames(model$MakeTransactions)
+  rowLabels <- gsub(".*\\.", "", rowLabels)
+  rowLabels <- paste0(rowLabels, "/US")
+  
+  # For make cols
+  colLabels <- colnames(model$MakeTransactions)
+  colLabels <- paste0(colLabels, "/US")
+  
+  # Replace names with new labels
+  rownames(model$MakeTransactions) <- rowLabels
+  colnames(model$MakeTransactions) <- colLabels
+  
+  return(model$MakeTransactions)
+}
+
+#' @param model An stateior model object with model specs and specific IO tables loaded
+#' @param state A string value that indicates the state model being disaggregated
+#' @return A stateior make table formatted according to stateior specifications
+formatMakeFromUSEEIOtoState <- function(model, state){
+  
   
   
 }
