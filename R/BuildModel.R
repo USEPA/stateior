@@ -550,17 +550,31 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
   temp <- 1 # for debugging
   if(disaggState == TRUE){
     
-    # Disaggregate each state 
+    # # Disaggregate objects once #TODO: Need to finish this part for US_Make, US_DomesticUse, commodities, and industries objects
+    # for(disagg in model$DisaggregationSpecs){
+    #   industries <- useeior:::disaggregateSectorDFs(model, disagg, "Industry")
+    #   
+    # }
+    
+    
+    # Disaggregate objects for each state 
     for (state in sort(c(state.name, "District of Columbia"))) {
      
       # Initialize model for every state
       model <- getStateModelDisaggSpecs()
+
+      #### TODO: Ask if Will we have industry models in stateior? ####
+      model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior 
+      
       
       if(length(model$DisaggregationSpecs)!=0){
         
         model$MakeTransactions <- State_Make_ls[[state]]
-        model$UseTransactions <- State_Use_ls[[state]]
-        #assign other model objects to disaggregate...
+        model$FullUse <- State_Use_ls[[state]]
+        
+        model$CommodityOutput <- State_CommodityOutput_ls[[state]]
+        model$IndustryOutput <- State_IndustryOutput_ls[[state]]
+ 
         
         model <- disaggregateStateModel(model, state)
       }
