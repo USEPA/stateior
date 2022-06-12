@@ -30,9 +30,15 @@ disaggregateStateModel <- function(model, state){
     
     logging::loginfo(paste0("Disaggregating ", disagg$OrignalSectorName," for ", state))
     
-    # Formatting Make row and column names according to useeior disaggregation formats
+    # Formatting model objects according to useeior disaggregation formats
     model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state)
+   
+    
+    # Disaggregating specified model objects
     model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
+    
+    # Formatting disaggregated model objects back to stateior formats
+    model$MakeTransactions <- formatMakeFromUSEEIOtoState(model, state)
     
     temp <- 1
     
@@ -72,6 +78,14 @@ formatMakeFromStateToUSEEIO <- function(model, state){
 #' @return A stateior make table formatted according to stateior specifications
 formatMakeFromUSEEIOtoState <- function(model, state){
   
+  rowLabels <- rownames(model$MakeTransactions)
+  rowLabels <- gsub("\\/.*","",rowLabels) # remove everything after "/"
+  rowLabels <- paste0(state,".",rowLabels) # add state and . before sector name to match original format
+  rownames(model$MakeTransactions) <- rowLabels # Replace old row labels with new ones
   
+  columnLabels <- colnames(model$MakeTransactions)
+  columnLabels <- gsub("\\/.*","",columnLabels) # remove everything after "/" 
+  colnames(model$MakeTransactions) <- columnLabels # replace old column labels with new ones
   
+  return(model$MakeTransactions)
 }
