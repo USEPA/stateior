@@ -22,8 +22,6 @@ getStateModelDisaggSpecs <- function(){
 disaggregateStateModel <- function(model, state){
 
   temp <- 1
-  # Need to export all disagg functions from useeior package? 
-#  disaggregateMakeTable <- utils::getFromNamespace("disaggregateMakeTable","useeior")
   
   for (disagg in model$DisaggregationSpecs){
 
@@ -41,9 +39,14 @@ disaggregateStateModel <- function(model, state){
     model$FinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = FALSE)
     model$UseValueAdded <- useeior:::disaggregateVA(model, disagg)
     
+    if(model$specs$CommodityorIndustryType=="Commodity") {
+      model <- calculateStateIndustryCommodityOuput(model) # Also formats the disaggregated industry and commodity outputs to stateior formats
+      
+    }
+    
     # Formatting disaggregated model objects back to stateior formats
     model$MakeTransactions <- formatMakeFromUSEEIOtoState(model, state)
-    model$FullUse <- formatFullUseFromUSEEIOToState(model, state)
+    model$FullUse <- formatFullUseFromUSEEIOtoState(model, state)
     
     temp <- 1
     
@@ -116,15 +119,24 @@ formatMakeFromUSEEIOtoState <- function(model, state){
 #' @param state A string value that indicates the state model being disaggregated
 #' @return A stateior FullUse table formatted according to stateior specifications
 formatFullUseFromUSEEIOtoState <- function(model, state){
+  temp <- 1
   
-  # rowLabels <- rownames(model$MakeTransactions)
-  # rowLabels <- gsub("\\/.*","",rowLabels) # remove everything after "/"
-  # rowLabels <- paste0(state,".",rowLabels) # add state and . before sector name to match original format
-  # rownames(model$MakeTransactions) <- rowLabels # Replace old row labels with new ones
-  # 
-  # columnLabels <- colnames(model$MakeTransactions)
-  # columnLabels <- gsub("\\/.*","",columnLabels) # remove everything after "/" 
-  # colnames(model$MakeTransactions) <- columnLabels # replace old column labels with new ones
+  tempFullUse <- cbind(model$UseTransactions, model$FinalDemand) # combine UseTransactions and FinalDemand columns
+  
+  # Create the empty section of FullUse that is VA rows by FD columns (NA values)
+  VAbyFDSection <- data.frame(matrix(nrow = dim(model$UseValueAdded)[1], 
+                                     ncol = ncol(tempFullUse) - ncol(model$UseTransactions))) 
+ 
+   # Rename rows and cols of new dataframe to allow cbind operation
+  colnames(VAbyFDSection) <- colnames(model$FinalDemand)
+  rownames(VAbyFDSection) <- rownames(model$UseValueAdded)
+  
+  tempVA <- cbind(model$UseValueAdded, VAbyFDSection) # combine UseValueAdded and VAbyFDSection columns
+  
+  # Assemble FullUse table and remane according to stateior formats
+  model$FullUse <- rbind(tempFullUse, tempVA)
+  rownames(model$FullUse) <- gsub("\\/.*","",rownames(model$FullUse)) # remove everything after "/"
+  colnames(model$FullUse) <- gsub("\\/.*","",colnames(model$FullUse)) # remove everything after "/"
   
   return(model$FullUse)
 }
@@ -142,4 +154,25 @@ splitFullUse <- function(model, state){
   
 }
 
-
+#' @param model An stateior model object with model specs and specific IO tables loaded
+#' @return A model object with disaggregated IndustryOutput and CommodityOutput objects
+calculateStateIndustryCommodityOuput <- function(model){
+  
+  temp <- 1
+  
+  # Calculating and formatting IndustryOutput
+  model$IndustryOutput <- data.frame(colSums(model$UseTransactions) + colSums(model$UseValueAdded))
+  colnames(model$IndustryOutput) <- "Output"
+  rowLabels <- rownames(model$IndustryOutput)
+  rowLabels <- gsub("\\/.*","",rowLabels) # remove everything after "/"
+  rownames(model$IndustryOutput) <- rowLabels
+  
+  # Calculating and formatting CommodityOuput
+  model$CommodityOutput <- data.frame(rowSums(model$UseTransactions) + rowSums(model$FinalDemand))
+  colnames(model$CommodityOutput) <- "Output"
+  rowLabels <- rownames(model$CommodityOutput)
+  rowLabels <- gsub("\\/.*","",rowLabels) # remove everything after "/"
+  rownames(model$CommodityOutput) <- rowLabels
+    
+  return(model)
+}
