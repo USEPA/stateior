@@ -575,17 +575,24 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
         model$CommodityOutput <- State_CommodityOutput_ls[[state]]
         model$IndustryOutput <- State_IndustryOutput_ls[[state]]
  
-        
         model <- disaggregateStateModel(model, state)
+
+        # Assign the disaggregated model objects to the stateior lists
+        State_Make_ls[[state]] <- model$MakeTransactions
+        State_Use_ls[[state]] <- model$FullUse
+        State_CommodityOutput_ls[[state]] <- model$CommodityOutput
+        State_IndustryOutput_ls[[state]] <- model$IndustryOutput
+        
+        temp <- 2 # for debugging
       }
       
         
-      temp <- 2 # for debugging, end of for loop
+      temp <- 3 # for debugging, end of for loop
     }
 
-    temp <- 3 # for debugging, end of code for disagg
+    temp <- 4 # for debugging, end of code for disagg
   }# End of Disagg   }
-  temp <- 4
+  temp <- 5
   
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
