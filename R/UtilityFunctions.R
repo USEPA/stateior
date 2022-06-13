@@ -22,7 +22,7 @@ loadDatafromUSEEIOR <- function(dataset) {
 readCSV <- function(filename, fill = FALSE) {
   df <- utils::read.table(filename, sep = ",", header = TRUE,
                           stringsAsFactors = FALSE, check.names = FALSE,
-                          fill = fill)
+                          fill = fill, fileEncoding = "UTF-8-BOM")
   return(df)
 }
 
