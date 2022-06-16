@@ -91,23 +91,15 @@ cat("\n")
 reportValidationResult(failures)
 ```
 
-#### 2.2. Check if commodity output from state Use and Domestic Use are almost equal (relative difference <= 0.01).
+#### 2.2. Check if sum of commodity output from state Use and sum demand from Domestic Use are almost equal (relative difference <= 0.01).
 ```{r check2.2}
-failures <- c()
-for (state in states[states != "Overseas"]) {
-  # Calculate Commodity Output (q) from Make and Use
-  q_use <- rowSums(State_Summary_Use_ls[[state]][rownames(US_Summary_Use), colnames(US_Summary_Use)]) # doesn't include F051
-  q_domuse <- rowSums(State_Summary_DomesticUse_ls[[state]][rownames(US_Summary_Use), ]) # includs F051
-  # Calculate relative differences in q_use and q_domuse
-  rel_diff <- (q_domuse - q_use)/q_use
-  # Compare rel_diff against 0 with a tolerance of 1E-3
-  failures_state <- formatValidationResult(rel_diff, abs_diff = TRUE, tolerance = 0.01)[["Failure"]]
-  if (nrow(failures_state) > 0) {
-    failures_state$State <- state
-  }
-  colnames(failures_state)[1:3] <- c("Commodity", "Relative Diff", "Validation")
-  failures <- rbind(failures, failures_state)
-}
+q_sum <- Reduce("+", State_Summary_CommodityOutput_ls)
+demand_sum <- Reduce("+", lapply(State_Summary_DomesticUse_ls, rowSums))[commodities]
+# Calculate relative differences in q_sum and demand_sum
+rel_diff <- (q_sum - demand_sum)/demand_sum
+# Compare rel_diff against 0 with a tolerance of 1E-3
+failures <- formatValidationResult(rel_diff, abs_diff = TRUE, tolerance = 0.01)[["Failure"]]
+colnames(failures_state)[1:3] <- c("Commodity", "Relative Diff", "Validation")
 cat("\n")
 reportValidationResult(failures)
 ```
