@@ -215,50 +215,6 @@ reportValidationResult(failures)
 Note: failures associated with 'F050 - Imports' are acceptable. Because state imports are not directly derived from US imports, a gap in imports between state sum and national total is reasonable.
 
 ```{r check9}
-# Create a function to implement the validation
-validateStateUseAgainstNationlUse <- function(domestic = FALSE, rel_diff = FALSE) {
-  if (domestic) {
-    Use_ls <- State_Summary_DomesticUse_ls
-    df0 <- US_Summary_DomesticUse
-  } else {
-    Use_ls <- State_Summary_Use_ls
-    df0 <- US_Summary_Use
-  }
-  df1 <- Reduce("+", Use_ls)
-  rownames(df1) <- gsub(".*\\.", "", rownames(df1))
-  df1 <- df1[rownames(df0), colnames(df0)]
-  # Compare aggregated state Use table against US Use table
-  if (rel_diff) {
-    failures <- formatValidationResult((df1 - df0)/df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
-    rownames(failures) <- NULL
-    colnames(failures) <- c("Commodity", "Industry/Final Demand", "Relative Diff", "Validation")
-    # Provide values in df0 and df1 for failures
-    if (nrow(failures) > 0) {
-      failures[, c("US", "StateSum")] <- 0
-      for (i in 1:nrow(failures)) {
-        row <- failures[i, "Commodity"]
-        col <- failures[i, "Industry/Final Demand"]
-        failures[i, "US"] <- df0[row, col]
-        failures[i, "StateSum"] <- df1[row, col]
-      }
-    }
-  } else {
-    failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 5E6)[["Failure"]]
-    rownames(failures) <- NULL
-    colnames(failures) <- c("Commodity", "Industry/Final Demand", "Absolute Diff", "Validation")
-    # Compare failures to US values
-    if (nrow(failures) > 0) {
-      failures[, "AbsDiffPortioninNationalTotals"] <- 0
-      for (i in 1:nrow(failures)) {
-        row <- failures[i, "Commodity"]
-        col <- failures[i, "Industry/Final Demand"]
-        failures[i, "AbsDiffPortioninNationalTotals"] <- failures[i, "Absolute Diff"]/df0[row, col]
-      }
-    }
-  }
-  
-  return(failures)
-}
 StateUseValidationFailures_absdiff <- validateStateUseAgainstNationlUse(domestic = FALSE, rel_diff = FALSE)
 StateDomesticUseValidationFailures_absdiff <- validateStateUseAgainstNationlUse(domestic = TRUE, rel_diff = FALSE)
 StateUseValidationFailures_reldiff <- validateStateUseAgainstNationlUse(domestic = FALSE, rel_diff = TRUE)

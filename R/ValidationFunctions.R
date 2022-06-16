@@ -99,6 +99,53 @@ reportValidationResult <- function(failures) {
   }
 }
 
+#' Validate state Use against US Use, cell-by-cell
+#' @param domestic A logical value indicating whether to compare Domestic Use or not
+#' @param rel_diff A logical value indicating whether to validate relative difference or not
+validateStateUseAgainstNationlUse <- function(domestic = FALSE, rel_diff = FALSE) {
+  if (domestic) {
+    Use_ls <- State_Summary_DomesticUse_ls
+    df0 <- US_Summary_DomesticUse
+  } else {
+    Use_ls <- State_Summary_Use_ls
+    df0 <- US_Summary_Use
+  }
+  df1 <- Reduce("+", Use_ls)
+  rownames(df1) <- gsub(".*\\.", "", rownames(df1))
+  df1 <- df1[rownames(df0), colnames(df0)]
+  # Compare aggregated state Use table against US Use table
+  if (rel_diff) {
+    failures <- formatValidationResult((df1 - df0)/df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
+    rownames(failures) <- NULL
+    colnames(failures) <- c("Commodity", "Industry/Final Demand", "Relative Diff", "Validation")
+    # Provide values in df0 and df1 for failures
+    if (nrow(failures) > 0) {
+      failures[, c("US", "StateSum")] <- 0
+      for (i in 1:nrow(failures)) {
+        row <- failures[i, "Commodity"]
+        col <- failures[i, "Industry/Final Demand"]
+        failures[i, "US"] <- df0[row, col]
+        failures[i, "StateSum"] <- df1[row, col]
+      }
+    }
+  } else {
+    failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 5E6)[["Failure"]]
+    rownames(failures) <- NULL
+    colnames(failures) <- c("Commodity", "Industry/Final Demand", "Absolute Diff", "Validation")
+    # Compare failures to US values
+    if (nrow(failures) > 0) {
+      failures[, "AbsDiffPortioninNationalTotals"] <- 0
+      for (i in 1:nrow(failures)) {
+        row <- failures[i, "Commodity"]
+        col <- failures[i, "Industry/Final Demand"]
+        failures[i, "AbsDiffPortioninNationalTotals"] <- failures[i, "Absolute Diff"]/df0[row, col]
+      }
+    }
+  }
+  
+  return(failures)
+}
+
 #' Validate Leontief matrix (L) of two-region model and final demand against
 #' SoI and RoUS output.
 #' @param state A text value specifying state of interest.
