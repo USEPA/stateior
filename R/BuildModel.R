@@ -221,15 +221,6 @@ buildStateUseModel <- function(year) {
     State_DomesticUse[, import_col] <- 0
     State_DomesticUse[, "F051"] <- model[["Use"]][[state]][commodities, "F051"]
     State_DomesticUse[is.na(State_DomesticUse)] <- 0
-    # Validation - interrupt if relative difference between commodity output (q)
-    # from state Use and q from state Domestic Use > 1E-5
-    q_use <- rowSums(State_Use[commodities, c(industries, FD_cols)])
-    q_domuse <- rowSums(State_DomesticUse)
-    rel_diff <- (q_domuse - q_use)/q_use
-    if (max(abs(rel_diff), na.rm = TRUE) > 1E-5 && state != "Overseas") {
-      stop(paste0(state, "'s Use and Domestic Use tables are not balanced ",
-                  "in terms of commodity output."))
-    }
     # Append value added rows to state Domestic Use tables
     State_DomesticUse[VA_rows, industries] <- model[["Use"]][[state]][VA_rows, industries]
     # Add state Domestic Use to model
@@ -240,6 +231,24 @@ buildStateUseModel <- function(year) {
     colnames(x) <- colnames(q) <- "Output"
     model[["IndustryOutput"]][[state]] <- x
     model[["CommodityOutput"]][[state]] <- q
+  }
+  
+  # Validation - interrupt if sum of state commodity output (q_state) and
+  # US commodity output (q_US) have absolute difference > 1.2E7 ($12 million)
+  q_state <- Reduce("+", lapply(lapply(model[["Use"]], "[", c(industries, FD_cols)),
+                                rowSums))[commodities]
+  q_US <- rowSums(US_Use[commodities, c(industries, FD_cols)])
+  if (max(abs(q_state - q_US), na.rm = TRUE) > 1.2E7) {
+    stop(paste("Absolute difference between sum of state commodity output and",
+               "national commodity output is larger than $12 million."))
+  }
+  
+  # Validation - interrupt if sum of state commodity output (q_state) and
+  # state demand (demand_state) have absolute difference > 1.2E7 ($12 million)
+  demand_state <- Reduce("+", lapply(model[["DomesticUse"]], rowSums))[commodities]
+  if (max(abs(q_state - demand_state), na.rm = TRUE) > 1.2E7) {
+    stop(paste("Absolute difference between sum of state commodity output and",
+               "sum of state demand is larger than $12 million."))
   }
   
   logging::loginfo("State Use model build complete.")
