@@ -187,81 +187,39 @@ buildStateUseModel <- function(year) {
   }
   
   logging::loginfo("Estimating state international trade adjustment...")
-  # Append international trade adjustment to state Use and DomesticUse tables
-  # !This step has to be executed after 'model' is complete in order to derive 'ratio'.
-  State_Import_sum <- Reduce("+", model[["Use"]])[commodities, import_col]
-  names(State_Import_sum) <- commodities
-  # Generate US international trade adjustment
-  US_ITA <- generateInternationalTradeAdjustmentVector("Summary", year)
   # Load US Summary Use table for given year
   US_Use <- getNationalUse("Summary", year)
-  logging::loginfo("Finalizing state Use table...")
-  ratio_ls <- list()
-  comm_ls <- list()
+  # Generate US international trade adjustment
+  US_ITA <- generateInternationalTradeAdjustmentVector("Summary", year)
+  # Calculate state ITA by allocating US ITA via state/US COR (commodity output ratio)
   for (state in states) {
-    ratio <- model[["Use"]][[state]][commodities, import_col]/State_Import_sum
-    names(ratio) <- commodities
-    ratio_ls[[state]] <- ratio
-    # Find commodities meet any condition below:
-    # 1. Its state/US import ratio == NA,
-    # 2. It has state/US import ratio that is negative or larger than 1,
-    # 3. It has non-zero national ITA but zero in state/US import ratio.
-    comm_ls[[state]] <- unique(c(names(ratio[is.na(ratio)]),
-                                 names(ratio[which(ratio < 0 | ratio > 1)]),
-                                 intersect(names(US_ITA[US_ITA != 0]),
-                                           names(ratio[ratio == 0]))))
-  }
-  comms <- unique(unlist(comm_ls))
-  for (state in states) {
-    ratio <- ratio_ls[[state]]
-    # For each commodity in the comm_ls, replace its state/US import ratio
-    # with total consumption (rowSums of Use excluding Imports) ratio.
-    for (comm in comms) {
-      state_total_cons <- sum(model[["Use"]][[state]][comm, setdiff(c(industries, FD_cols), import_col)])
-      US_total_cons <- sum(US_Use[comm, setdiff(c(industries, FD_cols), import_col)])
-      ratio[comm] <- state_total_cons/US_total_cons
-    }
-    # Add F051 to Use and DomesticUse
-    model[["Use"]][[state]][commodities, "F051"] <- US_ITA*ratio
+    cor <- rowSums(model[["Use"]][[state]][commodities, c(industries, FD_cols)]) /
+      rowSums(US_Use[commodities, c(industries, FD_cols)])
+    model[["Use"]][[state]][commodities, "F051"] <- US_ITA*cor
   }
   
   logging::loginfo("Estimating state domestic Use table...")
   logging::loginfo("Finalizing state industry and commodity output...")
-  # The rationale is: first, generate a state Import matrix, then, add it to state Use.
-  # The matrix is created by expanding an import vector to a matrix based on national
-  # commodity/total_import ratio.
-  # In this matrix, "row sum of non-import columns" should perfectly offset
-  # "the import column (F050)" (with a +/- X million $ difference), as this is
-  # the observation in US Import matrix and we assume it still holds at state level.
-  # Therefore, to create the state import matrix, the import column F050 needs
-  # to be determined first.
-  # To do so, we reuse the equation for calculating US ITA:
-  # ITA = Use$F050 - Import$F050.
-  # As a result, StateImport$F050 = StateUse$F050 - StateITA (F051).
+  # The rationale is to generate a state Import matrix then add it to state Use.
+  # The state Import matrix is created by multiplying the national average
+  # import ratio matrix (US_Import/US_Use) by state Use table.
+  # Derive an import_ratio matrix from US Import matrix
+  US_Import_file <- paste("Summary_Import", year, "BeforeRedef", sep = "_")
+  US_Import_m <- loadDatafromUSEEIOR(US_Import_file)[commodities,
+                                                     c(industries, FD_cols)]*1E6
+  import_ratio <- US_Import_m/US_Use[commodities, c(industries, FD_cols)]
+  # Replace NaN with zero, assuming 0 in US_Use will remain 0 in State_Use
+  import_ratio[is.na(import_ratio)] <- 0
   
-  # Derive a commodity_import_ratio matrix from US Import matrix
-  US_Import <- loadDatafromUSEEIOR(paste("Summary_Import", year, "BeforeRedef",
-                                         sep = "_"))[commodities, c(industries, FD_cols)]*1E6
-  US_Import_wo_F050 <- US_Import
-  US_Import_wo_F050[, import_col] <- 0
-  commodity_import_ratio <- US_Import_wo_F050/rowSums(US_Import_wo_F050)
-  # Replace NaN with total consumption ratio: use of commodity by each industry
-  # divided by rowSums of state Use except import column.
-  for (i in 1:nrow(commodity_import_ratio)) {
-    if (all(commodity_import_ratio[i, ] == "NaN")) {
-      commodity_import_ratio[i, ] <- State_Use[i, c(industries, FD_cols)]/rowSums(State_Use[i, nonimport_cols])
-    }
-  }
   # Create state Import matrix then add it to state Use
   for (state in states) {
+    # Generate state import matrix
+    State_Use <- model[["Use"]][[state]][commodities, c(industries, FD_cols)]
+    State_Import_m <- State_Use * import_ratio
     # Generate state domestic Use table
-    US_Import_wo_F050 <- US_Import
-    US_Import_wo_F050[, import_col] <- 0
-    State_Use <- model[["Use"]][[state]][commodities, ]
-    State_Import_m <- (State_Use[, import_col] - State_Use$F051) * commodity_import_ratio
-    State_Import_m$F051 <- 0
-    State_DomesticUse <- State_Use + State_Import_m
+    State_DomesticUse <- State_Use - State_Import_m
     State_DomesticUse[, import_col] <- 0
+    State_DomesticUse[, "F051"] <- model[["Use"]][[state]][commodities, "F051"]
     State_DomesticUse[is.na(State_DomesticUse)] <- 0
     # Validation - interrupt if relative difference between commodity output (q)
     # from state Use and q from state Domestic Use > 1E-5
