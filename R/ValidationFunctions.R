@@ -102,6 +102,7 @@ reportValidationResult <- function(failures) {
 #' Validate state Use against US Use, cell-by-cell
 #' @param domestic A logical value indicating whether to compare Domestic Use or not
 #' @param rel_diff A logical value indicating whether to validate relative difference or not
+#' @return A data.frame or vector contains failures
 validateStateUseAgainstNationlUse <- function(domestic = FALSE, rel_diff = FALSE) {
   if (domestic) {
     Use_ls <- State_Summary_DomesticUse_ls
