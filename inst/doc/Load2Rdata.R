@@ -1,4 +1,4 @@
-# Load two-region tables
+# Load year-specific two-region tables
 # year must already be defined to source this script
 
 TwoRegionMake_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_Make_", year))
@@ -7,3 +7,4 @@ TwoRegionIndustryOutput_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_Indu
 TwoRegionDomesticUse_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_DomesticUse_", year))
 TwoRegionDomesticUsewithTrade_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_DomesticUsewithTrade_", year))
 TwoRegionITA_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_InternationalTradeAdjustment_", year))
+
