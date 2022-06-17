@@ -21,6 +21,9 @@ getStateModelDisaggSpecs <- function(){
 #' @return A stateior model with the disaggregateed objects
 disaggregateStateModel <- function(model, state){
 
+  # TODO: Include disaggregation of domestic use for each state
+  # TODO: Include validation checks for row/column sums - note that there may be unexpected results due to existing negative values in state use tables.
+  
   temp <- 1
   
   for (disagg in model$DisaggregationSpecs){
@@ -83,19 +86,26 @@ formatMakeFromStateToUSEEIO <- function(model, state){
 
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param state A string value that indicates the state model being disaggregated
+#' @param domestic A boolean that indicates whether the table to format is the domesticUse table or not
 #' @return The FullUse model object with useeior formatting fit for disaggregation functions
-formatFullUseFromStateToUSEEIO <- function(model, state){
+formatFullUseFromStateToUSEEIO <- function(model, state, domestic = FALSE){
   temp <- 1
   
-  rowLabels <- rownames(model$FullUse)
+  if(domestic == TRUE){
+    table <- model$US_DomesticFullUse
+  }else{
+    table <- model$FullUse
+  }
+  
+  rowLabels <- rownames(table)
   rowLabels <- paste0(rowLabels, "/US")
-  rownames(model$FullUse) <- rowLabels
+  rownames(table) <- rowLabels
   
-  columnLabels <- colnames(model$FullUse)
+  columnLabels <- colnames(table)
   columnLabels <- paste0(columnLabels, "/US")
-  colnames(model$FullUse) <- columnLabels
+  colnames(table) <- columnLabels
   
-  return(model$FullUse)
+  return(table)
 }
 
 #' @param model An stateior model object with model specs and specific IO tables loaded
@@ -142,13 +152,28 @@ formatFullUseFromUSEEIOtoState <- function(model, state){
 }
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param state A string value that indicates the state model being disaggregated
+#' @param domestic A boolean that indicates whether the table to format is the domesticUse table or not
 #' @return A model object with FullUse split into UseTransactions, FinalDemand, and UseValueAdded objects
-splitFullUse <- function(model, state){
-  numCommodities <- dim(model$CommodityOutput)[1] # Find number of commodities
-  numIndustries <- dim(model$IndustryOutput)[1] # Find number of industries
-  model$UseTransactions <- model$FullUse[1:numCommodities, 1:numIndustries] # Get subset of FullUse with numCommodities rows and numIndustries columns
-  model$UseValueAdded <- model$FullUse[-(1:numCommodities),1:numIndustries] # Get subset of FullUse, starting from rows after numCommodities, with numIndustries columns
-  model$FinalDemand <- model$FullUse[1:numCommodities,-(1:numIndustries)] # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
+splitFullUse <- function(model, state, domestic = FALSE){
+  
+  
+  if(domestic == TRUE){
+    numCommodities <- length(model$Commodities) # Find number of commodities
+    numIndustries <- length(model$Industries) # Find number of industries
+    
+    model$DomesticUseTransactions <- model$US_DomesticFullUse[1:numCommodities, 1:numIndustries] # Get subset of FullUse with numCommodities rows and numIndustries columns
+    model$UseValueAdded <- model$US_DomesticFullUse[-(1:numCommodities),1:numIndustries] # Get subset of FullUse, starting from rows after numCommodities, with numIndustries columns
+    model$DomesticFinalDemand <- model$US_DomesticFullUse[1:numCommodities,-(1:numIndustries)] # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
+    
+  }else{
+    numCommodities <- dim(model$CommodityOutput)[1] # Find number of commodities
+    numIndustries <- dim(model$IndustryOutput)[1] # Find number of industries
+    
+    model$UseTransactions <- model$FullUse[1:numCommodities, 1:numIndustries] # Get subset of FullUse with numCommodities rows and numIndustries columns
+    model$UseValueAdded <- model$FullUse[-(1:numCommodities),1:numIndustries] # Get subset of FullUse, starting from rows after numCommodities, with numIndustries columns
+    model$FinalDemand <- model$FullUse[1:numCommodities,-(1:numIndustries)] # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
+  }
+
   
   return(model)
   
