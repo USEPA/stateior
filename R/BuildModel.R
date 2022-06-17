@@ -544,26 +544,48 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
                                                          year))
 
   ## Disaggregate model objects:
-  # State_CommodityOutput_ls, State_IndustryOutput_ls, State_Make_ls, State_Use_ls
+  # State_CommodityOutput_ls, State_IndustryOutput_ls, State_Make_ls, State_Use_ls --> disagg code in place for these objects
   # US_Make, US_DomesticUse
   # commodities, industries
   temp <- 1 # for debugging
   if(disaggState == TRUE){
-    
+
+    # Initialize model 
+    model <- getStateModelDisaggSpecs()
+        
     # # Disaggregate objects once #TODO: Need to finish this part for US_Make, US_DomesticUse, commodities, and industries objects
-    # for(disagg in model$DisaggregationSpecs){
-    #   industries <- useeior:::disaggregateSectorDFs(model, disagg, "Industry")
-    #   
-    # }
+    for(disagg in model$DisaggregationSpecs){
+
+      model$Industries <- industries
+      model$Commodities <- commodities
+      
+      model$US_DomesticFullUse <- US_DomesticUse
+      model$US_DomesticFullUse <- formatFullUseFromStateToUSEEIO(model, state, domestic = TRUE)
+      model <- splitFullUse(model, state, domestic = TRUE) # Splitting FullUse into UseTransactions, UseValueAdded, and FinalDemand objects
+      model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior 
+      
+      model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
+      model$DomesticFinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = TRUE)
+      model$UseValueAdded <- useeior:::disaggregateVA(model, disagg)
+      
+      #STOPPED HERE. NEXT STEP: MODIFY formatFullUseFromUSEEIOtoState function to accomodate domestic tables
+      
+      model$US_Make <- US_Make
+      
+      
+
+#      industries <- useeior:::disaggregateSectorDFs(model, disagg, "Industry")
+
+    }
     
-    
+    model <- NULL # Delete disaggregated National model to make way for individual state models
+ 
     # Disaggregate objects for each state 
     for (state in sort(c(state.name, "District of Columbia"))) {
      
       # Initialize model for every state
       model <- getStateModelDisaggSpecs()
 
-      #### TODO: Ask if Will we have industry models in stateior? ####
       model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior 
       
       
