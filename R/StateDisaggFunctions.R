@@ -15,7 +15,6 @@ getStateModelDisaggSpecs <- function(){
   
 }
 
-
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param state A string value that indicates the state model being disaggregated
 #' @return A stateior model with the disaggregateed objects
@@ -23,9 +22,7 @@ disaggregateStateModel <- function(model, state){
 
   # TODO: Include disaggregation of domestic use for each state
   # TODO: Include validation checks for row/column sums - note that there may be unexpected results due to existing negative values in state use tables.
-  
-  temp <- 1
-  
+
   for (disagg in model$DisaggregationSpecs){
 
     logging::loginfo(paste0("Disaggregating ", disagg$OrignalSectorName," for ", state))
@@ -51,17 +48,48 @@ disaggregateStateModel <- function(model, state){
     model$MakeTransactions <- formatMakeFromUSEEIOtoState(model, state)
     model$FullUse <- formatFullUseFromUSEEIOtoState(model, state)
     
-    temp <- 1
-    
   }
-  
-  temp <- 2
   
   return(model)
   
   
 } 
 
+
+#' @param model An stateior model object with model specs and specific IO tables loaded
+#' @param disagg Specifications for model disaggregation
+#' @return A stateior model with the disaggregateed objects
+disaggregateNationalObjectsInStateModel <- function(model, disagg){
+
+  # Format specified national stateior objects to model to prepare for disaggregation
+  
+  # Format Make
+  model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state) #Formatting MakeTransactions object
+  
+  # Format individual domestic use objects (DomesticUseTransactions, DomesticFinalDemand)
+  model$US_DomesticFullUse <- formatFullUseFromStateToUSEEIO(model, state, domestic = TRUE) # Note that the domestic full use object does not include value added rows
+  model <- splitFullUse(model, state, domestic = TRUE) # Splitting FullUse into UseTransactions, UseValueAdded, and FinalDemand objects
+  model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior 
+  
+  # Disaggregate model objects
+  
+  model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
+  model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
+  model$DomesticFinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = TRUE)
+  # Disaggregate industry and commodity lists last because the original lists are used in the disaggregation of the other obejcts
+  model$Industries <- disaggregateStateSectorLists(model, disagg, "Industry")
+  model$Commodities <- disaggregateStateSectorLists(model, disagg, "Commodity")
+  
+  # Convert disaggregated objects back to stateior formats. Note that commodities and industries did not change format in disaggregation.
+  
+  model$MakeTransactions <- formatMakeFromUSEEIOtoState(model, state = "National")
+  model$US_DomesticFullUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
+
+  
+  return(model)
+  
+  
+} 
 
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param state A string value that indicates the state model being disaggregated
@@ -89,8 +117,7 @@ formatMakeFromStateToUSEEIO <- function(model, state){
 #' @param domestic A boolean that indicates whether the table to format is the domesticUse table or not
 #' @return The FullUse model object with useeior formatting fit for disaggregation functions
 formatFullUseFromStateToUSEEIO <- function(model, state, domestic = FALSE){
-  temp <- 1
-  
+
   if(domestic == TRUE){
     table <- model$US_DomesticFullUse
   }else{
@@ -113,8 +140,6 @@ formatFullUseFromStateToUSEEIO <- function(model, state, domestic = FALSE){
 #' @return A stateior make table formatted according to stateior specifications
 formatMakeFromUSEEIOtoState <- function(model, state){
   
-
-  
   rowLabels <- rownames(model$MakeTransactions)
   rowLabels <- gsub("\\/.*","",rowLabels) # remove everything after "/"
   if(state != "National"){
@@ -135,12 +160,8 @@ formatMakeFromUSEEIOtoState <- function(model, state){
 #' @param domestic A boolean that indicates whether the table to format is the domesticUse table or not
 #' @return A stateior FullUse table formatted according to stateior specifications
 formatFullUseFromUSEEIOtoState <- function(model, state, domestic = FALSE){
-  temp <- 1
-  
-  
+
   if(domestic == TRUE){
-    temp <-2
-    
     model$US_DomesticFullUse <- cbind(model$DomesticUseTransactions, model$DomesticFinalDemand) # combine UseTransactions and FinalDemand columns
 
     # Format row and column names
@@ -176,8 +197,7 @@ formatFullUseFromUSEEIOtoState <- function(model, state, domestic = FALSE){
 #' @param domestic A boolean that indicates whether the table to format is the domesticUse table or not
 #' @return A model object with FullUse split into UseTransactions, FinalDemand, and UseValueAdded objects
 splitFullUse <- function(model, state, domestic = FALSE){
-  
-  
+ 
   if(domestic == TRUE){
     numCommodities <- length(model$Commodities) # Find number of commodities
     numIndustries <- length(model$Industries) # Find number of industries
@@ -194,7 +214,6 @@ splitFullUse <- function(model, state, domestic = FALSE){
     model$FinalDemand <- model$FullUse[1:numCommodities,-(1:numIndustries)] # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
   }
 
-  
   return(model)
   
 }
@@ -202,9 +221,7 @@ splitFullUse <- function(model, state, domestic = FALSE){
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @return A model object with disaggregated IndustryOutput and CommodityOutput objects
 calculateStateIndustryCommodityOuput <- function(model){
-  
-  temp <- 1
-  
+
   # Calculating and formatting IndustryOutput
   model$IndustryOutput <- data.frame(colSums(model$UseTransactions) + colSums(model$UseValueAdded))
   colnames(model$IndustryOutput) <- "Output"
@@ -220,4 +237,29 @@ calculateStateIndustryCommodityOuput <- function(model){
   rownames(model$CommodityOutput) <- rowLabels
     
   return(model)
+}
+
+#' Disaggregate model$Commodity or model$Industry dataframes in the main model object
+#' @param model A complete EEIO model: a list with USEEIO model components and attributes.
+#' @param disagg Specifications for disaggregating the current Table
+#' @param list_type string indicating whether to disaggregate model$Industry or model$Commodity dataframe. 
+#' @return newList A list which contain the disaggregated model$Commodity or model$Industry objects
+disaggregateStateSectorLists <- function(model, disagg, list_type) {
+  
+  originalSectorCode <- gsub("\\/.*","",disagg$OriginalSectorCode) # remove everything after "/"
+  disaggCodes <- gsub("\\/.*","",disagg$DisaggregatedSectorCodes) # remove everything after "/"
+  
+  if(list_type == "Commodity") {
+    originalList <- model$Commodities
+    originalIndex <- grep(paste0("^",originalSectorCode,"$"), model$Commodities) # the ^ and $ are required to find an exact match
+  } else {
+    #assume industry if not specified
+    originalList <- model$Industries
+    originalIndex <- grep(paste0("^",originalSectorCode,"$"), model$Industries) # the ^ and $ are required to find an exact match
+  }
+ 
+  newList <- append(originalList[1:originalIndex -1], disaggCodes)
+  newList <- append(newList, originalList[-(1:originalIndex)] ) # have to do this in two steps otherwise get an error
+
+  return(newList)
 }
