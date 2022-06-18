@@ -556,26 +556,46 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
     # # Disaggregate objects once #TODO: Need to finish this part for US_Make, US_DomesticUse, commodities, and industries objects
     for(disagg in model$DisaggregationSpecs){
 
+
       model$Industries <- industries
       model$Commodities <- commodities
       
-      model$US_DomesticFullUse <- US_DomesticUse
+      # Assign and format specified national stateior objects to model to prepare for disaggregation
+
+      # Assign Make
+      model$MakeTransactions <- US_Make
+      model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state) #Formatting MakeTransactions object
+      
+      
+      # Assign individual domestic use objects (DomesticUseTransactions, DomesticFinalDemand)
+      model$US_DomesticFullUse <- US_DomesticUse # Note that the domestic full use object does not include value added rows
       model$US_DomesticFullUse <- formatFullUseFromStateToUSEEIO(model, state, domestic = TRUE)
       model <- splitFullUse(model, state, domestic = TRUE) # Splitting FullUse into UseTransactions, UseValueAdded, and FinalDemand objects
       model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior 
       
+      # Disaggregate model objects
+      model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
+      
       model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
       model$DomesticFinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = TRUE)
-      model$UseValueAdded <- useeior:::disaggregateVA(model, disagg)
+
       
-      #STOPPED HERE. NEXT STEP: MODIFY formatFullUseFromUSEEIOtoState function to accomodate domestic tables
+      # Convert disaggregated objects back to stateior formats
+      model$MakeTransactions <- formatMakeFromUSEEIOtoState(model, state = "National")
+      model$US_DomesticFullUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
       
-      model$US_Make <- US_Make
+      
+
       
       
 
 #      industries <- useeior:::disaggregateSectorDFs(model, disagg, "Industry")
 
+      # Assign the disaggregated model objects to the original stateior objects
+      US_Make <- model$MakeTransactions
+      US_DomesticUse <- model$US_DomesticFullUse
+      
+      
     }
     
     model <- NULL # Delete disaggregated National model to make way for individual state models

@@ -113,9 +113,14 @@ formatFullUseFromStateToUSEEIO <- function(model, state, domestic = FALSE){
 #' @return A stateior make table formatted according to stateior specifications
 formatMakeFromUSEEIOtoState <- function(model, state){
   
+
+  
   rowLabels <- rownames(model$MakeTransactions)
   rowLabels <- gsub("\\/.*","",rowLabels) # remove everything after "/"
-  rowLabels <- paste0(state,".",rowLabels) # add state and . before sector name to match original format
+  if(state != "National"){
+    rowLabels <- paste0(state,".",rowLabels) # add state and . before sector name to match original format for state models only
+  }
+
   rownames(model$MakeTransactions) <- rowLabels # Replace old row labels with new ones
   
   columnLabels <- colnames(model$MakeTransactions)
@@ -127,28 +132,44 @@ formatMakeFromUSEEIOtoState <- function(model, state){
 
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param state A string value that indicates the state model being disaggregated
+#' @param domestic A boolean that indicates whether the table to format is the domesticUse table or not
 #' @return A stateior FullUse table formatted according to stateior specifications
-formatFullUseFromUSEEIOtoState <- function(model, state){
+formatFullUseFromUSEEIOtoState <- function(model, state, domestic = FALSE){
   temp <- 1
   
-  tempFullUse <- cbind(model$UseTransactions, model$FinalDemand) # combine UseTransactions and FinalDemand columns
   
-  # Create the empty section of FullUse that is VA rows by FD columns (NA values)
-  VAbyFDSection <- data.frame(matrix(nrow = dim(model$UseValueAdded)[1], 
-                                     ncol = ncol(tempFullUse) - ncol(model$UseTransactions))) 
- 
-   # Rename rows and cols of new dataframe to allow cbind operation
-  colnames(VAbyFDSection) <- colnames(model$FinalDemand)
-  rownames(VAbyFDSection) <- rownames(model$UseValueAdded)
-  
-  tempVA <- cbind(model$UseValueAdded, VAbyFDSection) # combine UseValueAdded and VAbyFDSection columns
-  
-  # Assemble FullUse table and remane according to stateior formats
-  model$FullUse <- rbind(tempFullUse, tempVA)
-  rownames(model$FullUse) <- gsub("\\/.*","",rownames(model$FullUse)) # remove everything after "/"
-  colnames(model$FullUse) <- gsub("\\/.*","",colnames(model$FullUse)) # remove everything after "/"
-  
-  return(model$FullUse)
+  if(domestic == TRUE){
+    temp <-2
+    
+    model$US_DomesticFullUse <- cbind(model$DomesticUseTransactions, model$DomesticFinalDemand) # combine UseTransactions and FinalDemand columns
+
+    # Format row and column names
+    rownames(model$US_DomesticFullUse) <- gsub("\\/.*","",rownames(model$US_DomesticFullUse)) # remove everything after "/"
+    colnames(model$US_DomesticFullUse) <- gsub("\\/.*","",colnames(model$US_DomesticFullUse)) # remove everything after "/"
+    
+    return(model$US_DomesticFullUse)
+    
+  }else{
+    tempFullUse <- cbind(model$UseTransactions, model$FinalDemand) # combine UseTransactions and FinalDemand columns
+    
+    # Create the empty section of FullUse that is VA rows by FD columns (NA values)
+    VAbyFDSection <- data.frame(matrix(nrow = dim(model$UseValueAdded)[1], 
+                                       ncol = ncol(tempFullUse) - ncol(model$UseTransactions))) 
+    
+    # Rename rows and cols of new dataframe to allow cbind operation
+    colnames(VAbyFDSection) <- colnames(model$FinalDemand)
+    rownames(VAbyFDSection) <- rownames(model$UseValueAdded)
+    
+    tempVA <- cbind(model$UseValueAdded, VAbyFDSection) # combine UseValueAdded and VAbyFDSection columns
+    
+    # Assemble FullUse table and remane according to stateior formats
+    model$FullUse <- rbind(tempFullUse, tempVA)
+    rownames(model$FullUse) <- gsub("\\/.*","",rownames(model$FullUse)) # remove everything after "/"
+    colnames(model$FullUse) <- gsub("\\/.*","",colnames(model$FullUse)) # remove everything after "/"
+    
+    return(model$FullUse)
+  }
+
 }
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param state A string value that indicates the state model being disaggregated
@@ -162,7 +183,6 @@ splitFullUse <- function(model, state, domestic = FALSE){
     numIndustries <- length(model$Industries) # Find number of industries
     
     model$DomesticUseTransactions <- model$US_DomesticFullUse[1:numCommodities, 1:numIndustries] # Get subset of FullUse with numCommodities rows and numIndustries columns
-    model$UseValueAdded <- model$US_DomesticFullUse[-(1:numCommodities),1:numIndustries] # Get subset of FullUse, starting from rows after numCommodities, with numIndustries columns
     model$DomesticFinalDemand <- model$US_DomesticFullUse[1:numCommodities,-(1:numIndustries)] # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
     
   }else{
