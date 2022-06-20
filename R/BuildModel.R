@@ -552,10 +552,11 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
 
     # Initialize model 
     model <- getStateModelDisaggSpecs()
-        
-    # Loop for objects that need to be disaggregated only once 
-    for(disagg in model$DisaggregationSpecs){
-
+    
+    if(length(model$DisaggregationSpecs)!=0){
+      model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior     
+          
+      # Disaggregate national model objects 
       # Assign model objects
       model$Industries <- industries
       model$Commodities <- commodities
@@ -563,32 +564,18 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
       model$US_DomesticFullUse <- US_DomesticUse # Note that the domestic full use object does not include value added rows
       
       # Disaggregate national model objects once (i.e. not for each state)
-      model <- disaggregateNationalObjectsInStateModel(model, disagg)
-
+      model <- disaggregateNationalObjectsInStateModel(model, model$DisaggregationSpecs)
+  
       # Assign the disaggregated model objects to the original stateior objects
       US_Make <- model$MakeTransactions
       US_DomesticUse <- model$US_DomesticFullUse
       industries <- model$Industries
       commodities <- model$Commodities
-      
-    } # end of one-time object disaggregations
-    
-    model <- NULL # Delete disaggregated National model to make way for individual state models
- 
-    # Loop for obejcts that need to be disaggregated objects for each state 
-    for (state in sort(c(state.name, "District of Columbia"))) {
-     
-      # Initialize model for every state
-      model <- getStateModelDisaggSpecs()
-
-      model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior 
-      
-      
-      if(length(model$DisaggregationSpecs)!=0){
         
+      # Loop for obejcts that need to be disaggregated objects for each state 
+      for (state in sort(c(state.name, "District of Columbia"))) {
         model$MakeTransactions <- State_Make_ls[[state]]
         model$FullUse <- State_Use_ls[[state]]
-        
         model$CommodityOutput <- State_CommodityOutput_ls[[state]]
         model$IndustryOutput <- State_IndustryOutput_ls[[state]]
  
@@ -599,13 +586,12 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
         State_Use_ls[[state]] <- model$FullUse
         State_CommodityOutput_ls[[state]] <- model$CommodityOutput
         State_IndustryOutput_ls[[state]] <- model$IndustryOutput
-        
-        temp <- 2 # for debugging
-      } #end of if disaggregationSpecs is not empty statement
-      
-    } #end of for each state loop
 
-  }# End of Disaggregation for state model obstcs
+      } #end of for each state loop
+        
+    } #end of if disaggregationSpecs is not empty statement
+
+  } #End of Disaggregation for state model obstcs
   
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
