@@ -249,8 +249,8 @@ disaggregateStateSectorLists <- function(code_vector, disagg) {
   disaggCodes <- gsub("\\/.*","",disagg$DisaggregatedSectorCodes) # remove everything after "/"
   originalIndex <- grep(paste0("^",originalSectorCode,"$"), code_vector) # the ^ and $ are required to find an exact match
  
-  newList <- append(originalList[1:originalIndex -1], disaggCodes)
-  newList <- append(newList, originalList[-(1:originalIndex)] ) # have to do this in two steps otherwise get an error
+  newList <- append(code_vector[1:originalIndex -1], disaggCodes)
+  newList <- append(newList, code_vector[-(1:originalIndex)] ) # have to do this in two steps otherwise get an error
 
   return(newList)
 }

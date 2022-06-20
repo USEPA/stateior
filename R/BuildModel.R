@@ -543,17 +543,14 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
                                                          "_CommodityOutput_",
                                                          year))
 
-  ## Disaggregate model objects:
-  # State_CommodityOutput_ls, State_IndustryOutput_ls, State_Make_ls, State_Use_ls --> disagg code in place for these objects
-  # US_Make, US_DomesticUse
-  # commodities, industries
-  temp <- 1 # for debugging
+  disagg <- NULL # Initialization
   if(disaggState == TRUE){
 
     # Initialize model 
     model <- getStateModelDisaggSpecs()
     
     if(length(model$DisaggregationSpecs)!=0){
+      disagg <- model$DisaggregationSpecs[[1]]
       model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior     
           
       # Disaggregate national model objects 
@@ -564,7 +561,7 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
       model$US_DomesticFullUse <- US_DomesticUse # Note that the domestic full use object does not include value added rows
       
       # Disaggregate national model objects once (i.e. not for each state)
-      model <- disaggregateNationalObjectsInStateModel(model, model$DisaggregationSpecs)
+      model <- disaggregateNationalObjectsInStateModel(model, disagg)
   
       # Assign the disaggregated model objects to the original stateior objects
       US_Make <- model$MakeTransactions
@@ -592,17 +589,17 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
     } #end of if disaggregationSpecs is not empty statement
 
   } #End of Disaggregation for state model obstcs
-  
+
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
   for (state in sort(c(state.name, "District of Columbia"))) {
     ## Two-region Make
     SoI_Make <- State_Make_ls[[state]]
-    rownames(SoI_Make) <- getBEASectorCodeLocation("Industry", state, iolevel)
-    colnames(SoI_Make) <- getBEASectorCodeLocation("Commodity", state, iolevel)
+    rownames(SoI_Make) <- getBEASectorCodeLocation("Industry", state, iolevel, disagg)
+    colnames(SoI_Make) <- getBEASectorCodeLocation("Commodity", state, iolevel, disagg)
     RoUS_Make <- US_Make - SoI_Make
-    rownames(RoUS_Make) <- getBEASectorCodeLocation("Industry", "RoUS", iolevel)
-    colnames(RoUS_Make) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel)
+    rownames(RoUS_Make) <- getBEASectorCodeLocation("Industry", "RoUS", iolevel, disagg)
+    colnames(RoUS_Make) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel, disagg)
     # Form two-region Make
     TwoRegionMake <- SoI_Make
     TwoRegionMake[rownames(RoUS_Make), colnames(RoUS_Make)] <- RoUS_Make

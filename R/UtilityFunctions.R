@@ -105,13 +105,16 @@ loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
 #' can be state name like "Georgia" or "RoUS" representing Rest of US.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @return A text value in the format of code/location.
-getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
+getBEASectorCodeLocation <- function(sector_type, location, iolevel, disagg=NULL) {
   # Get code
   if (sector_type != "FinalDemand") {
     if (sector_type == "InternationalTradeAdjustment") {
       code <- ifelse(iolevel == "Detail", "F05100", "F051")
     } else {
       code <- getVectorOfCodes(iolevel, sector_type)
+      if (!is.null(disagg)) {
+        code <- disaggregateStateSectorLists(code, disagg)
+      }
     }
   } else {
     code <- getFinalDemandCodes(iolevel)
