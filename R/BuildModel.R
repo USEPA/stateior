@@ -309,7 +309,19 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   SoI_DomesticUse <- loadStateIODataFile(paste0("State_",
                                                 iolevel,
                                                 "_DomesticUse_",
-                                                year))[[state]][commodities, ]
+                                                year))[[state]]
+
+  # Need to re-disaggregate the Use table
+  if(!is.null(diagg)){
+    model <- list()
+    model$DisaggregationSpecs[[1]] <- disagg
+    model$DomesticUseTransactions <- formatFullUseFromStateToUSEEIO(
+        SoI_DomesticUse[1:length(getVectorOfCodes(iolevel, "Commodity")),
+                        1:length(getVectorOfCodes(iolevel, "Industry"))])
+    SoI_DomesticUse <- useeior:::disaggregateUseTable(model, disagg)
+  } else {
+    SoI_DomesticUse <- SoI_DomesticUse[commodities, ]
+  }
   
   # Disaggregate SoI_DomesticUse
   
