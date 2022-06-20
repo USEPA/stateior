@@ -77,8 +77,8 @@ disaggregateNationalObjectsInStateModel <- function(model, disagg){
   model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
   model$DomesticFinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = TRUE)
   # Disaggregate industry and commodity lists last because the original lists are used in the disaggregation of the other obejcts
-  model$Industries <- disaggregateStateSectorLists(model, disagg, "Industry")
-  model$Commodities <- disaggregateStateSectorLists(model, disagg, "Commodity")
+  model$Industries <- disaggregateStateSectorLists(model$Industries, disagg)
+  model$Commodities <- disaggregateStateSectorLists(model$Commodities, disagg)
   
   # Convert disaggregated objects back to stateior formats. Note that commodities and industries did not change format in disaggregation.
   
@@ -240,23 +240,14 @@ calculateStateIndustryCommodityOuput <- function(model){
 }
 
 #' Disaggregate model$Commodity or model$Industry dataframes in the main model object
-#' @param model A complete EEIO model: a list with USEEIO model components and attributes.
+#' @param code_vector A list of sector codes (industry or commodity)
 #' @param disagg Specifications for disaggregating the current Table
-#' @param list_type string indicating whether to disaggregate model$Industry or model$Commodity dataframe. 
 #' @return newList A list which contain the disaggregated model$Commodity or model$Industry objects
-disaggregateStateSectorLists <- function(model, disagg, list_type) {
+disaggregateStateSectorLists <- function(code_vector, disagg) {
   
   originalSectorCode <- gsub("\\/.*","",disagg$OriginalSectorCode) # remove everything after "/"
   disaggCodes <- gsub("\\/.*","",disagg$DisaggregatedSectorCodes) # remove everything after "/"
-  
-  if(list_type == "Commodity") {
-    originalList <- model$Commodities
-    originalIndex <- grep(paste0("^",originalSectorCode,"$"), model$Commodities) # the ^ and $ are required to find an exact match
-  } else {
-    #assume industry if not specified
-    originalList <- model$Industries
-    originalIndex <- grep(paste0("^",originalSectorCode,"$"), model$Industries) # the ^ and $ are required to find an exact match
-  }
+  originalIndex <- grep(paste0("^",originalSectorCode,"$"), code_vector) # the ^ and $ are required to find an exact match
  
   newList <- append(originalList[1:originalIndex -1], disaggCodes)
   newList <- append(newList, originalList[-(1:originalIndex)] ) # have to do this in two steps otherwise get an error
