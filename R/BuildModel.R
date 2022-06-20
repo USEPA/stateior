@@ -553,46 +553,9 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
     # Initialize model 
     model <- getStateModelDisaggSpecs()
         
-    # # Disaggregate objects once #TODO: Need to finish this part for US_Make, US_DomesticUse, commodities, and industries objects
+    # Loop for objects that need to be disaggregated only once 
     for(disagg in model$DisaggregationSpecs){
 
-      # # Assign and format specified national stateior objects to model to prepare for disaggregation
-      # 
-      # # Assign industry and commodity lists
-      # model$Industries <- industries
-      # model$Commodities <- commodities
-      # 
-      # # Assign Make
-      # model$MakeTransactions <- US_Make
-      # model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state) #Formatting MakeTransactions object
-      # 
-      # # Assign individual domestic use objects (DomesticUseTransactions, DomesticFinalDemand)
-      # model$US_DomesticFullUse <- US_DomesticUse # Note that the domestic full use object does not include value added rows
-      # model$US_DomesticFullUse <- formatFullUseFromStateToUSEEIO(model, state, domestic = TRUE)
-      # model <- splitFullUse(model, state, domestic = TRUE) # Splitting FullUse into UseTransactions, UseValueAdded, and FinalDemand objects
-      # model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior 
-      # 
-      # # Disaggregate model objects
-      # 
-      # model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
-      # model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
-      # model$DomesticFinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = TRUE)
-      # # Disaggregate industry and commodity lists last because the original lists are used in the disaggregation of the other obejcts
-      # model$Industries <- disaggregateStateSectorLists(model, disagg, "Industry")
-      # model$Commodities <- disaggregateStateSectorLists(model, disagg, "Commodity")
-      # 
-      # # Convert disaggregated objects back to stateior formats. Note that commodities and industries did not change format in disaggregation.
-      # 
-      # model$MakeTransactions <- formatMakeFromUSEEIOtoState(model, state = "National")
-      # model$US_DomesticFullUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
-      # 
-      # # Assign the disaggregated model objects to the original stateior objects
-      # 
-      # US_Make <- model$MakeTransactions
-      # US_DomesticUse <- model$US_DomesticFullUse
-      # industries <- model$Industries
-      # commodities <- model$Commodities
-      
       # Assign model objects
       model$Industries <- industries
       model$Commodities <- commodities
@@ -612,7 +575,7 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
     
     model <- NULL # Delete disaggregated National model to make way for individual state models
  
-    # Disaggregate objects for each state 
+    # Loop for obejcts that need to be disaggregated objects for each state 
     for (state in sort(c(state.name, "District of Columbia"))) {
      
       # Initialize model for every state
@@ -643,7 +606,6 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
     } #end of for each state loop
 
   }# End of Disaggregation for state model obstcs
-  temp <- 5
   
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
