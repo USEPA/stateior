@@ -295,12 +295,6 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
                      FD_cols[substr(FD_cols, nchar(FD_cols),
                                     nchar(FD_cols)) %in% c("C", "E", "R", "N")])
 
-  if(!is.null(disagg)){
-    commodities <- disaggregateStateSectorLists(commodities, disagg)  
-    industries <- disaggregateStateSectorLists(industries, disagg)
-    tradable_cols <- disaggregateStateSectorLists(tradable_cols, disagg)
-  }
-  
   # All sectors except international imports
   nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
   
@@ -315,10 +309,21 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   if(!is.null(disagg)){
     model <- list()
     model$DisaggregationSpecs[[1]] <- disagg
-    model$DomesticUseTransactions <- formatFullUseFromStateToUSEEIO(
-        SoI_DomesticUse[1:length(getVectorOfCodes(iolevel, "Commodity")),
-                        1:length(getVectorOfCodes(iolevel, "Industry"))])
-    SoI_DomesticUse <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
+    m <- formatFullUseFromStateToUSEEIO(SoI_DomesticUse)
+    
+    model$DomesticUseTransactions <- m[1:length(commodities), 1:length(industries)]
+    model$DomesticFinalDemand <- m[1:length(commodities),-(1:length(industries))]
+
+    model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
+    model$DomesticFinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = TRUE)
+    
+    SoI_DomesticUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
+
+    commodities <- disaggregateStateSectorLists(commodities, disagg)  
+    industries <- disaggregateStateSectorLists(industries, disagg)
+    tradable_cols <- disaggregateStateSectorLists(tradable_cols, disagg)
+    nonimport_cols <- disaggregateStateSectorLists(nonimport_cols, disagg)
+    
   } else {
     SoI_DomesticUse <- SoI_DomesticUse[commodities, ]
   }
