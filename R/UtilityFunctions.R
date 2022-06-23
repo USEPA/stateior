@@ -363,6 +363,14 @@ readDatafileMeta <- function(year, iolevel, dataname, path) {
   return(metadata)
 }
 
+#' Capitalize a string.
+#' @param string A string
+#' @return A capitalized string.
+capitalize <- function(string) {
+  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
+  return(string)
+}
+
 ##############################################################
 ### All functions below are archived and need modification ###
 ##############################################################
