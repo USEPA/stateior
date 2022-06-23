@@ -23,7 +23,6 @@ Imports:
     ggplot2 (>= 3.0),
     glue (>= 1.6.2),
     jsonlite (>= 1.6),
-    Hmisc (>= 4.6-0),
     logging (>= 0.10),
     magrittr (>= 2.0.1),
     rappdirs (>= 0.3),
