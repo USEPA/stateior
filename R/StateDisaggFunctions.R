@@ -30,13 +30,17 @@ disaggregateStateModel <- function(model, state){
     # Formatting model objects according to useeior disaggregation formats
     model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state) #Formatting MakeTransactions object
     model$FullUse <- formatFullUseFromStateToUSEEIO(model$FullUse) # Formatting row/column names in FullUse object
+    model$DomesticFullUse <- formatFullUseFromStateToUSEEIO(model$DomesticFullUse)
     model <- splitFullUse(model) # Splitting FullUse into UseTransactions, UseValueAdded, and FinalDemand objects
+    model <- splitFullUse(model, domestic = TRUE)
  
     # Disaggregating specified model objects
     model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
     
     model$UseTransactions <- useeior:::disaggregateUseTable(model, disagg)
     model$FinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = FALSE)
+    model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
+    model$DomesticFinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = TRUE)
     model$UseValueAdded <- useeior:::disaggregateVA(model, disagg)
     
     if(model$specs$CommodityorIndustryType=="Commodity") {
@@ -47,6 +51,7 @@ disaggregateStateModel <- function(model, state){
     # Formatting disaggregated model objects back to stateior formats
     model$MakeTransactions <- formatMakeFromUSEEIOtoState(model, state)
     model$FullUse <- formatFullUseFromUSEEIOtoState(model, state)
+    model$DomesticFullUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
     
   }
   
