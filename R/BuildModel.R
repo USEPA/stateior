@@ -280,12 +280,12 @@ buildStateUseModel <- function(year) {
 buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
                                    ICF_sensitivity_analysis = FALSE,
                                    adjust_by = 0, domestic = TRUE,
-                                   disagg = NULL) {
+                                   model, disagg = NULL) {
   startLogging()
   # 0 - Define commodities, industries, final demand columns, import column, and
   # international trade adjustment column
-  commodities <- getVectorOfCodes(iolevel, "Commodity")
-  industries <- getVectorOfCodes(iolevel, "Industry")
+  commodities <- model$Commodities
+  industries <- model$Industries
   
   FD_cols <- getFinalDemandCodes(iolevel)
   import_col <- getVectorOfCodes(iolevel, "Import")
@@ -298,37 +298,14 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   # All sectors except international imports
   nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
   
-  # 1 - Load state domestic Use for the specified year
-  logging::loginfo("Loading state Domestic Use table...")
-  SoI_DomesticUse <- loadStateIODataFile(paste0("State_",
-                                                iolevel,
-                                                "_DomesticUse_",
-                                                year))[[state]]
-
-  # Need to re-disaggregate the Use table
-  if(!is.null(disagg)){
-    model <- list()
-    model$DisaggregationSpecs[[1]] <- disagg
-    m <- formatFullUseFromStateToUSEEIO(SoI_DomesticUse)
-    
-    model$DomesticUseTransactions <- m[1:length(commodities), 1:length(industries)]
-    model$DomesticFinalDemand <- m[1:length(commodities),-(1:length(industries))]
-
-    model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
-    model$DomesticFinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = TRUE)
-    
-    SoI_DomesticUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
-
-    commodities <- disaggregateStateSectorLists(commodities, disagg)  
-    industries <- disaggregateStateSectorLists(industries, disagg)
-    tradable_cols <- disaggregateStateSectorLists(tradable_cols, disagg)
-    nonimport_cols <- disaggregateStateSectorLists(nonimport_cols, disagg)
-    
-  } else {
-    SoI_DomesticUse <- SoI_DomesticUse[commodities, ]
-  }
+  # 1 - Load state domestic Use and commodity output for the specified year
+  SoI_DomesticUse <- model$DomesticFullUse[commodities, ]
+  SoI_CommodityOutput <- model$CommodityOutput
   
-  # Disaggregate SoI_DomesticUse
+  # Disaggregate remaining objects
+  if(!is.null(disagg)){
+    tradable_cols <- disaggregateStateSectorLists(tradable_cols, disagg)
+  }
   
   # 2 - Generate 2-region ICFs
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios...")
@@ -343,12 +320,7 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   logging::loginfo("Generating SoI2SoI Use table...")
   SoI2SoI_Use <- SoI_DomesticUse
   SoI2SoI_Use[, tradable_cols] <- SoI_DomesticUse[, tradable_cols] * ICF$SoI2SoI
-  # Load state commodity output
-  logging::loginfo("Loading state commodity output...")
-  SoI_CommodityOutput <- loadStateIODataFile(paste0("State_",
-                                                    iolevel,
-                                                    "_CommodityOutput_",
-                                                    year))[[state]]
+
   # Calculate Interregional Imports, Exports, and Net Exports
   logging::loginfo("Calculating SoI2SoI interregional imports and exports and net exports...")
   SoI2SoI_Use$InterregionalImports <- rowSums(SoI_DomesticUse[, tradable_cols]) - rowSums(SoI2SoI_Use[, tradable_cols])
@@ -556,6 +528,10 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
   # Load state Make, industry and commodity output
   State_Make_ls <- loadStateIODataFile(paste0("State_", iolevel, "_Make_", year))
   State_Use_ls <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year))
+  State_DomesticUse_ls <- loadStateIODataFile(paste0("State_",
+                                                     iolevel,
+                                                     "_DomesticUse_",
+                                                     year))
   State_IndustryOutput_ls <- loadStateIODataFile(paste0("State_",
                                                         iolevel,
                                                         "_IndustryOutput_",
@@ -580,14 +556,14 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
       model$Industries <- industries
       model$Commodities <- commodities
       model$MakeTransactions <- US_Make
-      model$US_DomesticFullUse <- US_DomesticUse # Note that the domestic full use object does not include value added rows
+      model$DomesticFullUse <- US_DomesticUse # Note that the domestic full use object does not include value added rows
       
       # Disaggregate national model objects once (i.e. not for each state)
       model <- disaggregateNationalObjectsInStateModel(model, disagg)
   
       # Assign the disaggregated model objects to the original stateior objects
       US_Make <- model$MakeTransactions
-      US_DomesticUse <- model$US_DomesticFullUse
+      US_DomesticUse <- model$DomesticFullUse
       industries <- model$Industries
       commodities <- model$Commodities
         
@@ -595,6 +571,7 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
       for (state in sort(c(state.name, "District of Columbia"))) {
         model$MakeTransactions <- State_Make_ls[[state]]
         model$FullUse <- State_Use_ls[[state]]
+        model$DomesticFullUse <- State_DomesticUse_ls[[state]]        
         model$CommodityOutput <- State_CommodityOutput_ls[[state]]
         model$IndustryOutput <- State_IndustryOutput_ls[[state]]
  
@@ -603,6 +580,7 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
         # Assign the disaggregated model objects to the stateior lists
         State_Make_ls[[state]] <- model$MakeTransactions
         State_Use_ls[[state]] <- model$FullUse
+        State_DomesticUse_ls[[state]] <- model$DomesticFullUse
         State_CommodityOutput_ls[[state]] <- model$CommodityOutput
         State_IndustryOutput_ls[[state]] <- model$IndustryOutput
 
@@ -610,20 +588,25 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
         
     } #end of if disaggregationSpecs is not empty statement
 
-  } #End of Disaggregation for state model obstcs
+  } #End of Disaggregation for state model objects
 
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
   for (state in sort(c(state.name, "District of Columbia"))) {
     ## Two-region Make
-    SoI_Make <- State_Make_ls[[state]]
-    rownames(SoI_Make) <- getBEASectorCodeLocation("Industry", state, iolevel, disagg)
-    colnames(SoI_Make) <- getBEASectorCodeLocation("Commodity", state, iolevel, disagg)
-    RoUS_Make <- US_Make - SoI_Make
+    model$MakeTransactions <- State_Make_ls[[state]]
+    model$FullUse <- State_Use_ls[[state]]
+    model$DomesticFullUse <- State_DomesticUse_ls[[state]]
+    model$CommodityOutput <- State_CommodityOutput_ls[[state]]
+    model$IndustryOutput <- State_IndustryOutput_ls[[state]]
+    
+    rownames(model$MakeTransactions) <- getBEASectorCodeLocation("Industry", state, iolevel, disagg)
+    colnames(model$MakeTransactions) <- getBEASectorCodeLocation("Commodity", state, iolevel, disagg)
+    RoUS_Make <- US_Make - model$MakeTransactions
     rownames(RoUS_Make) <- getBEASectorCodeLocation("Industry", "RoUS", iolevel, disagg)
     colnames(RoUS_Make) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel, disagg)
     # Form two-region Make
-    TwoRegionMake <- SoI_Make
+    TwoRegionMake <- model$MakeTransactions
     TwoRegionMake[rownames(RoUS_Make), colnames(RoUS_Make)] <- RoUS_Make
     # Replace NA with 0 in two-region Make
     TwoRegionMake[is.na(TwoRegionMake)] <- 0
@@ -632,14 +615,14 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
     ## Two-region Use and Domestic Use table
     TwoRegionUseModel <- buildTwoRegionUseModel(state, year, ioschema = 2012,
                                                 iolevel = iolevel, domestic = FALSE,
-                                                disagg = disagg)
+                                                model = model, disagg = disagg)
     TwoRegionUse <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
                                 TwoRegionUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
                           rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
                                 TwoRegionUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
     TwoRegionDomesticUseModel <- buildTwoRegionUseModel(state, year, ioschema = 2012,
                                                         iolevel = iolevel, domestic = TRUE,
-                                                        disagg = disagg)
+                                                        model = model, disagg = disagg)
     TwoRegionDomesticUse <- cbind(rbind(TwoRegionDomesticUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
                                         TwoRegionDomesticUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
                                   rbind(TwoRegionDomesticUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
