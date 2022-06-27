@@ -329,11 +329,11 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   # 4 - Generate RoUS domestic Use and commodity output
   # Generate RoUS domestic Use
   logging::loginfo("Generating RoUS Domestic Use table...")
-  US_DomesticUse <- generateUSDomesticUse(iolevel, year)
+  US_DomesticUse <- model$US_DomesticUse
   RoUS_DomesticUse <- US_DomesticUse - SoI_DomesticUse
   # Calculate RoUS Commodity Output
   logging::loginfo("Generating RoUS commodity output...")
-  US_Make <- getNationalMake(iolevel, year)
+  US_Make <- model$US_Make
   US_CommodityOutput <- colSums(US_Make)
   RoUS_CommodityOutput <- US_CommodityOutput - SoI_CommodityOutput
   colnames(RoUS_CommodityOutput) <- "Output"
@@ -561,9 +561,11 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
       # Disaggregate national model objects once (i.e. not for each state)
       model <- disaggregateNationalObjectsInStateModel(model, disagg)
   
-      # Assign the disaggregated model objects to the original stateior objects
+      # Assign the disaggregated model objects to the original stateior objects, rename some as national
       US_Make <- model$MakeTransactions
+      model$US_Make <- model$MakeTransactions
       US_DomesticUse <- model$DomesticFullUse
+      model$US_DomesticUse <- model$DomesticFullUse
       industries <- model$Industries
       commodities <- model$Commodities
         
