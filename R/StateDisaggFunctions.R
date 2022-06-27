@@ -67,7 +67,7 @@ disaggregateNationalObjectsInStateModel <- function(model, disagg){
   model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state) #Formatting MakeTransactions object
   
   # Format individual domestic use objects (DomesticUseTransactions, DomesticFinalDemand)
-  model$US_DomesticFullUse <- formatFullUseFromStateToUSEEIO(model$US_DomesticFullUse) # Note that the domestic full use object does not include value added rows
+  model$DomesticFullUse <- formatFullUseFromStateToUSEEIO(model$DomesticFullUse) # Note that the domestic full use object does not include value added rows
   model <- splitFullUse(model, domestic = TRUE) # Splitting FullUse into UseTransactions, UseValueAdded, and FinalDemand objects
   model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior 
   
@@ -83,7 +83,7 @@ disaggregateNationalObjectsInStateModel <- function(model, disagg){
   # Convert disaggregated objects back to stateior formats. Note that commodities and industries did not change format in disaggregation.
   
   model$MakeTransactions <- formatMakeFromUSEEIOtoState(model, state = "National")
-  model$US_DomesticFullUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
+  model$DomesticFullUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
 
   
   return(model)
@@ -154,13 +154,13 @@ formatMakeFromUSEEIOtoState <- function(model, state){
 formatFullUseFromUSEEIOtoState <- function(model, state, domestic = FALSE){
 
   if(domestic == TRUE){
-    model$US_DomesticFullUse <- cbind(model$DomesticUseTransactions, model$DomesticFinalDemand) # combine UseTransactions and FinalDemand columns
+    model$DomesticFullUse <- cbind(model$DomesticUseTransactions, model$DomesticFinalDemand) # combine UseTransactions and FinalDemand columns
 
     # Format row and column names
-    rownames(model$US_DomesticFullUse) <- gsub("\\/.*","",rownames(model$US_DomesticFullUse)) # remove everything after "/"
-    colnames(model$US_DomesticFullUse) <- gsub("\\/.*","",colnames(model$US_DomesticFullUse)) # remove everything after "/"
+    rownames(model$DomesticFullUse) <- gsub("\\/.*","",rownames(model$DomesticFullUse)) # remove everything after "/"
+    colnames(model$DomesticFullUse) <- gsub("\\/.*","",colnames(model$DomesticFullUse)) # remove everything after "/"
     
-    return(model$US_DomesticFullUse)
+    return(model$DomesticFullUse)
     
   }else{
     tempFullUse <- cbind(model$UseTransactions, model$FinalDemand) # combine UseTransactions and FinalDemand columns
@@ -193,8 +193,8 @@ splitFullUse <- function(model, domestic = FALSE){
     numCommodities <- length(model$Commodities) # Find number of commodities
     numIndustries <- length(model$Industries) # Find number of industries
     
-    model$DomesticUseTransactions <- model$US_DomesticFullUse[1:numCommodities, 1:numIndustries] # Get subset of FullUse with numCommodities rows and numIndustries columns
-    model$DomesticFinalDemand <- model$US_DomesticFullUse[1:numCommodities,-(1:numIndustries)] # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
+    model$DomesticUseTransactions <- model$DomesticFullUse[1:numCommodities, 1:numIndustries] # Get subset of FullUse with numCommodities rows and numIndustries columns
+    model$DomesticFinalDemand <- model$DomesticFullUse[1:numCommodities,-(1:numIndustries)] # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
     
   }else{
     numCommodities <- dim(model$CommodityOutput)[1] # Find number of commodities
