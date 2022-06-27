@@ -419,35 +419,6 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   RoUS2RoUS_Use$InterregionalExports <- RoUS_CommodityOutput$Output - rowSums(RoUS2RoUS_Use[, c(nonimport_cols, ITA_col)])
   RoUS2RoUS_Use$NetExports <- RoUS2RoUS_Use$InterregionalExports - RoUS2RoUS_Use$InterregionalImports
   
-  # 9.1 - Allocate negative InterregionalExports across columns in SoI2SoI Use and RoUS2RoUS Use
-  logging::loginfo("Allocating negative interregional exports in SoI2SoI Use and RoUS2RoUS Use...")
-  for (i in rows_allocation) {
-    # SoI2SoI
-    if (SoI2SoI_Use[i, "InterregionalExports"] < 0) {
-      value <- SoI2SoI_Use[i, "InterregionalExports"]
-      weight <- SoI2SoI_Use[i, tradable_cols]
-      if (sum(weight) == 0) {
-        SoI2SoI_Use[i, tradable_cols] <- value*(1/length(weight))
-      } else {
-        SoI2SoI_Use[i, tradable_cols] <- weight + value*(weight/sum(weight))
-      }
-    }
-    # RoUS2RoUS
-    if (RoUS2RoUS_Use[i, "InterregionalExports"] < 0) {
-      value <- RoUS2RoUS_Use[i, "InterregionalExports"]
-      weight <- RoUS2RoUS_Use[i, tradable_cols]
-      if (sum(weight) == 0) {
-        RoUS2RoUS_Use[i, tradable_cols] <- value*(1/length(weight))
-      } else {
-        RoUS2RoUS_Use[i, tradable_cols] <- weight + value*(weight/sum(weight))
-      }
-    }
-  }
-  SoI2SoI_Use$InterregionalImports <- rowSums(SoI_DomesticUse[, tradable_cols]) - rowSums(SoI2SoI_Use[, tradable_cols])
-  SoI2SoI_Use$InterregionalExports <- SoI_CommodityOutput$Output - rowSums(SoI2SoI_Use[, c(nonimport_cols, ITA_col)])
-  RoUS2RoUS_Use$InterregionalImports <- rowSums(RoUS_DomesticUse[, tradable_cols]) - rowSums(RoUS2RoUS_Use[, tradable_cols])
-  RoUS2RoUS_Use$InterregionalExports <- RoUS_CommodityOutput$Output - rowSums(RoUS2RoUS_Use[, c(nonimport_cols, ITA_col)])
-  
   # 10 - Generate SoI2RoUS and RoUS2SoI Use
   logging::loginfo("Generating SoI2RoUS and RoUS2SoI Use...")
   # SoI2RoUS
