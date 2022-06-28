@@ -597,6 +597,9 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
 
   } #End of Disaggregation for state model objects
 
+  # reassign nonimport cols after disaggregation
+  nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
+  
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
   for (state in sort(c(state.name, "District of Columbia"))) {
