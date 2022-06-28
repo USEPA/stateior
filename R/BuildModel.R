@@ -275,17 +275,47 @@ buildStateUseModel <- function(year) {
 #' to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.
 #' @param domestic A logical value indicating whether to use Domestic Use tables,
 #' default is TRUE.
+#' @param model
+#' @param disagg
 #' @return A list of domestic two-region Use tables.
 #' @export
 buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
                                    ICF_sensitivity_analysis = FALSE,
                                    adjust_by = 0, domestic = TRUE,
-                                   model, disagg = NULL) {
+                                   model = NULL, disagg = NULL) {
   startLogging()
   # 0 - Define commodities, industries, final demand columns, import column, and
-  # international trade adjustment column
-  commodities <- model$Commodities
-  industries <- model$Industries
+  # international trade adjustment column and
+  # 1 - Load state domestic Use and commodity output for the specified year
+  
+  if (is.null(model)) {
+    # If no model object is passed, generate these objects
+    commodities <- getVectorOfCodes(iolevel, "Commodity")
+    industries <- getVectorOfCodes(iolevel, "Industry")
+    SoI_DomesticUse <- loadStateIODataFile(paste0("State_",
+                                                  iolevel,
+                                                  "_DomesticUse_",
+                                                  year))[[state]][commodities, ]
+    SoI_CommodityOutput <- loadStateIODataFile(paste0("State_",
+                                                      iolevel,
+                                                      "_CommodityOutput_",
+                                                      year))[[state]]
+    US_DomesticUse <- generateUSDomesticUse(iolevel, year)
+    US_Make <- getNationalMake(iolevel, year)
+    US_Use <- getNationalUse("Summary", year)
+    SoI_Use <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year))[[state]]    
+    
+  } else {
+    commodities <- model$Commodities
+    industries <- model$Industries    
+    SoI_DomesticUse <- model$DomesticFullUse[commodities, ]
+    SoI_CommodityOutput <- model$CommodityOutput
+    US_DomesticUse <- model$US_DomesticUse
+    US_Make <- model$US_Make
+    US_Use <- model$US_Use
+    SoI_Use <- model$FullUse
+  }
+
   
   FD_cols <- getFinalDemandCodes(iolevel)
   import_col <- getVectorOfCodes(iolevel, "Import")
@@ -297,10 +327,6 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
 
   # All sectors except international imports
   nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
-  
-  # 1 - Load state domestic Use and commodity output for the specified year
-  SoI_DomesticUse <- model$DomesticFullUse[commodities, ]
-  SoI_CommodityOutput <- model$CommodityOutput
   
   # Disaggregate remaining objects
   if(!is.null(disagg)){
@@ -331,11 +357,9 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   # 4 - Generate RoUS domestic Use and commodity output
   # Generate RoUS domestic Use
   logging::loginfo("Generating RoUS Domestic Use table...")
-  US_DomesticUse <- model$US_DomesticUse
   RoUS_DomesticUse <- US_DomesticUse - SoI_DomesticUse
   # Calculate RoUS Commodity Output
   logging::loginfo("Generating RoUS commodity output...")
-  US_Make <- model$US_Make
   US_CommodityOutput <- colSums(US_Make)
   RoUS_CommodityOutput <- US_CommodityOutput - SoI_CommodityOutput
   colnames(RoUS_CommodityOutput) <- "Output"
@@ -477,8 +501,6 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   # to form two-region total Use table.
   if (!domestic) {
     # Load US and SoI Use, calcuate RoUS_Use
-    US_Use <- model$US_Use
-    SoI_Use <- model$FullUse
     RoUS_Use <- US_Use - SoI_Use[commodities, c(industries, FD_cols)]
     # Calculate SoI_Import and RoUS_Import
     SoI_Import <- SoI_Use[commodities, c(industries, FD_cols)] - SoI_DomesticUse[commodities, c(industries, FD_cols)]
