@@ -311,6 +311,8 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios...")
   ICF <- generateDomestic2RegionICFs(state, year, ioschema, iolevel,
                                      ICF_sensitivity_analysis, adjust_by)
+  ICF <- ICF[match(rownames(SoI_CommodityOutput), ICF$BEA_2012_Summary_Code),]
+
   # Only allocate "error" to rows (commodities) that does not have ICF of 1 or 0
   commodities_notrade <- ICF[ICF$SoI2SoI == 1 & ICF$SoI2RoUS == 0 &
                                ICF$RoUS2RoUS == 1 & ICF$RoUS2SoI == 0, 1]
