@@ -46,7 +46,7 @@ jobs:
       - name: Load stateior, generate and save two-region tables
         run: |
           devtools::load_all()
-          source("data-raw/TwoRegionModel.R")
+          source("data-raw/TwoRegionModelDisagg.R")
         shell: Rscript {0}
       
       # Upload .rds files
