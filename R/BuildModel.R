@@ -336,7 +336,7 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   # 2 - Generate 2-region ICFs
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios...")
   ICF <- generateDomestic2RegionICFs(state, year, ioschema, iolevel,
-                                     ICF_sensitivity_analysis, adjust_by)
+                                     ICF_sensitivity_analysis, adjust_by, disagg)
   ICF <- ICF[match(rownames(SoI_CommodityOutput), ICF$BEA_2012_Summary_Code),]
 
   # Only allocate "error" to rows (commodities) that does not have ICF of 1 or 0
@@ -615,9 +615,20 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
 
       } #end of for each state loop
         
-    } #end of if disaggregationSpecs is not empty statement
-
-  } #End of Disaggregation for state model objects
+    } else {
+      stop("Error accessing disaggregation specs")
+    }
+    
+  } else {
+    # Initiate model object
+    model <- list()
+    model$Commodities <- commodities
+    model$Industries <- industries
+    model$US_DomesticUse <- US_DomesticUse
+    model$US_Make <- US_Make
+    model$US_Use <- US_Use
+  }
+  
 
   # reassign nonimport cols after disaggregation
   nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
