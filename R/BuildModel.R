@@ -575,7 +575,7 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
       commodities <- model$Commodities
 
       # Loop for objects that need to be disaggregated objects for each state 
-      for (state in sort(c(state.name, "District of Columbia"))) {
+      for (state in sort(c(state.name, "District of Columbia", "Overseas"))) {
         model$MakeTransactions <- State_Make_ls[[state]]
         model$FullUse <- State_Use_ls[[state]]
         model$DomesticFullUse <- State_DomesticUse_ls[[state]]        
