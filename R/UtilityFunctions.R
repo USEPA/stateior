@@ -104,6 +104,7 @@ loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
 #' @param location A text value specifying desired location,
 #' can be state name like "Georgia" or "RoUS" representing Rest of US.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param disagg optional, disaggregation specs 
 #' @return A text value in the format of code/location.
 getBEASectorCodeLocation <- function(sector_type, location, iolevel, disagg=NULL) {
   # Get code
