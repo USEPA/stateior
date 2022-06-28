@@ -275,8 +275,8 @@ buildStateUseModel <- function(year) {
 #' to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.
 #' @param domestic A logical value indicating whether to use Domestic Use tables,
 #' default is TRUE.
-#' @param model
-#' @param disagg
+#' @param model optional, a model object with state tables
+#' @param disagg optional, disaggregation specs
 #' @return A list of domestic two-region Use tables.
 #' @export
 buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,

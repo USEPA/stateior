@@ -4,7 +4,7 @@
 \alias{getBEASectorCodeLocation}
 \title{Combine sector code and location to the form of code/location.}
 \usage{
-getBEASectorCodeLocation(sector_type, location, iolevel)
+getBEASectorCodeLocation(sector_type, location, iolevel, disagg = NULL)
 }
 \arguments{
 \item{sector_type}{A text value specifying desired sector type,

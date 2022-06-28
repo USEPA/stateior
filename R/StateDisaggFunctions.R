@@ -1,5 +1,5 @@
 
-
+#' Read and assign disaggregation specifications
 #' @return A stateior model object with the disaggregation specs loaded.
 getStateModelDisaggSpecs <- function(){
 
@@ -15,6 +15,7 @@ getStateModelDisaggSpecs <- function(){
   
 }
 
+#' Disaggregate state make and use tables
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param state A string value that indicates the state model being disaggregated
 #' @return A stateior model with the disaggregateed objects
@@ -66,6 +67,7 @@ disaggregateStateModel <- function(model, state){
 } 
 
 
+#' Disaggregate national make and use tables
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param disagg Specifications for model disaggregation
 #' @return A stateior model with the disaggregateed objects
@@ -106,12 +108,11 @@ disaggregateNationalObjectsInStateModel <- function(model, disagg){
   model$DomesticFullUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
   model$FullUse <- formatFullUseFromUSEEIOtoState(model, state)
 
-  
   return(model)
-  
-  
+
 } 
 
+#' Format model objects to prepare for use in useeior functions
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param state A string value that indicates the state model being disaggregated
 #' @return A stateior make table formatted for disaggregation with useeior functions
@@ -133,6 +134,7 @@ formatMakeFromStateToUSEEIO <- function(model, state){
   return(model$MakeTransactions)
 }
 
+#' Format Use table objects to prepare for use in useeior functions
 #' @param table FullUse table
 #' @return The FullUse model object with useeior formatting fit for disaggregation functions
 formatFullUseFromStateToUSEEIO <- function(table){
@@ -148,6 +150,7 @@ formatFullUseFromStateToUSEEIO <- function(table){
   return(table)
 }
 
+#' Format Make table objects back to stateior format
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param state A string value that indicates the state model being disaggregated
 #' @return A stateior make table formatted according to stateior specifications
@@ -168,6 +171,7 @@ formatMakeFromUSEEIOtoState <- function(model, state){
   return(model$MakeTransactions)
 }
 
+#' Format Use table objects back to stateior format
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param state A string value that indicates the state model being disaggregated
 #' @param domestic A boolean that indicates whether the table to format is the domesticUse table or not
@@ -182,7 +186,7 @@ formatFullUseFromUSEEIOtoState <- function(model, state, domestic = FALSE){
     colnames(model$DomesticFullUse) <- gsub("\\/.*","",colnames(model$DomesticFullUse)) # remove everything after "/"
     return(model$DomesticFullUse)
     
-  }else{
+  } else {
     tempFullUse <- cbind(model$UseTransactions, model$FinalDemand) # combine UseTransactions and FinalDemand columns
     
     # Create the empty section of FullUse that is VA rows by FD columns (NA values)
@@ -203,6 +207,8 @@ formatFullUseFromUSEEIOtoState <- function(model, state, domestic = FALSE){
   }
 
 }
+
+#' Separate full use table into model components
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @param domestic A boolean that indicates whether the table to format is the domesticUse table or not
 #' @return A model object with FullUse split into UseTransactions, FinalDemand, and UseValueAdded objects
@@ -224,6 +230,7 @@ splitFullUse <- function(model, domestic = FALSE){
   
 }
 
+#' Calculate output from model objects
 #' @param model An stateior model object with model specs and specific IO tables loaded
 #' @return A model object with disaggregated IndustryOutput and CommodityOutput objects
 calculateStateIndustryCommodityOuput <- function(model){
