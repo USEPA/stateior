@@ -142,17 +142,27 @@ generateDomestic2RegionICFs <- function(state, year, ioschema, iolevel,
   CommodityCodeName <- loadDatafromUSEEIOR(paste(iolevel,
                                                  "CommodityCodeName_2012",
                                                  sep = "_"))
+  # Update commodities from disaggregation
+  disagg <- data.frame(BEA_2012_Summary_Commodity_Code = c("221100", "221200", "221300"),
+                       BEA_2012_Summary_Commodity_Name = c("Elec", "NG", "Water"))
+  CommodityCodeName <- CommodityCodeName[CommodityCodeName$BEA_2012_Summary_Commodity_Code!="22",]
+  CommodityCodeName <- rbind(CommodityCodeName, disagg)
+  
   ICF <- merge(ICF_2r_wide, CommodityCodeName, by.x = bea,
                by.y = paste("BEA", ioschema, iolevel, "Commodity_Code", sep = "_"),
                all.y = TRUE)
   if (iolevel == "Summary") {
     # Adjust utilities
+    ICF[ICF[, bea] == "221100", cols] <- calculateElectricityFlowRatios(state, year)[, cols]
+    ICF[ICF[, bea] == "221100", "source"] <- "EIA"
+    ICF[ICF[, bea] %in% c("221200", "221300"), cols] <- data.frame("SoI2SoI" = 1,
+                                                               "SoI2RoUS" = 0,
+                                                               "RoUS2SoI" = 0,
+                                                               "RoUS2RoUS" = 1) 
+    ICF[ICF[, bea]%in% c("221200", "221300"), "source"] <- "Assuming no interregional trade"        
     
-    ## Adjust for disaggregation:
-    
-    
-    ICF[ICF[, bea] == "22", cols] <- calculateUtilitiesFlowRatios(state, year)[, cols]
-    ICF[ICF[, bea] == "22", "source"] <- "EIA"
+    # ICF[ICF[, bea] == "22", cols] <- calculateUtilitiesFlowRatios(state, year)[, cols]
+    # ICF[ICF[, bea] == "22", "source"] <- "EIA"
     
     # Adjust waste management and remediation services
     ICF[ICF[, bea] == "562", cols] <- calculateWasteManagementServiceFlowRatios(state, year)[, cols]
