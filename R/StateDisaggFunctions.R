@@ -20,7 +20,6 @@ getStateModelDisaggSpecs <- function(){
 #' @return A stateior model with the disaggregateed objects
 disaggregateStateModel <- function(model, state){
 
-  # TODO: Include disaggregation of domestic use for each state
   # TODO: Include validation checks for row/column sums - note that there may be unexpected results due to existing negative values in state use tables.
 
   for (disagg in model$DisaggregationSpecs){
@@ -36,12 +35,18 @@ disaggregateStateModel <- function(model, state){
  
     # Disaggregating specified model objects
     model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
-    
+    model$MakeTransactions[is.na(model$MakeTransactions)] <- 0
+        
     model$UseTransactions <- useeior:::disaggregateUseTable(model, disagg)
+    model$UseTransactions[is.na(model$UseTransactions)] <- 0
     model$FinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = FALSE)
+    model$FinalDemand[is.na(model$FinalDemand)] <- 0
     model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
+    model$DomesticUseTransactions[is.na(model$DomesticUseTransactions)] <- 0
     model$DomesticFinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = TRUE)
+    model$DomesticFinalDemand[is.na(model$DomesticFinalDemand)] <- 0
     model$UseValueAdded <- useeior:::disaggregateVA(model, disagg)
+    model$UseValueAdded[is.na(model$UseValueAdded)] <- 0
     
     if(model$specs$CommodityorIndustryType=="Commodity") {
       model <- calculateStateIndustryCommodityOuput(model) # Also formats the disaggregated industry and commodity outputs to stateior formats
@@ -70,23 +75,24 @@ disaggregateNationalObjectsInStateModel <- function(model, disagg){
   
   # Format Make
   model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state) #Formatting MakeTransactions object
-  
+
   # Format individual domestic use objects (DomesticUseTransactions, DomesticFinalDemand)
   model$DomesticFullUse <- formatFullUseFromStateToUSEEIO(model$DomesticFullUse) # Note that the domestic full use object does not include value added rows
   model <- splitFullUse(model, domestic = TRUE) # Splitting FullUse into UseTransactions, UseValueAdded, and FinalDemand objects
-  model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior 
-  
+
   # Disaggregate model objects
-  
   model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
+  model$MakeTransactions[is.na(model$MakeTransactions)] <- 0
+  
   model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
+  model$DomesticUseTransactions[is.na(model$DomesticUseTransactions)] <- 0
   model$DomesticFinalDemand <- useeior:::disaggregateFinalDemand(model, disagg, domestic = TRUE)
-  # Disaggregate industry and commodity lists last because the original lists are used in the disaggregation of the other obejcts
+  model$DomesticFinalDemand[is.na(model$DomesticFinalDemand)] <- 0  
+
   model$Industries <- disaggregateStateSectorLists(model$Industries, disagg)
   model$Commodities <- disaggregateStateSectorLists(model$Commodities, disagg)
   
   # Convert disaggregated objects back to stateior formats. Note that commodities and industries did not change format in disaggregation.
-  
   model$MakeTransactions <- formatMakeFromUSEEIOtoState(model, state = "National")
   model$DomesticFullUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
 
@@ -148,7 +154,7 @@ formatMakeFromUSEEIOtoState <- function(model, state){
   columnLabels <- colnames(model$MakeTransactions)
   columnLabels <- gsub("\\/.*","",columnLabels) # remove everything after "/" 
   colnames(model$MakeTransactions) <- columnLabels # replace old column labels with new ones
-  
+
   return(model$MakeTransactions)
 }
 
@@ -164,7 +170,6 @@ formatFullUseFromUSEEIOtoState <- function(model, state, domestic = FALSE){
     # Format row and column names
     rownames(model$DomesticFullUse) <- gsub("\\/.*","",rownames(model$DomesticFullUse)) # remove everything after "/"
     colnames(model$DomesticFullUse) <- gsub("\\/.*","",colnames(model$DomesticFullUse)) # remove everything after "/"
-    
     return(model$DomesticFullUse)
     
   }else{
@@ -184,7 +189,6 @@ formatFullUseFromUSEEIOtoState <- function(model, state, domestic = FALSE){
     model$FullUse <- rbind(tempFullUse, tempVA)
     rownames(model$FullUse) <- gsub("\\/.*","",rownames(model$FullUse)) # remove everything after "/"
     colnames(model$FullUse) <- gsub("\\/.*","",colnames(model$FullUse)) # remove everything after "/"
-    
     return(model$FullUse)
   }
 
