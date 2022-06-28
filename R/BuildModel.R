@@ -477,8 +477,8 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   # to form two-region total Use table.
   if (!domestic) {
     # Load US and SoI Use, calcuate RoUS_Use
-    US_Use <- getNationalUse("Summary", year)
-    SoI_Use <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year))[[state]]
+    US_Use <- model$US_Use
+    SoI_Use <- model$FullUse
     RoUS_Use <- US_Use - SoI_Use[commodities, c(industries, FD_cols)]
     # Calculate SoI_Import and RoUS_Import
     SoI_Import <- SoI_Use[commodities, c(industries, FD_cols)] - SoI_DomesticUse[commodities, c(industries, FD_cols)]
@@ -526,6 +526,7 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
   nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
   # Load US Make table
   US_Make <- getNationalMake(iolevel, year)
+  US_Use <- getNationalUse(iolevel, year)
   US_DomesticUse <- generateUSDomesticUse(iolevel, year)
   # Load state Make, industry and commodity output
   State_Make_ls <- loadStateIODataFile(paste0("State_", iolevel, "_Make_", year))
@@ -558,6 +559,7 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
       model$Industries <- industries
       model$Commodities <- commodities
       model$MakeTransactions <- US_Make
+      model$FullUse <- US_Use
       model$DomesticFullUse <- US_DomesticUse # Note that the domestic full use object does not include value added rows
       
       # Disaggregate national model objects once (i.e. not for each state)
@@ -568,10 +570,11 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
       model$US_Make <- model$MakeTransactions
       US_DomesticUse <- model$DomesticFullUse
       model$US_DomesticUse <- model$DomesticFullUse
+      model$US_Use <- model$FullUse
       industries <- model$Industries
       commodities <- model$Commodities
-        
-      # Loop for obejcts that need to be disaggregated objects for each state 
+
+      # Loop for objects that need to be disaggregated objects for each state 
       for (state in sort(c(state.name, "District of Columbia"))) {
         model$MakeTransactions <- State_Make_ls[[state]]
         model$FullUse <- State_Use_ls[[state]]
