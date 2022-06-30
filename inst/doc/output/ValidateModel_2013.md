@@ -9,7 +9,7 @@ State and two-region IO data successfully loaded.
 
 ### Check state IO tables
 
-#### 1\. Check if industry output from state Make and Use are almost equal (\<= 0.001).
+#### 1\. Check if industry output from state Make and Use are almost equal (\<= 0.01).
 
 There are no failures.
 
@@ -23,153 +23,25 @@ There are no failures.
 
 Note: only exception being Overseas, which isn’t used for further
 calculations, and if the same cell in US Make table is also negative.
-
 There are no failures.
 
-#### 4\. Sum of each industry’s output across all states must almost equal(\<= 0.001) industry output in US Make Table.
+#### 4\. Sum of each industry’s output across all states must almost equal (\<= 1E7, or $10 million by industry) the industry output in US Make Table.
 
-There are 71 failures, and they are
+The threshold is set to 1E7 because there are differences (within +/-
+$10 million) between US industry output summed from Make and that summed
+from Use, comparing sum of state industry output (summed from state Use)
+to US industry output summed from US Make should account for those
+inherent differences at the national level. There are no failures.
 
-| Industry |                            |
-| :------- | -------------------------- |
-| 111CA    | rowSums(US\_Summary\_Make) |
-| 113FF    | rowSums(US\_Summary\_Make) |
-| 211      | rowSums(US\_Summary\_Make) |
-| 212      | rowSums(US\_Summary\_Make) |
-| 213      | rowSums(US\_Summary\_Make) |
-| 22       | rowSums(US\_Summary\_Make) |
-| 23       | rowSums(US\_Summary\_Make) |
-| 321      | rowSums(US\_Summary\_Make) |
-| 327      | rowSums(US\_Summary\_Make) |
-| 331      | rowSums(US\_Summary\_Make) |
-| 332      | rowSums(US\_Summary\_Make) |
-| 333      | rowSums(US\_Summary\_Make) |
-| 334      | rowSums(US\_Summary\_Make) |
-| 335      | rowSums(US\_Summary\_Make) |
-| 3361MV   | rowSums(US\_Summary\_Make) |
-| 3364OT   | rowSums(US\_Summary\_Make) |
-| 337      | rowSums(US\_Summary\_Make) |
-| 339      | rowSums(US\_Summary\_Make) |
-| 311FT    | rowSums(US\_Summary\_Make) |
-| 313TT    | rowSums(US\_Summary\_Make) |
-| 315AL    | rowSums(US\_Summary\_Make) |
-| 322      | rowSums(US\_Summary\_Make) |
-| 323      | rowSums(US\_Summary\_Make) |
-| 324      | rowSums(US\_Summary\_Make) |
-| 325      | rowSums(US\_Summary\_Make) |
-| 326      | rowSums(US\_Summary\_Make) |
-| 42       | rowSums(US\_Summary\_Make) |
-| 441      | rowSums(US\_Summary\_Make) |
-| 445      | rowSums(US\_Summary\_Make) |
-| 452      | rowSums(US\_Summary\_Make) |
-| 4A0      | rowSums(US\_Summary\_Make) |
-| 481      | rowSums(US\_Summary\_Make) |
-| 482      | rowSums(US\_Summary\_Make) |
-| 483      | rowSums(US\_Summary\_Make) |
-| 484      | rowSums(US\_Summary\_Make) |
-| 485      | rowSums(US\_Summary\_Make) |
-| 486      | rowSums(US\_Summary\_Make) |
-| 487OS    | rowSums(US\_Summary\_Make) |
-| 493      | rowSums(US\_Summary\_Make) |
-| 511      | rowSums(US\_Summary\_Make) |
-| 512      | rowSums(US\_Summary\_Make) |
-| 513      | rowSums(US\_Summary\_Make) |
-| 514      | rowSums(US\_Summary\_Make) |
-| 521CI    | rowSums(US\_Summary\_Make) |
-| 523      | rowSums(US\_Summary\_Make) |
-| 524      | rowSums(US\_Summary\_Make) |
-| 525      | rowSums(US\_Summary\_Make) |
-| HS       | rowSums(US\_Summary\_Make) |
-| ORE      | rowSums(US\_Summary\_Make) |
-| 532RL    | rowSums(US\_Summary\_Make) |
-| 5411     | rowSums(US\_Summary\_Make) |
-| 5415     | rowSums(US\_Summary\_Make) |
-| 5412OP   | rowSums(US\_Summary\_Make) |
-| 55       | rowSums(US\_Summary\_Make) |
-| 561      | rowSums(US\_Summary\_Make) |
-| 562      | rowSums(US\_Summary\_Make) |
-| 61       | rowSums(US\_Summary\_Make) |
-| 621      | rowSums(US\_Summary\_Make) |
-| 622      | rowSums(US\_Summary\_Make) |
-| 623      | rowSums(US\_Summary\_Make) |
-| 624      | rowSums(US\_Summary\_Make) |
-| 711AS    | rowSums(US\_Summary\_Make) |
-| 713      | rowSums(US\_Summary\_Make) |
-| 721      | rowSums(US\_Summary\_Make) |
-| 722      | rowSums(US\_Summary\_Make) |
-| 81       | rowSums(US\_Summary\_Make) |
-| GFGD     | rowSums(US\_Summary\_Make) |
-| GFGN     | rowSums(US\_Summary\_Make) |
-| GFE      | rowSums(US\_Summary\_Make) |
-| GSLG     | rowSums(US\_Summary\_Make) |
-| GSLE     | rowSums(US\_Summary\_Make) |
+#### 5\. Sum of each commodity’s output across all states must almost equal (\<= 1E7, or $10 million by commodity) the commodity output in US Make Table.
 
-#### 5\. Sum of each commodity’s output across all states must almost equal(\<= 0.001) commodity output in US Make Table.
+The threshold is set to 1E7 because there are differences (within +/-
+$10 million) between US industry output summed from Make and that summed
+from Use, comparing sum of state industry output (summed from state Use)
+to US industry output summed from US Make should account for those
+inherent differences at the national level. There are no failures.
 
-There are 58 failures, and they are
-
-|    | Commodity |                            |
-| -- | :-------- | -------------------------- |
-| 1  | 111CA     | colSums(US\_Summary\_Make) |
-| 2  | 113FF     | colSums(US\_Summary\_Make) |
-| 3  | 211       | colSums(US\_Summary\_Make) |
-| 4  | 212       | colSums(US\_Summary\_Make) |
-| 6  | 22        | colSums(US\_Summary\_Make) |
-| 7  | 23        | colSums(US\_Summary\_Make) |
-| 8  | 321       | colSums(US\_Summary\_Make) |
-| 9  | 327       | colSums(US\_Summary\_Make) |
-| 10 | 331       | colSums(US\_Summary\_Make) |
-| 11 | 332       | colSums(US\_Summary\_Make) |
-| 12 | 333       | colSums(US\_Summary\_Make) |
-| 13 | 334       | colSums(US\_Summary\_Make) |
-| 14 | 335       | colSums(US\_Summary\_Make) |
-| 15 | 3361MV    | colSums(US\_Summary\_Make) |
-| 16 | 3364OT    | colSums(US\_Summary\_Make) |
-| 17 | 337       | colSums(US\_Summary\_Make) |
-| 18 | 339       | colSums(US\_Summary\_Make) |
-| 19 | 311FT     | colSums(US\_Summary\_Make) |
-| 20 | 313TT     | colSums(US\_Summary\_Make) |
-| 21 | 315AL     | colSums(US\_Summary\_Make) |
-| 22 | 322       | colSums(US\_Summary\_Make) |
-| 23 | 323       | colSums(US\_Summary\_Make) |
-| 24 | 324       | colSums(US\_Summary\_Make) |
-| 25 | 325       | colSums(US\_Summary\_Make) |
-| 26 | 326       | colSums(US\_Summary\_Make) |
-| 27 | 42        | colSums(US\_Summary\_Make) |
-| 28 | 441       | colSums(US\_Summary\_Make) |
-| 29 | 445       | colSums(US\_Summary\_Make) |
-| 30 | 452       | colSums(US\_Summary\_Make) |
-| 31 | 4A0       | colSums(US\_Summary\_Make) |
-| 32 | 481       | colSums(US\_Summary\_Make) |
-| 33 | 482       | colSums(US\_Summary\_Make) |
-| 34 | 483       | colSums(US\_Summary\_Make) |
-| 35 | 484       | colSums(US\_Summary\_Make) |
-| 36 | 485       | colSums(US\_Summary\_Make) |
-| 38 | 487OS     | colSums(US\_Summary\_Make) |
-| 39 | 493       | colSums(US\_Summary\_Make) |
-| 40 | 511       | colSums(US\_Summary\_Make) |
-| 41 | 512       | colSums(US\_Summary\_Make) |
-| 42 | 513       | colSums(US\_Summary\_Make) |
-| 43 | 514       | colSums(US\_Summary\_Make) |
-| 45 | 523       | colSums(US\_Summary\_Make) |
-| 46 | 524       | colSums(US\_Summary\_Make) |
-| 49 | ORE       | colSums(US\_Summary\_Make) |
-| 50 | 532RL     | colSums(US\_Summary\_Make) |
-| 51 | 5411      | colSums(US\_Summary\_Make) |
-| 52 | 5415      | colSums(US\_Summary\_Make) |
-| 53 | 5412OP    | colSums(US\_Summary\_Make) |
-| 54 | 55        | colSums(US\_Summary\_Make) |
-| 55 | 561       | colSums(US\_Summary\_Make) |
-| 57 | 61        | colSums(US\_Summary\_Make) |
-| 58 | 621       | colSums(US\_Summary\_Make) |
-| 61 | 624       | colSums(US\_Summary\_Make) |
-| 63 | 713       | colSums(US\_Summary\_Make) |
-| 64 | 721       | colSums(US\_Summary\_Make) |
-| 65 | 722       | colSums(US\_Summary\_Make) |
-| 66 | 81        | colSums(US\_Summary\_Make) |
-| 72 | Used      | colSums(US\_Summary\_Make) |
-
-#### 6\. Sum of each commodity’s output across all states must almost equal (\<= 1E^7, or $10 million by commodity) commodity output in US Use Table minus International Imports (commodity specific).
+#### 6\. Sum of each commodity’s output across all states must almost equal (\<= 1E^7, or $10 million by commodity) commodity output in US Use Table.
 
 Note: even if the threshold is met, track the difference for each
 commodity. Save result as a type of quality control check.
@@ -178,191 +50,209 @@ There are no failures.
 
 |        | q\_state\_sum - q\_US\_use |
 | ------ | -------------------------: |
-| 111CA  |                \-1.221e-04 |
-| 113FF  |                \-1.000e+06 |
-| 211    |                  2.000e+06 |
-| 212    |                \-1.530e-05 |
+| 111CA  |                \-1.000e+06 |
+| 113FF  |                  3.000e+06 |
+| 211    |                \-1.000e+06 |
+| 212    |                  5.000e+06 |
 | 213    |                  0.000e+00 |
-| 22     |                \-6.000e+06 |
-| 23     |                  0.000e+00 |
-| 321    |                \-2.000e+06 |
+| 22     |                \-2.441e-04 |
+| 23     |                \-2.000e+06 |
+| 321    |                \-4.000e+06 |
 | 327    |                  2.000e+06 |
-| 331    |                  3.050e-05 |
-| 332    |                \-1.000e+06 |
-| 333    |                  2.000e+06 |
-| 334    |                  5.000e+06 |
-| 335    |                \-2.000e+06 |
-| 3361MV |                \-1.000e+06 |
-| 3364OT |                  2.000e+06 |
-| 337    |                  1.000e+06 |
-| 339    |                \-1.000e+06 |
-| 311FT  |                  1.000e+06 |
-| 313TT  |                  7.600e-06 |
-| 315AL  |                  4.000e+06 |
-| 322    |                \-6.000e+06 |
-| 323    |                \-1.000e+06 |
-| 324    |                  3.000e+06 |
-| 325    |                  1.000e+06 |
-| 326    |                  0.000e+00 |
-| 42     |                  2.441e-04 |
-| 441    |                  6.100e-05 |
-| 445    |                \-3.050e-05 |
-| 452    |                  0.000e+00 |
-| 4A0    |                  2.441e-04 |
-| 481    |                \-2.000e+06 |
-| 482    |                  0.000e+00 |
-| 483    |                  7.600e-06 |
-| 484    |                \-6.100e-05 |
-| 485    |                  1.530e-05 |
-| 486    |                  7.600e-06 |
-| 487OS  |                  3.000e+06 |
-| 493    |                  0.000e+00 |
-| 511    |                  5.000e+06 |
-| 512    |                \-2.000e+06 |
-| 513    |                  5.000e+06 |
-| 514    |                \-3.000e+06 |
-| 521CI  |                  1.000e+06 |
-| 523    |                  6.000e+06 |
-| 524    |                \-1.000e+06 |
-| 525    |                  3.050e-05 |
-| HS     |                \-2.441e-04 |
-| ORE    |                  2.441e-04 |
-| 532RL  |                  1.221e-04 |
-| 5411   |                  2.000e+06 |
-| 5415   |                  6.100e-05 |
-| 5412OP |                \-3.000e+06 |
-| 55     |                \-6.100e-05 |
-| 561    |                \-2.000e+06 |
-| 562    |                  2.000e+06 |
-| 61     |                  6.100e-05 |
-| 621    |                  0.000e+00 |
+| 331    |                  0.000e+00 |
+| 332    |                \-2.000e+06 |
+| 333    |                  5.000e+06 |
+| 334    |                \-1.000e+06 |
+| 335    |                \-1.000e+06 |
+| 3361MV |                  1.000e+06 |
+| 3364OT |                  3.000e+06 |
+| 337    |                \-5.000e+06 |
+| 339    |                  1.000e+06 |
+| 311FT  |                  2.441e-04 |
+| 313TT  |                \-2.000e+06 |
+| 315AL  |                \-3.800e-06 |
+| 322    |                  1.000e+06 |
+| 323    |                \-3.050e-05 |
+| 324    |                \-3.000e+06 |
+| 325    |                \-3.000e+06 |
+| 326    |                  3.000e+06 |
+| 42     |                  8.000e+06 |
+| 441    |                \-4.000e+06 |
+| 445    |                \-2.000e+06 |
+| 452    |                \-6.100e-05 |
+| 4A0    |                  4.000e+06 |
+| 481    |                  3.000e+06 |
+| 482    |                  7.000e+06 |
+| 483    |                  1.000e+06 |
+| 484    |                \-4.000e+06 |
+| 485    |                \-4.000e+06 |
+| 486    |                \-2.000e+06 |
+| 487OS  |                  5.000e+06 |
+| 493    |                \-1.000e+06 |
+| 511    |                  3.000e+06 |
+| 512    |                \-1.000e+06 |
+| 513    |                \-4.000e+06 |
+| 514    |                \-1.000e+06 |
+| 521CI  |                \-5.000e+06 |
+| 523    |                  2.000e+06 |
+| 524    |                  3.000e+06 |
+| 525    |                \-3.050e-05 |
+| HS     |                  7.324e-04 |
+| ORE    |                \-3.000e+06 |
+| 532RL  |                  1.000e+06 |
+| 5411   |                \-2.000e+06 |
+| 5415   |                \-3.000e+06 |
+| 5412OP |                  1.000e+06 |
+| 55     |                \-1.000e+06 |
+| 561    |                \-1.000e+06 |
+| 562    |                \-1.000e+06 |
+| 61     |                \-1.000e+06 |
+| 621    |                  2.441e-04 |
 | 622    |                  0.000e+00 |
-| 623    |                  3.050e-05 |
-| 624    |                  0.000e+00 |
-| 711AS  |                \-1.000e+06 |
-| 713    |                \-6.100e-05 |
-| 721    |                  0.000e+00 |
-| 722    |                \-3.662e-04 |
-| 81     |                  2.000e+06 |
-| GFGD   |                \-1.221e-04 |
-| GFGN   |                  6.100e-05 |
-| GFE    |                  1.000e+06 |
-| GSLG   |                  0.000e+00 |
-| GSLE   |                  0.000e+00 |
-| Used   |                  1.000e+06 |
-| Other  |                  2.000e+06 |
+| 623    |                  9.160e-05 |
+| 624    |                  1.000e+06 |
+| 711AS  |                  3.000e+06 |
+| 713    |                  3.000e+06 |
+| 721    |                \-4.000e+06 |
+| 722    |                \-3.000e+06 |
+| 81     |                \-1.000e+06 |
+| GFGD   |                  0.000e+00 |
+| GFGN   |                  0.000e+00 |
+| GFE    |                  5.000e+06 |
+| GSLG   |                \-2.441e-04 |
+| GSLE   |                  4.000e+06 |
+| Used   |                \-6.000e+06 |
+| Other  |                \-2.000e+06 |
 
 #### 7\. All cells that are zero in US Make table must remain zero in state Make tables. Find zero values in US Make table.
 
 There are no failures.
 
-#### 8\. Sum of each cell across all state Use tables must almost equal (\<= 0.001) the same cell in US Use table. This validates that Total state demand == Total national demand.
+#### 8\. Sum of each cell across all state Use tables must almost equal (\<= 1E5, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
 
 Note: failures associated with ‘F050 - Imports’ are acceptable. Because
 state imports are not directly derived from US imports, a gap in imports
 between state sum and national total is reasonable.
 
-##### 8.1 State Use tables
+##### 8.1 State Use tables (checking absolute differences)
 
-There are 42 failures, and they are
+There is 1 failure, and it is
 
-| Commodity | Industry/Final Demand |
-| :-------- | :-------------------- |
-| 113FF     | F050                  |
-| 211       | F050                  |
-| 212       | F050                  |
-| 22        | F050                  |
-| 321       | F050                  |
-| 327       | F050                  |
-| 332       | F050                  |
-| 333       | F050                  |
-| 334       | F050                  |
-| 335       | F050                  |
-| 3361MV    | F050                  |
-| 3364OT    | F050                  |
-| 337       | F050                  |
-| 339       | F050                  |
-| 311FT     | F050                  |
-| 315AL     | F050                  |
-| 322       | F050                  |
-| 323       | F050                  |
-| 324       | F050                  |
-| 325       | F050                  |
-| 42        | F050                  |
-| 481       | F050                  |
-| 482       | F050                  |
-| 483       | F050                  |
-| 484       | F050                  |
-| 487OS     | F050                  |
-| 511       | F050                  |
-| 512       | F050                  |
-| 513       | F050                  |
-| 514       | F050                  |
-| 521CI     | F050                  |
-| 523       | F050                  |
-| 524       | F050                  |
-| 5411      | F050                  |
-| 5412OP    | F050                  |
-| 561       | F050                  |
-| 562       | F050                  |
-| 711AS     | F050                  |
-| 81        | F050                  |
-| GFE       | F050                  |
-| Used      | F050                  |
-| Other     | F050                  |
+| Commodity | Industry/Final Demand | Absolute Diff | Validation                | AbsDiffPortioninNationalTotals |
+| :-------- | :-------------------- | ------------: | :------------------------ | -----------------------------: |
+| 487OS     | F050                  |       5067649 | abs(result) \<= tolerance |                      0.0018216 |
 
-##### 8.2 State Domestic Use tables
+##### 8.2 State Domestic Use tables (checking absolute differences)
+
+There are no failures.
+
+##### 8.3 State Use tables (checking relative differences)
+
+There are 10 failures, and they are
+
+| Commodity | Industry/Final Demand | Relative Diff | Validation                |          US |     StateSum |
+| :-------- | :-------------------- | ------------: | :------------------------ | ----------: | -----------: |
+| 212       | F050                  |         0.003 | abs(result) \<= tolerance |   5.120e+08 |    513322475 |
+| 22        | F050                  |         0.001 | abs(result) \<= tolerance | \-2.609e+09 | \-2612000000 |
+| 487OS     | F050                  |         0.002 | abs(result) \<= tolerance |   2.782e+09 |   2787067649 |
+| 513       | F050                  |       \-0.025 | abs(result) \<= tolerance | \-1.620e+08 |  \-158000000 |
+| 514       | F050                  |         0.003 | abs(result) \<= tolerance | \-1.023e+09 | \-1026000000 |
+| 521CI     | F050                  |       \-0.043 | abs(result) \<= tolerance | \-4.600e+07 |   \-44000000 |
+| 523       | F050                  |       \-0.069 | abs(result) \<= tolerance | \-5.800e+07 |   \-54000000 |
+| 561       | F050                  |       \-0.002 | abs(result) \<= tolerance | \-1.149e+09 | \-1147000000 |
+| 562       | F050                  |       \-0.022 | abs(result) \<= tolerance | \-1.370e+08 |  \-134000000 |
+| GFE       | F050                  |       \-0.004 | abs(result) \<= tolerance | \-4.550e+08 |  \-453000000 |
+
+##### 8.4 State Domestic Use tables (checking relative differences)
 
 There are no failures.
 
 ### Check two-region model results
 
-#### 9\. If SoI commodity output == 0, SoI2SoI ICF ratio == 0
+#### 9\. Check if commodity output from two-region Make and Domestic Use are almost equal (relative difference \<= 0.01).
 
 There are no failures.
 
-#### 10\. SoI and RoUS interregional exports \>= 0, interregional imports \>= 0
+#### 10\. If SoI commodity output == 0, SoI2SoI ICF ratio == 0
+
+\[1\] “Alabama” \[1\] “Alaska” \[1\] “Arizona” \[1\] “Arkansas” \[1\]
+“California” \[1\] “Colorado” \[1\] “Connecticut” \[1\] “Delaware”
+\[1\] “District of Columbia” \[1\] “Florida” \[1\] “Georgia” \[1\]
+“Hawaii” \[1\] “Idaho” \[1\] “Illinois” \[1\] “Indiana” \[1\] “Iowa”
+\[1\] “Kansas” \[1\] “Kentucky” \[1\] “Louisiana” \[1\] “Maine” \[1\]
+“Maryland” \[1\] “Massachusetts” \[1\] “Michigan” \[1\] “Minnesota”
+\[1\] “Mississippi” \[1\] “Missouri” \[1\] “Montana” \[1\] “Nebraska”
+\[1\] “Nevada” \[1\] “New Hampshire” \[1\] “New Jersey” \[1\] “New
+Mexico” \[1\] “New York” \[1\] “North Carolina” \[1\] “North Dakota”
+\[1\] “Ohio” \[1\] “Oklahoma” \[1\] “Oregon” \[1\] “Pennsylvania” \[1\]
+“Rhode Island” \[1\] “South Carolina” \[1\] “South Dakota” \[1\]
+“Tennessee” \[1\] “Texas” \[1\] “Utah” \[1\] “Vermont” \[1\]
+“Virginia” \[1\] “Washington” \[1\] “West Virginia” \[1\]
+“Wisconsin” \[1\] “Wyoming”
 
 There are no failures.
 
-#### 11\. SoI net exports + RoUS net exports == 0
+#### 11\. SoI and RoUS interregional exports \>= 0, interregional imports \>= 0
 
 There are no failures.
 
-#### 12\. Check row sum of SoI2SoI \<= state commodity supply. Row sum of RoUS2RoUS \<= national commodity supply.
+#### 12\. SoI net exports + RoUS net exports == 0
 
 There are no failures.
 
-#### 13\. Value in SoI2SoI and RoUS2RoUS can be negative only when the same cell is negative in national Use table
+#### 13\. Check row sum of SoI2SoI \<= state commodity supply. Row sum of RoUS2RoUS \<= RoUS commodity supply.
 
 There are no failures.
 
-#### 14\. SoI interregional imports == RoUS interregional exports, or difference \<= 0.001
+#### 14\. Value in SoI2SoI and RoUS2RoUS can be negative only when the same cell is negative in national Use table
 
 There are no failures.
 
-#### 15\. Total state commodity supply == state demand by intermediate consumption, plus final demand (except imports) + Interregional Exports + Export Residual. Difference must be \<= 0.001.
+#### 15\. SoI interregional imports == RoUS interregional exports, or difference \<= 0.001
 
 There are no failures.
 
-#### 16\. Number of negative cells in SoI2SoI, SoI2RoUS, RoUS2SoI and RoUS2RoUS \<= Number of negative cells in national Use table
+#### 16.1. Total state commodity supply == state demand by intermediate consumption, plus final demand (except imports and international trade adjustment) + Interregional Exports + Export Residual. Difference must be \<= 0.001.
 
 There are no failures.
 
-#### 17\. Non-square model verification. Validate L matrix of two-region model and final demand against SoI and RoUS output. L\*y - output \<= 1^6, or $1 million.
-
-##### 17.1 Georgia and Rest of the US
+#### 16.2. Total SoI and RoUS commodity supply (output) == SoI and RoUS demand (domestic intermediate consumption + ITA + Export Residual).
 
 There are no failures.
 
-##### 17.2 Minnesota and Rest of the US
+#### 17\. Number of negative cells in SoI2SoI, SoI2RoUS, RoUS2SoI and RoUS2RoUS \<= Number of negative cells in national Use table
 
 There are no failures.
 
-##### 17.3 Oregon and Rest of the US
+#### 18\. Non-square model verification. Validate L matrix of two-region model and final demand against SoI and RoUS output.
 
-There are no failures.
+##### Absolute difference: L*y - output \<= 1^6, or $1 million. \#\#\#\#\# Relative difference: (L*y - output)/output \<= 1^-2, or 1%.
 
-##### 17.4 Washington and Rest of the US
+##### 18.1 Georgia and Rest of the US
 
-There are no failures.
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.2 Minnesota and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.3 Oregon and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.4 Washington and Rest of the US
+
+Absolute Difference: There are 2 failures, and they are
+
+|     | rownames                   |    result | check       |
+| --- | :------------------------- | --------: | :---------- |
+| 162 | Washington.3364OT.Industry | \-1118132 | L\*y-output |
+| 233 | RoUS.3364OT.Industry       |   1114306 | L\*y-output |
+
+Relative Difference: There are no failures.
