@@ -299,7 +299,6 @@ for (state in states[states != "Overseas"]) {
   diff <- setdiff(CO_zeros$Commodity, SoI2SoI_ICF_zeros)
   failures_state <- SoI2SoI_ICF_zeros[SoI2SoI_ICF_zeros %in% diff]
   failures <- c(failures, failures_state)
-  print(state)
 }
 cat("\n")
 reportValidationResult(failures)
@@ -508,7 +507,9 @@ reportValidationResult(failures)
 ```
 
 #### 18. Non-square model verification. Validate L matrix of two-region model and final demand against SoI and RoUS output.
+
 ##### Absolute difference: L*y - output <= 1^6, or $1 million.
+
 ##### Relative difference: (L*y - output)/output <= 1^-2, or 1%.
 ```{r check18, include=FALSE}
 #' @param state A text value specifying state of interest.
