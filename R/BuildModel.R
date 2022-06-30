@@ -625,11 +625,11 @@ assembleTwoRegionIO <- function(year, iolevel) {
     TwoRegionIO[["DomesticUsewithTrade"]][[state]] <- TwoRegionDomesticUseModel[1:4]
     
     ## Two-region Commodity Output
-    SoI_CommodityOutput <- State_CommodityOutput_ls[[state]]
-    RoUS_CommodityOutput <- colSums(US_Make) - SoI_CommodityOutput
-    MakeUseDiff <- colSums(US_Make) - rowSums(US_DomesticUse[, c(industries, FD_cols, ITA_col)])
-    RoUS_CommodityOutput$Output <- RoUS_CommodityOutput$Output - MakeUseDiff
-    TwoRegionCommodityOutput <- c(SoI_CommodityOutput$Output, RoUS_CommodityOutput$Output)
+    SoI_CommodityOutput <- rowSums(TwoRegionDomesticUseModel[["SoI2SoI"]][, c(industries, FD_cols, ITA_col, "ExportResidual")]) +
+      rowSums(TwoRegionDomesticUseModel[["SoI2RoUS"]][, c(industries, FD_cols, ITA_col)])
+    RoUS_CommodityOutput <- rowSums(TwoRegionDomesticUseModel[["RoUS2RoUS"]][, c(industries, FD_cols, ITA_col, "ExportResidual")]) +
+      rowSums(TwoRegionDomesticUseModel[["RoUS2SoI"]][, c(industries, FD_cols, ITA_col)])
+    TwoRegionCommodityOutput <- c(SoI_CommodityOutput, RoUS_CommodityOutput)
     names(TwoRegionCommodityOutput) <- c(getBEASectorCodeLocation("Commodity", state, iolevel),
                                          getBEASectorCodeLocation("Commodity", "RoUS", iolevel))
     TwoRegionIO[["CommodityOutput"]][[state]] <- TwoRegionCommodityOutput
