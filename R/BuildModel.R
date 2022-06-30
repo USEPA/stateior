@@ -3,7 +3,7 @@
 #' @description Build a state supply model for all 52 states/regions
 #' (including DC and Overseas) for a given year.
 #' @param year A numeric value between 2007 and 2017.
-#' @return A list of state supply model components: Make, commodity and industry output.
+#' @return A list of state Make table and commodity output.
 #' @export
 buildStateSupplyModel <- function(year) {
   startLogging()
@@ -108,22 +108,35 @@ buildStateSupplyModel <- function(year) {
   State_Make_balanced <- State_Make_balanced[rownames(State_Make), ]
   
   logging::loginfo("Finalizing state Make table...")
+  logging::loginfo("Finalizing state commodity output...")
   model <- list()
   for (state in states) {
     Make <- State_Make_balanced[gsub("\\..*", "",
                                      rownames(State_Make_balanced)) == state, ]
     model[["Make"]][[state]] <- Make
+    q <- as.data.frame(colSums(Make))
+    colnames(q) <- "Output"
+    model[["CommodityOutput"]][[state]] <- q
   }
+  
+  # Validation - interrupt if sum of state commodity output (q_state) and
+  # US commodity output have absolute difference > 1E7 ($10 million)
+  q_state <- Reduce("+", model[["CommodityOutput"]])
+  if (max(abs(q_state - US_CommodityOutput), na.rm = TRUE) > 1E7) {
+    stop(paste("Absolute difference between sum of state commodity output and",
+               "national commodity output is larger than $10 million."))
+  }
+  
   logging::loginfo("State Supply model build complete.")
   return(model)
 }
 
-#' Build a state use use for all 52 states/regions
+#' Build a state use model for all 52 states/regions
 #' (including DC and Overseas) for a given year
 #' @description Build a state Use model for all 52 states/regions
 #' (including DC and Overseas) for a given year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @return A list of state use model components: Use table and Domestic Use table.
+#' @return A list of state Use table, Domestic Use table and industry output.
 #' @export
 buildStateUseModel <- function(year) {
   startLogging()
@@ -134,7 +147,6 @@ buildStateUseModel <- function(year) {
   FD_cols <- getFinalDemandCodes("Summary")
   VA_rows <- getVectorOfCodes("Summary", "ValueAdded")
   import_col <- getVectorOfCodes("Summary", "Import")
-  nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
   # Prepare State Intermediate Consumption tables
   logging::loginfo("Estimating state intermediate consumption...")
   State_Use_Intermediate_ls <- estimateStateIntermediateConsumption(year)
@@ -160,28 +172,17 @@ buildStateUseModel <- function(year) {
   logging::loginfo("Assembling state Use table (intermediate consumption + final demand)...")
   logging::loginfo("Estimating state value added, appending it to state Use table...")
   StateGVA <- assembleStateSummaryGrossValueAdded(year)
-  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
   
   model <- list()
   for (state in states) {
     # Assemble state Use table
     State_Use <- cbind(State_Use_Intermediate_ls[[state]],
                        StateFinalDemand[StateFinalDemand$State == state, FD_cols])
-    # Update Import in state Use table
-    State_Use[, import_col] <- colSums(StateMake_ls[[state]]) - rowSums(State_Use)
-    State_Use[is.na(State_Use)] <- 0
-    # Validation - interrupt if commodity output (q) from Make != q from Use by 1E-5
-    q_make <- colSums(StateMake_ls[[state]])
-    q_use <- rowSums(State_Use)
-    rel_diff <- (q_use - q_make)/q_make
-    if (max(abs(rel_diff), na.rm = TRUE) > 1E-5 && state != "Overseas") {
-      stop(paste0(state, "'s Make and Use tables are not balanced ",
-                  "in terms of commodity output."))
-    }
     # Append value added rows to state Use tables
     GVA <- StateGVA[gsub("\\..*", "", rownames(StateGVA)) == state, ]
     rownames(GVA) <- gsub(".*\\.", "", rownames(GVA))
     State_Use[rownames(GVA), industries] <- GVA
+    State_Use[is.na(State_Use)] <- 0
     # Add to model
     model[["Use"]][[state]] <- State_Use
   }
@@ -192,14 +193,16 @@ buildStateUseModel <- function(year) {
   # Generate US international trade adjustment
   US_ITA <- generateInternationalTradeAdjustmentVector("Summary", year)
   # Calculate state ITA by allocating US ITA via state/US COR (commodity output ratio)
+  CommodityOutput <- loadStateIODataFile(paste0("State_Summary_CommodityOutput_",
+                                                year))
   for (state in states) {
-    cor <- rowSums(model[["Use"]][[state]][commodities, c(industries, FD_cols)]) /
-      rowSums(US_Use[commodities, c(industries, FD_cols)])
+    cor <- CommodityOutput[[state]] / rowSums(US_Use[commodities, c(industries, FD_cols)])
     model[["Use"]][[state]][commodities, "F051"] <- US_ITA*cor
   }
   
-  logging::loginfo("Estimating state domestic Use table...")
-  logging::loginfo("Finalizing state industry and commodity output...")
+  logging::loginfo("Estimating state international imports in Use table...")
+  logging::loginfo("Estimating state Domestic Use table...")
+  logging::loginfo("Finalizing state industry output...")
   # The rationale is to generate a state Import matrix then add it to state Use.
   # The state Import matrix is created by multiplying the national average
   # import ratio matrix (US_Import/US_Use) by state Use table.
@@ -208,43 +211,37 @@ buildStateUseModel <- function(year) {
   US_Import_m <- loadDatafromUSEEIOR(US_Import_file)[commodities,
                                                      c(industries, FD_cols)]*1E6
   import_ratio <- US_Import_m/US_Use[commodities, c(industries, FD_cols)]
-  # Replace NaN with zero, assuming 0 in US_Use will remain 0 in State_Use
+  # Replace NaN, Inf/-Inf with zero, assuming 0 in US_Use will remain 0 in State_Use
   import_ratio[is.na(import_ratio)] <- 0
+  import_ratio[] <- lapply(import_ratio, function(x) ifelse(is.infinite(x), 0, x))
   
   # Create state Import matrix then add it to state Use
   for (state in states) {
     # Generate state import matrix
     State_Use <- model[["Use"]][[state]][commodities, c(industries, FD_cols)]
     State_Import_m <- State_Use * import_ratio
+    State_ITA <- model[["Use"]][[state]][commodities, "F051"]
+    State_Import_vec <- -1 * rowSums(State_Import_m) + State_ITA
+    model[["Use"]][[state]][commodities, import_col] <- State_Import_vec
     # Generate state domestic Use table
     State_DomesticUse <- State_Use - State_Import_m
     State_DomesticUse[, import_col] <- 0
-    State_DomesticUse[, "F051"] <- model[["Use"]][[state]][commodities, "F051"]
+    State_DomesticUse[, "F051"] <- State_ITA
     State_DomesticUse[is.na(State_DomesticUse)] <- 0
     # Append value added rows to state Domestic Use tables
     State_DomesticUse[VA_rows, industries] <- model[["Use"]][[state]][VA_rows, industries]
     # Add state Domestic Use to model
     model[["DomesticUse"]][[state]] <- State_DomesticUse
     # Calculate industry and commodity output based on Use
-    x <- as.data.frame(colSums(model[["Use"]][[state]][c(commodities, VA_rows), industries]))
-    q <- as.data.frame(rowSums(model[["Use"]][[state]][commodities, c(industries, FD_cols)]))
-    colnames(x) <- colnames(q) <- "Output"
+    x <- as.data.frame(colSums(model[["Use"]][[state]][c(commodities, VA_rows),
+                                                       industries]))
+    colnames(x) <- "Output"
     model[["IndustryOutput"]][[state]] <- x
-    model[["CommodityOutput"]][[state]] <- q
-  }
-  
-  # Validation - interrupt if sum of state commodity output (q_state) and
-  # US commodity output (q_US) have absolute difference > 1.2E7 ($12 million)
-  q_state <- Reduce("+", lapply(lapply(model[["Use"]], "[", c(industries, FD_cols)),
-                                rowSums))[commodities]
-  q_US <- rowSums(US_Use[commodities, c(industries, FD_cols)])
-  if (max(abs(q_state - q_US), na.rm = TRUE) > 1.2E7) {
-    stop(paste("Absolute difference between sum of state commodity output and",
-               "national commodity output is larger than $12 million."))
   }
   
   # Validation - interrupt if sum of state commodity output (q_state) and
   # state demand (demand_state) have absolute difference > 1.2E7 ($12 million)
+  q_state <- Reduce("+", lapply(CommodityOutput, rowSums))
   demand_state <- Reduce("+", lapply(model[["DomesticUse"]], rowSums))[commodities]
   if (max(abs(q_state - demand_state), na.rm = TRUE) > 1.2E7) {
     stop(paste("Absolute difference between sum of state commodity output and",
