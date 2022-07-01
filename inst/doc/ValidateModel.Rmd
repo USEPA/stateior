@@ -333,7 +333,7 @@ for (state in states[states != "Overseas"]) {
   df <- as.data.frame(sapply(df, round, 1))
   rownames(df) <- rownames(TwoRegionTable_state[["SoI2SoI"]])
   # Compare SoI net exports + RoUS net exports against 0
-  failures_state <- formatValidationResult(df, abs_diff = TRUE, tolerance = 0)[["Failure"]]
+  failures_state <- formatValidationResult(df, abs_diff = TRUE, tolerance = 0)[["Pass"]]
   failures <- rbind(failures, failures_state)
 }
 reportValidationResult(failures)
