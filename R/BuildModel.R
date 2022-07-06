@@ -457,7 +457,7 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   # Check if interregional trade is non-negative
   df <- cbind(SoI2SoI_Use[, c("InterregionalImports", "InterregionalExports")],
               RoUS2RoUS_Use[, c("InterregionalImports", "InterregionalExports")])
-  if (any(df < 0)) {
+  if (any(df < -1E-3)) {
     stop(c("There are negative values in interregional trade columns in ",
            "SoI2SoI and RoUS2RoUS domestic Use tables."))
   }
