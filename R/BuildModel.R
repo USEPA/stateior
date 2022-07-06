@@ -290,15 +290,24 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
                                    getVectorOfCodes, iolevel = iolevel)),
                      FD_cols[substr(FD_cols, nchar(FD_cols),
                                     nchar(FD_cols)) %in% c("C", "E", "R", "N")])
+  nontradable_cols <- setdiff(c(industries, FD_cols, ITA_col), tradable_cols)
   # All sectors except international imports
   nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
+  # BEA column
+  BEA_col <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
   
-  # 1 - Load state domestic Use for the specified year
+  # 1 - Load state domestic Use and commodity output for the specified year
   logging::loginfo("Loading state Domestic Use table...")
   SoI_DomesticUse <- loadStateIODataFile(paste0("State_",
                                                 iolevel,
                                                 "_DomesticUse_",
                                                 year))[[state]][commodities, ]
+  # Load state commodity output
+  logging::loginfo("Loading state commodity output...")
+  SoI_CommodityOutput <- loadStateIODataFile(paste0("State_",
+                                                    iolevel,
+                                                    "_CommodityOutput_",
+                                                    year))[[state]]
   
   # 2 - Generate 2-region ICFs
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios...")
@@ -308,17 +317,20 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   commodities_notrade <- ICF[ICF$SoI2SoI == 1 & ICF$SoI2RoUS == 0 &
                                ICF$RoUS2RoUS == 1 & ICF$RoUS2SoI == 0, 1]
   rows_allocation <- setdiff(commodities, commodities_notrade)
+  # Adjust commodities_notrade and rows_allocation if state commodity output is
+  # larger than sum of values in non-tradable columns
+  diff <- SoI_CommodityOutput$Output - rowSums(SoI_DomesticUse[, nontradable_cols])
+  commodities_notrade <- union(commodities_notrade, names(diff[diff < 0]))
+  rows_allocation <- setdiff(commodities, commodities_notrade)
+  # Force ICF of all commodities_notrade to 1 and 0, change note in source column
+  ICF[ICF[, BEA_col] %in% names(diff[diff < 0]), c("SoI2SoI", "RoUS2RoUS")] <- 1
+  ICF[ICF[, BEA_col] %in% names(diff[diff < 0]), c("SoI2RoUS", "RoUS2SoI")] <- 0
+  ICF[ICF[, BEA_col] %in% names(diff[diff < 0]), "source"] <- "Assuming no interregional trade"
   
   # 3 - Generate SoI2SoI domestic Use
   logging::loginfo("Generating SoI2SoI Use table...")
   SoI2SoI_Use <- SoI_DomesticUse
   SoI2SoI_Use[, tradable_cols] <- SoI_DomesticUse[, tradable_cols] * ICF$SoI2SoI
-  # Load state commodity output
-  logging::loginfo("Loading state commodity output...")
-  SoI_CommodityOutput <- loadStateIODataFile(paste0("State_",
-                                                    iolevel,
-                                                    "_CommodityOutput_",
-                                                    year))[[state]]
   # Calculate Interregional Imports, Exports, and Net Exports
   logging::loginfo("Calculating SoI2SoI interregional imports and exports and net exports...")
   SoI2SoI_Use$InterregionalImports <- rowSums(SoI_DomesticUse[, tradable_cols]) - rowSums(SoI2SoI_Use[, tradable_cols])
@@ -441,6 +453,14 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   RoUS2RoUS_Use[commodities_notrade, "ExportResidual"] <- RoUS2RoUS_Use[commodities_notrade, "InterregionalExports"]
   RoUS2RoUS_Use[commodities_notrade, c("InterregionalExports", "NetExports")] <- 0
   RoUS2RoUS_Use[is.na(RoUS2RoUS_Use$ExportResidual), "ExportResidual"] <- 0
+  
+  # Check if interregional trade is non-negative
+  df <- cbind(SoI2SoI_Use[, c("InterregionalImports", "InterregionalExports")],
+              RoUS2RoUS_Use[, c("InterregionalImports", "InterregionalExports")])
+  if (any(df < 0)) {
+    stop(c("There are negative values in interregional trade columns in ",
+           "SoI2SoI and RoUS2RoUS domestic Use tables."))
+  }
   
   # 12 - Create validation
   logging::loginfo("Creating validation on two-region domestic Use table...")
