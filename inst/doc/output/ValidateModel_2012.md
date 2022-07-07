@@ -128,7 +128,7 @@ There are no failures.
 
 There are no failures.
 
-#### 8\. Sum of each cell across all state Use tables must almost equal (\<= 1E5, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
+#### 8\. Sum of each cell across all state Use tables must almost equal (\<= 5E6, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
 
 Note: failures associated with ‘F050 - Imports’ are acceptable. Because
 state imports are not directly derived from US imports, a gap in imports
@@ -182,12 +182,7 @@ There are no failures.
 
 #### 11\. SoI and RoUS interregional exports \>= 0, interregional imports \>= 0
 
-There are 2 failures, and they are
-
-|    | rownames | variable                                  |    result | check               |
-| -- | :------- | :---------------------------------------- | --------: | :------------------ |
-| 14 | 212      | Louisiana\_RoUS2RoUS$InterregionalImports | \-5609631 | result \< tolerance |
-| 15 | 212      | Louisiana\_SoI2SoI$InterregionalExports   | \-5609631 | result \< tolerance |
+There are no failures.
 
 #### 12\. SoI net exports + RoUS net exports == 0
 
@@ -199,63 +194,7 @@ There are no failures.
 
 #### 14\. Value in SoI2SoI and RoUS2RoUS can be negative only when the same cell is negative in national Use table
 
-There are 53 failures, and they are
-
-| Commodity | Industry |         result | check               | table                 |
-| :-------- | :------- | -------------: | :------------------ | :-------------------- |
-| 212       | 111CA    | \-9.104855e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 113FF    | \-7.005484e+01 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 211      | \-1.991191e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 212      | \-1.124101e+05 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 213      | \-1.977453e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 22       | \-6.803761e+05 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 23       | \-7.949391e+05 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 311FT    | \-5.885903e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 313TT    | \-1.618169e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 321      | \-7.176093e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 322      | \-1.775661e+05 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 324      | \-1.247178e+06 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 325      | \-1.030653e+06 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 326      | \-2.275062e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 327      | \-3.201266e+05 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 331      | \-4.885548e+05 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 332      | \-2.126563e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 333      | \-6.088730e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 334      | \-1.626621e+01 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 335      | \-7.113021e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 3361MV   | \-2.836056e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 3364OT   | \-3.321256e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 337      | \-2.237337e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 339      | \-1.026159e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 42       | \-7.279808e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 482      | \-6.028031e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 484      | \-2.174894e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 487OS    | \-2.063269e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 493      | \-1.616335e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 4A0      | \-5.963926e+01 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 511      | \-2.604353e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 512      | \-7.219950e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 513      | \-3.959600e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 514      | \-2.369080e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 5412OP   | \-2.652634e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 55       | \-1.513879e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 561      | \-1.416652e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 562      | \-4.575064e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 61       | \-9.190723e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 622      | \-2.963157e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 623      | \-1.147189e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 624      | \-7.524152e+02 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 711AS    | \-6.941489e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 713      | \-3.168800e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 721      | \-3.664117e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 722      | \-2.098299e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | 81       | \-3.592559e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | F010     | \-6.126693e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | F02E     | \-3.014359e+03 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | GFGN     | \-6.133149e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | GSLE     | \-2.264224e+05 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | GSLG     | \-5.858997e+04 | result \< tolerance | Louisiana SoI2SoI Use |
-| 212       | HS       | \-3.809806e+02 | result \< tolerance | Louisiana SoI2SoI Use |
+There are no failures.
 
 #### 15\. SoI interregional imports == RoUS interregional exports, or difference \<= 0.001
 

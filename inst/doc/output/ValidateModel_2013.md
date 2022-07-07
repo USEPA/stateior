@@ -128,7 +128,7 @@ There are no failures.
 
 There are no failures.
 
-#### 8\. Sum of each cell across all state Use tables must almost equal (\<= 1E5, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
+#### 8\. Sum of each cell across all state Use tables must almost equal (\<= 5E6, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
 
 Note: failures associated with ‘F050 - Imports’ are acceptable. Because
 state imports are not directly derived from US imports, a gap in imports
