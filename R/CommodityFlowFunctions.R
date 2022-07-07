@@ -131,11 +131,11 @@ calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, ios
   # Load pre-saved state export/import data
   if (year < 2013) {
     trade <- loadStateIODataFile(paste0("Census_USATrade",
-                                        Hmisc::capitalize(flow_ratio_type),
+                                        capitalize(flow_ratio_type),
                                         "_", year))
   } else {
     trade <- loadStateIODataFile(paste0("Census_State",
-                                        Hmisc::capitalize(flow_ratio_type),
+                                        capitalize(flow_ratio_type),
                                         "_", year))
   }
   # Map from NAICS to BEA

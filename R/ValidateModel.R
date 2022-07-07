@@ -7,12 +7,21 @@ validateResult <- function(result, abs_diff = TRUE, tolerance) {
   result[is.na(result)] <- 0
   # Validate result
   if (abs_diff) {
-    validation <- as.data.frame(abs(result) <= tolerance)
+    validation <- as.data.frame(abs(result) < tolerance)
   } else {
-    validation <- as.data.frame(result <= tolerance)
+    validation <- as.data.frame(result < tolerance)
   }
-  validation$rownames <- rownames(validation)
+  if (!is.null(rownames(result))) {
+    validation$rownames <- rownames(result)
+  } else if (!is.null(names(result))) {
+    validation$rownames <- names(result)
+  } else {
+    validation$rownames <- rownames(validation)
+  }
   if (ncol(validation) <= 3) {
+    if (class(result) == "data.frame") {
+      result <- result[, 1]
+    }
     validation$result <- round(result, abs(log10(tolerance)))
     validation <- reshape2::melt(validation,
                                  id.vars = c("rownames", "result"),
@@ -23,12 +32,16 @@ validateResult <- function(result, abs_diff = TRUE, tolerance) {
     validation_result$rownames <- rownames(validation_result)
     validation_self <- reshape2::melt(validation_self,
                                       id.vars = "rownames")
+    validation_self$variable <- as.character(validation_self$variable)
     validation_result <- reshape2::melt(validation_result,
                                         id.vars = "rownames",
                                         value.name = "result")
+    validation_result$variable <- as.character(validation_result$variable)
     validation <- merge(validation_self, validation_result,
                         by = c("rownames", "variable"))
-    validation$check <- "abs(result) <= tolerance"
+    validation$check <- ifelse(abs_diff,
+                               "abs(result) < tolerance",
+                               "result < tolerance")
   }
   return(validation)
 }
