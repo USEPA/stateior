@@ -1,6 +1,8 @@
 # stateior
+<!-- badges: start -->
+[![R CI/CD test](https://github.com/USEPA/stateior/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/USEPA/stateior/actions/workflows/R-CMD-check.yaml)
 
-`stateior` is an R package for building multi-regional input-output (MRIO) models in support of creating [USEEIO models](https://www.epa.gov/land-research/us-environmentally-extended-input-output-useeio-models) for states and other purposes.
+`stateior` is an R package for building multi-regional input-output (MRIO) models in support of creating [USEEIO models](https://www.epa.gov/land-research/us-environmentally-extended-input-output-useeio-models) in the `useeior` package ([link](https://github.com/USEPA/useeior)) for states and other purposes.
 
 `stateior` is in a stable development state.
 Users intending to use the package for production purposes and applications should use [Releases](https://github.com/USEPA/stateior/releases).
@@ -10,16 +12,18 @@ See [Wiki](https://github.com/USEPA/stateior/wiki) for advanced uses, details ab
 
 ## Installation
 
-```
+```r
 # Install development version from GitHub
 install.packages("devtools")
 devtools::install_github("USEPA/stateior")
 ```
 
-```
+```r
 # Install a previously released version (e.g. v0.1.0) from GitHub
 devtools::install_github("USEPA/stateior@v0.1.0")
 ```
+
+See [Releases](https://github.com/USEPA/stateior/releases) for all previously realeased versions.
 
 ## Disclaimer
 
