@@ -137,7 +137,7 @@ getBEAStatePCE <- function() {
   # Save data
   for (year in year_cols) {
     df <- StatePCE[StatePCE$GeoName %in% geo_names,
-                   c("GeoName", "LineCode", "Description", year_cols)]
+                   c("GeoName", "LineCode", "Description", year)]
     # Write data to .rds
     data_name <- paste("State_PCE", year,
                        utils::packageDescription("stateior", fields = "Version"),
@@ -156,6 +156,85 @@ getBEAStatePCE <- function() {
 }
 # Download, save and document BEA state PCE from 2010 to the latest year available.
 getBEAStatePCE()
+
+#' Get BEA state foreign travel and expenditures by U.S. residents and
+#' expenditures in the U.S. by nonresidents data from 2010 to the latest year
+#' available.
+#' @return A data frame of BEA state foreign travel and expenditures by U.S.
+#' residents and expenditures in the U.S. by nonresidents data from 2010 to
+#' the latest year available.
+getBEAStateResidentAndNonresidentSpending <- function() {
+  # Create the placeholder file
+  StatePCEzip <- "inst/extdata/SAPCE.zip"
+  dir <- "inst/extdata/SAPCE"
+  # Download all BEA IO tables into the placeholder file
+  if (!file.exists(StatePCEzip)) {
+    utils::download.file("https://apps.bea.gov/regional/zip/SAPCE.zip",
+                         StatePCEzip, mode = "wb")
+    # Get the name of all files in the zip archive
+    tmp <- unzip(StatePCEzip, list = TRUE)
+    fname <- tmp[tmp$Length > 0, ]$Name
+    # Unzip the file to the designated directory
+    unzip(StatePCEzip, files = fname, exdir = dir, overwrite = TRUE)
+  }
+  # Define FileName and FullFileName
+  FileName <- list.files(dir, pattern = "SAPCE4__ALL_AREAS")
+  FullFileName <- file.path(dir, FileName)
+  # Get date_accessed
+  date_accessed <- as.character(as.Date(file.mtime(StatePCEzip)))
+  # Find latest data year
+  file_split <- unlist(stringr::str_split(FileName, pattern = "_"))
+  end_year <- sub(".csv", "", file_split[length(file_split)])
+  # Create year_cols
+  year_cols <- as.character(2010:end_year)
+  
+  # Load state PCE data
+  StatePCE <- utils::read.table(FullFileName, sep = ",",
+                                header = TRUE, stringsAsFactors = FALSE,
+                                check.names = FALSE, fill = TRUE)
+  # Get date_last_modified
+  date_last_modified <- stringr::str_match(StatePCE[grep("Last updated: ",
+                                                         StatePCE$GeoFIPS),
+                                                    "GeoFIPS"],
+                                           "Last updated: (.*?)--")[2]
+  # Get resident and nonresident spending
+  Spending <- StatePCE[StatePCE$LineCode %in% c(129, 130), ]
+  # Replace NA with zero
+  Spending[is.na(Spending)] <- 0
+  # Convert values to current US $
+  Spending[, year_cols] <- sapply(Spending[, year_cols], as.numeric)*1E6
+  # Keep state-level data
+  geo_names <- c(state.name, "District of Columbia", "United States")
+  # Save data
+  for (year in year_cols) {
+    for (linecode in c(129:130)) {
+      df <- Spending[Spending$GeoName %in% geo_names & Spending$LineCode == linecode,
+                     c("GeoName", "LineCode", "Description", year)]
+      # Write data to .rds
+      data_name <- paste("State",
+                         ifelse(linecode == 129,
+                                "ForeignExpenditureByResident",
+                                "DomesticExpenditureByNonresident"),
+                         year,
+                         utils::packageDescription("stateior", fields = "Version"),
+                         sep = "_")
+      saveRDS(object = df,
+              file = paste0(file.path("data", data_name), ".rds"))
+      # Write metadata to JSON
+      useeior:::writeMetadatatoJSON(package = "stateior",
+                                    name = data_name,
+                                    year = year,
+                                    source = "US Bureau of Economic Analysis",
+                                    url = "https://apps.bea.gov/regional/zip/SAPCE.zip",
+                                    date_last_modified = date_last_modified,
+                                    date_accessed = date_accessed)
+    }
+  }
+}
+# Download, save and document BEA state foreign travel and expenditures by U.S.
+# residents and expenditures in the U.S. by nonresidents data from 2010 to
+# the latest year available.
+getBEAStateResidentAndNonresidentSpending()
 
 #' Download BEA US Gov Expenditure data (NIPA table) from 2007-2019.
 #' @return A data frame of BEA US Gov Expenditure data (NIPA table) from 2007-2019.
