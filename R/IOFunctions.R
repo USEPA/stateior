@@ -42,6 +42,7 @@ generateInternationalTradeAdjustmentVector <- function(iolevel, year) {
   names(InternationalTradeAdjustment) <- rownames(Use)
   return(InternationalTradeAdjustment)
 }
+
 #' Calculate US International Transport Margins Ratio (matrix).
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.

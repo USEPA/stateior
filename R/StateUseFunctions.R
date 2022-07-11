@@ -46,7 +46,7 @@ getStateGOS <- function(year) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state PCE for all states at a specific year.
 getStatePCE <- function(year) {
-  # Load pre-saved state PCE 2007-2018
+  # Load pre-saved state PCE
   StatePCE <- loadStateIODataFile(paste0("State_PCE_", year))
   StatePCE <- StatePCE[, c("GeoName", "LineCode", as.character(year))]
   return(StatePCE)
