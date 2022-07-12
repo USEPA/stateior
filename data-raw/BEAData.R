@@ -85,9 +85,9 @@ getBEAStateGDPData <- function(dataname) {
 }
 # Download, save and document BEA state economic data
 # from 2010 to the latest year available
-# for (dataname in c("GVA", "Tax", "Compensation", "GOS")) {
-#   getBEAStateGDPData(dataname)
-# }
+for (dataname in c("GVA", "Tax", "Compensation", "GOS")) {
+  getBEAStateGDPData(dataname)
+}
 
 #' Get BEA state PCE (personal consumption expenditures) data from 2010 to the
 #' latest year available.
@@ -311,7 +311,7 @@ getBEAGovInvestment <- function() {
 }
 # Download, save and document BEA US government investment by state data from
 # 2010 to the latest year available.
-# getBEAGovInvestment()
+getBEAGovInvestment()
 
 #' Get BEA US Gov Consumption data by state (Table 3.10.5 annual) from 2010
 #' to the latest year available.
@@ -368,7 +368,7 @@ getBEAGovConsumption <- function() {
 }
 # Download, save and document BEA US government consumption by state data from
 # 2010 to the latest year available.
-# getBEAGovConsumption()
+getBEAGovConsumption()
 
 
 
