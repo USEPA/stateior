@@ -37,9 +37,13 @@ library(stateior)
 
 # Loading the latest version by default
 data <- loadStateIODataFile(dataname)
+# Example
+TwoRegionDomesticUse_GA_RoUS <- loadStateIODataFile("TwoRegion_Summary_DomesticUse_2012")[["Georgia"]]
 
 # Specify version_number if a particular version is desired
 data <- loadStateIODataFile(dataname, ver = version_number)
+# Example
+TwoRegionDomesticUse_GA_RoUS <- loadStateIODataFile("TwoRegion_Summary_DomesticUse_2012_0.1.0")[["Georgia"]]
 ```
 
 See [Two Region Data](format_specs/TwoRegionData.md#data) for names and details of 2-region MRIO data sets that are currently available.
