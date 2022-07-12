@@ -690,13 +690,16 @@ buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   FD_cols <- getFinalDemandCodes(iolevel)
   import_col <- getVectorOfCodes(iolevel, "Import")
   nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
+  PCE_col <- getVectorOfCodes(iolevel, "HouseholdDemand")
   
-  logging::loginfo("Generating SoI Make table...")
+  logging::loginfo("Loading SoI Make table...")
   # SoI Make
   SoI_Make <- loadStateIODataFile(paste0("State_",iolevel,
                                          "_Make_", year))[[state]]
-  rownames(SoI_Make) <- paste(state, industries, "Industry", sep = ".")
-  colnames(SoI_Make) <- paste(state, commodities, "Commodity", sep = ".")
+  rownames(SoI_Make) <- paste0(getBEASectorCodeLocation("Industry", state, "Summary"),
+                               "/Industry")
+  colnames(SoI_Make) <- paste0(getBEASectorCodeLocation("Commodity", state, "Summary"),
+                               "/Commodity")
   # SoI commodity output
   SoI_CommodityOutput <- loadStateIODataFile(paste0("State_",
                                                     iolevel,
@@ -707,80 +710,89 @@ buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   # RoUS Make
   US_Make <- getNationalMake(iolevel, year)
   RoUS_Make <- US_Make - SoI_Make
-  rownames(RoUS_Make) <- paste("RoUS", industries, "Industry", sep = ".")
-  colnames(RoUS_Make) <- paste("RoUS", commodities, "Commodity", sep = ".")
-  # RoUS domestic Use
-  SoI_DomesticUse <- loadStateIODataFile(paste0("State_", iolevel,
-                                                "_DomesticUse_", year))[[state]]
-  US_DomesticUse <- generateUSDomesticUse(iolevel, year)
-  RoUS_DomesticUse <- US_DomesticUse - SoI_DomesticUse[commodities, ]
+  rownames(RoUS_Make) <- paste0(getBEASectorCodeLocation("Industry", "RoUS", "Summary"),
+                                "/Industry")
+  colnames(RoUS_Make) <- paste0(getBEASectorCodeLocation("Commodity", "RoUS", "Summary"),
+                                "/Commodity")
   # RoUS commodity output
   US_CommodityOutput <- colSums(US_Make)
   RoUS_CommodityOutput <- US_CommodityOutput - SoI_CommodityOutput
   colnames(RoUS_CommodityOutput) <- "Output"
   # Adjust RoUS_CommodityOutput
+  US_DomesticUse <- generateUSDomesticUse(iolevel, year)
   MakeUseDiff <- US_CommodityOutput - rowSums(US_DomesticUse[, nonimport_cols])
   RoUS_CommodityOutput$Output <- RoUS_CommodityOutput$Output - MakeUseDiff
   
-  logging::loginfo("Generating two-region Domestic Use tables...")
-  # Two-region Use table
-  TwoRegionUseModel <- buildTwoRegionUseModel(state, year, ioschema, iolevel)
-  TwoRegionUse <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, industries],
-                              TwoRegionUseModel[["RoUS2SoI"]][commodities, industries]),
-                        rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, industries],
-                              TwoRegionUseModel[["RoUS2RoUS"]][commodities, industries]))
-  rownames(TwoRegionUse) <- paste(rep(c(state, "RoUS"), each = length(commodities)),
-                                  commodities, rep("Commodity", each = length(commodities)),
-                                  sep = ".")
-  colnames(TwoRegionUse) <- paste(rep(c(state, "RoUS"), each = length(industries)),
-                                  industries, rep("Industry", each = length(industries)),
-                                  sep = ".")
+  logging::loginfo("Loading two-region Domestic Use tables...")
+  # Two-region Use Transaction
+  TwoRegionUse <- loadStateIODataFile(paste("TwoRegion", iolevel, "DomesticUse",
+                                            year, sep = "_"))[[state]]
+  TwoRegionUseTrans_cols <- unlist(lapply(c(state, "RoUS"),
+                                          function(x)
+                                            getBEASectorCodeLocation("Industry",
+                                                                     location = x,
+                                                                     "Summary")))
+  TwoRegionUseTransaction <- TwoRegionUse[, TwoRegionUseTrans_cols]
+  rownames(TwoRegionUseTransaction) <- paste0(rownames(TwoRegionUseTransaction),
+                                              "/Commodity")
+  colnames(TwoRegionUseTransaction) <- paste0(colnames(TwoRegionUseTransaction),
+                                              "/Industry")
   
-  logging::loginfo("Generating two-region final demand tables...")
+  logging::loginfo("Loading two-region final demand tables...")
   # Final demand
-  FD_columns <- getFinalDemandCodes(iolevel)
-  TwoRegionFinalDemand <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, FD_columns],
-                                      TwoRegionUseModel[["RoUS2SoI"]][commodities, FD_columns]),
-                                rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, FD_columns],
-                                      TwoRegionUseModel[["RoUS2RoUS"]][commodities, FD_columns]))
-  rownames(TwoRegionFinalDemand) <- rownames(TwoRegionUse)
-  colnames(TwoRegionFinalDemand) <- paste(rep(c(state, "RoUS"), each = length(FD_columns)),
-                                          FD_columns, sep = ".")
+  TwoRegionUseFD_cols <- unlist(lapply(c(state, "RoUS"),
+                                       function(x)
+                                         getBEASectorCodeLocation("FinalDemand",
+                                                                  location = x,
+                                                                  "Summary")))
+  TwoRegionFinalDemand <- TwoRegionUse[, TwoRegionUseFD_cols]
+  rownames(TwoRegionFinalDemand) <- rownames(TwoRegionUseTransaction)
   
   logging::loginfo("Calculating SoI and RoUS international imports by industry...")
   # International imports by industry
-  SoI_Use <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year))[[state]][commodities, ]
+  SoI_Use <- loadStateIODataFile(paste("State", iolevel, "Use", year,
+                                       sep = "_"))[[state]][commodities,
+                                                            c(industries, FD_cols)]
   US_Use <- getNationalUse(iolevel, year)
-  US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef", sep = "_"))*1E6
+  US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
+                                         sep = "_"))*1E6
   US_ImportRatios <- US_Import[rownames(US_Use), colnames(US_Use)]/US_Use
   US_ImportRatios[is.na(US_ImportRatios)] <- 0
   RoUS_Use <- US_Use - SoI_Use
   IntlImports <- as.data.frame(t(c(colSums(SoI_Use * US_ImportRatios),
                                    colSums(RoUS_Use * US_ImportRatios))))
-  colnames(IntlImports) <- paste0(paste(rep(c(state, "RoUS"), each = ncol(IntlImports)/2),
-                                        colnames(IntlImports),
-                                        sep = "."),
-                                  rep(c(rep(".Industry", each = length(industries)),
-                                        rep("", each = length(FD_columns))), 2))
+  colnames(IntlImports) <- c(grep("US-", colnames(TwoRegionUseTransaction), value = TRUE),
+                             grep("US-", TwoRegionUseFD_cols, value = TRUE),
+                             grep("RoUS", colnames(TwoRegionUseTransaction), value = TRUE),
+                             grep("RoUS", TwoRegionUseFD_cols, value = TRUE))
   
   logging::loginfo("Calculating SoI and RoUS gross value added by industry...")
   # GVA
   GVA_rows <- getVectorOfCodes(iolevel, "ValueAdded")
-  SoI_GVA <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year))[[state]][GVA_rows, ]
-  RoUS_GVA <- Reduce("+", loadStateIODataFile(paste0("State_", iolevel, "_Use_", year)))[GVA_rows, ] - SoI_GVA
+  SoI_GVA_ls <- loadStateIODataFile(paste("State", iolevel, "Use", year, sep = "_"))
+  SoI_GVA <- SoI_GVA_ls[[state]][GVA_rows, c(industries, FD_cols)]
+  RoUS_GVA <- Reduce("+", SoI_GVA_ls)[GVA_rows, c(industries, FD_cols)] - SoI_GVA
   TwoRegionGVA <- cbind(SoI_GVA, RoUS_GVA)
-  colnames(TwoRegionGVA) <- colnames(InternationalImports)
+  colnames(TwoRegionGVA) <- colnames(IntlImports)
   
   logging::loginfo("Calculating SoI and RoUS international transport margins by industry...")
   # International Transport Margins
   IntlTransportMarginsRatio <- calculateUSInternationalTransportMarginsRatioMatrix(iolevel, year)
   IntlTransportMargins <- as.data.frame(t(c(colSums(SoI_Use * IntlTransportMarginsRatio),
                                             colSums(RoUS_Use * IntlTransportMarginsRatio))))
-  colnames(IntlTransportMargins) <- paste0(paste(rep(c(state, "RoUS"), each = ncol(IntlTransportMargins)/2),
-                                                 colnames(IntlTransportMargins),
-                                                 sep = "."),
-                                           rep(c(rep(".Industry", each = length(industries)),
-                                                 rep("", each = length(FD_columns))), 2))
+  colnames(IntlTransportMargins) <- colnames(IntlImports)
+  
+  logging::loginfo("Loading foreign expenditure by U.S. residents and spending in the U.S. by nonresidents...")
+  # Foreign expenditure by U.S. residents
+  ForeignExp <- loadStateIODataFile(paste("State_ForeignExpenditureByResident",
+                                          year, sep = "_"))
+  SoIForeignExp <- ForeignExp[ForeignExp$GeoName == state, as.character(year)]
+  RoUSForeignExp <- ForeignExp[ForeignExp$GeoName == "United States", as.character(year)] - SoIForeignExp
+  # Spending in the U.S. by nonresidents
+  DomesticExp <- loadStateIODataFile(paste("State_DomesticExpenditureByNonresident",
+                                           year, sep = "_"))
+  SoIDomesticExp <- DomesticExp[DomesticExp$GeoName == state, as.character(year)]
+  RoUSDomesticExp <- DomesticExp[DomesticExp$GeoName == "United States", as.character(year)] - SoIDomesticExp
   
   logging::loginfo("Assembling full two-region make and use table...")
   # Start with SoI_Make
@@ -788,31 +800,47 @@ buildFullTwoRegionIOTable <- function(state, year, ioschema, iolevel) {
   # Append RoUS_Make
   FullTwoRegionTable[rownames(RoUS_Make), colnames(RoUS_Make)] <- RoUS_Make
   # Append TwoRegionUse
-  FullTwoRegionTable[rownames(TwoRegionUse), colnames(TwoRegionUse)] <- TwoRegionUse
+  FullTwoRegionTable[rownames(TwoRegionUseTransaction), colnames(TwoRegionUseTransaction)] <- TwoRegionUseTransaction
   # Append TwoRegionFinalDemand
-  FullTwoRegionTable[rownames(TwoRegionUse), colnames(TwoRegionFinalDemand)] <- TwoRegionFinalDemand
+  FullTwoRegionTable[rownames(TwoRegionFinalDemand), colnames(TwoRegionFinalDemand)] <- TwoRegionFinalDemand
   # Adjust row and column order
-  FullTwoRegionTable <- FullTwoRegionTable[c(rownames(TwoRegionUse),
+  FullTwoRegionTable <- FullTwoRegionTable[c(rownames(TwoRegionUseTransaction),
                                              rownames(SoI_Make), rownames(RoUS_Make)),
                                            c(colnames(SoI_Make),colnames(RoUS_Make),
-                                             colnames(TwoRegionUse), colnames(TwoRegionFinalDemand))]
+                                             colnames(TwoRegionUseTransaction), colnames(TwoRegionFinalDemand))]
   
-  # Append final demand table
-  FullTwoRegionTable[1:nrow(TwoRegionFinalDemand), colnames(TwoRegionFinalDemand)] <- TwoRegionFinalDemand
+  # Append total output column
+  tworegion_co_filename <- paste("TwoRegion", iolevel, "CommodityOutput", year, sep = "_")
+  TwoRegionCommodityOutput <- loadStateIODataFile(tworegion_co_filename)[[state]]
+  tworegion_io_filename <- paste("TwoRegion", iolevel, "IndustryOutput", year, sep = "_")
+  TwoRegionIndustryOutput <- loadStateIODataFile(tworegion_io_filename)[[state]]
+  FullTwoRegionTable[, "Total Output"] <- c(TwoRegionCommodityOutput,
+                                            TwoRegionIndustryOutput)
+  
   # Append international imports
-  FullTwoRegionTable["InternationalImports", colnames(InternationalImports)] <- InternationalImports
+  FullTwoRegionTable["International Imports", colnames(IntlImports)] <- IntlImports
   # Append total intermediate consumption
-  FullTwoRegionTable["TotalIntermediateConsumption", colnames(TwoRegionUse)] <- colSums(FullTwoRegionTable[, colnames(TwoRegionUse)])
+  FullTwoRegionTable["Total Intermediate Consumption", colnames(TwoRegionUseTransaction)] <- colSums(FullTwoRegionTable[, colnames(TwoRegionUseTransaction)])
   # Append gross value added
   FullTwoRegionTable[GVA_rows, colnames(TwoRegionGVA)] <- TwoRegionGVA
   # Append value added at basic price or Gross Value Added
-  FullTwoRegionTable["GrossValueAdded", colnames(TwoRegionGVA)] <- colSums(FullTwoRegionTable[GVA_rows, colnames(TwoRegionGVA)])
-  # Append direct purchases abroad by residents
-  # TBD
+  FullTwoRegionTable["Gross Value Added", colnames(TwoRegionGVA)] <- colSums(FullTwoRegionTable[GVA_rows, colnames(TwoRegionGVA)])
+  # Append direct spending abroad by residents
+  SoIPCE_col <- grep(paste(PCE_col, "US-", sep = "/"),
+                     colnames(FullTwoRegionTable), value = TRUE)
+  RoUSPCE_col <- grep(paste(PCE_col, "RoUS", sep = "/"),
+                      colnames(FullTwoRegionTable), value = TRUE)
+  FullTwoRegionTable["Foreign Expenditure by U.S. Resident", c(SoIPCE_col, RoUSPCE_col)] <- c(SoIForeignExp, RoUSForeignExp)
   # Append purchases on the domestic territory by non-residents
-  # TBD
-  # Append international transportation margins
-  FullTwoRegionTable["InternationalTransportMargins", colnames(InternationalTransportMargins)] <- InternationalTransportMargins
+  FullTwoRegionTable["Domestic Expenditure by Nonresident", c(SoIPCE_col, RoUSPCE_col)] <- c(SoIDomesticExp, RoUSDomesticExp)
+  # Append international Transport Margins
+  FullTwoRegionTable["International Transport Margins", colnames(IntlTransportMargins)] <- IntlTransportMargins
+  
+  # Append total output row
+  FullTwoRegionTable["Total Output", ] <- c(TwoRegionCommodityOutput,
+                                            TwoRegionIndustryOutput,
+                                            colSums(TwoRegionFinalDemand),
+                                            NA)
   
   return(FullTwoRegionTable)
 }
