@@ -8,21 +8,21 @@ Each two-region matrix has a four-quadrant structure. In each matrix, `SoI` is r
 
 ## Data
 
-| Item                           | Data Structure | Description |
-| ------------------------------ | -------------- | ----------- |
-| Make                           | matrix         | [The two-region Make Transactions](#Two-Region-Make-Transactions) |
-| Use                            | matrix         | [The two-region Use Transactions](#Two-Region-Use-Transactions) |
-| Domestic Use                   | matrix         | [The two-region Domestic Use Transactions](#Two-Region-Use-Transactions) |
-| Final Demand                   | matrix         | [The two-region Final Demand](#Two-Region-Final-Demand) |
-| Domestic Final Demand          | matrix         | [The two-region Domestic Final Demand](#Two-Region-Final-Demand) |
-| International Trade Adjustment | numeric vector | [The two-region International Trade Adjustment](#Two-Region-International-Trade-Adjustment) |
-| Value Added                    | matrix         | [The two-region Value Added](#Two-Region-Value-Added) |
-| Commodity Output               | numeric vector | [Two-region total output by commodity](#Two-Region-Output-Vectors) |
-| Industry Output                | numeric vector | [Two-region total output by industry](#Two-Region-Output-Vectors) |
-| Domestic Use with trade        | list           | [The two-region Domestic Use with interregional trade](#Two-Region-Domestic-Use-with-Trade) |
+| Item                           | Data Name<sup>1</sup>  | Data Structure | Description |
+| ------------------------------ | ---------------------- | -------------- | ----------- |
+| Make                           | TwoRegion_Summary_Make_`year`_`version` | matrix         | [The two-region Make](#Two-Region-Make) |
+| Use                            | TwoRegion_Summary_Use_`year`_`version`  | matrix         | [The two-region Use](#Two-Region-Use) |
+| Domestic Use                   | TwoRegion_Summary_DomesticUse_`year`_`version` | matrix         | [The two-region Domestic Use](#Two-Region-Use) |
+| Domestic Use with trade        | TwoRegion_Summary_DomesticUsewithTrade_`year`_`version` | list | [The two-region Domestic Use with interregional trade](#Two-Region-Domestic-Use-with-Trade) |
+| International Trade Adjustment | TwoRegion_Summary_InternationalTradeAdjustment_`year`_`version` | numeric vector | [The two-region International Trade Adjustment](#Two-Region-International-Trade-Adjustment) |
+| Value Added                    | TwoRegionValueAdded_`year`_`version` | matrix         | [The two-region Value Added](#Two-Region-Value-Added) |
+| Commodity Output               | TwoRegionCommodityOutput_`year`_`version` | numeric vector | [Two-region total output by commodity](#Two-Region-Output-Vectors) |
+| Industry Output                | TwoRegionIndustryOutput_`year`_`version`  | numeric vector | [Two-region total output by industry](#Two-Region-Output-Vectors) |
 
-### Two Region Make Transactions
-The two-region Make Transactions is an `industry x commodity` matrix with amounts of commodities (in model year USD) being made by industries.
+<sup>1</sup> Data names on [Data Commons](https://edap-ord-data-commons.s3.amazonaws.com/index.html?prefix=stateio/). `year` and `version` are subject to change.
+
+### Two Region Make
+The two-region Make is an `industry x commodity` matrix with amounts of commodities (in model year USD) being made by industries.
 ```
                   commodities/US-ST, commodities/RoUS
                   +---------------------------------+
@@ -36,34 +36,33 @@ The two-region Make Transactions is an `industry x commodity` matrix with amount
                   +---------------------------------+
 ```
 
-### Two Region Use Transactions
-The two-region Use Transactions is a `commodity x industry` matrix with amounts of commodities (in model year USD) being used by industries for intermediate production.
+### Two Region Use
+The two-region Use is a `commodity x industry` matrix with amounts of commodities (in model year USD) being used by industries for intermediate production, or being used by final consumers. Use also includes commodity imports, exports and change in inventories as components of final demand, and value added components as inputs to industries.
+
 ```
-                    industries/US-ST, industries/RoUS
-                   +---------------------------------+
-                   |                |                |
- commodities/US-ST |                |                |
-                   |                |                |
-                   |-------------- Use --------------|
-                   |                |                |
- commodities/RoUS  |                |                |
-                   |                |                |
-                   +---------------------------------+
+                    industries/US-ST, final demand/US-ST, industries/RoUS, final demand/RoUS
+                   +------------------------------------------------------------------------+
+                   |                                    |                                   |
+ commodities/US-ST |                                    |                                   |
+                   |                                    |                                   |
+                   |---------------------------------- Use ---------------------------------|
+                   |                                    |                                   |
+ commodities/RoUS  |                                    |                                   |
+                   |                                    |                                   |
+                   +------------------------------------------------------------------------+
 ```
 
-### Two Region Final Demand
-The two-region Final Demand is a `commodity x final demand` matrix with amounts of commodities (in model year USD) being used by final consumers.
+### Two Region Domestic Use with Trade
+A named list of matrices, `SoI2SoI`, `SoI2RoUS`, `RoUS2SoI`, `RoUS2RoUS`.
+
+Each matrix is in `commodity x industry` form with total amounts of commodities (in model year USD) being used by industries for intermediate production, or being used by final consumers, in `SoI` that are also produced in `SoI`. Interregional trade columns are `InterregionalImports`, `InterregionalExports`, `NetExports`, and `ExportResidual`.
 ```
-                    final demand/US-ST, final demand/RoUS
-                   +-------------------------------------+
-                   |                  |                  |
- commodities/US-ST |                  |                  |
-                   |                  |                  |
-                   |------------ Final Demand -----------|
-                   |                  |                  |
- commodities/RoUS  |                  |                  |
-                   |                  |                  |
-                   +-------------------------------------+
+            industries, final demand, interregional trade
+            +-------------------------------------------+
+            |                                           |
+commodities |                   matrix                  |
+            |                                           |
+            +-------------------------------------------+
 ```
 
 ### Two Region International Trade Adjustment
@@ -95,17 +94,3 @@ commodities/US-ST, commodities/RoUS +----q----+
 
 industries/US-ST, industries/RoUS +----x----+
 ```
-
-### Two Region Domestic Use with Trade
-A named list of matrices, `SoI2SoI`, `SoI2RoUS`, `RoUS2SoI`, `RoUS2RoUS`.
-
-Each matrix is in `commodity x industry` form with total amounts of commodities (in model year USD) being used by industries for intermediate production, or being used by final consumers, in `SoI` that are also produced in `SoI`. Interregional trade columns are `InterregionalImports`, `InterregionalExports`, `NetExports`, and `ExportResidual`.
-```
-            industries, final demand, interregional trade
-            +-------------------------------------------+
-            |                                           |
-commodities |                   matrix                  |
-            |                                           |
-            +-------------------------------------------+
-```
-
