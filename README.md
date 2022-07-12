@@ -36,10 +36,10 @@ Load a 2-region MRIO data sets
 library(stateior)
 
 # Loading the latest version by default
-df <- loadStateIODataFile(dataname)
+data <- loadStateIODataFile(dataname)
 
 # Specify version_number if a particular version is desired
-df <- loadStateIODataFile(dataname, ver = version_number)
+data <- loadStateIODataFile(dataname, ver = version_number)
 ```
 
 See [Two Region Data](format_specs/TwoRegionData.md#data) for names and details of 2-region MRIO data sets that are currently available.
