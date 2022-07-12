@@ -15,9 +15,9 @@ Each two-region matrix has a four-quadrant structure. In each matrix, `SoI` is r
 | Domestic Use                   | TwoRegion_Summary_DomesticUse_`year`_`version` | matrix         | [The two-region Domestic Use](#Two-Region-Use) |
 | Domestic Use with trade        | TwoRegion_Summary_DomesticUsewithTrade_`year`_`version` | list | [The two-region Domestic Use with interregional trade](#Two-Region-Domestic-Use-with-Trade) |
 | International Trade Adjustment | TwoRegion_Summary_InternationalTradeAdjustment_`year`_`version` | numeric vector | [The two-region International Trade Adjustment](#Two-Region-International-Trade-Adjustment) |
-| Value Added                    | TwoRegionValueAdded_`year`_`version` | matrix         | [The two-region Value Added](#Two-Region-Value-Added) |
-| Commodity Output               | TwoRegionCommodityOutput_`year`_`version` | numeric vector | [Two-region total output by commodity](#Two-Region-Output-Vectors) |
-| Industry Output                | TwoRegionIndustryOutput_`year`_`version`  | numeric vector | [Two-region total output by industry](#Two-Region-Output-Vectors) |
+| Value Added                    | TwoRegion_Summary_ValueAdded_`year`_`version` | matrix         | [The two-region Value Added](#Two-Region-Value-Added) |
+| Commodity Output               | TwoRegion_Summary_CommodityOutput_`year`_`version` | numeric vector | [Two-region total output by commodity](#Two-Region-Output-Vectors) |
+| Industry Output                | TwoRegion_Summary_IndustryOutput_`year`_`version`  | numeric vector | [Two-region total output by industry](#Two-Region-Output-Vectors) |
 
 <sup>1</sup> Data names on [Data Commons](https://edap-ord-data-commons.s3.amazonaws.com/index.html?prefix=stateio/). `year` and `version` are subject to change.
 
