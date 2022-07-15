@@ -25,6 +25,29 @@ devtools::install_github("USEPA/stateior@v0.1.0")
 
 See [Releases](https://github.com/USEPA/stateior/releases) for all previously realeased versions.
 
+## Usage
+
+Currently, `stateior` is capable of building 2-region MRIO models in the United States.
+The 2 regions are State of Interest (SoI) and Rest of the US (RoUS).
+
+Load a 2-region MRIO data sets
+
+```r
+library(stateior)
+
+# Loading the latest version by default
+data <- loadStateIODataFile(dataname)
+# Example
+TwoRegionDomesticUse_GA_RoUS <- loadStateIODataFile("TwoRegion_Summary_DomesticUse_2012")[["Georgia"]]
+
+# Specify version_number if a particular version is desired
+data <- loadStateIODataFile(dataname, ver = version_number)
+# Example
+TwoRegionDomesticUse_GA_RoUS <- loadStateIODataFile("TwoRegion_Summary_DomesticUse_2012_0.1.0")[["Georgia"]]
+```
+
+See [Two Region Data](format_specs/TwoRegionData.md#data) for names and details of 2-region MRIO data sets that are currently available.
+
 ## Disclaimer
 
 The United States Environmental Protection Agency (EPA) GitHub project code is provided on an "as is" basis and the user assumes responsibility for its use.  EPA has relinquished control of the information and no longer has responsibility to protect the integrity , confidentiality, or availability of the information.  Any reference to specific commercial products, processes, or services by service mark, trademark, manufacturer, or otherwise, does not constitute or imply their endorsement, recommendation or favoring by EPA.  The EPA seal and logo shall not be used in any manner to imply endorsement of any commercial product or activity by EPA or the United States Government.
