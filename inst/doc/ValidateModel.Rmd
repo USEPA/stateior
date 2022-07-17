@@ -20,14 +20,15 @@ logging::basicConfig(level = 40)
 ```{r report-function}
 reportValidationResult <- function(failures) {
   if (any(nrow(failures) == 0, length(failures) == 0)) {
-    cat("There are no failures.\n\n")
+    cat("There are no failures.\n")
   } else if (any(nrow(failures) == 1, length(failures) == 1)) {
     cat("There is", nrow(failures), "failure, and it is")
-    knitr::kable(failures, "simple")
+    print(knitr::kable(failures, "simple"))
   } else {
     cat("There are", nrow(failures), "failures, and they are")
-    knitr::kable(failures, "simple")
+    print(knitr::kable(failures, "simple"))
   }
+  cat("\n")
 }
 ```
 
@@ -666,9 +667,9 @@ for (state in state.name) {
 ```{r report-results}
 for (state in state.name) {
   cat(paste0("##### 18.", which(states == state)), state, "and Rest of the US\n")
-  cat("Absolute Difference: ")
+  cat("Absolute Difference: \n")
   reportValidationResult(Failures_ls[[state]])
-  cat("Relative Difference: ")
+  cat("Relative Difference: \n")
   reportValidationResult(Failures_RelDiff_ls[[state]])
 }
 ```
