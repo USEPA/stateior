@@ -242,8 +242,16 @@ Relative Difference: There are no failures.
 
 ##### 18.5 California and Rest of the US
 
-Absolute Difference: There are 4 failures, and they areRelative
-Difference: There are no failures.
+Absolute Difference: There are 4 failures, and they are
+
+|     | rownames                |    result | check       |
+| --- | :---------------------- | --------: | :---------- |
+| 159 | California.334.Industry |   1377993 | L\*y-output |
+| 164 | California.339.Industry |   1090469 | L\*y-output |
+| 230 | RoUS.334.Industry       | \-1375192 | L\*y-output |
+| 235 | RoUS.339.Industry       | \-1089822 | L\*y-output |
+
+Relative Difference: There are no failures.
 
 ##### 18.6 Colorado and Rest of the US
 
@@ -469,8 +477,14 @@ Relative Difference: There are no failures.
 
 ##### 18.45 Texas and Rest of the US
 
-Absolute Difference: There are 2 failures, and they areRelative
-Difference: There are no failures.
+Absolute Difference: There are 2 failures, and they are
+
+|     | rownames           |    result | check       |
+| --- | :----------------- | --------: | :---------- |
+| 149 | Texas.211.Industry |   2402642 | L\*y-output |
+| 220 | RoUS.211.Industry  | \-2406145 | L\*y-output |
+
+Relative Difference: There are no failures.
 
 ##### 18.46 Utah and Rest of the US
 

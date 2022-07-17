@@ -248,8 +248,18 @@ Relative Difference: There are no failures.
 
 ##### 18.5 California and Rest of the US
 
-Absolute Difference: There are 6 failures, and they areRelative
-Difference: There are no failures.
+Absolute Difference: There are 6 failures, and they are
+
+|     | rownames                   |    result | check       |
+| --- | :------------------------- | --------: | :---------- |
+| 148 | California.113FF.Industry  | \-1389976 | L\*y-output |
+| 189 | California.514.Industry    |   1735139 | L\*y-output |
+| 199 | California.5412OP.Industry |   1149667 | L\*y-output |
+| 219 | RoUS.113FF.Industry        |   1367084 | L\*y-output |
+| 260 | RoUS.514.Industry          | \-1727666 | L\*y-output |
+| 270 | RoUS.5412OP.Industry       | \-1151044 | L\*y-output |
+
+Relative Difference: There are no failures.
 
 ##### 18.6 Colorado and Rest of the US
 
@@ -277,8 +287,14 @@ Relative Difference: There are no failures.
 
 ##### 18.11 Georgia and Rest of the US
 
-Absolute Difference: There are 2 failures, and they areRelative
-Difference: There are no failures.
+Absolute Difference: There are 2 failures, and they are
+
+|     | rownames               |    result | check       |
+| --- | :--------------------- | --------: | :---------- |
+| 166 | Georgia.313TT.Industry |   1373003 | L\*y-output |
+| 237 | RoUS.313TT.Industry    | \-1357655 | L\*y-output |
+
+Relative Difference: There are no failures.
 
 ##### 18.12 Hawaii and Rest of the US
 
@@ -474,8 +490,16 @@ Relative Difference: There are no failures.
 
 ##### 18.45 Texas and Rest of the US
 
-Absolute Difference: There are 4 failures, and they areRelative
-Difference: There are no failures.
+Absolute Difference: There are 4 failures, and they are
+
+|     | rownames           |    result | check       |
+| --- | :----------------- | --------: | :---------- |
+| 149 | Texas.211.Industry |   2885662 | L\*y-output |
+| 183 | Texas.486.Industry | \-1003547 | L\*y-output |
+| 220 | RoUS.211.Industry  | \-2889127 | L\*y-output |
+| 254 | RoUS.486.Industry  |   1005020 | L\*y-output |
+
+Relative Difference: There are no failures.
 
 ##### 18.46 Utah and Rest of the US
 

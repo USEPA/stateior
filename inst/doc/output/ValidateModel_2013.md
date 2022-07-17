@@ -242,8 +242,14 @@ Relative Difference: There are no failures.
 
 ##### 18.5 California and Rest of the US
 
-Absolute Difference: There are 2 failures, and they areRelative
-Difference: There are no failures.
+Absolute Difference: There are 2 failures, and they are
+
+|     | rownames                |    result | check       |
+| --- | :---------------------- | --------: | :---------- |
+| 189 | California.514.Industry | \-1028987 | L\*y-output |
+| 260 | RoUS.514.Industry       |   1024997 | L\*y-output |
+
+Relative Difference: There are no failures.
 
 ##### 18.6 Colorado and Rest of the US
 
@@ -403,8 +409,14 @@ Relative Difference: There are no failures.
 
 ##### 18.33 New York and Rest of the US
 
-Absolute Difference: There are 2 failures, and they areRelative
-Difference: There are no failures.
+Absolute Difference: There are 2 failures, and they are
+
+|     | rownames              |    result | check       |
+| --- | :-------------------- | --------: | :---------- |
+| 191 | New York.523.Industry | \-1031274 | L\*y-output |
+| 262 | RoUS.523.Industry     |   1016845 | L\*y-output |
+
+Relative Difference: There are no failures.
 
 ##### 18.34 North Carolina and Rest of the US
 
@@ -468,8 +480,16 @@ Relative Difference: There are no failures.
 
 ##### 18.45 Texas and Rest of the US
 
-Absolute Difference: There are 4 failures, and they areRelative
-Difference: There are no failures.
+Absolute Difference: There are 4 failures, and they are
+
+|     | rownames           |    result | check       |
+| --- | :----------------- | --------: | :---------- |
+| 149 | Texas.211.Industry | \-1723835 | L\*y-output |
+| 151 | Texas.213.Industry | \-1527000 | L\*y-output |
+| 220 | RoUS.211.Industry  |   1719364 | L\*y-output |
+| 222 | RoUS.213.Industry  |   1523465 | L\*y-output |
+
+Relative Difference: There are no failures.
 
 ##### 18.46 Utah and Rest of the US
 
@@ -491,8 +511,14 @@ Relative Difference: There are no failures.
 
 ##### 18.49 Washington and Rest of the US
 
-Absolute Difference: There are 2 failures, and they areRelative
-Difference: There are no failures.
+Absolute Difference: There are 2 failures, and they are
+
+|     | rownames                   |    result | check       |
+| --- | :------------------------- | --------: | :---------- |
+| 162 | Washington.3364OT.Industry | \-1118132 | L\*y-output |
+| 233 | RoUS.3364OT.Industry       |   1114306 | L\*y-output |
+
+Relative Difference: There are no failures.
 
 ##### 18.50 West Virginia and Rest of the US
 
