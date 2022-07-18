@@ -12,7 +12,12 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   fips <- FIPS_STATE[FIPS_STATE$State == state, "State_FIPS"]
-  value_col <- paste0("value_", year)
+  if (year <= 2018) {
+    value_col <- paste0("curval_", year)
+  } else {
+    value_col <- paste0("current_value_", year)
+  }
+  
   # Generate FAF_2r
   if (flow_ratio_type == "domestic") {
     FAF <- FAF[FAF$trade_type == 1, c("dms_origst", "dms_destst", "sctg2",
