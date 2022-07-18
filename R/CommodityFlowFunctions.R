@@ -12,9 +12,9 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   fips <- FIPS_STATE[FIPS_STATE$State == state, "State_FIPS"]
-  if (year <= 2018) {
+  if (year == 2012) {
     value_col <- paste0("curval_", year)
-  } else {
+  } else if (year %in% c(2013:2018)) {
     value_col <- paste0("current_value_", year)
   }
   
