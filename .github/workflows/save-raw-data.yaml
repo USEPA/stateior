@@ -16,16 +16,16 @@ jobs:
         config:
           - {os: ubuntu-latest, r: 'release'}
         script-run: 
-          # - {script: data-raw/BEAData.R}
-          # - {script: data-raw/CensusData.R}
-          # - {script: data-raw/EIAData.R}
+          - {script: data-raw/BEAData.R}
+          - {script: data-raw/CensusData.R}
+          - {script: data-raw/EIAData.R}
           - {script: data-raw/FAFData.R}
-          # - {script: data-raw/USASpendingData.R, year: 2012}
-          # - {script: data-raw/USASpendingData.R, year: 2013}
-          # - {script: data-raw/USASpendingData.R, year: 2014}
-          # - {script: data-raw/USASpendingData.R, year: 2015}
-          # - {script: data-raw/USASpendingData.R, year: 2016}
-          # - {script: data-raw/USASpendingData.R, year: 2017}
+          - {script: data-raw/USASpendingData.R, year: 2012}
+          - {script: data-raw/USASpendingData.R, year: 2013}
+          - {script: data-raw/USASpendingData.R, year: 2014}
+          - {script: data-raw/USASpendingData.R, year: 2015}
+          - {script: data-raw/USASpendingData.R, year: 2016}
+          - {script: data-raw/USASpendingData.R, year: 2017}
         
     # env:
       # R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
