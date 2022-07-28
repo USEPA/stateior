@@ -254,8 +254,8 @@ Absolute Difference: There are 2 failures, and they are
 
 |     | rownames                |    result | check       |
 | --- | :---------------------- | --------: | :---------- |
-| 189 | California.514.Industry | \-1510304 | L\*y-output |
-| 260 | RoUS.514.Industry       |   1507203 | L\*y-output |
+| 189 | California.514.Industry | \-1510303 | L\*y-output |
+| 260 | RoUS.514.Industry       |   1507202 | L\*y-output |
 
 Relative Difference: There are no failures.
 
@@ -289,8 +289,8 @@ Absolute Difference: There are 2 failures, and they are
 
 |     | rownames               |    result | check       |
 | --- | :--------------------- | --------: | :---------- |
-| 166 | Georgia.313TT.Industry |   1258408 | L\*y-output |
-| 237 | RoUS.313TT.Industry    | \-1243387 | L\*y-output |
+| 166 | Georgia.313TT.Industry |   1258288 | L\*y-output |
+| 237 | RoUS.313TT.Industry    | \-1243393 | L\*y-output |
 
 Relative Difference: There are no failures.
 
@@ -426,7 +426,7 @@ Absolute Difference: There are 2 failures, and they are
 
 |     | rownames              |    result | check       |
 | --- | :-------------------- | --------: | :---------- |
-| 191 | New York.523.Industry |   1165470 | L\*y-output |
+| 191 | New York.523.Industry |   1165471 | L\*y-output |
 | 262 | RoUS.523.Industry     | \-1161392 | L\*y-output |
 
 Relative Difference: There are no failures.
@@ -497,8 +497,8 @@ Absolute Difference: There are 2 failures, and they are
 
 |     | rownames           |    result | check       |
 | --- | :----------------- | --------: | :---------- |
-| 170 | Texas.324.Industry |   1064250 | L\*y-output |
-| 241 | RoUS.324.Industry  | \-1064571 | L\*y-output |
+| 170 | Texas.324.Industry |   1063809 | L\*y-output |
+| 241 | RoUS.324.Industry  | \-1064120 | L\*y-output |
 
 Relative Difference: There are no failures.
 

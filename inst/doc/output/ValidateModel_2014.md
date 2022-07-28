@@ -246,10 +246,10 @@ Absolute Difference: There are 4 failures, and they are
 
 |     | rownames                |    result | check       |
 | --- | :---------------------- | --------: | :---------- |
-| 159 | California.334.Industry |   1377993 | L\*y-output |
-| 164 | California.339.Industry |   1090469 | L\*y-output |
-| 230 | RoUS.334.Industry       | \-1375192 | L\*y-output |
-| 235 | RoUS.339.Industry       | \-1089822 | L\*y-output |
+| 159 | California.334.Industry |   1377973 | L\*y-output |
+| 164 | California.339.Industry |   1090555 | L\*y-output |
+| 230 | RoUS.334.Industry       | \-1375172 | L\*y-output |
+| 235 | RoUS.339.Industry       | \-1089905 | L\*y-output |
 
 Relative Difference: There are no failures.
 
@@ -481,8 +481,8 @@ Absolute Difference: There are 2 failures, and they are
 
 |     | rownames           |    result | check       |
 | --- | :----------------- | --------: | :---------- |
-| 149 | Texas.211.Industry |   2402642 | L\*y-output |
-| 220 | RoUS.211.Industry  | \-2406145 | L\*y-output |
+| 149 | Texas.211.Industry |   2402673 | L\*y-output |
+| 220 | RoUS.211.Industry  | \-2406168 | L\*y-output |
 
 Relative Difference: There are no failures.
 
