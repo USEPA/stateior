@@ -4,7 +4,7 @@
 
 `stateior` is an R package for building multi-regional input-output (MRIO) models in the United States in support of creating [USEEIO models](https://www.epa.gov/land-research/us-environmentally-extended-input-output-useeio-models) in the [`useeior`](https://github.com/USEPA/useeior) package for US states and other purposes.
 
-`stateior` describes a robust StateIO modeling framework and offers various functions for calculating, validating, visualizing, and writing out StateIO models.
+`stateior` describes a robust StateIO modeling framework and offers various functions for building, validating, visualizing, and writing out StateIO models.
 `stateior` is in a stable development state.
 Users intending to use the package for production purposes and applications should use [Releases](https://github.com/USEPA/stateior/releases).
 
