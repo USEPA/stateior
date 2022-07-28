@@ -2,7 +2,18 @@
 % Please edit documentation in R/StateSupplyFunctions.R
 \name{calculateStateUSValueAddedRatio}
 \alias{calculateStateUSValueAddedRatio}
-\title{Calculate state-US GVA (value added) ratios at BEA Summary level.}
+\title{Calculate state-US GVA (value added) ratios at BEA Summary level.
+There are two prerequisite steps embedded in thus function.
+Prerequisite #1: state_GVA is calculated from the SAGDP state GVA data,
+via getStateGVA(year), which is originally by LineCode then mapped to
+BEA industries using mapStateTabletoBEASummary("GVA", year).
+Prerequisite #2: where GVA must be allocated from one LineCode to multiple
+BEA industries, including sectors of retail, real estate, fed gov non-defense,
+and state & local gov, allocation factors are calculated using
+calculateStatetoBEASummaryAllocationFactor(year, "Employment")).
+When using state employment (from BEA) as source for allocation,
+introduce national GVA to disaggregate state employment
+in real estate and gov industries from LineCode to BEA Summary.}
 \usage{
 calculateStateUSValueAddedRatio(year)
 }
@@ -15,4 +26,15 @@ for all states at a specific year at BEA Summary level.
 }
 \description{
 Calculate state-US GVA (value added) ratios at BEA Summary level.
+There are two prerequisite steps embedded in thus function.
+Prerequisite #1: state_GVA is calculated from the SAGDP state GVA data,
+via getStateGVA(year), which is originally by LineCode then mapped to
+BEA industries using mapStateTabletoBEASummary("GVA", year).
+Prerequisite #2: where GVA must be allocated from one LineCode to multiple
+BEA industries, including sectors of retail, real estate, fed gov non-defense,
+and state & local gov, allocation factors are calculated using
+calculateStatetoBEASummaryAllocationFactor(year, "Employment")).
+When using state employment (from BEA) as source for allocation,
+introduce national GVA to disaggregate state employment
+in real estate and gov industries from LineCode to BEA Summary.
 }

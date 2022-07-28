@@ -2,18 +2,19 @@
 % Please edit documentation in R/StateUseFunctions.R
 \name{adjustGVAComponent}
 \alias{adjustGVAComponent}
-\title{Adjust EmpComp, Tax, and GOS to fill NA and make them consistent with GVA}
+\title{Adjust EmpComp, Tax, and GOS to fill NA and make them consistent with GVA.}
 \usage{
 adjustGVAComponent(year, return)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 
-\item{return}{A character string showing which attribute to return. 'comp', 'tax', 'gos'}
+\item{return}{A character string showing which attribute to return.
+Can be "GVA", "EmpCompensation", "Tax", or "GOS".}
 }
 \value{
-A data frame contains adjusted EmpComp, Tax, GOS, and GVA
+A data frame contains adjusted EmpComp, Tax, GOS, and GVA.
 }
 \description{
-Adjust EmpComp, Tax, and GOS to fill NA and make them consistent with GVA
+Adjust EmpComp, Tax, and GOS to fill NA and make them consistent with GVA.
 }

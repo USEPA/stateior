@@ -11,7 +11,7 @@ buildStateSupplyModel(year)
 \item{year}{A numeric value between 2007 and 2017.}
 }
 \value{
-A list of state supply model components: Make, commodity and industry output.
+A list of state Make table and commodity output.
 }
 \description{
 Build a state supply model for all 52 states/regions

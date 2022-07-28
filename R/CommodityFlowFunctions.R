@@ -6,38 +6,45 @@
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data frame contains commodity flow ratios by BEA.
-calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema, iolevel) {
+calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved FAF4 commodity flow data
   FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"))
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
-  fips <- FIPS_STATE[FIPS_STATE$State==state, "State_FIPS"]
-  value_col <- paste0("value_", year)
+  fips <- FIPS_STATE[FIPS_STATE$State == state, "State_FIPS"]
+  if (year == 2012) {
+    value_col <- paste0("value_", year)
+  } else if (year %in% c(2013:2018)) {
+    value_col <- paste0("curval_", year)
+  } else {
+    value_col <- paste0("current_value_", year)
+  }
+  
   # Generate FAF_2r
-  if (flow_ratio_type=="domestic") {
-    FAF <- FAF[FAF$trade_type==1, c("dms_origst", "dms_destst", "sctg2",
-                                    "dms_mode", value_col)]
+  if (flow_ratio_type == "domestic") {
+    FAF <- FAF[FAF$trade_type == 1, c("dms_origst", "dms_destst", "sctg2",
+                                      "dms_mode", value_col)]
     colnames(FAF) <- c("ORIG", "DEST", "SCTG", "MODE", "VALUE")
-    FAF$ORIG <- ifelse(FAF$ORIG==fips, "SoI", "RoUS")
-    FAF$DEST <- ifelse(FAF$DEST==fips, "SoI", "RoUS") 
+    FAF$ORIG <- ifelse(FAF$ORIG == fips, "SoI", "RoUS")
+    FAF$DEST <- ifelse(FAF$DEST == fips, "SoI", "RoUS") 
     # Aggregate to 2 regions 
     FAF_2r <- stats::aggregate(VALUE ~ ORIG + DEST + SCTG + MODE, FAF, sum)
     # Calculate commodity flow amount in warehousing & storage sector
     FAF_2r_ws <- stats::aggregate(VALUE ~ ORIG + DEST, FAF, sum)
-  } else if (flow_ratio_type=="export") {
-    FAF <- FAF[FAF$trade_type==3, c("dms_origst", "sctg2", "fr_outmode", value_col)]
+  } else if (flow_ratio_type == "export") {
+    FAF <- FAF[FAF$trade_type == 3, c("dms_origst", "sctg2", "fr_outmode", value_col)]
     colnames(FAF) <- c("ORIG", "SCTG", "MODE", "VALUE")
-    FAF$ORIG <- ifelse(FAF$ORIG==fips, "SoI", "RoUS")
+    FAF$ORIG <- ifelse(FAF$ORIG == fips, "SoI", "RoUS")
     FAF$DEST <- "RoW"
     # Aggregate to 2 regions 
     FAF_2r <- stats::aggregate(VALUE ~ ORIG + SCTG + MODE, FAF, sum)
     # Calculate commodity flow amount in warehousing & storage sector
     FAF_2r_ws <- stats::aggregate(VALUE ~ ORIG, FAF, sum)
-  } else if (flow_ratio_type=="import") {
-    FAF <- FAF[FAF$trade_type==2, c("dms_destst", "sctg2", "fr_inmode", value_col)]
+  } else if (flow_ratio_type == "import") {
+    FAF <- FAF[FAF$trade_type == 2, c("dms_destst", "sctg2", "fr_inmode", value_col)]
     colnames(FAF) <- c("DEST", "SCTG", "MODE", "VALUE")
     FAF$ORIG <- "RoW"
-    FAF$DEST <- ifelse(FAF$DEST==fips, "SoI", "RoUS")
+    FAF$DEST <- ifelse(FAF$DEST == fips, "SoI", "RoUS")
     # Aggregate to 2 regions 
     FAF_2r <- stats::aggregate(VALUE ~ DEST + SCTG + MODE, FAF, sum)
     # Calculate commodity flow amount in warehousing & storage sector
@@ -56,9 +63,9 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
                                    package = "stateior"))
   SCTGtoBEA <- unique(SCTGtoBEA[, c("SCTG", bea)])
   FAF_2r <- merge(FAF_2r, SCTGtoBEA, by = "SCTG")
-  if (iolevel=="Detail") {
+  if (iolevel == "Detail") {
     # Use previous code and approach
-  } else if (iolevel=="Summary") {
+  } else if (iolevel == "Summary") {
     # Determine BEA sectors that need allocation
     allocation_sectors <- SCTGtoBEA[duplicated(SCTGtoBEA$SCTG) |
                                       duplicated(SCTGtoBEA$SCTG, fromLast = TRUE), ]
@@ -67,25 +74,25 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
     # Merge StateEmp with allocation_sectors
     Emp <- merge(StateEmp, allocation_sectors, by = "BEA_2012_Summary_Code")
     # Merge FAF_2r and Emp
-    FAF_2r <- merge(FAF_2r, Emp[Emp$State==state, ],
+    FAF_2r <- merge(FAF_2r, Emp[Emp$State == state, ],
                     by = c("SCTG", "BEA_2012_Summary_Code"), all.x = TRUE)
     FAF_2r[is.na(FAF_2r$State), "State"] <- state
     FAF_2r[is.na(FAF_2r$Emp), "Emp"] <- 1
     for (sctg in unique(FAF_2r$SCTG)) {
       # Calculate allocation factor
-      weight_vector <- FAF_2r[FAF_2r$SCTG==sctg, "Emp"]
+      weight_vector <- FAF_2r[FAF_2r$SCTG == sctg, "Emp"]
       allocation_factor <- weight_vector/sum(weight_vector/4, na.rm = TRUE)
       # Allocate Value
-      value <- FAF_2r[FAF_2r$SCTG==sctg, "VALUE"]*allocation_factor
-      FAF_2r[FAF_2r$SCTG==sctg, "VALUE"] <- value
+      value <- FAF_2r[FAF_2r$SCTG == sctg, "VALUE"]*allocation_factor
+      FAF_2r[FAF_2r$SCTG == sctg, "VALUE"] <- value
       # Aggregate by BEA and ORIG/DEST
-      if (flow_ratio_type=="domestic") {
+      if (flow_ratio_type == "domestic") {
         FAF_2r <- stats::aggregate(VALUE ~ ORIG + DEST + BEA_2012_Summary_Code,
                                    FAF_2r, sum, na.rm = TRUE)
-      } else if (flow_ratio_type=="export") {
+      } else if (flow_ratio_type == "export") {
         FAF_2r <- stats::aggregate(VALUE ~ ORIG + BEA_2012_Summary_Code,
                                    FAF_2r, sum, na.rm = TRUE)
-      } else if (flow_ratio_type=="import") {
+      } else if (flow_ratio_type == "import") {
         FAF_2r <- stats::aggregate(VALUE ~ DEST + BEA_2012_Summary_Code,
                                    FAF_2r, sum, na.rm = TRUE)
       }
@@ -99,7 +106,7 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
                     FAF_2r_transportation[, common_cols])
     
     # Calculate commodity flow ratio
-    if (flow_ratio_type=="domestic") {
+    if (flow_ratio_type == "domestic") {
       totalflow <- stats::aggregate(VALUE ~ DEST + BEA_2012_Summary_Code, FAF_2r, sum)
       FAF_2r <- merge(FAF_2r, totalflow, by = c("DEST", "BEA_2012_Summary_Code"))
       FAF_2r$ratio <- FAF_2r$VALUE.x / FAF_2r$VALUE.y
@@ -108,13 +115,13 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
       totalflow <- stats::aggregate(VALUE ~ BEA_2012_Summary_Code, FAF_2r, sum)
       FAF_2r <- merge(FAF_2r, totalflow, by = "BEA_2012_Summary_Code")
       FAF_2r$ratio <- FAF_2r$VALUE.x / FAF_2r$VALUE.y
-      if (flow_ratio_type=="export") {
+      if (flow_ratio_type == "export") {
         FAF_2r <- FAF_2r[, c("ORIG", "BEA_2012_Summary_Code", "ratio")]
-      } else if (flow_ratio_type=="import") {
+      } else if (flow_ratio_type == "import") {
         FAF_2r <- FAF_2r[, c("DEST", "BEA_2012_Summary_Code", "ratio")]
       }
     }
-  } else if (iolevel=="Sector") {
+  } else if (iolevel == "Sector") {
     # To be completed
   }
   return(FAF_2r)
@@ -127,15 +134,15 @@ calculateCommodityFlowRatios <- function (state, year, flow_ratio_type, ioschema
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data frame contains international commodity flow ratios by BEA for all available states.
-calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, ioschema, iolevel) {
+calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, ioschema, iolevel) {
   # Load pre-saved state export/import data
-  if (year<2013) {
+  if (year < 2013) {
     trade <- loadStateIODataFile(paste0("Census_USATrade",
-                                        Hmisc::capitalize(flow_ratio_type),
+                                        capitalize(flow_ratio_type),
                                         "_", year))
   } else {
     trade <- loadStateIODataFile(paste0("Census_State",
-                                        Hmisc::capitalize(flow_ratio_type),
+                                        capitalize(flow_ratio_type),
                                         "_", year))
   }
   # Map from NAICS to BEA
@@ -153,10 +160,10 @@ calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, io
     for (bea in unique(trade[, bea_code])) {
       dig <- 4
       ind <- FALSE
-      while(ind==FALSE & dig>1) {
-        tmp <- trade[trade$State==state & trade[, bea_code]==bea &
-                       nchar(trade$NAICS)==dig, ]
-        if (nrow(tmp)>0) {
+      while (ind == FALSE & dig > 1) {
+        tmp <- trade[trade$State == state & trade[, bea_code] == bea &
+                       nchar(trade$NAICS) == dig, ]
+        if (nrow(tmp) > 0) {
           tmp$NAICS_digit <- dig # mark the NAICS digit used for this USEEIO code
           ind <- TRUE
         } else {
@@ -164,7 +171,7 @@ calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, io
         }
       }
       # If state trade table does not include bea, set Value to 0
-      if (dig==1) {
+      if (dig == 1) {
         tmp[1, 2:4] <- c(bea, state, year)
         tmp$Value <- 0
         tmp$NAICS_digit <- ""
@@ -194,9 +201,9 @@ calculateCensusForeignCommodityFlowRatios <- function (year, flow_ratio_type, io
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @return A data frame contains hazardous waste management services flow ratios by BEA.
-calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
+calculateHazWasteManagementServiceFlowRatios <- function(state, year) {
   # Modify year due to the fact that RCRAInfo is biennial
-  year <- ifelse(year%%2==0, year-1, year)
+  year <- ifelse(year %% 2 == 0, year - 1, year)
   # Load data
   SummaryBR <- utils::read.csv(system.file("extdata",
                                            paste0("RCRAInfoBR/SummaryBR_", year, ".csv"),
@@ -204,7 +211,7 @@ calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
                                header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   SummaryBR[, 2:ncol(SummaryBR)] <- lapply(SummaryBR[, 2:ncol(SummaryBR)],
                                            function(x){as.numeric(gsub(",", "", x))})
-  SummaryBR <- SummaryBR[SummaryBR$`Location Name`%in%toupper(c(state.name, "District of Columbia")), ]
+  SummaryBR <- SummaryBR[SummaryBR$`Location Name` %in% toupper(c(state.name, "District of Columbia")), ]
   
   InterstateFlow <- utils::read.csv(system.file("extdata",
                                                 paste0("RCRAInfoBR/Interstate_", year, ".csv"),
@@ -212,17 +219,17 @@ calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
                                     header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   InterstateFlow[, 2:ncol(InterstateFlow)] <- lapply(InterstateFlow[, 2:ncol(InterstateFlow)],
                                                      function(x){as.numeric(gsub(",", "", x))})
-  InterstateFlow <- InterstateFlow[InterstateFlow$`Location Name`%in%toupper(c(state.name, "District of Columbia")), ]
+  InterstateFlow <- InterstateFlow[InterstateFlow$`Location Name` %in% toupper(c(state.name, "District of Columbia")), ]
   # Calculate total managed, shipped and received
   # Total Managed
-  TM_SoI <- SummaryBR[SummaryBR$`Location Name`==toupper(state), "Managed (Tons)"]
-  TM_RoUS <- sum(SummaryBR[SummaryBR$`Location Name`!=toupper(state), "Managed (Tons)"])
+  TM_SoI <- SummaryBR[SummaryBR$`Location Name` == toupper(state), "Managed (Tons)"]
+  TM_RoUS <- sum(SummaryBR[SummaryBR$`Location Name` != toupper(state), "Managed (Tons)"])
   # Total Interstate Shipments
-  TS_SoI <- InterstateFlow[InterstateFlow$`Location Name`==toupper(state), "Interstate Shipments (Tons)"]
-  TS_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name`!=toupper(state), "Interstate Shipments (Tons)"])
+  TS_SoI <- InterstateFlow[InterstateFlow$`Location Name` == toupper(state), "Interstate Shipments (Tons)"]
+  TS_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name` != toupper(state), "Interstate Shipments (Tons)"])
   # Total Interstate Receipts
-  TR_SoI <- InterstateFlow[InterstateFlow$`Location Name`==toupper(state), "Interstate Receipts (Tons)"]
-  TR_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name`!=toupper(state), "Interstate Receipts (Tons)"])
+  TR_SoI <- InterstateFlow[InterstateFlow$`Location Name` == toupper(state), "Interstate Receipts (Tons)"]
+  TR_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name` != toupper(state), "Interstate Receipts (Tons)"])
   
   # Calculate two-region ICF ratios. !!! imports of HW == exports of HW management service
   HazWaste_ICF_2r <- data.frame("SoI2SoI"   = 1 - TR_SoI/TM_SoI, # the remainder after exporting service to RoUS
@@ -230,10 +237,10 @@ calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
                                 "RoUS2SoI"  = TR_RoUS/TM_RoUS, # receiving HW == exporting service
                                 "RoUS2RoUS" = 1 - TR_RoUS/TM_RoUS) # the remainder after exporting service to SoI
   # Adjust ICF ratios if TM value is 0
-  if (TM_SoI==0) {
+  if (TM_SoI == 0) {
     HazWaste_ICF_2r[, c("SoI2SoI", "SoI2RoUS")] <- c(1, 0)
   }
-  if (TM_RoUS==0) {
+  if (TM_RoUS == 0) {
     HazWaste_ICF_2r[, c("RoUS2RoUS", "RoUS2SoI")] <- c(1, 0)
   }
   # Adjust ICF ratios if TR/TM > 1
@@ -253,7 +260,7 @@ calculateHazWasteManagementServiceFlowRatios <- function (state, year) {
 calculateWasteManagementServiceFlowRatios <- function (state, year) {
   # Assume non-haz waste ICF ratios == commodity output ratios
   COR <- calculateStateCommodityOutputRatio(year)
-  SoIWasteCOR <- COR[COR$BEA_2012_Summary_Code=="562"&COR$State==state, "Ratio"]
+  SoIWasteCOR <- COR[COR$BEA_2012_Summary_Code == "562"&COR$State == state, "Ratio"]
   RoUSWasteCOR <- 1 - SoIWasteCOR
   NonHazWaste_ICF_2r <- data.frame("SoI2SoI"   = SoIWasteCOR,
                                    "SoI2RoUS"  = 1 - SoIWasteCOR,
@@ -278,23 +285,23 @@ calculateElectricityFlowRatios <- function (state, year) {
                                             year))
   # Subset SoI and RoUS total consumption
   consumption_desc <- "Electricity total consumption (i.e., retail sales)"
-  ConsumptionMSN <- CodeDesc[CodeDesc$Description==consumption_desc&
-                               CodeDesc$Unit=="Million kilowatthours", "MSN"]
-  Consumption_SoI <- Consumption[Consumption$MSN==ConsumptionMSN&
-                                   Consumption$State==state_abb,
+  ConsumptionMSN <- CodeDesc[CodeDesc$Description == consumption_desc&
+                               CodeDesc$Unit == "Million kilowatthours", "MSN"]
+  Consumption_SoI <- Consumption[Consumption$MSN == ConsumptionMSN&
+                                   Consumption$State == state_abb,
                                  as.character(year)]
-  Consumption_RoUS <- Consumption[Consumption$MSN==ConsumptionMSN&
-                                    Consumption$State=="US",
+  Consumption_RoUS <- Consumption[Consumption$MSN == ConsumptionMSN&
+                                    Consumption$State == "US",
                                   as.character(year)] - Consumption_SoI
   # Subset SoI and RoUS net interstate trade
   trade_desc <- "Net interstate flow of electricity (negative indicates flow out of state)"
-  NetInterstateTradeMSN <- CodeDesc[CodeDesc$Description==trade_desc&
-                                      CodeDesc$Unit=="Million kilowatthours", "MSN"]
-  NetInterstateTrade_SoI <- Consumption[Consumption$MSN==NetInterstateTradeMSN&
-                                          Consumption$State==state_abb,
+  NetInterstateTradeMSN <- CodeDesc[CodeDesc$Description == trade_desc&
+                                      CodeDesc$Unit == "Million kilowatthours", "MSN"]
+  NetInterstateTrade_SoI <- Consumption[Consumption$MSN == NetInterstateTradeMSN&
+                                          Consumption$State == state_abb,
                                         as.character(year)]
-  NetInterstateTrade_RoUS <- Consumption[Consumption$MSN==NetInterstateTradeMSN&
-                                           Consumption$State=="US",
+  NetInterstateTrade_RoUS <- Consumption[Consumption$MSN == NetInterstateTradeMSN&
+                                           Consumption$State == "US",
                                          as.character(year)] - NetInterstateTrade_SoI
   # Note that abs(NetInterstateTrade_SoI)==abs(NetInterstateTrade_RoUS)
   
@@ -326,12 +333,12 @@ calculateElectricityFlowRatios <- function (state, year) {
 #' @return A data frame contains domestic interregional utilities flow ratios by state.
 calculateUtilitiesFlowRatios <- function (state, year) {
   # Get state employment for utilities sector
-  BLS_QCEW <- getFlowsaData("Employment", year)
-  StateDetailEmp <- mapBLSQCEWtoBEA(BLS_QCEW, year, "Detail")
+  EmploymentFBS <- getFlowsaData("Employment", year)
+  StateDetailEmp <- mapFlowBySectorfromNAICStoBEA(EmploymentFBS, year, "Detail")
   StateDetailEmp$State <- mapFIPS5toLocationNames(StateDetailEmp$FIPS, "FIPS")
   utilities <- c("221100", "221200", "221300")
-  StateUtilitiesEmp <- StateDetailEmp[StateDetailEmp$BEA_2012_Detail_Code%in%utilities &
-                                        StateDetailEmp$State==state, ]
+  StateUtilitiesEmp <- StateDetailEmp[StateDetailEmp$BEA_2012_Detail_Code %in% utilities &
+                                        StateDetailEmp$State == state, ]
   # Calulate weight and ratios, matching utilities sector order
   weight <- StateUtilitiesEmp[match(utilities, StateUtilitiesEmp$BEA_2012_Detail_Code),
                               "FlowAmount"]

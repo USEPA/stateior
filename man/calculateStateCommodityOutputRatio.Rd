@@ -2,7 +2,9 @@
 % Please edit documentation in R/StateUseFunctions.R
 \name{calculateStateCommodityOutputRatio}
 \alias{calculateStateCommodityOutputRatio}
-\title{Calculate state-US Commodity Output ratios at BEA Summary level.}
+\title{Calculate state-US Commodity Output ratios at BEA Summary level.
+Apply row sum to state and US Make tables to get commodity output vectors and
+then Commodity Output Ratio (COR).}
 \usage{
 calculateStateCommodityOutputRatio(year)
 }
@@ -14,4 +16,6 @@ A data frame contains state-US Commodity Output ratios at BEA Summary level.
 }
 \description{
 Calculate state-US Commodity Output ratios at BEA Summary level.
+Apply row sum to state and US Make tables to get commodity output vectors and
+then Commodity Output Ratio (COR).
 }

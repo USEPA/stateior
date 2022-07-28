@@ -1,1240 +1,529 @@
----
-title: "Validating 2014 State IO Model"
-date: "2022-02-08"
-output:
-  html_document:
-    keep_md: yes
-editor_options: 
-  chunk_output_type: console
----
+This document presents validation results of 2014 summary-level state IO
+model.
 
-This document presents validation results of 2014 summary-level state IO model.
+### Prepare data
 
+#### 0\. Load state and two-region IO data.
 
+State and two-region IO data successfully loaded.
 
+### Check state IO tables
 
-
-#### 0. Load state and two-region IO data.
-2022-02-08 00:18:12 INFO::State_Summary_Make_2014_0.1.0.rds not found in local folder, downloading from Data Commons...
-2022-02-08 00:18:14 INFO::State_Summary_IndustryOutput_2014_0.1.0.rds not found in local folder, downloading from Data Commons...
-2022-02-08 00:18:17 INFO::State_Summary_CommodityOutput_2014_0.1.0.rds not found in local folder, downloading from Data Commons...
-2022-02-08 00:18:20 INFO::State_Summary_Use_2014_0.1.0.rds not found in local folder, downloading from Data Commons...
-2022-02-08 00:18:22 INFO::State_Summary_DomesticUse_2014_0.1.0.rds not found in local folder, downloading from Data Commons...
-2022-02-08 00:18:25 INFO::TwoRegion_Summary_DomesticUsewithTrade_2014_0.1.0.rds not found in local folder, downloading from Data Commons...
-
-#### 1. Sum of each cell across all state Make tables must almost equal (<= 0.001) the same cell in US Make table.
-There are no failures.
-
-#### 2. There should not be any negative values in state Make table. Only exception being Overseas, which isn't used for further calculations, and if the same cell in US Make table is also negative. Check if there are negative values in US Make table.
-There are no failures.
-
-#### 3. Sum of each industry's output across all states must almost equal(<= 0.001) industry output in US Make Table.
-There are no failures.
-
-#### 4. Sum of each commodity's output across all states must almost equal(<= 0.001) commodity output in US Make Table.
-There are no failures.
-
-#### 5. Sum of each commodity's output across all states must almost equal (<= 1.11^7, or $11.1 million by commodity) commodity output in US Use Table minus International Imports (commodity specific). Even if the threshold is met, track the difference for each commodity. Save result as a type of quality control check
-There are no failures.
-
-#### 6. All cells that are zero in US Make table must remain zero in state Make tables. Find zero values in US Make table.
-There are no failures.
-
-#### 7. Sum of each cell across all state Use tables must almost equal (<= 1^7, or $10 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
-Note: failures associated with 'F050 - Imports' are acceptable. Because state imports are not directly derived from US imports, a gap in imports between state sum and national total is reasonable.
-##### 7.1 State Use tables
-There are 36 failures, and they are
-
-Commodity   Industry/Final Demand 
-----------  ----------------------
-111CA       F050                  
-113FF       F050                  
-211         F050                  
-212         F050                  
-22          F050                  
-321         F050                  
-327         F050                  
-331         F050                  
-332         F050                  
-333         F050                  
-334         F050                  
-335         F050                  
-3361MV      F050                  
-3364OT      F050                  
-337         F050                  
-339         F050                  
-311FT       F050                  
-313TT       F050                  
-315AL       F050                  
-322         F050                  
-323         F050                  
-324         F050                  
-325         F050                  
-326         F050                  
-42          F050                  
-481         F050                  
-482         F050                  
-483         F050                  
-484         F050                  
-487OS       F050                  
-511         F050                  
-512         F050                  
-524         F050                  
-5412OP      F050                  
-81          F050                  
-Used        F050                  
-
-##### 7.2 State Domestic Use tables
-There are no failures.
-
-#### 8. If SoI commodity output == 0, SoI2SoI ICF ratio == 0
-2022-02-08 00:18:31 INFO::FAF_2014_0.1.0.rds not found in local folder, downloading from Data Commons...
-2022-02-08 00:18:34 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:18:34 INFO::file not found, downloading from https://edap-ord-data-commons.s3.amazonaws.com/flowsa/FlowBySector
-2022-02-08 00:18:39 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:18:39 INFO::EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds not found in local folder, downloading from Data Commons...
-2022-02-08 00:18:42 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:43 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:44 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:44 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:45 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:46 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:18:50 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:18:50 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:51 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:52 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:53 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:53 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:54 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:18:55 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:18:59 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:18:59 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:00 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:01 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:01 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:02 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:03 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:04 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:19:07 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:19:08 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:08 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:09 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:10 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:11 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:11 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:12 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:19:16 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:19:16 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:17 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:18 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:18 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:19 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:20 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:21 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:19:24 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:19:25 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:25 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:26 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:27 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:27 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:28 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:29 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:19:32 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:19:33 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:33 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:34 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:35 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:36 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:36 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:37 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:19:41 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:19:41 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:42 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:43 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:44 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:45 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:46 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:47 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:19:50 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:19:50 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:51 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:52 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:53 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:54 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:54 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:19:55 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:19:58 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:19:59 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:00 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:01 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:01 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:02 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:03 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:04 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:20:08 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:20:09 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:09 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:10 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:11 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:12 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:13 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:14 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:20:17 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:20:18 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:18 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:19 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:20 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:21 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:22 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:23 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:20:26 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:20:27 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:28 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:29 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:30 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:30 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:31 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:32 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:20:36 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:20:37 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:37 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:38 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:39 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:40 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:41 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:42 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:20:45 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:20:46 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:47 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:48 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:49 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:50 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:50 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:51 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:20:55 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:20:56 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:56 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:57 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:58 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:20:59 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:00 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:01 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:21:04 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:21:05 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:06 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:06 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:07 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:08 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:09 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:10 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:21:13 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:21:14 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:15 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:16 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:16 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:17 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:18 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:19 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:21:22 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:21:23 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:23 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:24 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:25 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:26 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:27 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:28 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:21:31 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:21:32 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:32 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:33 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:34 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:35 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:36 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:37 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:21:41 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:21:42 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:42 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:43 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:44 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:45 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:46 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:47 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:21:51 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:21:52 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:52 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:53 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:54 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:55 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:56 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:21:57 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:22:01 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:22:02 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:03 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:04 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:05 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:05 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:06 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:08 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:22:11 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:22:12 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:13 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:14 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:15 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:16 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:17 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:18 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:22:21 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:22:22 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:23 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:24 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:25 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:26 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:27 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:28 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:22:32 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:22:33 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:34 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:35 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:36 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:36 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:37 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:38 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:22:42 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:22:43 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:44 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:45 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:46 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:46 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:48 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:49 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:22:53 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:22:54 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:54 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:55 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:56 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:57 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:22:58 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:00 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:23:03 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:23:04 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:05 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:06 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:07 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:08 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:09 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:10 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:23:14 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:23:15 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:16 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:17 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:18 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:19 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:20 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:21 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:23:24 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:23:25 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:26 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:27 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:28 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:29 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:30 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:32 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:23:35 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:23:36 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:37 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:38 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:39 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:40 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:41 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:42 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:23:46 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:23:47 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:48 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:49 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:50 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:51 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:52 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:53 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:23:56 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:23:57 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:58 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:58 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:23:59 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:00 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:01 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:02 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:24:05 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:24:06 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:07 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:08 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:09 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:09 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:10 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:11 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:24:15 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:24:16 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:16 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:17 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:19 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:20 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:20 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:21 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:24:25 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:24:26 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:27 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:28 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:28 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:29 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:30 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:31 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:24:35 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:24:37 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:37 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:38 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:39 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:40 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:41 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:42 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:24:46 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:24:47 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:48 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:48 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:49 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:50 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:51 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:52 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:24:56 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:24:56 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:57 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:58 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:59 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:24:59 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:00 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:01 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:25:05 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:25:06 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:06 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:07 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:08 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:09 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:10 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:11 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:25:14 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:25:15 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:15 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:16 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:17 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:18 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:18 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:20 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:25:23 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:25:24 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:24 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:25 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:26 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:27 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:28 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:29 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:25:32 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:25:33 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:34 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:35 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:35 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:36 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:37 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:38 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:25:41 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:25:42 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:43 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:44 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:45 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:46 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:47 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:48 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:25:53 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:25:54 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:55 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:56 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:57 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:58 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:25:59 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:00 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:26:04 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:26:05 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:06 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:07 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:08 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:09 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:10 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:12 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:26:15 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:26:16 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:17 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:18 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:19 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:20 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:21 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:23 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:26:27 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:26:28 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:29 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:30 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:31 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:32 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:33 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:35 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:26:39 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:26:40 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:41 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:42 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:43 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:44 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:45 INFO::Loading FAF_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:46 INFO::Loading State_Employment_2009_2018_0.1.0.rds from local folder ...
-2022-02-08 00:26:50 INFO::Loading EIA_SEDS_CodeDescription_0.1.0.rds from local folder ...
-2022-02-08 00:26:51 INFO::Loading EIA_SEDS_StateElectricityConsumption_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:52 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:53 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:54 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
-2022-02-08 00:26:55 INFO::Loading State_Summary_CommodityOutput_2014_0.1.0.rds from local folder ...
+#### 1\. Check if industry output from state Make and Use are almost equal (\<= 0.01).
 
 There are no failures.
 
-#### 9. SoI and RoUS interregional exports >= 0, interregional imports >= 0
+### Compare state to US IO tables (negativity in the same cell & state sum == US totals)
+
+#### 2\. Sum of each cell across all state Make tables must almost equal (\<= 0.001) the same cell in US Make table.
+
 There are no failures.
 
-#### 10. SoI net exports + RoUS net exports == 0
+#### 3\. There should not be any negative values in state Make table, unless they are negative in US Make table.
+
+Note: only exception being Overseas, which isn’t used for further
+calculations, and if the same cell in US Make table is also negative.
 There are no failures.
 
-#### 11. Check row sum of SoI2SoI <= state commodity supply. Row sum of RoUS2RoUS <= national commodity supply.
-There are 700 failures, and they are
+#### 4\. Sum of each industry’s output across all states must almost equal (\<= 1E7, or $10 million by industry) the industry output in US Make Table.
 
-        rownames   variable                    
-------  ---------  ----------------------------
-72      Used       Alabama                     
-75      113FF      Alabama's RoUS              
-76      211        Alabama's RoUS              
-79      22         Alabama's RoUS              
-82      327        Alabama's RoUS              
-85      333        Alabama's RoUS              
-86      334        Alabama's RoUS              
-87      335        Alabama's RoUS              
-89      3364OT     Alabama's RoUS              
-90      337        Alabama's RoUS              
-94      315AL      Alabama's RoUS              
-145     Used       Alabama's RoUS              
-146     Other      Alabama's RoUS              
-74      111CA      Alaska's RoUS               
-751     113FF      Alaska's RoUS               
-761     211        Alaska's RoUS               
-791     22         Alaska's RoUS               
-81      321        Alaska's RoUS               
-821     327        Alaska's RoUS               
-84      332        Alaska's RoUS               
-851     333        Alaska's RoUS               
-861     334        Alaska's RoUS               
-871     335        Alaska's RoUS               
-88      3361MV     Alaska's RoUS               
-891     3364OT     Alaska's RoUS               
-901     337        Alaska's RoUS               
-93      313TT      Alaska's RoUS               
-941     315AL      Alaska's RoUS               
-99      326        Alaska's RoUS               
-1451    Used       Alaska's RoUS               
-1461    Other      Alaska's RoUS               
-721     Used       Arizona                     
-752     113FF      Arizona's RoUS              
-762     211        Arizona's RoUS              
-792     22         Arizona's RoUS              
-811     321        Arizona's RoUS              
-822     327        Arizona's RoUS              
-852     333        Arizona's RoUS              
-862     334        Arizona's RoUS              
-872     335        Arizona's RoUS              
-881     3361MV     Arizona's RoUS              
-902     337        Arizona's RoUS              
-931     313TT      Arizona's RoUS              
-942     315AL      Arizona's RoUS              
-1452    Used       Arizona's RoUS              
-1462    Other      Arizona's RoUS              
-722     Used       Arkansas                    
-753     113FF      Arkansas's RoUS             
-763     211        Arkansas's RoUS             
-793     22         Arkansas's RoUS             
-812     321        Arkansas's RoUS             
-823     327        Arkansas's RoUS             
-841     332        Arkansas's RoUS             
-853     333        Arkansas's RoUS             
-863     334        Arkansas's RoUS             
-873     335        Arkansas's RoUS             
-882     3361MV     Arkansas's RoUS             
-892     3364OT     Arkansas's RoUS             
-903     337        Arkansas's RoUS             
-932     313TT      Arkansas's RoUS             
-943     315AL      Arkansas's RoUS             
-96      323        Arkansas's RoUS             
-1453    Used       Arkansas's RoUS             
-1463    Other      Arkansas's RoUS             
-3       211        California                  
-6       22         California                  
-723     Used       California                  
-944     315AL      California's RoUS           
-1454    Used       California's RoUS           
-1464    Other      California's RoUS           
-754     113FF      Colorado's RoUS             
-764     211        Colorado's RoUS             
-824     327        Colorado's RoUS             
-854     333        Colorado's RoUS             
-864     334        Colorado's RoUS             
-874     335        Colorado's RoUS             
-883     3361MV     Colorado's RoUS             
-893     3364OT     Colorado's RoUS             
-904     337        Colorado's RoUS             
-933     313TT      Colorado's RoUS             
-945     315AL      Colorado's RoUS             
-1455    Used       Colorado's RoUS             
-1465    Other      Colorado's RoUS             
-755     113FF      Connecticut's RoUS          
-765     211        Connecticut's RoUS          
-794     22         Connecticut's RoUS          
-813     321        Connecticut's RoUS          
-825     327        Connecticut's RoUS          
-855     333        Connecticut's RoUS          
-865     334        Connecticut's RoUS          
-875     335        Connecticut's RoUS          
-884     3361MV     Connecticut's RoUS          
-905     337        Connecticut's RoUS          
-934     313TT      Connecticut's RoUS          
-946     315AL      Connecticut's RoUS          
-1456    Used       Connecticut's RoUS          
-1466    Other      Connecticut's RoUS          
-741     111CA      Delaware's RoUS             
-756     113FF      Delaware's RoUS             
-766     211        Delaware's RoUS             
-814     321        Delaware's RoUS             
-826     327        Delaware's RoUS             
-842     332        Delaware's RoUS             
-856     333        Delaware's RoUS             
-866     334        Delaware's RoUS             
-876     335        Delaware's RoUS             
-885     3361MV     Delaware's RoUS             
-894     3364OT     Delaware's RoUS             
-906     337        Delaware's RoUS             
-935     313TT      Delaware's RoUS             
-947     315AL      Delaware's RoUS             
-991     326        Delaware's RoUS             
-1457    Used       Delaware's RoUS             
-1467    Other      Delaware's RoUS             
-742     111CA      District of Columbia's RoUS 
-757     113FF      District of Columbia's RoUS 
-767     211        District of Columbia's RoUS 
-815     321        District of Columbia's RoUS 
-827     327        District of Columbia's RoUS 
-843     332        District of Columbia's RoUS 
-857     333        District of Columbia's RoUS 
-867     334        District of Columbia's RoUS 
-877     335        District of Columbia's RoUS 
-886     3361MV     District of Columbia's RoUS 
-895     3364OT     District of Columbia's RoUS 
-907     337        District of Columbia's RoUS 
-936     313TT      District of Columbia's RoUS 
-948     315AL      District of Columbia's RoUS 
-992     326        District of Columbia's RoUS 
-139     81         District of Columbia's RoUS 
-1458    Used       District of Columbia's RoUS 
-1468    Other      District of Columbia's RoUS 
-17      337        Florida                     
-21      315AL      Florida                     
-724     Used       Florida                     
-758     113FF      Florida's RoUS              
-768     211        Florida's RoUS              
-858     333        Florida's RoUS              
-868     334        Florida's RoUS              
-949     315AL      Florida's RoUS              
-1459    Used       Florida's RoUS              
-1469    Other      Florida's RoUS              
-2       113FF      Georgia                     
-725     Used       Georgia                     
-759     113FF      Georgia's RoUS              
-769     211        Georgia's RoUS              
-859     333        Georgia's RoUS              
-869     334        Georgia's RoUS              
-878     335        Georgia's RoUS              
-908     337        Georgia's RoUS              
-9410    315AL      Georgia's RoUS              
-14510   Used       Georgia's RoUS              
-14610   Other      Georgia's RoUS              
-743     111CA      Hawaii's RoUS               
-7510    113FF      Hawaii's RoUS               
-7610    211        Hawaii's RoUS               
-795     22         Hawaii's RoUS               
-816     321        Hawaii's RoUS               
-828     327        Hawaii's RoUS               
-844     332        Hawaii's RoUS               
-8510    333        Hawaii's RoUS               
-8610    334        Hawaii's RoUS               
-879     335        Hawaii's RoUS               
-887     3361MV     Hawaii's RoUS               
-896     3364OT     Hawaii's RoUS               
-909     337        Hawaii's RoUS               
-937     313TT      Hawaii's RoUS               
-9411    315AL      Hawaii's RoUS               
-993     326        Hawaii's RoUS               
-1391    81         Hawaii's RoUS               
-14511   Used       Hawaii's RoUS               
-14611   Other      Hawaii's RoUS               
-7511    113FF      Idaho's RoUS                
-7611    211        Idaho's RoUS                
-817     321        Idaho's RoUS                
-829     327        Idaho's RoUS                
-845     332        Idaho's RoUS                
-8511    333        Idaho's RoUS                
-8611    334        Idaho's RoUS                
-8710    335        Idaho's RoUS                
-888     3361MV     Idaho's RoUS                
-897     3364OT     Idaho's RoUS                
-9010    337        Idaho's RoUS                
-938     313TT      Idaho's RoUS                
-9412    315AL      Idaho's RoUS                
-961     323        Idaho's RoUS                
-1392    81         Idaho's RoUS                
-14512   Used       Idaho's RoUS                
-14612   Other      Idaho's RoUS                
-22      113FF      Illinois                    
-726     Used       Illinois                    
-8612    334        Illinois's RoUS             
-898     3364OT     Illinois's RoUS             
-9011    337        Illinois's RoUS             
-9413    315AL      Illinois's RoUS             
-14513   Used       Illinois's RoUS             
-14613   Other      Illinois's RoUS             
-727     Used       Indiana                     
-7512    113FF      Indiana's RoUS              
-8613    334        Indiana's RoUS              
-8711    335        Indiana's RoUS              
-899     3364OT     Indiana's RoUS              
-9012    337        Indiana's RoUS              
-9414    315AL      Indiana's RoUS              
-14514   Used       Indiana's RoUS              
-14614   Other      Indiana's RoUS              
-7612    211        Iowa's RoUS                 
-8210    327        Iowa's RoUS                 
-8614    334        Iowa's RoUS                 
-8712    335        Iowa's RoUS                 
-889     3361MV     Iowa's RoUS                 
-8910    3364OT     Iowa's RoUS                 
-9013    337        Iowa's RoUS                 
-939     313TT      Iowa's RoUS                 
-9415    315AL      Iowa's RoUS                 
-14515   Used       Iowa's RoUS                 
-14615   Other      Iowa's RoUS                 
-7513    113FF      Kansas's RoUS               
-7613    211        Kansas's RoUS               
-796     22         Kansas's RoUS               
-818     321        Kansas's RoUS               
-8211    327        Kansas's RoUS               
-846     332        Kansas's RoUS               
-8512    333        Kansas's RoUS               
-8615    334        Kansas's RoUS               
-8713    335        Kansas's RoUS               
-8810    3361MV     Kansas's RoUS               
-9014    337        Kansas's RoUS               
-9310    313TT      Kansas's RoUS               
-9416    315AL      Kansas's RoUS               
-14516   Used       Kansas's RoUS               
-14616   Other      Kansas's RoUS               
-728     Used       Kentucky                    
-7514    113FF      Kentucky's RoUS             
-7614    211        Kentucky's RoUS             
-8513    333        Kentucky's RoUS             
-8616    334        Kentucky's RoUS             
-8714    335        Kentucky's RoUS             
-8911    3364OT     Kentucky's RoUS             
-9015    337        Kentucky's RoUS             
-9311    313TT      Kentucky's RoUS             
-9417    315AL      Kentucky's RoUS             
-14517   Used       Kentucky's RoUS             
-14617   Other      Kentucky's RoUS             
-13      334        Louisiana                   
-7515    113FF      Louisiana's RoUS            
-819     321        Louisiana's RoUS            
-8514    333        Louisiana's RoUS            
-8617    334        Louisiana's RoUS            
-8715    335        Louisiana's RoUS            
-8811    3361MV     Louisiana's RoUS            
-8912    3364OT     Louisiana's RoUS            
-9016    337        Louisiana's RoUS            
-9312    313TT      Louisiana's RoUS            
-9418    315AL      Louisiana's RoUS            
-14518   Used       Louisiana's RoUS            
-14618   Other      Louisiana's RoUS            
-744     111CA      Maine's RoUS                
-7516    113FF      Maine's RoUS                
-7615    211        Maine's RoUS                
-8110    321        Maine's RoUS                
-8212    327        Maine's RoUS                
-847     332        Maine's RoUS                
-8515    333        Maine's RoUS                
-8618    334        Maine's RoUS                
-8716    335        Maine's RoUS                
-8812    3361MV     Maine's RoUS                
-8913    3364OT     Maine's RoUS                
-9017    337        Maine's RoUS                
-9313    313TT      Maine's RoUS                
-9419    315AL      Maine's RoUS                
-962     323        Maine's RoUS                
-994     326        Maine's RoUS                
-14519   Used       Maine's RoUS                
-14619   Other      Maine's RoUS                
-7517    113FF      Maryland's RoUS             
-7616    211        Maryland's RoUS             
-8516    333        Maryland's RoUS             
-8619    334        Maryland's RoUS             
-8717    335        Maryland's RoUS             
-8813    3361MV     Maryland's RoUS             
-8914    3364OT     Maryland's RoUS             
-9018    337        Maryland's RoUS             
-9314    313TT      Maryland's RoUS             
-9420    315AL      Maryland's RoUS             
-14520   Used       Maryland's RoUS             
-14620   Other      Maryland's RoUS             
-729     Used       Massachusetts               
-7518    113FF      Massachusetts's RoUS        
-7617    211        Massachusetts's RoUS        
-8517    333        Massachusetts's RoUS        
-8620    334        Massachusetts's RoUS        
-8718    335        Massachusetts's RoUS        
-8814    3361MV     Massachusetts's RoUS        
-9019    337        Massachusetts's RoUS        
-9315    313TT      Massachusetts's RoUS        
-9421    315AL      Massachusetts's RoUS        
-14521   Used       Massachusetts's RoUS        
-14621   Other      Massachusetts's RoUS        
-131     334        Michigan                    
-7210    Used       Michigan                    
-7519    113FF      Michigan's RoUS             
-7618    211        Michigan's RoUS             
-797     22         Michigan's RoUS             
-8621    334        Michigan's RoUS             
-8719    335        Michigan's RoUS             
-8915    3364OT     Michigan's RoUS             
-9020    337        Michigan's RoUS             
-9422    315AL      Michigan's RoUS             
-14522   Used       Michigan's RoUS             
-14622   Other      Michigan's RoUS             
-7211    Used       Minnesota                   
-7619    211        Minnesota's RoUS            
-8213    327        Minnesota's RoUS            
-8518    333        Minnesota's RoUS            
-8622    334        Minnesota's RoUS            
-8720    335        Minnesota's RoUS            
-8815    3361MV     Minnesota's RoUS            
-8916    3364OT     Minnesota's RoUS            
-9021    337        Minnesota's RoUS            
-9316    313TT      Minnesota's RoUS            
-9423    315AL      Minnesota's RoUS            
-14523   Used       Minnesota's RoUS            
-14623   Other      Minnesota's RoUS            
-7520    113FF      Mississippi's RoUS          
-7620    211        Mississippi's RoUS          
-798     22         Mississippi's RoUS          
-8214    327        Mississippi's RoUS          
-848     332        Mississippi's RoUS          
-8519    333        Mississippi's RoUS          
-8623    334        Mississippi's RoUS          
-8721    335        Mississippi's RoUS          
-8816    3361MV     Mississippi's RoUS          
-8917    3364OT     Mississippi's RoUS          
-9022    337        Mississippi's RoUS          
-9317    313TT      Mississippi's RoUS          
-9424    315AL      Mississippi's RoUS          
-14524   Used       Mississippi's RoUS          
-14624   Other      Mississippi's RoUS          
-7212    Used       Missouri                    
-7521    113FF      Missouri's RoUS             
-7621    211        Missouri's RoUS             
-8520    333        Missouri's RoUS             
-8624    334        Missouri's RoUS             
-8722    335        Missouri's RoUS             
-9023    337        Missouri's RoUS             
-9318    313TT      Missouri's RoUS             
-9425    315AL      Missouri's RoUS             
-14525   Used       Missouri's RoUS             
-14625   Other      Missouri's RoUS             
-745     111CA      Montana's RoUS              
-7522    113FF      Montana's RoUS              
-7622    211        Montana's RoUS              
-799     22         Montana's RoUS              
-8111    321        Montana's RoUS              
-8215    327        Montana's RoUS              
-849     332        Montana's RoUS              
-8521    333        Montana's RoUS              
-8625    334        Montana's RoUS              
-8723    335        Montana's RoUS              
-8817    3361MV     Montana's RoUS              
-8918    3364OT     Montana's RoUS              
-9024    337        Montana's RoUS              
-9319    313TT      Montana's RoUS              
-9426    315AL      Montana's RoUS              
-963     323        Montana's RoUS              
-995     326        Montana's RoUS              
-1393    81         Montana's RoUS              
-14526   Used       Montana's RoUS              
-14626   Other      Montana's RoUS              
-7623    211        Nebraska's RoUS             
-7910    22         Nebraska's RoUS             
-8112    321        Nebraska's RoUS             
-8216    327        Nebraska's RoUS             
-8410    332        Nebraska's RoUS             
-8522    333        Nebraska's RoUS             
-8626    334        Nebraska's RoUS             
-8724    335        Nebraska's RoUS             
-8818    3361MV     Nebraska's RoUS             
-8919    3364OT     Nebraska's RoUS             
-9025    337        Nebraska's RoUS             
-9320    313TT      Nebraska's RoUS             
-9427    315AL      Nebraska's RoUS             
-964     323        Nebraska's RoUS             
-1394    81         Nebraska's RoUS             
-14527   Used       Nebraska's RoUS             
-14627   Other      Nebraska's RoUS             
-746     111CA      Nevada's RoUS               
-7523    113FF      Nevada's RoUS               
-7624    211        Nevada's RoUS               
-8113    321        Nevada's RoUS               
-8217    327        Nevada's RoUS               
-8411    332        Nevada's RoUS               
-8523    333        Nevada's RoUS               
-8627    334        Nevada's RoUS               
-8725    335        Nevada's RoUS               
-8819    3361MV     Nevada's RoUS               
-8920    3364OT     Nevada's RoUS               
-9026    337        Nevada's RoUS               
-9321    313TT      Nevada's RoUS               
-9428    315AL      Nevada's RoUS               
-14528   Used       Nevada's RoUS               
-14628   Other      Nevada's RoUS               
-747     111CA      New Hampshire's RoUS        
-7524    113FF      New Hampshire's RoUS        
-7625    211        New Hampshire's RoUS        
-8114    321        New Hampshire's RoUS        
-8218    327        New Hampshire's RoUS        
-8412    332        New Hampshire's RoUS        
-8524    333        New Hampshire's RoUS        
-8628    334        New Hampshire's RoUS        
-8726    335        New Hampshire's RoUS        
-8820    3361MV     New Hampshire's RoUS        
-8921    3364OT     New Hampshire's RoUS        
-9027    337        New Hampshire's RoUS        
-9322    313TT      New Hampshire's RoUS        
-9429    315AL      New Hampshire's RoUS        
-965     323        New Hampshire's RoUS        
-996     326        New Hampshire's RoUS        
-1395    81         New Hampshire's RoUS        
-14529   Used       New Hampshire's RoUS        
-14629   Other      New Hampshire's RoUS        
-7213    Used       New Jersey                  
-7525    113FF      New Jersey's RoUS           
-8525    333        New Jersey's RoUS           
-8629    334        New Jersey's RoUS           
-8727    335        New Jersey's RoUS           
-8821    3361MV     New Jersey's RoUS           
-8922    3364OT     New Jersey's RoUS           
-9028    337        New Jersey's RoUS           
-9323    313TT      New Jersey's RoUS           
-9430    315AL      New Jersey's RoUS           
-14530   Used       New Jersey's RoUS           
-14630   Other      New Jersey's RoUS           
-748     111CA      New Mexico's RoUS           
-7526    113FF      New Mexico's RoUS           
-7626    211        New Mexico's RoUS           
-8115    321        New Mexico's RoUS           
-8219    327        New Mexico's RoUS           
-8413    332        New Mexico's RoUS           
-8526    333        New Mexico's RoUS           
-8630    334        New Mexico's RoUS           
-8728    335        New Mexico's RoUS           
-8822    3361MV     New Mexico's RoUS           
-8923    3364OT     New Mexico's RoUS           
-9029    337        New Mexico's RoUS           
-9324    313TT      New Mexico's RoUS           
-9431    315AL      New Mexico's RoUS           
-997     326        New Mexico's RoUS           
-1396    81         New Mexico's RoUS           
-14531   Used       New Mexico's RoUS           
-14631   Other      New Mexico's RoUS           
-23      113FF      New York                    
-7214    Used       New York                    
-7627    211        New York's RoUS             
-8631    334        New York's RoUS             
-9432    315AL      New York's RoUS             
-14532   Used       New York's RoUS             
-14632   Other      New York's RoUS             
-7215    Used       North Carolina              
-7527    113FF      North Carolina's RoUS       
-7628    211        North Carolina's RoUS       
-8527    333        North Carolina's RoUS       
-8632    334        North Carolina's RoUS       
-8729    335        North Carolina's RoUS       
-9030    337        North Carolina's RoUS       
-9433    315AL      North Carolina's RoUS       
-14533   Used       North Carolina's RoUS       
-14633   Other      North Carolina's RoUS       
-749     111CA      North Dakota's RoUS         
-7528    113FF      North Dakota's RoUS         
-7629    211        North Dakota's RoUS         
-8116    321        North Dakota's RoUS         
-8220    327        North Dakota's RoUS         
-8414    332        North Dakota's RoUS         
-8528    333        North Dakota's RoUS         
-8633    334        North Dakota's RoUS         
-8730    335        North Dakota's RoUS         
-8823    3361MV     North Dakota's RoUS         
-8924    3364OT     North Dakota's RoUS         
-9031    337        North Dakota's RoUS         
-9325    313TT      North Dakota's RoUS         
-9434    315AL      North Dakota's RoUS         
-998     326        North Dakota's RoUS         
-1397    81         North Dakota's RoUS         
-14534   Used       North Dakota's RoUS         
-14634   Other      North Dakota's RoUS         
-7216    Used       Ohio                        
-8634    334        Ohio's RoUS                 
-9032    337        Ohio's RoUS                 
-9435    315AL      Ohio's RoUS                 
-14535   Used       Ohio's RoUS                 
-14635   Other      Ohio's RoUS                 
-7529    113FF      Oklahoma's RoUS             
-7630    211        Oklahoma's RoUS             
-7911    22         Oklahoma's RoUS             
-8117    321        Oklahoma's RoUS             
-8221    327        Oklahoma's RoUS             
-8529    333        Oklahoma's RoUS             
-8635    334        Oklahoma's RoUS             
-8731    335        Oklahoma's RoUS             
-8824    3361MV     Oklahoma's RoUS             
-8925    3364OT     Oklahoma's RoUS             
-9033    337        Oklahoma's RoUS             
-9326    313TT      Oklahoma's RoUS             
-9436    315AL      Oklahoma's RoUS             
-14536   Used       Oklahoma's RoUS             
-14636   Other      Oklahoma's RoUS             
-7217    Used       Oregon                      
-7530    113FF      Oregon's RoUS               
-7631    211        Oregon's RoUS               
-8118    321        Oregon's RoUS               
-8222    327        Oregon's RoUS               
-8415    332        Oregon's RoUS               
-8530    333        Oregon's RoUS               
-8636    334        Oregon's RoUS               
-8732    335        Oregon's RoUS               
-8825    3361MV     Oregon's RoUS               
-8926    3364OT     Oregon's RoUS               
-9034    337        Oregon's RoUS               
-9327    313TT      Oregon's RoUS               
-9437    315AL      Oregon's RoUS               
-14537   Used       Oregon's RoUS               
-14637   Other      Oregon's RoUS               
-7218    Used       Pennsylvania                
-8637    334        Pennsylvania's RoUS         
-9035    337        Pennsylvania's RoUS         
-9438    315AL      Pennsylvania's RoUS         
-14538   Used       Pennsylvania's RoUS         
-14638   Other      Pennsylvania's RoUS         
-7410    111CA      Rhode Island's RoUS         
-7531    113FF      Rhode Island's RoUS         
-7632    211        Rhode Island's RoUS         
-8119    321        Rhode Island's RoUS         
-8223    327        Rhode Island's RoUS         
-8416    332        Rhode Island's RoUS         
-8531    333        Rhode Island's RoUS         
-8638    334        Rhode Island's RoUS         
-8733    335        Rhode Island's RoUS         
-8826    3361MV     Rhode Island's RoUS         
-8927    3364OT     Rhode Island's RoUS         
-9036    337        Rhode Island's RoUS         
-9328    313TT      Rhode Island's RoUS         
-9439    315AL      Rhode Island's RoUS         
-966     323        Rhode Island's RoUS         
-999     326        Rhode Island's RoUS         
-14539   Used       Rhode Island's RoUS         
-14639   Other      Rhode Island's RoUS         
-7219    Used       South Carolina              
-7532    113FF      South Carolina's RoUS       
-7633    211        South Carolina's RoUS       
-8224    327        South Carolina's RoUS       
-8532    333        South Carolina's RoUS       
-8639    334        South Carolina's RoUS       
-8734    335        South Carolina's RoUS       
-8928    3364OT     South Carolina's RoUS       
-9037    337        South Carolina's RoUS       
-9440    315AL      South Carolina's RoUS       
-14540   Used       South Carolina's RoUS       
-14640   Other      South Carolina's RoUS       
-7411    111CA      South Dakota's RoUS         
-7533    113FF      South Dakota's RoUS         
-7634    211        South Dakota's RoUS         
-8120    321        South Dakota's RoUS         
-8225    327        South Dakota's RoUS         
-8417    332        South Dakota's RoUS         
-8533    333        South Dakota's RoUS         
-8640    334        South Dakota's RoUS         
-8735    335        South Dakota's RoUS         
-8827    3361MV     South Dakota's RoUS         
-8929    3364OT     South Dakota's RoUS         
-9038    337        South Dakota's RoUS         
-9329    313TT      South Dakota's RoUS         
-9441    315AL      South Dakota's RoUS         
-967     323        South Dakota's RoUS         
-9910    326        South Dakota's RoUS         
-1398    81         South Dakota's RoUS         
-14541   Used       South Dakota's RoUS         
-14641   Other      South Dakota's RoUS         
-7220    Used       Tennessee                   
-7534    113FF      Tennessee's RoUS            
-7635    211        Tennessee's RoUS            
-8534    333        Tennessee's RoUS            
-8641    334        Tennessee's RoUS            
-8736    335        Tennessee's RoUS            
-8930    3364OT     Tennessee's RoUS            
-9039    337        Tennessee's RoUS            
-9442    315AL      Tennessee's RoUS            
-14542   Used       Tennessee's RoUS            
-14642   Other      Tennessee's RoUS            
-211     315AL      Texas                       
-7221    Used       Texas                       
-9443    315AL      Texas's RoUS                
-14543   Used       Texas's RoUS                
-14643   Other      Texas's RoUS                
-7535    113FF      Utah's RoUS                 
-7636    211        Utah's RoUS                 
-8121    321        Utah's RoUS                 
-8226    327        Utah's RoUS                 
-8418    332        Utah's RoUS                 
-8535    333        Utah's RoUS                 
-8642    334        Utah's RoUS                 
-8737    335        Utah's RoUS                 
-8828    3361MV     Utah's RoUS                 
-8931    3364OT     Utah's RoUS                 
-9040    337        Utah's RoUS                 
-9330    313TT      Utah's RoUS                 
-9444    315AL      Utah's RoUS                 
-14544   Used       Utah's RoUS                 
-14644   Other      Utah's RoUS                 
-7412    111CA      Vermont's RoUS              
-7536    113FF      Vermont's RoUS              
-7637    211        Vermont's RoUS              
-7912    22         Vermont's RoUS              
-8122    321        Vermont's RoUS              
-8227    327        Vermont's RoUS              
-8419    332        Vermont's RoUS              
-8536    333        Vermont's RoUS              
-8643    334        Vermont's RoUS              
-8738    335        Vermont's RoUS              
-8829    3361MV     Vermont's RoUS              
-8932    3364OT     Vermont's RoUS              
-9041    337        Vermont's RoUS              
-9331    313TT      Vermont's RoUS              
-9445    315AL      Vermont's RoUS              
-968     323        Vermont's RoUS              
-9911    326        Vermont's RoUS              
-14545   Used       Vermont's RoUS              
-14645   Other      Vermont's RoUS              
-7222    Used       Virginia                    
-7537    113FF      Virginia's RoUS             
-7638    211        Virginia's RoUS             
-8537    333        Virginia's RoUS             
-8644    334        Virginia's RoUS             
-8739    335        Virginia's RoUS             
-8830    3361MV     Virginia's RoUS             
-9042    337        Virginia's RoUS             
-9332    313TT      Virginia's RoUS             
-9446    315AL      Virginia's RoUS             
-14546   Used       Virginia's RoUS             
-14646   Other      Virginia's RoUS             
-171     337        Washington                  
-7223    Used       Washington                  
-7639    211        Washington's RoUS           
-8538    333        Washington's RoUS           
-8645    334        Washington's RoUS           
-8740    335        Washington's RoUS           
-8831    3361MV     Washington's RoUS           
-9043    337        Washington's RoUS           
-9333    313TT      Washington's RoUS           
-9447    315AL      Washington's RoUS           
-14547   Used       Washington's RoUS           
-14647   Other      Washington's RoUS           
-7413    111CA      West Virginia's RoUS        
-7538    113FF      West Virginia's RoUS        
-7640    211        West Virginia's RoUS        
-8123    321        West Virginia's RoUS        
-8228    327        West Virginia's RoUS        
-8420    332        West Virginia's RoUS        
-8539    333        West Virginia's RoUS        
-8646    334        West Virginia's RoUS        
-8741    335        West Virginia's RoUS        
-8832    3361MV     West Virginia's RoUS        
-8933    3364OT     West Virginia's RoUS        
-9044    337        West Virginia's RoUS        
-9334    313TT      West Virginia's RoUS        
-9448    315AL      West Virginia's RoUS        
-14548   Used       West Virginia's RoUS        
-14648   Other      West Virginia's RoUS        
-7224    Used       Wisconsin                   
-7641    211        Wisconsin's RoUS            
-8647    334        Wisconsin's RoUS            
-8742    335        Wisconsin's RoUS            
-8833    3361MV     Wisconsin's RoUS            
-8934    3364OT     Wisconsin's RoUS            
-9045    337        Wisconsin's RoUS            
-9335    313TT      Wisconsin's RoUS            
-9449    315AL      Wisconsin's RoUS            
-14549   Used       Wisconsin's RoUS            
-14649   Other      Wisconsin's RoUS            
-7414    111CA      Wyoming's RoUS              
-7539    113FF      Wyoming's RoUS              
-7642    211        Wyoming's RoUS              
-7913    22         Wyoming's RoUS              
-8124    321        Wyoming's RoUS              
-8229    327        Wyoming's RoUS              
-8421    332        Wyoming's RoUS              
-8540    333        Wyoming's RoUS              
-8648    334        Wyoming's RoUS              
-8743    335        Wyoming's RoUS              
-8834    3361MV     Wyoming's RoUS              
-8935    3364OT     Wyoming's RoUS              
-9046    337        Wyoming's RoUS              
-9336    313TT      Wyoming's RoUS              
-9450    315AL      Wyoming's RoUS              
-969     323        Wyoming's RoUS              
-9912    326        Wyoming's RoUS              
-1399    81         Wyoming's RoUS              
-14550   Used       Wyoming's RoUS              
-14650   Other      Wyoming's RoUS              
+The threshold is set to 1E7 because there are differences (within +/-
+$10 million) between US industry output summed from Make and that summed
+from Use, comparing sum of state industry output (summed from state Use)
+to US industry output summed from US Make should account for those
+inherent differences at the national level. There are no failures.
 
-#### 12. Value in SoI2SoI and RoUS2RoUS can be negative only when the same cell is negative in national Use table
+#### 5\. Sum of each commodity’s output across all states must almost equal (\<= 1E7, or $10 million by commodity) the commodity output in US Make Table.
+
+The threshold is set to 1E7 because there are differences (within +/-
+$10 million) between US industry output summed from Make and that summed
+from Use, comparing sum of state industry output (summed from state Use)
+to US industry output summed from US Make should account for those
+inherent differences at the national level. There are no failures.
+
+#### 6\. Sum of each commodity’s output across all states must almost equal (\<= 1E^7, or $10 million by commodity) commodity output in US Use Table.
+
+Note: even if the threshold is met, track the difference for each
+commodity. Save result as a type of quality control check.
+
 There are no failures.
 
-#### 13. SoI interregional imports == RoUS interregional exports, or difference <= 0.001
+|        | q\_state\_sum - q\_US\_use |
+| ------ | -------------------------: |
+| 111CA  |                 2.0000e+06 |
+| 113FF  |               \-1.0000e+06 |
+| 211    |                 1.0000e+06 |
+| 212    |               \-3.0000e+06 |
+| 213    |               \-3.0500e-05 |
+| 22     |               \-1.0000e+06 |
+| 23     |                 7.0000e+06 |
+| 321    |               \-3.0500e-05 |
+| 327    |               \-3.0000e+06 |
+| 331    |                 2.0000e+06 |
+| 332    |               \-2.0000e+06 |
+| 333    |               \-4.0000e+06 |
+| 334    |               \-1.0000e+06 |
+| 335    |                 1.0000e+06 |
+| 3361MV |                 1.2210e-04 |
+| 3364OT |                 2.0000e+06 |
+| 337    |               \-2.0000e+06 |
+| 339    |                 1.0000e+06 |
+| 311FT  |                 0.0000e+00 |
+| 313TT  |               \-4.0000e+06 |
+| 315AL  |                 4.0000e+06 |
+| 322    |                 2.0000e+06 |
+| 323    |               \-1.0000e+06 |
+| 324    |                 1.0000e+06 |
+| 325    |                 1.0000e+06 |
+| 326    |                 0.0000e+00 |
+| 42     |               \-5.0000e+06 |
+| 441    |                 2.0000e+06 |
+| 445    |                 0.0000e+00 |
+| 452    |                 4.0000e+06 |
+| 4A0    |               \-1.0000e+06 |
+| 481    |               \-3.0000e+06 |
+| 482    |               \-4.0000e+06 |
+| 483    |               \-1.0000e+06 |
+| 484    |               \-2.0000e+06 |
+| 485    |               \-4.0000e+06 |
+| 486    |                 3.0000e+06 |
+| 487OS  |                 3.0000e+06 |
+| 493    |                 3.0500e-05 |
+| 511    |                 4.0000e+06 |
+| 512    |                 1.0000e+06 |
+| 513    |                 1.0000e+06 |
+| 514    |               \-1.0000e+06 |
+| 521CI  |                 1.0000e+06 |
+| 523    |                 5.0000e+06 |
+| 524    |               \-3.0000e+06 |
+| 525    |               \-3.0500e-05 |
+| HS     |                 2.4410e-04 |
+| ORE    |                 3.6620e-04 |
+| 532RL  |                 2.0000e+06 |
+| 5411   |                 2.0000e+06 |
+| 5415   |                 6.0000e+06 |
+| 5412OP |                 1.2207e-03 |
+| 55     |                 1.0000e+06 |
+| 561    |               \-3.0000e+06 |
+| 562    |                 1.0000e+06 |
+| 61     |               \-6.1000e-05 |
+| 621    |                 0.0000e+00 |
+| 622    |                 1.0000e+06 |
+| 623    |               \-1.0000e+06 |
+| 624    |                 9.1600e-05 |
+| 711AS  |                 2.0000e+06 |
+| 713    |                 6.1000e-05 |
+| 721    |               \-1.0000e+06 |
+| 722    |                 1.2210e-04 |
+| 81     |               \-2.0000e+06 |
+| GFGD   |                 0.0000e+00 |
+| GFGN   |               \-6.1000e-05 |
+| GFE    |                 1.0000e+06 |
+| GSLG   |                 7.3240e-04 |
+| GSLE   |                 2.0000e+06 |
+| Used   |                 1.0000e+06 |
+| Other  |               \-1.0000e+06 |
+
+#### 7\. All cells that are zero in US Make table must remain zero in state Make tables. Find zero values in US Make table.
+
 There are no failures.
 
-#### 14. Total state commodity supply == state demand by intermediate consumption, plus final demand (except imports) + Interregional Exports + Export Residual. Difference must be <= 0.001.
+#### 8\. Sum of each cell across all state Use tables must almost equal (\<= 5E6, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
+
+Note: failures associated with ‘F050 - Imports’ are acceptable. Because
+state imports are not directly derived from US imports, a gap in imports
+between state sum and national total is reasonable.
+
+##### 8.1 State Use tables (checking absolute differences)
+
+There are 2 failures, and they are
+
+| Commodity | Industry/Final Demand | Absolute Diff | Validation               | AbsDiffPortioninNationalTotals |
+| :-------- | :-------------------- | ------------: | :----------------------- | -----------------------------: |
+| 487OS     | F050                  |       7042029 | abs(result) \< tolerance |                      0.0022841 |
+| 513       | F050                  |       7000000 | abs(result) \< tolerance |                    \-0.0411765 |
+
+##### 8.2 State Domestic Use tables (checking absolute differences)
+
 There are no failures.
 
-#### 15. Number of negative cells in SoI2SoI, SoI2RoUS, RoUS2SoI and RoUS2RoUS <= Number of negative cells in national Use table
+##### 8.3 State Use tables (checking relative differences)
+
+There are 10 failures, and they are
+
+| Commodity | Industry/Final Demand | Relative Diff | Validation               |          US |     StateSum |
+| :-------- | :-------------------- | ------------: | :----------------------- | ----------: | -----------: |
+| 22        | F050                  |       \-0.001 | abs(result) \< tolerance | \-2.992e+09 | \-2989000000 |
+| 487OS     | F050                  |         0.002 | abs(result) \< tolerance |   3.083e+09 |   3090042029 |
+| 513       | F050                  |       \-0.041 | abs(result) \< tolerance | \-1.700e+08 |  \-163000000 |
+| 521CI     | F050                  |       \-0.021 | abs(result) \< tolerance | \-4.800e+07 |   \-47000000 |
+| 523       | F050                  |       \-0.066 | abs(result) \< tolerance | \-6.100e+07 |   \-57000000 |
+| 5411      | F050                  |       \-0.001 | abs(result) \< tolerance | \-2.663e+09 | \-2660000000 |
+| 561       | F050                  |       \-0.003 | abs(result) \< tolerance | \-1.348e+09 | \-1344000000 |
+| 562       | F050                  |       \-0.013 | abs(result) \< tolerance | \-1.600e+08 |  \-158000000 |
+| 81        | F050                  |         0.002 | abs(result) \< tolerance | \-3.329e+09 | \-3334000000 |
+| GFE       | F050                  |         0.005 | abs(result) \< tolerance | \-4.140e+08 |  \-416000000 |
+
+##### 8.4 State Domestic Use tables (checking relative differences)
+
 There are no failures.
 
-#### 16. Non-square model verification. Validate L matrix of two-region model and final demand against SoI and RoUS output. L*y - output <= 1^6, or $1 million.
+### Check two-region model results
 
+#### 9\. Check if commodity output from two-region Make and Domestic Use are almost equal (relative difference \<= 0.01).
 
-##### 16.1 Georgia and Rest of the US
 There are no failures.
 
-##### 16.2 Minnesota and Rest of the US
+#### 10\. If SoI commodity output == 0, SoI2SoI ICF ratio == 0
+
 There are no failures.
 
-##### 16.3 Oregon and Rest of the US
+#### 11\. SoI and RoUS interregional exports \>= 0, interregional imports \>= 0
+
 There are no failures.
 
-##### 16.4 Washington and Rest of the US
+#### 12\. SoI net exports + RoUS net exports == 0
+
 There are no failures.
+
+#### 13\. Check row sum of SoI2SoI \<= state commodity supply. Row sum of RoUS2RoUS \<= RoUS commodity supply.
+
+There are no failures.
+
+#### 14\. Value in SoI2SoI and RoUS2RoUS can be negative only when the same cell is negative in national Use table
+
+There are no failures.
+
+#### 15\. SoI interregional imports == RoUS interregional exports, or difference \<= 0.001
+
+There are no failures.
+
+#### 16.1. Total state commodity supply == state demand by intermediate consumption, plus final demand (except imports and international trade adjustment) + Interregional Exports + Export Residual. Difference must be \<= 0.001.
+
+There are no failures.
+
+#### 16.2. Total SoI and RoUS commodity supply (output) == SoI and RoUS demand (domestic intermediate consumption + ITA + Export Residual).
+
+There are no failures.
+
+#### 17\. Number of negative cells in SoI2SoI, SoI2RoUS, RoUS2SoI and RoUS2RoUS \<= Number of negative cells in national Use table
+
+There are no failures.
+
+#### 18\. Non-square model verification. Validate L matrix of two-region model and final demand against SoI and RoUS output.
+
+##### Absolute difference: L\*y - output \<= 1^6, or $1 million.
+
+##### Relative difference: (L\*y - output)/output \<= 1^-2, or 1%.
+
+##### 18.1 Alabama and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.2 Alaska and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.3 Arizona and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.4 Arkansas and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.5 California and Rest of the US
+
+Absolute Difference: There are 4 failures, and they are
+
+|     | rownames                |    result | check       |
+| --- | :---------------------- | --------: | :---------- |
+| 159 | California.334.Industry |   1377973 | L\*y-output |
+| 164 | California.339.Industry |   1090555 | L\*y-output |
+| 230 | RoUS.334.Industry       | \-1375172 | L\*y-output |
+| 235 | RoUS.339.Industry       | \-1089905 | L\*y-output |
+
+Relative Difference: There are no failures.
+
+##### 18.6 Colorado and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.7 Connecticut and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.8 Delaware and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.10 Florida and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.11 Georgia and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.12 Hawaii and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.13 Idaho and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.14 Illinois and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.15 Indiana and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.16 Iowa and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.17 Kansas and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.18 Kentucky and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.19 Louisiana and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.20 Maine and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.21 Maryland and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.22 Massachusetts and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.23 Michigan and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.24 Minnesota and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.25 Mississippi and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.26 Missouri and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.27 Montana and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.28 Nebraska and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.29 Nevada and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.30 New Hampshire and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.31 New Jersey and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.32 New Mexico and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.33 New York and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.34 North Carolina and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.35 North Dakota and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.36 Ohio and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.37 Oklahoma and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.38 Oregon and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.40 Pennsylvania and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.41 Rhode Island and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.42 South Carolina and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.43 South Dakota and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.44 Tennessee and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.45 Texas and Rest of the US
+
+Absolute Difference: There are 2 failures, and they are
+
+|     | rownames           |    result | check       |
+| --- | :----------------- | --------: | :---------- |
+| 149 | Texas.211.Industry |   2402673 | L\*y-output |
+| 220 | RoUS.211.Industry  | \-2406168 | L\*y-output |
+
+Relative Difference: There are no failures.
+
+##### 18.46 Utah and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.47 Vermont and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.48 Virginia and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.49 Washington and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.50 West Virginia and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.51 Wisconsin and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.52 Wyoming and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.

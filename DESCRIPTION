@@ -2,7 +2,7 @@ Package: stateior
 Type: Package
 Title: US State Input-Output (stateio) R modeling software
 Version: 0.1.0
-Date: 2022-01-20
+Date: 2022-07-27
 Authors@R: c(
   person("Mo", "Li", email="mo.li@gdit.com", role="aut"),
   person("Joao-Pedro", "Ferreira", email="joao.ferreira@ufl.edu", role= c("aut")),
@@ -21,8 +21,8 @@ Imports:
     configr (>= 0.3.4),
     dplyr (>= 1.0.6),
     ggplot2 (>= 3.0),
+    glue (>= 1.6.2),
     jsonlite (>= 1.6),
-    Hmisc (>= 4.6-0),
     logging (>= 0.10),
     magrittr (>= 2.0.1),
     rappdirs (>= 0.3),
@@ -38,10 +38,10 @@ Imports:
 Depends:
   R (>= 3.6)
 Remotes:
-  github::USEPA/useeior@master
+  github::USEPA/useeior@v1.1.0
 License: file LICENSE
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.1
+RoxygenNote: 7.2.0
 Suggests:
     testthat (>= 2.1.0)

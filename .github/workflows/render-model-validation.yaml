@@ -50,9 +50,9 @@ jobs:
           ref: dev
       # - run: git checkout HEAD^
 
-      - uses: r-lib/actions/setup-pandoc@v1
+      - uses: r-lib/actions/setup-pandoc@v2
 
-      - uses: r-lib/actions/setup-r@v1
+      - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
@@ -60,7 +60,7 @@ jobs:
 
       - uses: r-lib/actions/setup-renv@v2
       
-      - uses: r-lib/actions/setup-r-dependencies@v1
+      - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: |
             devtools
@@ -70,12 +70,14 @@ jobs:
         run: |
           install.packages("rmarkdown")
           for (year in 2012:2017) {
-            rmarkdown::render("inst/doc/ValidateModel.Rmd", output_dir = "inst/doc/output", output_file = paste0("ValidateModel_", year, ".html"))
+            rmarkdown::render("inst/doc/ValidateModel.Rmd", output_dir = "inst/doc/output", output_file = paste0("ValidateModel_", year, ".md"))
           }
         shell: Rscript {0}
         
       - name: Commit model validation results
         run: |
+          git fetch origin dev
+          git pull origin dev
           git config user.name "GitHub Actions Bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add inst/doc/output/ValidateModel*.md
