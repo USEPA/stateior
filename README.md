@@ -3,7 +3,7 @@
 [![R CI/CD test](https://github.com/USEPA/stateior/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/USEPA/stateior/actions/workflows/R-CMD-check.yaml)
 
 `stateior` is an R package for building multi-regional economic input-output (MRIO) tables of states in the United States, refered to as **StateIO** models. 
-Currently, `stateior` is capable of building two-region MRIO models at the [BEA](https://www.bea.gov/) Summary level of resolution in the US for all years from 2012-2017.
+Currently, `stateior` is capable of creating IO tables for each US state and building two-region MRIO models based on those state IO tables at the [BEA](https://www.bea.gov/) Summary level of resolution in the US for all years from 2012-2017.
 The two regions are State of Interest (SoI) and Rest of the US (RoUS).
 `stateior` was initially conceived in support of creating state-specific versions of [USEEIO models](https://www.epa.gov/land-research/us-environmentally-extended-input-output-useeio-models), but may be used for other purposes where state input-output tables are used.
 The package is intended to add transparency and reproducibility to the complex process of generating subnational input-output tables, which are not compiled by any statistical agency.
@@ -30,15 +30,30 @@ devtools::install_github("USEPA/stateior@v0.1.0")
 library(stateior)
 ```
 
-Load desired StateIO data. See [Two Region Data](format_specs/TwoRegionData.md#data) for names and details of two-region MRIO data sets that are currently available.
+Load desired StateIO data. See [State Data](format_specs/TwoRegionData.md#data) and [Two Region Data](format_specs/TwoRegionData.md#data) for names and details of state and two-region MRIO data sets that are currently available, respectively.
 
 ```r
-#Load the two region domestic Use tables for 2012 for all states. This will download the data product from a remote server and load it into your R session as an R list . 
+##############
+# State Data #
+##############
+# Load the state domestic Use tables for 2012 for all states.
+# This will download the data product from a remote server and load it into your R session as an R list. 
+StateDomesticUse_2012 <- loadStateIODataFile("State_Summary_DomesticUse_2012")
+
+# Select the Georgia Use table.
+# This will put this table into a standard R data frame named 'GA_DomesticUse_2012'.
+GA_DomesticUse_2012 <- StateDomesticUse_2012[["Georgia"]]
+
+###################
+# Two-Region Data #
+###################
+# Load the two region domestic Use tables for 2012 for all states.
+# This will download the data product from a remote server and load it into your R session as an R list. 
 TwoRegionDomesticUse_2012 <- loadStateIODataFile("TwoRegion_Summary_DomesticUse_2012")
 
-#Select the two region Use table for Georgia and Rest of the US. This will put this table into a standard R data frame named 'GA_TwoRegionDomesticUse_2012'.
+# Select the two region Use table for Georgia and Rest of the US.
+# This will put this table into a standard R data frame named 'GA_TwoRegionDomesticUse_2012'.
 GA_TwoRegionDomesticUse_2012 <- TwoRegionDomesticUse_2012[["Georgia"]]
-
 ```
 ### Use for Developers (usage type #2)
 
