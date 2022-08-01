@@ -30,7 +30,7 @@ devtools::install_github("USEPA/stateior@v0.1.0")
 library(stateior)
 ```
 
-Load desired StateIO data. See [State Data](format_specs/TwoRegionData.md#data) and [Two Region Data](format_specs/TwoRegionData.md#data) for names and details of state and two-region MRIO data sets that are currently available, respectively.
+Load desired StateIO data. See [One Region Data](format_specs/OneRegionData.md#data) and [Two Region Data](format_specs/TwoRegionData.md#data) for names and details of one- and two-region MRIO data sets that are currently available, respectively.
 
 ```r
 ##############
