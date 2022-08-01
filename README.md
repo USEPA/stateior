@@ -34,15 +34,15 @@ Load desired StateIO data. See [One Region Data](format_specs/OneRegionData.md#d
 
 ```r
 ##############
-# State Data #
+# One-Region Data #
 ##############
-# Load the state domestic Use tables for 2012 for all states.
+# Load the state one-region (state only) domestic Use tables for 2012 for all states.
 # This will download the data product from a remote server and load it into your R session as an R list. 
-StateDomesticUse_2012 <- loadStateIODataFile("State_Summary_DomesticUse_2012")
+OneRegionDomesticUse_2012 <- loadStateIODataFile("State_Summary_DomesticUse_2012")
 
 # Select the Georgia Use table.
 # This will put this table into a standard R data frame named 'GA_DomesticUse_2012'.
-GA_DomesticUse_2012 <- StateDomesticUse_2012[["Georgia"]]
+GA_DomesticUse_2012 <- OneRegionDomesticUse_2012[["Georgia"]]
 
 ###################
 # Two-Region Data #
