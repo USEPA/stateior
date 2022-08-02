@@ -34,9 +34,9 @@ library(stateior)
 Load desired StateIO data. See [One Region Data](format_specs/OneRegionData.md#data) and [Two Region Data](format_specs/TwoRegionData.md#data) for names and details of one- and two-region MRIO data sets that are currently available, respectively.
 
 ```r
-##############
+###################
 # One-Region Data #
-##############
+###################
 # Load the state one-region (state only) domestic Use tables for 2012 for all states.
 # This will download the data product from a remote server and load it into your R session as an R list. 
 OneRegionDomesticUse_2012 <- loadStateIODataFile("State_Summary_DomesticUse_2012")
