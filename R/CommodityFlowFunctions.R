@@ -12,7 +12,14 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   fips <- FIPS_STATE[FIPS_STATE$State == state, "State_FIPS"]
-  value_col <- paste0("value_", year)
+  if (year == 2012) {
+    value_col <- paste0("value_", year)
+  } else if (year %in% c(2013:2018)) {
+    value_col <- paste0("curval_", year)
+  } else {
+    value_col <- paste0("current_value_", year)
+  }
+  
   # Generate FAF_2r
   if (flow_ratio_type == "domestic") {
     FAF <- FAF[FAF$trade_type == 1, c("dms_origst", "dms_destst", "sctg2",
@@ -131,11 +138,11 @@ calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, ios
   # Load pre-saved state export/import data
   if (year < 2013) {
     trade <- loadStateIODataFile(paste0("Census_USATrade",
-                                        Hmisc::capitalize(flow_ratio_type),
+                                        capitalize(flow_ratio_type),
                                         "_", year))
   } else {
     trade <- loadStateIODataFile(paste0("Census_State",
-                                        Hmisc::capitalize(flow_ratio_type),
+                                        capitalize(flow_ratio_type),
                                         "_", year))
   }
   # Map from NAICS to BEA

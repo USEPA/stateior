@@ -22,7 +22,7 @@ loadDatafromUSEEIOR <- function(dataset) {
 readCSV <- function(filename, fill = FALSE) {
   df <- utils::read.table(filename, sep = ",", header = TRUE,
                           stringsAsFactors = FALSE, check.names = FALSE,
-                          fill = fill)
+                          fill = fill, fileEncoding = "UTF-8-BOM")
   return(df)
 }
 
@@ -264,6 +264,7 @@ findLatestStateIODatainLocalDirectory <- function(filename) {
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return The pathname to the state IO data file.
+#' @export
 loadStateIODataFile <- function(filename, ver = NULL) {
   # Define file name
   if (is.null(ver)) {
@@ -361,6 +362,14 @@ readDatafileMeta <- function(year, iolevel, dataname, path) {
     logging::logerror(paste("Local metadata file for", datafile, "is missing."))
   }
   return(metadata)
+}
+
+#' Capitalize a string.
+#' @param string A string
+#' @return A capitalized string.
+capitalize <- function(string) {
+  substr(string, 1, 1) <- toupper(substr(string, 1, 1))
+  return(string)
 }
 
 ##############################################################

@@ -6,7 +6,7 @@
 getCensusUSATradebyNAICS <- function(year, flow_ratio_type) {
   # Load the downloaded table from usatrade.census.gov
   FileName <- paste0("Census_USATrade",
-                     Hmisc::capitalize(flow_ratio_type), "_", year, ".csv")
+                     capitalize(flow_ratio_type), "_", year, ".csv")
   FullFileName <- system.file("extdata", FileName, package = "stateior")
   date_last_modified <- as.character(as.Date(file.mtime(FullFileName)))
   table <- utils::read.table(FullFileName, sep = ",", header = FALSE,

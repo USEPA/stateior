@@ -2,7 +2,7 @@
 % Please edit documentation in R/BuildModel.R
 \name{buildStateUseModel}
 \alias{buildStateUseModel}
-\title{Build a state use use for all 52 states/regions
+\title{Build a state use model for all 52 states/regions
 (including DC and Overseas) for a given year}
 \usage{
 buildStateUseModel(year)
@@ -11,7 +11,7 @@ buildStateUseModel(year)
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 }
 \value{
-A list of state use model components: Use table and Domestic Use table.
+A list of state Use table, Domestic Use table and industry output.
 }
 \description{
 Build a state Use model for all 52 states/regions
