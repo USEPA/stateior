@@ -2,13 +2,13 @@
 % Please edit documentation in R/UtilityFunctions.R
 \name{getStateIODataRegistryonDataCommons}
 \alias{getStateIODataRegistryonDataCommons}
-\title{Get state IO data registry on Data Commons.}
+\title{Get StateIO data registry on Data Commons.}
 \usage{
 getStateIODataRegistryonDataCommons()
 }
 \value{
-A dataframe of state IO data registry on Data Commons.
+A dataframe of StateIO data registry on Data Commons.
 }
 \description{
-Get state IO data registry on Data Commons.
+Get StateIO data registry on Data Commons.
 }

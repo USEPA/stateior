@@ -2,7 +2,7 @@
 % Please edit documentation in R/UtilityFunctions.R
 \name{findLatestStateIODatainLocalDirectory}
 \alias{findLatestStateIODatainLocalDirectory}
-\title{Find the latest state IO data in local data directory.}
+\title{Find the latest StateIO data in local data directory.}
 \usage{
 findLatestStateIODatainLocalDirectory(filename)
 }
@@ -10,8 +10,8 @@ findLatestStateIODatainLocalDirectory(filename)
 \item{filename}{A string specifying filename, e.g. "State_Summary_Use_2017".}
 }
 \value{
-File name of the latest state IO data in local data directory.
+File name of the latest StateIO data in local data directory.
 }
 \description{
-Find the latest state IO data in local data directory.
+Find the latest StateIO data in local data directory.
 }
