@@ -43,6 +43,7 @@ getFedGovSpending <- function(year) {
       fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
       # Unzip the file to the designated directory
       unzip(FedGovExpzip, files = fname, exdir = "inst/extdata/USAspending", overwrite = TRUE)
+      file.remove(FedGovExpzip)
       # Load data
       df <- data.frame()
       for (i in 1:length(fname)) {

@@ -47,6 +47,7 @@ getFAF <- function(year) {
     fname <- unzip(FAFzip, list = TRUE)[unzip(FAFzip, list = TRUE)$Length > 0, ]$Name
     # Unzip the file to the designated directory
     unzip(FAFzip, files = fname, exdir = paste0("inst/extdata"), overwrite = TRUE)
+    file.remove(FAFzip)
   }
   # Find date accessed
   date_accessed <- as.character(as.Date(file.mtime(filename)))
