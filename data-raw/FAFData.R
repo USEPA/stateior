@@ -64,6 +64,14 @@ getFAF <- function(year) {
                      paste(c("value", "curval", "tons", "tmiles"), year, sep = "_"))]
       # Convert current value from million $ to $
       FAF[, paste0("curval_", year)] <- FAF[, paste0("curval_", year)]*1E6
+    } else if (year == 2019) {
+      FAF <- FAF[, c(colnames(FAF)[1:9],
+                     paste(c("value", "current_value", "tons", "tmiles"), year, sep = "_"))]
+      # Convert current value from million $ to $
+      FAF[, paste0("current_value_", year)] <- FAF[, paste0("current_value_", year)]*1E6
+    } else {
+      FAF <- FAF[, c(colnames(FAF)[1:9],
+                     paste(c("value", "tons", "tmiles"), year, sep = "_"))]
     }
     # Convert value from million $ to $
     FAF[, paste0("value_", year)] <- FAF[, paste0("value_", year)]*1E6
