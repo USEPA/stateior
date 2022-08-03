@@ -64,6 +64,7 @@ jobs:
         run: |
           devtools::load_all()
           year <- ${{ matrix.data-year }}
+          options(timeout = 1000)
           source("${{ matrix.script-run }}")
         shell: Rscript {0}
       
