@@ -67,7 +67,6 @@ getCensusStateExportbyNAICS <- function(year) {
   tryCatch(
     exp = {
       default_options <- options()
-      options(timeout = 1E4)
       export <- as.data.frame(jsonlite::fromJSON(url),
                               stringsAsFactors = FALSE)[-1, -6]
       options(default_options)
@@ -124,7 +123,6 @@ getCensusStateImportbyNAICS <- function(year) {
     exp = {
       # Download table and convert to dataframe
       default_options <- options()
-      options(timeout = 1E4)
       import <- as.data.frame(jsonlite::fromJSON(url),
                               stringsAsFactors = FALSE)[-1, -6]
       options(default_options)
@@ -192,8 +190,7 @@ getStateLocalGovExpenditure <- function(year) {
         FullFileName <- file.path(directory, TableName)
         # Download file
         if (!file.exists(FullFileName)) {
-          suppressWarnings(utils::download.file(url, FullFileName, mode = "wb",
-                                                timeout = max(1000, getOption("timeout"))))
+          suppressWarnings(utils::download.file(url, FullFileName, mode = "wb"))
         }
         date_accessed <- as.character(as.Date(file.mtime(FullFileName)))
         # Specify rows to skip based on year

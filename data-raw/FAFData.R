@@ -42,7 +42,7 @@ getFAF <- function(year) {
   # Download all FAF tables into the placeholder file
   if (!file.exists(FAFzip)) {
     utils::download.file(paste0(file_baseurl, gsub("inst/extdata/", "", FAFzip)),
-                         FAFzip, mode = "wb", timeout = max(1000, getOption("timeout")))
+                         FAFzip, mode = "wb")
     # Get the name of all files in the zip archive
     fname <- unzip(FAFzip, list = TRUE)[unzip(FAFzip, list = TRUE)$Length > 0, ]$Name
     # Unzip the file to the designated directory

@@ -6,8 +6,7 @@ getEIASEDSCodeDescription <- function() {
   url <- "https://www.eia.gov/state/seds/CDF/Codes_and_Descriptions.xlsx"
   # Download EIA State Energy Data Systems (SEDS) consumption data
   if (!file.exists(CodeDescFile)) {
-    utils::download.file(url, CodeDescFile, mode = "wb",
-                         timeout = max(1000, getOption("timeout")))
+    utils::download.file(url, CodeDescFile, mode = "wb")
   }
   notes <- readLines("https://www.eia.gov/state/seds/seds-technical-notes-complete.php?sid=US")
   date_last_modified <- stringr::str_match(toString(notes),
@@ -46,8 +45,7 @@ getEIASEDSStateElectricityConsumption <- function(year) {
   ConsumptionFile <- "inst/extdata/EIA_SEDS_consumption.csv"
   url <- "https://www.eia.gov/state/seds/sep_use/total/csv/use_all_phy.csv"
   if (!file.exists(ConsumptionFile)) {
-    utils::download.file(url, ConsumptionFile, mode = "wb",
-                         timeout = max(1000, getOption("timeout")))
+    utils::download.file(url, ConsumptionFile, mode = "wb")
   }
   notes <- readLines("https://www.eia.gov/state/seds/seds-data-complete.php?sid=US")
   date_last_modified <- stringr::str_match(toString(notes),
