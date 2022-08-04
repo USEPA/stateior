@@ -13,7 +13,7 @@ getEIASEDSCodeDescription <- function() {
                                            "Released: (.*?)<br/>")[2]
   date_accessed <- as.character(as.Date(file.mtime(CodeDescFile)))
   CodeDesc <- as.data.frame(readxl::read_excel(CodeDescFile,
-                                               sheet = "MSN Descriptions",
+                                               sheet = "Codes_and_Descriptions",
                                                skip = 9))
   # Write data to .rds
   data_name <- paste("EIA_SEDS_CodeDescription",
