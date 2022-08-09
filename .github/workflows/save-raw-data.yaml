@@ -17,8 +17,8 @@ jobs:
           - {os: ubuntu-latest, r: 'release'}
         script-run: 
           # - data-raw/BEAData.R
-          # - data-raw/CensusData.R
-          - data-raw/EIAData.R
+          - data-raw/CensusData.R
+          # - data-raw/EIAData.R
           # - data-raw/FAFData.R
           # - data-raw/USASpendingData.R
         data-year:
@@ -75,7 +75,7 @@ jobs:
           # Artifact name
           name: data and metadata
           # A file, directory or wildcard patter that describes what to upload
-          path: "data/*.rds"
+          path: "data/*${{ matrix.data-year }}*.rds"
           if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
           # retention-days: 5 # cannot exceed the retention limit set by the repository, organization, or enterprise.
       
@@ -86,6 +86,6 @@ jobs:
           # Artifact name
           name: data and metadata
           # A file, directory or wildcard patter that describes what to upload
-          path: "inst/extdata/metadata/*.json"
+          path: "inst/extdata/metadata/*${{ matrix.data-year }}*.json"
           if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
           # retention-days: 5 # cannot exceed the retention limit set by the repository, organization, or enterprise.
