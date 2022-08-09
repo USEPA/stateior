@@ -220,7 +220,7 @@ getStateLocalGovExpenditure <- function(year) {
         df_ls[[table]] <- df_i[complete.cases(df_i), ]
       },
       error = function(e) {
-        logging::logwarn(paste(year, "state and local government expenditure data",
+        stop(paste(year, "state and local government expenditure data",
                                "is not avaliable from Census. Nothing is returned."))
       }
     )
