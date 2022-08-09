@@ -94,8 +94,8 @@ getCensusStateExportbyNAICS <- function(year) {
                                     date_accessed = as.character(Sys.Date()))
     },
     error = function(e) {
-      logging::logwarn(paste(year, "state export data is not avaliable from Census.",
-                             "Nothing is returned."))
+      stop(paste(year, "state export data is not avaliable from Census.",
+                 "Nothing is returned."))
     }
   )
 }
@@ -150,8 +150,8 @@ getCensusStateImportbyNAICS <- function(year) {
                                     date_accessed = as.character(Sys.Date()))
     },
     error = function(e) {
-      logging::logwarn(paste(year, "state import data is not avaliable from Census.",
-                             "Nothing is returned."))
+      stop(paste(year, "state import data is not avaliable from Census.",
+                 "Nothing is returned."))
     }
   )
 }
@@ -177,11 +177,19 @@ getStateLocalGovExpenditure <- function(year) {
     } else {
       FileType <- ".xlsx"
     }
+    if (year == 2018) {
+      suffix <- "_revised"
+    } else {
+      suffix <- ""
+    }
     # Create url
     url <- paste0(base_url, year, "/summary-tables/", substr(year, 3, 4),
-                  "slsstab1", table, FileType)
-    TableName <- paste0(substr(year, 3, 4), "slsstab1", table, FileType)
-    directory <- "inst/extdata/StateLocalGovFinances/"
+                  "slsstab1", table, suffix, FileType)
+    if (year >= 2018) {
+      url <- sub("summary-tables/", "", url)
+    }
+    TableName <- paste0(substr(year, 3, 4), "slsstab1", table, suffix, FileType)
+    directory <- "inst/extdata/StateLocalGovFinances"
     tryCatch(
       exp = {
         if (!file.exists(directory)) {
@@ -194,12 +202,12 @@ getStateLocalGovExpenditure <- function(year) {
         }
         date_accessed <- as.character(as.Date(file.mtime(FullFileName)))
         # Specify rows to skip based on year
-        if (year %in% c(2008, 2013:2016)) {
-          skip_rows <- 9
+        if (year %in% c(2012, 2017)) {
+          skip_rows <- 7
         } else if (year %in% c(2009:2011)) {
           skip_rows <- 8
         } else {
-          skip_rows <- 7
+          skip_rows <- 9
         }
         # Load table
         df_i <- as.data.frame(readxl::read_excel(FullFileName, sheet = 1,
@@ -221,7 +229,7 @@ getStateLocalGovExpenditure <- function(year) {
       },
       error = function(e) {
         stop(paste(year, "state and local government expenditure data",
-                               "is not avaliable from Census. Nothing is returned."))
+                   "is not avaliable from Census. Nothing is returned."))
       }
     )
   }
