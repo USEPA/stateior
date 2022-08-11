@@ -183,11 +183,14 @@ getFlowsaData <- function(dataname, year) {
   return(df)
 }
 
-#' Get StateIO data registry on Data Commons.
+#' Get data registry on Data Commons.
+#' @param data_group A string specifying name of data group that is used as the
+#' subdirectory in Data Commons, can be "stateio", "flowsa/FlowBySector", or
+#' "flowsa/FlowByActivity".
 #' @return A dataframe of StateIO data registry on Data Commons.
-getStateIODataRegistryonDataCommons <- function() {
+getRegistryonDataCommons <- function(data_group = "stateio") {
   registry_ls <- aws.s3::get_bucket(bucket = "edap-ord-data-commons",
-                                    prefix = "stateio")
+                                    prefix = data_group)
   registry <- cbind.data.frame(basename(sapply(registry_ls, `[[`, "Key")),
                                sapply(registry_ls, `[[`, "LastModified"),
                                stringsAsFactors = FALSE)
@@ -199,7 +202,7 @@ getStateIODataRegistryonDataCommons <- function() {
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @return File name of the latest StateIO data on Data Commons.
 findLatestStateIODataonDataCommons <- function(filename) {
-  registry <- getStateIODataRegistryonDataCommons()
+  registry <- getRegistryonDataCommons(data_group = "stateio")
   f <- basename(registry[startsWith(registry$Key, filename) &
                            endsWith(registry$Key, ".rds") &
                            which.max(as.Date(registry$LastModified)),
@@ -213,7 +216,7 @@ findLatestStateIODataonDataCommons <- function(filename) {
 #' Check if file is available on Data Commons. Stop function execution if not.
 #' @param file A string specifying file, e.g. "State_Summary_Use_2017_v0.1.0_rds".
 checkFileonDataCommons <- function(file) {
-  registry <- getStateIODataRegistryonDataCommons()
+  getRegistryonDataCommons(data_group = "stateio")
   f <- basename(registry[startsWith(registry$Key, file) &
                            endsWith(registry$Key, ".rds"),
                          "Key"])
