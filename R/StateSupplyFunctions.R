@@ -384,9 +384,18 @@ getFAFCommodityOutput <- function(year) {
                                     package = "stateior"))
   # Load pre-saved FAF4 commodity flow data
   FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"))
+  # Define value_col and origin_col
+  if (year == 2012) {
+    value_col <- paste0("value_", year)
+  } else if (year %in% c(2013:2018)) {
+    value_col <- paste0("curval_", year)
+  } else {
+    value_col <- paste0("current_value_", year)
+  }
+  origin_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_orig")]
   # Keep domestic and export trade, keep useful columns, then rename
   FAF <- FAF[FAF$trade_type %in% c(1, 3),
-             c("dms_origst", "sctg2", paste0("value_", year))]
+             c(origin_col, "sctg2", paste0("value_", year))]
   colnames(FAF) <- c("State_FIPS", "SCTG", "Value")
   # Calculate state commodity output by SCTG
   FAF <- merge(FAF, FIPS_STATE, by = "State_FIPS", all.x = TRUE)

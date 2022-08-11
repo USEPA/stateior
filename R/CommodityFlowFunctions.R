@@ -12,6 +12,7 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   fips <- FIPS_STATE[FIPS_STATE$State == state, "State_FIPS"]
+  # Define value_col, origin_col, and destination_col
   if (year == 2012) {
     value_col <- paste0("value_", year)
   } else if (year %in% c(2013:2018)) {
@@ -19,10 +20,12 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
   } else {
     value_col <- paste0("current_value_", year)
   }
+  origin_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_orig")]
+  destination_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_dest")]
   
   # Generate FAF_2r
   if (flow_ratio_type == "domestic") {
-    FAF <- FAF[FAF$trade_type == 1, c("dms_origst", "dms_destst", "sctg2",
+    FAF <- FAF[FAF$trade_type == 1, c(origin_col, destination_col, "sctg2",
                                       "dms_mode", value_col)]
     colnames(FAF) <- c("ORIG", "DEST", "SCTG", "MODE", "VALUE")
     FAF$ORIG <- ifelse(FAF$ORIG == fips, "SoI", "RoUS")
@@ -32,7 +35,7 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
     # Calculate commodity flow amount in warehousing & storage sector
     FAF_2r_ws <- stats::aggregate(VALUE ~ ORIG + DEST, FAF, sum)
   } else if (flow_ratio_type == "export") {
-    FAF <- FAF[FAF$trade_type == 3, c("dms_origst", "sctg2", "fr_outmode", value_col)]
+    FAF <- FAF[FAF$trade_type == 3, c(origin_col, "sctg2", "fr_outmode", value_col)]
     colnames(FAF) <- c("ORIG", "SCTG", "MODE", "VALUE")
     FAF$ORIG <- ifelse(FAF$ORIG == fips, "SoI", "RoUS")
     FAF$DEST <- "RoW"
@@ -41,7 +44,7 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
     # Calculate commodity flow amount in warehousing & storage sector
     FAF_2r_ws <- stats::aggregate(VALUE ~ ORIG, FAF, sum)
   } else if (flow_ratio_type == "import") {
-    FAF <- FAF[FAF$trade_type == 2, c("dms_destst", "sctg2", "fr_inmode", value_col)]
+    FAF <- FAF[FAF$trade_type == 2, c(destination_col, "sctg2", "fr_inmode", value_col)]
     colnames(FAF) <- c("DEST", "SCTG", "MODE", "VALUE")
     FAF$ORIG <- "RoW"
     FAF$DEST <- ifelse(FAF$DEST == fips, "SoI", "RoUS")
