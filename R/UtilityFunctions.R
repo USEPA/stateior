@@ -145,22 +145,27 @@ getTwoRegionDataFileName <- function(year, iolevel, dataname) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state data from FLOWSA.
 getFlowsaData <- function(dataname, year) {
+  pkg_ver <- utils::packageDescription(pkg = "stateior", fields = "Version")
   # Load metadata
   if (dataname == "Employment") {
     meta <- configr::read.config(system.file("extdata/", "FlowBySector_metadata.yml",
                                              package = "stateior"))
-    filename <- paste(dataname, "state", year, meta[[dataname]], sep = "_")
+    if ("Extension" %in% names(meta[[dataname]][[pkg_ver]])) {
+      file_extesion <- meta[[dataname]][[pkg_ver]]
+    } else {
+      file_extesion <- meta[[dataname]][[pkg_ver]][[as.character(year)]]
+    }
+    filename <- paste(dataname, "state", year, file_extesion, sep = "_")
     subdirectory <- "flowsa/FlowBySector"
   } else {
     meta <- configr::read.config(system.file("extdata/", "FlowByActivity_metadata.yml",
                                              package = "stateior"))
-    # Define file name and subdirectory
-    if (dataname == "NOAA_FisheryLandings") {
-      year <- "2012-2018"
-      filename <- paste0(paste(dataname, year, sep = "_"), meta[[dataname]])
+    if ("Extension" %in% names(meta[[dataname]][[pkg_ver]])) {
+      file_extesion <- meta[[dataname]][[pkg_ver]]
     } else {
-      filename <- paste(dataname, year, meta[[dataname]], sep = "_")
+      file_extesion <- meta[[dataname]][[pkg_ver]][[as.character(year)]]
     }
+    filename <- paste(dataname, year, file_extesion, sep = "_")
     subdirectory <- "flowsa/FlowByActivity"
   }
   # Define file directory
@@ -176,7 +181,7 @@ getFlowsaData <- function(dataname, year) {
     utils::download.file(file.path(url, filename),
                          file.path(directory, filename), mode = "wb", quiet = TRUE)
   }
-  # Load FBA
+  # Load data
   df <- as.data.frame(arrow::read_parquet(file.path(directory, filename)))
   # Keep state-level data, including 50 states and D.C.
   df <- df[substr(df$Location, 1, 2) <= 56 & substr(df$Location, 3, 5) == "000", ]

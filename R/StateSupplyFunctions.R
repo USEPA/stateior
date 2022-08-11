@@ -349,7 +349,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   Ag <- Ag[, c("BEA_2012_Summary_Code", "State", "Value", "Ratio")]
   
   # Load Fishery Landings and Forestry CutValue data from flowsa
-  Fishery <- getFlowsaData("NOAA_FisheryLandings", year)
+  Fishery <- getFlowsaData("NOAA_FisheriesLandings", year)
   FisheryForestry <- rbind(Fishery,
                            USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy == "All Species", ])
   # Convert State_FIPS to numeric values

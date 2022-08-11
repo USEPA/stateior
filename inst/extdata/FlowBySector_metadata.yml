@@ -1,2 +1,9 @@
 Employment:
-  Extension: "v1.1_37dee46.parquet"
+  0.1.0:
+    Extension: "v1.1_37dee46.parquet"
+  0.2.0:
+    2018: &ext
+      Extension: "v1.2.3_aaf5403.parquet"
+    2019: *ext
+    2020:
+      Extension: "v1.2.4_7c15ea5.parquet"
