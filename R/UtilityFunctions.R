@@ -221,7 +221,7 @@ findLatestStateIODataonDataCommons <- function(filename) {
 #' Check if file is available on Data Commons. Stop function execution if not.
 #' @param file A string specifying file, e.g. "State_Summary_Use_2017_v0.1.0_rds".
 checkFileonDataCommons <- function(file) {
-  getRegistryonDataCommons(data_group = "stateio")
+  registry <- getRegistryonDataCommons(data_group = "stateio")
   f <- basename(registry[startsWith(registry$Key, file) &
                            endsWith(registry$Key, ".rds"),
                          "Key"])
