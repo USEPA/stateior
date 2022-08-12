@@ -11,8 +11,23 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
   FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"))
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
-  fips <- FIPS_STATE[FIPS_STATE$State == state, "State_FIPS"]
-  # Define value_col, origin_col, and destination_col
+  # Create fips_var that is dependent on FAF version:
+  # FAF4 assigns original FIPS to origin and destination
+  # FAF5 assigns more granular code (one digit more than FIPS) to locations
+  if (year <= 2018) { # FAF4
+    fips_var <- FIPS_STATE[FIPS_STATE$State == state, "State_FIPS"]
+  } else { # FAF5
+    # Load mapping file retrieved from https://faf.ornl.gov/faf5/
+    mapping_filename <- system.file("extdata",
+                                    "CFS area code - FAF5 zone id.xlsx",
+                                    package = "stateior")
+    FAF5_FIPS_mapping <- as.data.frame(readxl::read_excel(mapping_filename,
+                                                          sheet = "Sheet1",
+                                                          col_names = TRUE))
+    fips_var <- as.numeric(FAF5_FIPS_mapping[FAF5_FIPS_mapping$STPOSTAL == state.abb[state.name == state],
+                                  "FAF"])
+  }
+  # Define value_col, orig_col, and dest_col
   if (year == 2012) {
     value_col <- paste0("value_", year)
   } else if (year %in% c(2013:2018)) {
@@ -20,34 +35,34 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
   } else {
     value_col <- paste0("current_value_", year)
   }
-  origin_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_orig")]
-  destination_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_dest")]
+  orig_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_orig")]
+  dest_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_dest")]
   
   # Generate FAF_2r
   if (flow_ratio_type == "domestic") {
-    FAF <- FAF[FAF$trade_type == 1, c(origin_col, destination_col, "sctg2",
+    FAF <- FAF[FAF$trade_type == 1, c(orig_col, dest_col, "sctg2",
                                       "dms_mode", value_col)]
     colnames(FAF) <- c("ORIG", "DEST", "SCTG", "MODE", "VALUE")
-    FAF$ORIG <- ifelse(FAF$ORIG == fips, "SoI", "RoUS")
-    FAF$DEST <- ifelse(FAF$DEST == fips, "SoI", "RoUS") 
+    FAF$ORIG <- ifelse(FAF$ORIG %in% fips_var, "SoI", "RoUS")
+    FAF$DEST <- ifelse(FAF$DEST %in% fips_var, "SoI", "RoUS") 
     # Aggregate to 2 regions 
     FAF_2r <- stats::aggregate(VALUE ~ ORIG + DEST + SCTG + MODE, FAF, sum)
     # Calculate commodity flow amount in warehousing & storage sector
     FAF_2r_ws <- stats::aggregate(VALUE ~ ORIG + DEST, FAF, sum)
   } else if (flow_ratio_type == "export") {
-    FAF <- FAF[FAF$trade_type == 3, c(origin_col, "sctg2", "fr_outmode", value_col)]
+    FAF <- FAF[FAF$trade_type == 3, c(orig_col, "sctg2", "fr_outmode", value_col)]
     colnames(FAF) <- c("ORIG", "SCTG", "MODE", "VALUE")
-    FAF$ORIG <- ifelse(FAF$ORIG == fips, "SoI", "RoUS")
+    FAF$ORIG <- ifelse(FAF$ORIG == fips_var, "SoI", "RoUS")
     FAF$DEST <- "RoW"
     # Aggregate to 2 regions 
     FAF_2r <- stats::aggregate(VALUE ~ ORIG + SCTG + MODE, FAF, sum)
     # Calculate commodity flow amount in warehousing & storage sector
     FAF_2r_ws <- stats::aggregate(VALUE ~ ORIG, FAF, sum)
   } else if (flow_ratio_type == "import") {
-    FAF <- FAF[FAF$trade_type == 2, c(destination_col, "sctg2", "fr_inmode", value_col)]
+    FAF <- FAF[FAF$trade_type == 2, c(dest_col, "sctg2", "fr_inmode", value_col)]
     colnames(FAF) <- c("DEST", "SCTG", "MODE", "VALUE")
     FAF$ORIG <- "RoW"
-    FAF$DEST <- ifelse(FAF$DEST == fips, "SoI", "RoUS")
+    FAF$DEST <- ifelse(FAF$DEST == fips_var, "SoI", "RoUS")
     # Aggregate to 2 regions 
     FAF_2r <- stats::aggregate(VALUE ~ DEST + SCTG + MODE, FAF, sum)
     # Calculate commodity flow amount in warehousing & storage sector
