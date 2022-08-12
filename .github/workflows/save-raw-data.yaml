@@ -17,9 +17,9 @@ jobs:
           - {os: ubuntu-latest, r: 'release'}
         script-run: 
           # - data-raw/BEAData.R
-          - data-raw/CensusData.R
+          # - data-raw/CensusData.R
           # - data-raw/EIAData.R
-          # - data-raw/FAFData.R
+          - data-raw/FAFData.R
           # - data-raw/USASpendingData.R
         data-year:
           # - 2012
@@ -28,9 +28,9 @@ jobs:
           # - 2015
           # - 2016
           # - 2017
-          - 2018
+          # - 2018
           - 2019
-          - 2020
+          # - 2020
          
         
     # env:
