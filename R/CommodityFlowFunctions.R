@@ -17,9 +17,10 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
   if (year <= 2018) { # FAF4
     fips_var <- FIPS_STATE[FIPS_STATE$State == state, "State_FIPS"]
   } else { # FAF5
-    # Load mapping file retrieved from https://faf.ornl.gov/faf5/
+    # Load mapping file originally named "CFS area code - FAF5 zone id.xlsx"
+    # and retrieved from https://faf.ornl.gov/faf5/
     mapping_filename <- system.file("extdata",
-                                    "CFS area code - FAF5 zone id.xlsx",
+                                    "FAF5_FIPS_lookup.xlsx",
                                     package = "stateior")
     FAF5_FIPS_mapping <- as.data.frame(readxl::read_excel(mapping_filename,
                                                           sheet = "Sheet1",
