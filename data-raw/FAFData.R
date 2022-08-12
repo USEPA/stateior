@@ -22,14 +22,9 @@ getFAF <- function(year) {
   } else {
     ### FAF 5.3 ###
     # Create placeholder for zip file and specify filename based on year
-    if (year == 2019) {
-      FAFzip <- "inst/extdata/FAF5.3_2018-2019.zip"
-      filename <- "inst/extdata/FAF5.3_2018-2019.csv"
-    } else {
-      # Use forecasts (mid-range estimates only)
-      FAFzip <- "inst/extdata/FAF5.3_State.zip"
-      filename <- "inst/extdata/FAF5.3_State.csv"
-    }
+    # Use forecast data set that includes 2019 and 2020 (mid-range estimates only)
+    FAFzip <- "inst/extdata/FAF5.3_State.zip"
+    filename <- "inst/extdata/FAF5.3_State.csv"
     file_baseurl <- "https://faf.ornl.gov/faf5/data/download_files/"
     # Use last modified date on www.faf.ornl.gov
     url <- "https://faf.ornl.gov/faf5"
