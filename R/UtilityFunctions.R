@@ -208,10 +208,9 @@ getRegistryonDataCommons <- function(data_group = "stateio") {
 #' @return File name of the latest StateIO data on Data Commons.
 findLatestStateIODataonDataCommons <- function(filename) {
   registry <- getRegistryonDataCommons(data_group = "stateio")
-  f <- basename(registry[startsWith(registry$Key, filename) &
-                           endsWith(registry$Key, ".rds") &
-                           which.max(as.Date(registry$LastModified)),
-                         "Key"])
+  f <- registry[startsWith(registry$Key, filename) &
+                  endsWith(registry$Key, ".rds"), ]
+  f <- basename(f[which.max(as.Date(f$LastModified)), "Key"])
   if (length(f) == 0) {
     stop(paste(filename, "not avaialble on Data Commons."))
   }
