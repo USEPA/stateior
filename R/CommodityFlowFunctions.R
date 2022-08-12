@@ -33,8 +33,10 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
     value_col <- paste0("value_", year)
   } else if (year %in% c(2013:2018)) {
     value_col <- paste0("curval_", year)
-  } else {
+  } else if (year == 2019) {
     value_col <- paste0("current_value_", year)
+  } else if (year == 2020) { # forecast of 2020 data are in 2012 dollar (value_2020)
+    value_col <- paste0("value_", year)
   }
   orig_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_orig")]
   dest_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_dest")]
