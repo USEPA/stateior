@@ -76,10 +76,10 @@ jobs:
         
       - name: Commit model validation results
         run: |
-          git fetch origin dev
-          git pull origin dev
+          git fetch origin 0.2.0
+          git pull origin 0.2.0
           git config user.name "GitHub Actions Bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add inst/doc/output/ValidateModel*.md
           git commit -m "Update model validation documents"
-          git push origin dev
+          git push origin 0.2.0
