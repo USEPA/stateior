@@ -145,25 +145,24 @@ getTwoRegionDataFileName <- function(year, iolevel, dataname) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state data from FLOWSA.
 getFlowsaData <- function(dataname, year) {
-  pkg_ver <- utils::packageDescription(pkg = "stateior", fields = "Version")
   # Load metadata
   if (dataname == "Employment") {
     meta <- configr::read.config(system.file("extdata/", "FlowBySector_metadata.yml",
                                              package = "stateior"))
-    if ("Extension" %in% names(meta[[dataname]][[pkg_ver]])) {
-      file_extesion <- meta[[dataname]][[pkg_ver]]
+    if ("Extension" %in% names(meta[[dataname]][[model_ver]])) {
+      file_extesion <- meta[[dataname]][[model_ver]]
     } else {
-      file_extesion <- meta[[dataname]][[pkg_ver]][[as.character(year)]]
+      file_extesion <- meta[[dataname]][[model_ver]][[as.character(year)]]
     }
     filename <- paste(dataname, "state", year, file_extesion, sep = "_")
     subdirectory <- "flowsa/FlowBySector"
   } else {
     meta <- configr::read.config(system.file("extdata/", "FlowByActivity_metadata.yml",
                                              package = "stateior"))
-    if ("Extension" %in% names(meta[[dataname]][[pkg_ver]])) {
-      file_extesion <- meta[[dataname]][[pkg_ver]]
+    if ("Extension" %in% names(meta[[dataname]][[model_ver]])) {
+      file_extesion <- meta[[dataname]][[model_ver]]
     } else {
-      file_extesion <- meta[[dataname]][[pkg_ver]][[as.character(year)]]
+      file_extesion <- meta[[dataname]][[model_ver]][[as.character(year)]]
     }
     filename <- paste(dataname, year, file_extesion, sep = "_")
     subdirectory <- "flowsa/FlowByActivity"
