@@ -17,7 +17,7 @@ getNationalMake <- function(iolevel, year) {
 #' @return A data frame contains state GVA for all states at a specific year.
 getStateGVA <- function(year) {
   # Load pre-saved state GVA data
-  StateGVA <- loadStateIODataFile(paste0("State_GVA_", year))
+  StateGVA <- loadStateIODataFile(paste0("State_GVA_", year), ver = model_ver)
   StateGVA <- StateGVA[, c("GeoName", "LineCode", as.character(year))]
   return(StateGVA)
 }
@@ -72,7 +72,8 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
       allocation_factors[allocation_factors$LineCode == linecode, "factor"] <- weight_vector/sum(weight_vector)
     }
     # Load BEA state Emp
-    BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year))
+    BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
+                                       ver = model_ver)
     # Map BEA state Emp (from LineCode) to BEA Summary
     BEAStateEmp <- merge(BEAStateEmp[BEAStateEmp$GeoName %in%
                                        c(state.name, "District of Columbia"),
@@ -301,7 +302,8 @@ estimateStateCommodityOutputRatiofromAlternativeSources <- function(year) {
 #' @return A data frame contains State Employment by BEA Summary.
 getStateEmploymentbyBEASummary <- function(year) {
   # BEA State Emp
-  BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year))
+  BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
+                                     ver = model_ver)
   EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
   BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
                        EmptoBEAmapping, by = "LineCode")
@@ -383,7 +385,7 @@ getFAFCommodityOutput <- function(year) {
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv",
                                     package = "stateior"))
   # Load pre-saved FAF4 commodity flow data
-  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"))
+  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"), ver = model_ver)
   # Define value_col and origin_col
   if (year == 2012) {
     value_col <- paste0("value_", year)
