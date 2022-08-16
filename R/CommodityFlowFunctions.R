@@ -233,9 +233,6 @@ calculateHazWasteManagementServiceFlowRatios <- function(state, year) {
   # Total Managed
   TM_SoI <- SummaryBR[SummaryBR$`Location Name` == toupper(state), "Managed (Tons)"]
   TM_RoUS <- sum(SummaryBR[SummaryBR$`Location Name` != toupper(state), "Managed (Tons)"])
-  # Total Interstate Shipments
-  TS_SoI <- InterstateFlow[InterstateFlow$`Location Name` == toupper(state), "Interstate Shipments (Tons)"]
-  TS_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name` != toupper(state), "Interstate Shipments (Tons)"])
   # Total Interstate Receipts
   TR_SoI <- InterstateFlow[InterstateFlow$`Location Name` == toupper(state), "Interstate Receipts (Tons)"]
   TR_RoUS <- sum(InterstateFlow[InterstateFlow$`Location Name` != toupper(state), "Interstate Receipts (Tons)"])
@@ -253,10 +250,10 @@ calculateHazWasteManagementServiceFlowRatios <- function(state, year) {
     HazWaste_ICF_2r[, c("RoUS2RoUS", "RoUS2SoI")] <- c(1, 0)
   }
   # Adjust ICF ratios if TR/TM > 1
-  if (HazWaste_ICF_2r$SoI2RoUS>1) {
+  if (HazWaste_ICF_2r$SoI2RoUS > 1) {
     HazWaste_ICF_2r[, c("SoI2SoI", "SoI2RoUS")] <- c(0, 1)
   }
-  if (HazWaste_ICF_2r$RoUS2SoI>1) {
+  if (HazWaste_ICF_2r$RoUS2SoI > 1) {
     HazWaste_ICF_2r[, c("RoUS2RoUS", "RoUS2SoI")] <- c(0, 1)
   }
   return(HazWaste_ICF_2r)
@@ -266,10 +263,10 @@ calculateHazWasteManagementServiceFlowRatios <- function(state, year) {
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @return A data frame contains waste management services flow ratios by BEA.
-calculateWasteManagementServiceFlowRatios <- function (state, year) {
+calculateWasteManagementServiceFlowRatios <- function(state, year) {
   # Assume non-haz waste ICF ratios == commodity output ratios
   COR <- calculateStateCommodityOutputRatio(year)
-  SoIWasteCOR <- COR[COR$BEA_2012_Summary_Code == "562"&COR$State == state, "Ratio"]
+  SoIWasteCOR <- COR[COR$BEA_2012_Summary_Code == "562" & COR$State == state, "Ratio"]
   RoUSWasteCOR <- 1 - SoIWasteCOR
   NonHazWaste_ICF_2r <- data.frame("SoI2SoI"   = SoIWasteCOR,
                                    "SoI2RoUS"  = 1 - SoIWasteCOR,
@@ -286,7 +283,7 @@ calculateWasteManagementServiceFlowRatios <- function (state, year) {
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @return A data frame contains domestic interregional electricity flow ratios by state.
-calculateElectricityFlowRatios <- function (state, year) {
+calculateElectricityFlowRatios <- function(state, year) {
   state_abb <- getStateAbbreviation(state)
   # Load consumption data
   CodeDesc <- loadStateIODataFile("EIA_SEDS_CodeDescription", ver = model_ver)
@@ -295,22 +292,22 @@ calculateElectricityFlowRatios <- function (state, year) {
                                      ver = model_ver)
   # Subset SoI and RoUS total consumption
   consumption_desc <- "Electricity total consumption (i.e., retail sales)"
-  ConsumptionMSN <- CodeDesc[CodeDesc$Description == consumption_desc&
+  ConsumptionMSN <- CodeDesc[CodeDesc$Description == consumption_desc &
                                CodeDesc$Unit == "Million kilowatthours", "MSN"]
-  Consumption_SoI <- Consumption[Consumption$MSN == ConsumptionMSN&
+  Consumption_SoI <- Consumption[Consumption$MSN == ConsumptionMSN &
                                    Consumption$State == state_abb,
                                  as.character(year)]
-  Consumption_RoUS <- Consumption[Consumption$MSN == ConsumptionMSN&
+  Consumption_RoUS <- Consumption[Consumption$MSN == ConsumptionMSN &
                                     Consumption$State == "US",
                                   as.character(year)] - Consumption_SoI
   # Subset SoI and RoUS net interstate trade
   trade_desc <- "Net interstate flow of electricity (negative indicates flow out of state)"
-  NetInterstateTradeMSN <- CodeDesc[CodeDesc$Description == trade_desc&
+  NetInterstateTradeMSN <- CodeDesc[CodeDesc$Description == trade_desc &
                                       CodeDesc$Unit == "Million kilowatthours", "MSN"]
-  NetInterstateTrade_SoI <- Consumption[Consumption$MSN == NetInterstateTradeMSN&
+  NetInterstateTrade_SoI <- Consumption[Consumption$MSN == NetInterstateTradeMSN &
                                           Consumption$State == state_abb,
                                         as.character(year)]
-  NetInterstateTrade_RoUS <- Consumption[Consumption$MSN == NetInterstateTradeMSN&
+  NetInterstateTrade_RoUS <- Consumption[Consumption$MSN == NetInterstateTradeMSN &
                                            Consumption$State == "US",
                                          as.character(year)] - NetInterstateTrade_SoI
   # Note that abs(NetInterstateTrade_SoI)==abs(NetInterstateTrade_RoUS)
@@ -341,7 +338,7 @@ calculateElectricityFlowRatios <- function (state, year) {
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @return A data frame contains domestic interregional utilities flow ratios by state.
-calculateUtilitiesFlowRatios <- function (state, year) {
+calculateUtilitiesFlowRatios <- function(state, year) {
   # Get state employment for utilities sector
   EmploymentFBS <- getFlowsaData("Employment", year)
   StateDetailEmp <- mapFlowBySectorfromNAICStoBEA(EmploymentFBS, year, "Detail")
