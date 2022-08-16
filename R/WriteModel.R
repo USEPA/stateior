@@ -3,7 +3,7 @@
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @param state State name.
-#' #' @param outputfolder A directory to write matrices out to.
+#' @param outputfolder A directory to write matrices out to.
 #' @description Writes StateIO data as .csv or .xlsx files to output folder.
 #' @export
 writeStateIODatatoCSV <- function(filename, ver = NULL, state, outputfolder) {

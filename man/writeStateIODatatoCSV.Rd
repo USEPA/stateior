@@ -12,8 +12,9 @@ writeStateIODatatoCSV(filename, ver = NULL, state, outputfolder)
 
 \item{ver}{A string specifying version of the data, default is NULL, can be "v0.1.0".}
 
-\item{state}{State name.
-#' @param outputfolder A directory to write matrices out to.}
+\item{state}{State name.}
+
+\item{outputfolder}{A directory to write matrices out to.}
 }
 \description{
 Writes StateIO data as .csv or .xlsx files to output folder.
