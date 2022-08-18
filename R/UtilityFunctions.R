@@ -149,18 +149,22 @@ getFlowsaData <- function(dataname, year) {
   if (dataname == "Employment") {
     meta <- configr::read.config(system.file("extdata/", "FlowBySector_metadata.yml",
                                              package = "stateior"))
-    filename <- paste(dataname, "state", year, meta[[dataname]], sep = "_")
+    if ("Extension" %in% names(meta[[dataname]][[model_ver]])) {
+      file_extesion <- meta[[dataname]][[model_ver]]
+    } else {
+      file_extesion <- meta[[dataname]][[model_ver]][[as.character(year)]]
+    }
+    filename <- paste(dataname, "state", year, file_extesion, sep = "_")
     subdirectory <- "flowsa/FlowBySector"
   } else {
     meta <- configr::read.config(system.file("extdata/", "FlowByActivity_metadata.yml",
                                              package = "stateior"))
-    # Define file name and subdirectory
-    if (dataname == "NOAA_FisheryLandings") {
-      year <- "2012-2018"
-      filename <- paste0(paste(dataname, year, sep = "_"), meta[[dataname]])
+    if ("Extension" %in% names(meta[[dataname]][[model_ver]])) {
+      file_extesion <- meta[[dataname]][[model_ver]]
     } else {
-      filename <- paste(dataname, year, meta[[dataname]], sep = "_")
+      file_extesion <- meta[[dataname]][[model_ver]][[as.character(year)]]
     }
+    filename <- paste(dataname, year, file_extesion, sep = "_")
     subdirectory <- "flowsa/FlowByActivity"
   }
   # Define file directory
@@ -176,18 +180,21 @@ getFlowsaData <- function(dataname, year) {
     utils::download.file(file.path(url, filename),
                          file.path(directory, filename), mode = "wb", quiet = TRUE)
   }
-  # Load FBA
+  # Load data
   df <- as.data.frame(arrow::read_parquet(file.path(directory, filename)))
   # Keep state-level data, including 50 states and D.C.
   df <- df[substr(df$Location, 1, 2) <= 56 & substr(df$Location, 3, 5) == "000", ]
   return(df)
 }
 
-#' Get state IO data registry on Data Commons.
-#' @return A dataframe of state IO data registry on Data Commons.
-getStateIODataRegistryonDataCommons <- function() {
+#' Get data registry on Data Commons.
+#' @param data_group A string specifying name of data group that is used as the
+#' subdirectory in Data Commons, can be "stateio", "flowsa/FlowBySector", or
+#' "flowsa/FlowByActivity".
+#' @return A dataframe of StateIO data registry on Data Commons.
+getRegistryonDataCommons <- function(data_group = "stateio") {
   registry_ls <- aws.s3::get_bucket(bucket = "edap-ord-data-commons",
-                                    prefix = "stateio")
+                                    prefix = data_group)
   registry <- cbind.data.frame(basename(sapply(registry_ls, `[[`, "Key")),
                                sapply(registry_ls, `[[`, "LastModified"),
                                stringsAsFactors = FALSE)
@@ -195,15 +202,14 @@ getStateIODataRegistryonDataCommons <- function() {
   return(registry)
 }
 
-#' Find the latest state IO data on Data Commons.
+#' Find the latest StateIO data on Data Commons.
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
-#' @return File name of the latest state IO data on Data Commons.
+#' @return File name of the latest StateIO data on Data Commons.
 findLatestStateIODataonDataCommons <- function(filename) {
-  registry <- getStateIODataRegistryonDataCommons()
-  f <- basename(registry[startsWith(registry$Key, filename) &
-                           endsWith(registry$Key, ".rds") &
-                           which.max(as.Date(registry$LastModified)),
-                         "Key"])
+  registry <- getRegistryonDataCommons(data_group = "stateio")
+  f <- registry[startsWith(registry$Key, filename) &
+                  endsWith(registry$Key, ".rds"), ]
+  f <- basename(f[which.max(as.Date(f$LastModified)), "Key"])
   if (length(f) == 0) {
     stop(paste(filename, "not avaialble on Data Commons."))
   }
@@ -213,7 +219,7 @@ findLatestStateIODataonDataCommons <- function(filename) {
 #' Check if file is available on Data Commons. Stop function execution if not.
 #' @param file A string specifying file, e.g. "State_Summary_Use_2017_v0.1.0_rds".
 checkFileonDataCommons <- function(file) {
-  registry <- getStateIODataRegistryonDataCommons()
+  registry <- getRegistryonDataCommons(data_group = "stateio")
   f <- basename(registry[startsWith(registry$Key, file) &
                            endsWith(registry$Key, ".rds"),
                          "Key"])
@@ -222,7 +228,7 @@ checkFileonDataCommons <- function(file) {
   }
 }
 
-#' Download state IO data file from Data Commons and stores in a local data directory.
+#' Download StateIO data file from Data Commons and stores in a local data directory.
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return An .rds data file downloaded from Data Commons and stored in local directory.
@@ -246,9 +252,9 @@ downloadStateIODatafromDataCommons <- function(filename, ver = NULL) {
                        file.path(directory, f), mode = "wb", quiet = TRUE)
 }
 
-#' Find the latest state IO data in local data directory.
+#' Find the latest StateIO data in local data directory.
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
-#' @return File name of the latest state IO data in local data directory.
+#' @return File name of the latest StateIO data in local data directory.
 findLatestStateIODatainLocalDirectory <- function(filename) {
   files <- list.files(path = file.path(rappdirs::user_data_dir(), "stateio"),
                       pattern = paste0(filename, ".*\\.rds"),
@@ -260,10 +266,10 @@ findLatestStateIODatainLocalDirectory <- function(filename) {
   return(f)
 }
 
-#' Load state IO data file from Data Commons or local data directory.
+#' Load StateIO data file from Data Commons or local data directory.
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
-#' @return The pathname to the state IO data file.
+#' @return A StateIO data product (usually a list of dataframes).
 #' @export
 loadStateIODataFile <- function(filename, ver = NULL) {
   # Define file name
@@ -351,7 +357,8 @@ writeDatafileMeta <- function(year, iolevel, dataname, path) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
-#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse", "CommodityOutput, and "IndustryOutput".
+#' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
+#' "CommodityOutput, and "IndustryOutput".
 #' @param path User-defined local path.
 #' @return A datetime object for desired data file from local folder.
 readDatafileMeta <- function(year, iolevel, dataname, path) {
