@@ -74,4 +74,7 @@ getBEAStateEmployment <- function(year) {
   }
 }
 # Download, save and document BEA state employment data
-getBEAStateEmployment(year)
+for (year in 2012:2020) {
+  getBEAStateEmployment(year)
+  print(year)
+}
