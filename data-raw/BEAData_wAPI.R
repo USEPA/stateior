@@ -45,6 +45,7 @@ getBEAStateEmployment <- function(year) {
     DateLastModified_linecode <- stringr::str_match(toString(notes),
                                                     "Last updated: (.*?)--")[2]
     DateLastModified <- rbind(DateLastModified, DateLastModified_linecode)
+    Sys.sleep(3)
   }
   
   # Save data
