@@ -47,7 +47,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           fetch-depth: 0
-          ref: dev
+          ref: 'ver-0.2.0'
       # - run: git checkout HEAD^
 
       - uses: r-lib/actions/setup-pandoc@v2
@@ -69,17 +69,17 @@ jobs:
       - name: Render model validation Rmarkdown file
         run: |
           install.packages("rmarkdown")
-          for (year in 2012:2017) {
+          for (year in 2018:2020) {
             rmarkdown::render("inst/doc/ValidateModel.Rmd", output_dir = "inst/doc/output", output_file = paste0("ValidateModel_", year, ".md"))
           }
         shell: Rscript {0}
         
       - name: Commit model validation results
         run: |
-          git fetch origin dev
-          git pull origin dev
+          git fetch origin ver-0.2.0
+          git pull origin ver-0.2.0
           git config user.name "GitHub Actions Bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add inst/doc/output/ValidateModel*.md
           git commit -m "Update model validation documents"
-          git push origin dev
+          git push origin ver-0.2.0

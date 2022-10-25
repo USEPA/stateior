@@ -17,7 +17,8 @@ getNationalUse <- function(iolevel, year) {
 #' @return A data frame contains state Compensation for all states at a specific year.
 getStateEmpCompensation <- function(year) {
   # Load pre-saved state Compensation 2007-2017
-  StateEmpCompensation <- loadStateIODataFile(paste0("State_Compensation_", year))
+  StateEmpCompensation <- loadStateIODataFile(paste0("State_Compensation_", year),
+                                              ver = model_ver)
   StateEmpCompensation <- StateEmpCompensation[, c("GeoName", "LineCode", as.character(year))]
   return(StateEmpCompensation)
 }
@@ -27,7 +28,8 @@ getStateEmpCompensation <- function(year) {
 #' @return A data frame contains state Tax for all states at a specific year.
 getStateTax <- function(year) {
   # Load pre-saved state Tax 2007-2017
-  StateTax <- loadStateIODataFile(paste0("State_Tax_", year))
+  StateTax <- loadStateIODataFile(paste0("State_Tax_", year),
+                                  ver = model_ver)
   StateTax <- StateTax[, c("GeoName", "LineCode", as.character(year))]
   return(StateTax)
 }
@@ -37,7 +39,8 @@ getStateTax <- function(year) {
 #' @return A data frame contains state GOS for all states at a specific year.
 getStateGOS <- function(year) {
   # Load pre-saved state GOS 2007-2017
-  StateGOS <- loadStateIODataFile(paste0("State_GOS_", year))
+  StateGOS <- loadStateIODataFile(paste0("State_GOS_", year),
+                                  ver = model_ver)
   StateGOS <- StateGOS[, c("GeoName", "LineCode", as.character(year))]
   return(StateGOS)
 }
@@ -47,7 +50,8 @@ getStateGOS <- function(year) {
 #' @return A data frame contains state PCE for all states at a specific year.
 getStatePCE <- function(year) {
   # Load pre-saved state PCE
-  StatePCE <- loadStateIODataFile(paste0("State_PCE_", year))
+  StatePCE <- loadStateIODataFile(paste0("State_PCE_", year),
+                                  ver = model_ver)
   StatePCE <- StatePCE[, c("GeoName", "LineCode", as.character(year))]
   return(StatePCE)
 }
@@ -59,7 +63,8 @@ getStatePCE <- function(year) {
 #' @return A data frame contains state-US Commodity Output ratios at BEA Summary level.
 calculateStateCommodityOutputRatio <- function(year) {
   # Load state Make table
-  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
+  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year),
+                                      ver = model_ver)
   states <- names(StateMake_ls)
   # Load US Commodity output
   US_Make <- getNationalMake("Summary", year)
@@ -87,7 +92,8 @@ estimateStateIntermediateConsumption <- function(year) {
   commodities <- getVectorOfCodes("Summary", "Commodity")
   
   # Load state Make table
-  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
+  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year),
+                                      ver = model_ver)
   # Load US Make and Use tables
   US_Make <- getNationalMake("Summary", year)
   US_Use <- getNationalUse("Summary", year)
@@ -444,7 +450,8 @@ estimateStateExport <- function(year) {
   State_Export <- State_Export[, "F040", drop = FALSE]
   
   # Adjust state international exports to avoid state exports > state commodity output
-  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
+  StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year),
+                                      ver = model_ver)
   State_CommOutput <- as.data.frame(unlist(lapply(names(StateMake_ls),
                                                   function(x) colSums(StateMake_ls[[x]]))))
   rownames(State_CommOutput) <- paste(rep(names(StateMake_ls), each = ncol(StateMake_ls[[1]])),
@@ -511,7 +518,8 @@ estimateStateExport <- function(year) {
 #' @return A data frame contains state S&L government expenditure ratio for all states at a specific year at BEA Summary level.
 calculateStateSLGovExpenditureRatio <- function(year) {
   # Load state and local government expenditure
-  GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year))
+  GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year),
+                                ver = model_ver)
   GovExp_statetotal <- rowSums(GovExp[, c(state.name, "District of Columbia")])
   GovExp[, "Overseas"] <- GovExp[, "United States Total"] - GovExp_statetotal
   # Map to BEA Summary sectors
@@ -635,8 +643,10 @@ calculateStateUSEmpCompensationRatio <- function(year) {
 #' @return A data frame contains weighting factor of each expenditure component over US total gov expenditure.
 calculateUSGovExpenditureWeightFactor <- function(year, defense) {
   # Load data
-  GovConsumption <- loadStateIODataFile(paste0("GovConsumption_", year))
-  GovInvestment <- loadStateIODataFile(paste0("GovInvestment_", year))
+  GovConsumption <- loadStateIODataFile(paste0("GovConsumption_", year),
+                                        ver = model_ver)
+  GovInvestment <- loadStateIODataFile(paste0("GovInvestment_", year),
+                                       ver = model_ver)
   # Keep rows by line code
   if (defense) {
     GovConsumption <- GovConsumption[GovConsumption$Line %in% c(26, 28), ]

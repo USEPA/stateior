@@ -1,8 +1,8 @@
 #' Get US import/export table from usatrade.census.gov, and convert it to Census
 #' import/export table format.
-#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying year of interest.
 #' @param flow_ratio_type Type of commodity flow, can be "export" or "import".
-#' @return A data frame contains US import/export data from 2012-2017.
+#' @return A data frame contains US import/export data for the specified year.
 getCensusUSATradebyNAICS <- function(year, flow_ratio_type) {
   # Load the downloaded table from usatrade.census.gov
   FileName <- paste0("Census_USATrade",
@@ -42,12 +42,14 @@ getCensusUSATradebyNAICS <- function(year, flow_ratio_type) {
                                 date_accessed = date_last_modified)
 }
 # Download, save and document 2012 state trade data (from Census USA Trade Export and Import)
-Census_USATradeExport_2012 <- getCensusUSATradebyNAICS(2012, "export")
-Census_USATradeImport_2012 <- getCensusUSATradebyNAICS(2012, "import")
+if (year == 2012) {
+  getCensusUSATradebyNAICS(2012, "export")
+  getCensusUSATradebyNAICS(2012, "import")
+}
 
 #' Get Census export by NAICS data for a specific year.
 #' Find guide at https://www.census.gov/foreign-trade/reference/guides/Guide%20to%20International%20Trade%20Datasets.pdf
-#' @param year A numeric value between 2013 and current year specifying the year
+#' @param year A numeric value larger than 2012 specifying year of interest.
 #' of interest.
 #' @return A data frame contains state export by NAICS data for the specified year.
 getCensusStateExportbyNAICS <- function(year) {
@@ -59,44 +61,52 @@ getCensusStateExportbyNAICS <- function(year) {
                 "?get=NAICS,CTY_NAME,STATE,ALL_VAL_YR&YEAR=",
                 year,
                 "&MONTH=12")
-  # Download table and convert to dataframe
-  export <- as.data.frame(jsonlite::fromJSON(url),
-                          stringsAsFactors = FALSE)[-1, -6]
   # Get date_last_modified
   date_last_modified <- jsonlite::fromJSON(base_url)$dataset$modified
-  # Add column names
-  colnames(export) <- c("NAICS", "CountryName", "State", "Value", "Year")
-  # Convert specific columns to numeric format
-  export[, c("Value", "Year")] <- sapply(export[, c("Value", "Year")], as.numeric)
-  # Keep export by state (!STATE=="") and convert state abbreviation to state name
-  export_states <- export[!export$NAICS == "" & export$State %in% c(state.abb, "DC"), ]
-  state_names <- c(state.name, "District of Columbia")
-  export_states$State <- state_names[match(export_states$State, c(state.abb, "DC"))]
-  # Write data to .rds
-  data_name <- paste("Census_StateExport", year,
-                     utils::packageDescription("stateior", fields = "Version"),
-                     sep = "_")
-  saveRDS(object = export_states,
-          file = paste0(file.path("data", data_name), ".rds"))
-  # Write metadata to JSON
-  useeior:::writeMetadatatoJSON(package = "stateior",
-                                name = data_name,
-                                year = year,
-                                source = "US Census Bureau",
-                                url = url,
-                                date_last_modified = date_last_modified,
-                                date_accessed = as.character(Sys.Date()))
+  # Download table and convert to dataframe
+  tryCatch(
+    exp = {
+      default_options <- options()
+      export <- as.data.frame(jsonlite::fromJSON(url),
+                              stringsAsFactors = FALSE)[-1, -6]
+      options(default_options)
+      # Add column names
+      colnames(export) <- c("NAICS", "CountryName", "State", "Value", "Year")
+      # Convert specific columns to numeric format
+      export[, c("Value", "Year")] <- sapply(export[, c("Value", "Year")], as.numeric)
+      # Keep export by state (!STATE=="") and convert state abbreviation to state name
+      export_states <- export[!export$NAICS == "" & export$State %in% c(state.abb, "DC"), ]
+      state_names <- c(state.name, "District of Columbia")
+      export_states$State <- state_names[match(export_states$State, c(state.abb, "DC"))]
+      # Write data to .rds
+      data_name <- paste("Census_StateExport", year,
+                         utils::packageDescription("stateior", fields = "Version"),
+                         sep = "_")
+      saveRDS(object = export_states,
+              file = paste0(file.path("data", data_name), ".rds"))
+      # Write metadata to JSON
+      useeior:::writeMetadatatoJSON(package = "stateior",
+                                    name = data_name,
+                                    year = year,
+                                    source = "US Census Bureau",
+                                    url = url,
+                                    date_last_modified = date_last_modified,
+                                    date_accessed = as.character(Sys.Date()))
+    },
+    error = function(e) {
+      stop(paste(year, "state export data is not avaliable from Census.",
+                 "Nothing is returned."))
+    }
+  )
 }
-# Download, save and document Census state export data from 2013 to the latest
-# year available
-for (year in 2013:(as.numeric(format(Sys.Date(), "%Y")) - 1)) {
+# Download, save and document Census state export data for specified year
+if (year >= 2013) {
   getCensusStateExportbyNAICS(year)
 }
 
 #' Get Census import by NAICS data for a specific year.
 #' Find guide at https://www.census.gov/foreign-trade/reference/guides/Guide%20to%20International%20Trade%20Datasets.pdf
-#' @param year A numeric value between 2013 and current year specifying the year
-#' of interest.
+#' @param year A numeric value larger than 2012 specifying year of interest.
 #' @return A data frame contains state import by NAICS data for the specified year.
 getCensusStateImportbyNAICS <- function(year) {
   # Create URL
@@ -107,43 +117,51 @@ getCensusStateImportbyNAICS <- function(year) {
                 "?get=NAICS,CTY_NAME,STATE,GEN_VAL_YR&YEAR=",
                 year,
                 "&MONTH=12")
-  # Download table and convert to dataframe
-  import <- as.data.frame(jsonlite::fromJSON(url),
-                          stringsAsFactors = FALSE)[-1, -6]
   # Get date_last_modified
   date_last_modified <- jsonlite::fromJSON(base_url)$dataset$modified
-  # Add column names
-  colnames(import) <- c("NAICS", "CountryName", "State", "Value", "Year")
-  # Convert specific columns to numeric format
-  import[, c("Value", "Year")] <- sapply(import[, c("Value", "Year")], as.numeric)
-  # Keep import by state (!STATE=="") and convert state abbreviation to state name
-  import_states <- import[!import$NAICS == "" & import$State %in% c(state.abb, "DC"), ]
-  state_names <- c(state.name, "District of Columbia")
-  import_states$State <- state_names[match(import_states$State, c(state.abb, "DC"))]
-  # Write data to .rds
-  data_name <- paste("Census_StateImport", year,
-                     utils::packageDescription("stateior", fields = "Version"),
-                     sep = "_")
-  saveRDS(object = import_states,
-          file = paste0(file.path("data", data_name), ".rds"))
-  # Write metadata to JSON
-  useeior:::writeMetadatatoJSON(package = "stateior",
-                                name = data_name,
-                                year = year,
-                                source = "US Census Bureau",
-                                url = url,
-                                date_last_modified = date_last_modified,
-                                date_accessed = as.character(Sys.Date()))
+  tryCatch(
+    exp = {
+      # Download table and convert to dataframe
+      default_options <- options()
+      import <- as.data.frame(jsonlite::fromJSON(url),
+                              stringsAsFactors = FALSE)[-1, -6]
+      options(default_options)
+      # Add column names
+      colnames(import) <- c("NAICS", "CountryName", "State", "Value", "Year")
+      # Convert specific columns to numeric format
+      import[, c("Value", "Year")] <- sapply(import[, c("Value", "Year")], as.numeric)
+      # Keep import by state (!STATE=="") and convert state abbreviation to state name
+      import_states <- import[!import$NAICS == "" & import$State %in% c(state.abb, "DC"), ]
+      state_names <- c(state.name, "District of Columbia")
+      import_states$State <- state_names[match(import_states$State, c(state.abb, "DC"))]
+      # Write data to .rds
+      data_name <- paste("Census_StateImport", year,
+                         utils::packageDescription("stateior", fields = "Version"),
+                         sep = "_")
+      saveRDS(object = import_states,
+              file = paste0(file.path("data", data_name), ".rds"))
+      # Write metadata to JSON
+      useeior:::writeMetadatatoJSON(package = "stateior",
+                                    name = data_name,
+                                    year = year,
+                                    source = "US Census Bureau",
+                                    url = url,
+                                    date_last_modified = date_last_modified,
+                                    date_accessed = as.character(Sys.Date()))
+    },
+    error = function(e) {
+      stop(paste(year, "state import data is not avaliable from Census.",
+                 "Nothing is returned."))
+    }
+  )
 }
-# Download, save and document  Census state import data from 2013 to the latest
-# year available
-for (year in 2013:(as.numeric(format(Sys.Date(), "%Y")) - 1)) {
+# Download, save and document Census state import data for specified year
+if (year >= 2013) {
   getCensusStateImportbyNAICS(year)
 }
 
 #' Download Census state and local gov expenditure for a specific year.
-#' @param year A numeric value between 2012 and 2017 specifying the year
-#' of interest.
+#' @param year A numeric value specifying year of interest.
 #' @return A data frame containing Census state and local gov expenditure for
 #' the specified year.
 getStateLocalGovExpenditure <- function(year) {
@@ -159,67 +177,84 @@ getStateLocalGovExpenditure <- function(year) {
     } else {
       FileType <- ".xlsx"
     }
+    if (year == 2018) {
+      suffix <- "_revised"
+    } else {
+      suffix <- ""
+    }
     # Create url
     url <- paste0(base_url, year, "/summary-tables/", substr(year, 3, 4),
-                  "slsstab1", table, FileType)
-    TableName <- paste0(substr(year, 3, 4), "slsstab1", table, FileType)
-    directory <- "inst/extdata/StateLocalGovFinances/"
-    if (!file.exists(directory)) {
-      dir.create(directory, recursive = TRUE)
+                  "slsstab1", table, suffix, FileType)
+    if (year >= 2018) {
+      url <- sub("summary-tables/", "", url)
     }
-    FullFileName <- file.path(directory, TableName)
-    # Download file
-    if (!file.exists(FullFileName)) {
-      utils::download.file(url, FullFileName, mode = "wb")
-    }
-    date_accessed <- as.character(as.Date(file.mtime(FullFileName)))
-    # Specify rows to skip based on year
-    if (year %in% c(2008, 2013:2016)) {
-      skip_rows <- 9
-    } else if (year %in% c(2009:2011)) {
-      skip_rows <- 8
-    } else {
-      skip_rows <- 7
-    }
-    # Load table
-    df_i <- as.data.frame(readxl::read_excel(FullFileName, sheet = 1,
-                                             col_names = TRUE, skip = skip_rows))
-    # Save date_last_modified
-    date_last_modified_i <- sub("Revision date: ",
-                                "",
-                                df_i[grep("Revision date: ",
-                                          df_i$Description), "Description"])
-    date_last_modified_ls[[table]] <- date_last_modified_i
-    # Keep Expenditures only
-    df_i <- df_i[which(df_i$Description == "Expenditure1"):nrow(df_i), ]
-    if (year > 2011) {
-      Line <- as.integer(df_i[complete.cases(df_i), 1])
-    }
-    df_i <- df_i[, colnames(df_i) %in% c("Description", "United States Total",
-                                         state.name, "District of Columbia")]
-    df_ls[[table]] <- df_i[complete.cases(df_i), ]
+    TableName <- paste0(substr(year, 3, 4), "slsstab1", table, suffix, FileType)
+    directory <- "inst/extdata/StateLocalGovFinances"
+    tryCatch(
+      exp = {
+        if (!file.exists(directory)) {
+          dir.create(directory, recursive = TRUE)
+        }
+        FullFileName <- file.path(directory, TableName)
+        # Download file
+        if (!file.exists(FullFileName)) {
+          suppressWarnings(utils::download.file(url, FullFileName, mode = "wb"))
+        }
+        date_accessed <- as.character(as.Date(file.mtime(FullFileName)))
+        # Specify rows to skip based on year
+        if (year %in% c(2012, 2017)) {
+          skip_rows <- 7
+        } else if (year %in% c(2009:2011)) {
+          skip_rows <- 8
+        } else {
+          skip_rows <- 9
+        }
+        # Load table
+        df_i <- as.data.frame(readxl::read_excel(FullFileName, sheet = 1,
+                                                 col_names = TRUE, skip = skip_rows))
+        # Save date_last_modified
+        date_last_modified_i <- sub("Revision date: ",
+                                    "",
+                                    df_i[grep("Revision date: ",
+                                              df_i$Description), "Description"])
+        date_last_modified_ls[[table]] <- date_last_modified_i
+        # Keep Expenditures only
+        df_i <- df_i[which(df_i$Description == "Expenditure1"):nrow(df_i), ]
+        if (year > 2011) {
+          Line <- as.integer(df_i[complete.cases(df_i), 1])
+        }
+        df_i <- df_i[, colnames(df_i) %in% c("Description", "United States Total",
+                                             state.name, "District of Columbia")]
+        df_ls[[table]] <- df_i[complete.cases(df_i), ]
+      },
+      error = function(e) {
+        stop(paste(year, "state and local government expenditure data",
+                   "is not avaliable from Census. Nothing is returned."))
+      }
+    )
   }
-  df_ls[["b"]][, "Description"] <- NULL
-  df <- cbind(Line, df_ls[["a"]], df_ls[["b"]])
-  # Convert values to numeric and $
-  df[, 3:ncol(df)] <- sapply(df[, 3:ncol(df)], as.numeric)*1E3
-  date_last_modified <- unique(unlist(date_last_modified_ls))
-  # Write data to .rds
-  data_name <- paste("Census_StateLocalGovExpenditure", year,
-                     utils::packageDescription("stateior", fields = "Version"),
-                     sep = "_")
-  saveRDS(object = df,
-          file = paste0(file.path("data", data_name), ".rds"))
-  # Write metadata to JSON
-  useeior:::writeMetadatatoJSON(package = "stateior",
-                                name = data_name,
-                                year = year,
-                                source = "US Census Bureau",
-                                url = base_url,
-                                date_last_modified = date_last_modified,
-                                date_accessed = date_accessed)
+  if (length(df_ls) > 0) {
+    df_ls[["b"]][, "Description"] <- NULL
+    df <- cbind(Line, df_ls[["a"]], df_ls[["b"]])
+    # Convert values to numeric and $
+    df[, 3:ncol(df)] <- sapply(df[, 3:ncol(df)], as.numeric)*1E3
+    date_last_modified <- unique(unlist(date_last_modified_ls))
+    # Write data to .rds
+    data_name <- paste("Census_StateLocalGovExpenditure", year,
+                       utils::packageDescription("stateior", fields = "Version"),
+                       sep = "_")
+    saveRDS(object = df,
+            file = paste0(file.path("data", data_name), ".rds"))
+    # Write metadata to JSON
+    useeior:::writeMetadatatoJSON(package = "stateior",
+                                  name = data_name,
+                                  year = year,
+                                  source = "US Census Bureau",
+                                  url = base_url,
+                                  date_last_modified = date_last_modified,
+                                  date_accessed = date_accessed)
+  }
 }
-# Download, save and document 2013-2017 state local government expenditure (from Census)
-for (year in 2012:2017) {
-  getStateLocalGovExpenditure(year)
-}
+# Download, save and document Census state local government expenditure data
+# for specified year
+getStateLocalGovExpenditure(year)
