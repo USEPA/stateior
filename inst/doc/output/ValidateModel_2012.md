@@ -218,25 +218,315 @@ There are no failures.
 
 ##### Relative difference: (L\*y - output)/output \<= 1^-2, or 1%.
 
-##### 18.1 Georgia and Rest of the US
+##### 18.1 Alabama and Rest of the US
 
 Absolute Difference: There are no failures.
 
 Relative Difference: There are no failures.
 
-##### 18.2 Minnesota and Rest of the US
+##### 18.2 Alaska and Rest of the US
 
 Absolute Difference: There are no failures.
 
 Relative Difference: There are no failures.
 
-##### 18.3 Oregon and Rest of the US
+##### 18.3 Arizona and Rest of the US
 
 Absolute Difference: There are no failures.
 
 Relative Difference: There are no failures.
 
-##### 18.4 Washington and Rest of the US
+##### 18.4 Arkansas and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.5 California and Rest of the US
+
+Absolute Difference: There are 4 failures, and they are
+
+|     | rownames                 |    result | check       |
+| --- | :----------------------- | --------: | :---------- |
+| 164 | California.339.Industry  |   1325009 | L\*y-output |
+| 198 | California.5415.Industry | \-1191303 | L\*y-output |
+| 235 | RoUS.339.Industry        | \-1323680 | L\*y-output |
+| 269 | RoUS.5415.Industry       |   1193922 | L\*y-output |
+
+Relative Difference: There are no failures.
+
+##### 18.6 Colorado and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.7 Connecticut and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.8 Delaware and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.10 Florida and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.11 Georgia and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.12 Hawaii and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.13 Idaho and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.14 Illinois and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.15 Indiana and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.16 Iowa and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.17 Kansas and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.18 Kentucky and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.19 Louisiana and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.20 Maine and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.21 Maryland and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.22 Massachusetts and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.23 Michigan and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.24 Minnesota and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.25 Mississippi and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.26 Missouri and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.27 Montana and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.28 Nebraska and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.29 Nevada and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.30 New Hampshire and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.31 New Jersey and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.32 New Mexico and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.33 New York and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.34 North Carolina and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.35 North Dakota and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.36 Ohio and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.37 Oklahoma and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.38 Oregon and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.40 Pennsylvania and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.41 Rhode Island and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.42 South Carolina and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.43 South Dakota and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.44 Tennessee and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.45 Texas and Rest of the US
+
+Absolute Difference: There are 4 failures, and they are
+
+|     | rownames           |    result | check       |
+| --- | :----------------- | --------: | :---------- |
+| 149 | Texas.211.Industry | \-1163208 | L\*y-output |
+| 151 | Texas.213.Industry |   2914047 | L\*y-output |
+| 220 | RoUS.211.Industry  |   1166755 | L\*y-output |
+| 222 | RoUS.213.Industry  | \-2911277 | L\*y-output |
+
+Relative Difference: There are no failures.
+
+##### 18.46 Utah and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.47 Vermont and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.48 Virginia and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.49 Washington and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.50 West Virginia and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.51 Wisconsin and Rest of the US
+
+Absolute Difference: There are no failures.
+
+Relative Difference: There are no failures.
+
+##### 18.52 Wyoming and Rest of the US
 
 Absolute Difference: There are no failures.
 

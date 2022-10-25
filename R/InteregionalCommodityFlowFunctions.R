@@ -55,7 +55,8 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, ioschema, iol
   StateCommOutput <- loadStateIODataFile(paste0("State_",
                                                 iolevel,
                                                 "_CommodityOutput_",
-                                                year))[[state]]
+                                                year),
+                                         ver = model_ver)[[state]]
   colnames(StateCommOutput) <- "CommodityOutput"
   # Merge with BEAtoTradedorLocal
   StateCommOutput <- merge(BEAtoTradedorLocal, StateCommOutput,

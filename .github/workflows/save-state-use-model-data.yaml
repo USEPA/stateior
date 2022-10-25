@@ -1,5 +1,5 @@
 # This workflow is designed to be manually triggered only.
-name: Save state use model data as .rds
+name: Save state use model data as .rds in parallel runs
 
 on:
   workflow_dispatch: # allow manual trigger
@@ -8,13 +8,25 @@ jobs:
   generate-save-data:
     runs-on: ${{ matrix.config.os }}
 
-    name: ${{ matrix.config.os}} (${{ matrix.config.r}})
+    name: ${{ matrix.script-run }}, ${{ matrix.data-year }} (${{ matrix.config.os}}, ${{ matrix.config.r}})
     
     strategy:
       fail-fast: false
       matrix:
         config:
           - {os: ubuntu-latest, r: 'release'}
+        script-run:
+          - data-raw/StateUseModel.R
+        data-year:
+          - 2012
+          - 2013
+          - 2014
+          - 2015
+          - 2016
+          - 2017
+          - 2018
+          - 2019
+          - 2020
 
     # env:
       # R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -22,15 +34,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: r-lib/actions/setup-pandoc@v1
+      - uses: r-lib/actions/setup-pandoc@v2
 
-      - uses: r-lib/actions/setup-r@v1
+      - uses: r-lib/actions/setup-r@v2
         with:
           r-version: ${{ matrix.config.r }}
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
       
-      - uses: r-lib/actions/setup-r-dependencies@v1
+      - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           extra-packages: devtools
       
@@ -46,7 +58,8 @@ jobs:
       - name: Load stateior, generate and save state use IO data
         run: |
           devtools::load_all()
-          source("data-raw/StateUseModel.R")
+          year <- ${{ matrix.data-year }}
+          source("${{ matrix.script-run }}")
         shell: Rscript {0}
       
       # Upload .rds files

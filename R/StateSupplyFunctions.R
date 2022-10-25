@@ -17,7 +17,7 @@ getNationalMake <- function(iolevel, year) {
 #' @return A data frame contains state GVA for all states at a specific year.
 getStateGVA <- function(year) {
   # Load pre-saved state GVA data
-  StateGVA <- loadStateIODataFile(paste0("State_GVA_", year))
+  StateGVA <- loadStateIODataFile(paste0("State_GVA_", year), ver = model_ver)
   StateGVA <- StateGVA[, c("GeoName", "LineCode", as.character(year))]
   return(StateGVA)
 }
@@ -72,7 +72,8 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
       allocation_factors[allocation_factors$LineCode == linecode, "factor"] <- weight_vector/sum(weight_vector)
     }
     # Load BEA state Emp
-    BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year))
+    BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
+                                       ver = model_ver)
     # Map BEA state Emp (from LineCode) to BEA Summary
     BEAStateEmp <- merge(BEAStateEmp[BEAStateEmp$GeoName %in%
                                        c(state.name, "District of Columbia"),
@@ -301,7 +302,8 @@ estimateStateCommodityOutputRatiofromAlternativeSources <- function(year) {
 #' @return A data frame contains State Employment by BEA Summary.
 getStateEmploymentbyBEASummary <- function(year) {
   # BEA State Emp
-  BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year))
+  BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
+                                     ver = model_ver)
   EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
   BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
                        EmptoBEAmapping, by = "LineCode")
@@ -349,7 +351,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   Ag <- Ag[, c("BEA_2012_Summary_Code", "State", "Value", "Ratio")]
   
   # Load Fishery Landings and Forestry CutValue data from flowsa
-  Fishery <- getFlowsaData("NOAA_FisheryLandings", year)
+  Fishery <- getFlowsaData("NOAA_FisheriesLandings", year)
   FisheryForestry <- rbind(Fishery,
                            USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy == "All Species", ])
   # Convert State_FIPS to numeric values
@@ -383,10 +385,19 @@ getFAFCommodityOutput <- function(year) {
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv",
                                     package = "stateior"))
   # Load pre-saved FAF4 commodity flow data
-  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"))
+  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"), ver = model_ver)
+  # Define value_col and origin_col
+  if (year == 2012) {
+    value_col <- paste0("value_", year)
+  } else if (year %in% c(2013:2018)) {
+    value_col <- paste0("curval_", year)
+  } else {
+    value_col <- paste0("current_value_", year)
+  }
+  origin_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_orig")]
   # Keep domestic and export trade, keep useful columns, then rename
   FAF <- FAF[FAF$trade_type %in% c(1, 3),
-             c("dms_origst", "sctg2", paste0("value_", year))]
+             c(origin_col, "sctg2", paste0("value_", year))]
   colnames(FAF) <- c("State_FIPS", "SCTG", "Value")
   # Calculate state commodity output by SCTG
   FAF <- merge(FAF, FIPS_STATE, by = "State_FIPS", all.x = TRUE)

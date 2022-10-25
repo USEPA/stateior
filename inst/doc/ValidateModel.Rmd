@@ -20,14 +20,15 @@ logging::basicConfig(level = 40)
 ```{r report-function}
 reportValidationResult <- function(failures) {
   if (any(nrow(failures) == 0, length(failures) == 0)) {
-    cat("There are no failures.\n\n")
+    cat("There are no failures.\n")
   } else if (any(nrow(failures) == 1, length(failures) == 1)) {
     cat("There is", nrow(failures), "failure, and it is")
-    knitr::kable(failures, "simple")
+    print(knitr::kable(failures, "simple"))
   } else {
     cat("There are", nrow(failures), "failures, and they are")
-    knitr::kable(failures, "simple")
+    print(knitr::kable(failures, "simple"))
   }
+  cat("\n")
 }
 ```
 
@@ -650,54 +651,25 @@ validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
   return(list(A = A, L = L, y = y, Validation = validation))
 }
 
-# Generate validation results
-GA_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Georgia", year, ioschema = 2012, iolevel = "Summary")
-MN_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Minnesota", year, ioschema = 2012, iolevel = "Summary")
-OR_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Oregon", year, ioschema = 2012, iolevel = "Summary")
-WA_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput("Washington", year, ioschema = 2012, iolevel = "Summary")
-
-# Failures
-GA_failures <- formatValidationResult(GA_2r_LagaintsOutput_Validation$Validation[, "L*y-output", drop = FALSE],
-                                      abs_diff = TRUE, tolerance = 1E6)[["Failure"]]
-MN_failures <- formatValidationResult(MN_2r_LagaintsOutput_Validation$Validation[, "L*y-output", drop = FALSE],
-                                      abs_diff = TRUE, tolerance = 1E6)[["Failure"]]
-OR_failures <- formatValidationResult(OR_2r_LagaintsOutput_Validation$Validation[, "L*y-output", drop = FALSE],
-                                      abs_diff = TRUE, tolerance = 1E6)[["Failure"]]
-WA_failures <- formatValidationResult(WA_2r_LagaintsOutput_Validation$Validation[, "L*y-output", drop = FALSE],
-                                      abs_diff = TRUE, tolerance = 1E6)[["Failure"]]
-GA_failures_reldiff <- formatValidationResult(GA_2r_LagaintsOutput_Validation$Validation[, "rel_diff", drop = FALSE],
-                                              abs_diff = TRUE, tolerance = 1E-2)[["Failure"]]
-MN_failures_reldiff <- formatValidationResult(MN_2r_LagaintsOutput_Validation$Validation[, "rel_diff", drop = FALSE],
-                                              abs_diff = TRUE, tolerance = 1E-2)[["Failure"]]
-OR_failures_reldiff <- formatValidationResult(OR_2r_LagaintsOutput_Validation$Validation[, "rel_diff", drop = FALSE],
-                                              abs_diff = TRUE, tolerance = 1E-2)[["Failure"]]
-WA_failures_reldiff <- formatValidationResult(WA_2r_LagaintsOutput_Validation$Validation[, "rel_diff", drop = FALSE],
-                                              abs_diff = TRUE, tolerance = 1E-2)[["Failure"]]
+Failures_ls <- list()
+Failures_RelDiff_ls <- list()
+for (state in state.name) {
+  # Generate validation results
+  SoI_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput(state, year, ioschema = 2012, iolevel = "Summary")
+  # Failures
+  Failures_ls[[state]] <- formatValidationResult(SoI_2r_LagaintsOutput_Validation$Validation[, "L*y-output", drop = FALSE],
+                                                 abs_diff = TRUE, tolerance = 1E6)[["Failure"]]
+  Failures_RelDiff_ls[[state]] <- formatValidationResult(SoI_2r_LagaintsOutput_Validation$Validation[, "rel_diff", drop = FALSE],
+                                                         abs_diff = TRUE, tolerance = 1E-2)[["Failure"]]
+}
 ```
 
 ```{r report-results}
-# GA
-cat("##### 18.1 Georgia and Rest of the US\n")
-cat("Absolute Difference: ")
-reportValidationResult(GA_failures)
-cat("Relative Difference: ")
-reportValidationResult(GA_failures_reldiff)
-# MN
-cat("##### 18.2 Minnesota and Rest of the US\n")
-cat("Absolute Difference: ")
-reportValidationResult(MN_failures)
-cat("Relative Difference: ")
-reportValidationResult(MN_failures_reldiff)
-# OR
-cat("##### 18.3 Oregon and Rest of the US\n")
-cat("Absolute Difference: ")
-reportValidationResult(OR_failures)
-cat("Relative Difference: ")
-reportValidationResult(OR_failures_reldiff)
-# WA
-cat("##### 18.4 Washington and Rest of the US\n")
-cat("Absolute Difference: ")
-reportValidationResult(WA_failures)
-cat("Relative Difference: ")
-reportValidationResult(WA_failures_reldiff)
+for (state in state.name) {
+  cat(paste0("##### 18.", which(states == state)), state, "and Rest of the US\n")
+  cat("Absolute Difference: \n")
+  reportValidationResult(Failures_ls[[state]])
+  cat("Relative Difference: \n")
+  reportValidationResult(Failures_RelDiff_ls[[state]])
+}
 ```

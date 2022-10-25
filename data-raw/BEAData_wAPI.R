@@ -1,8 +1,8 @@
-#' Get BEA state employment (full-time and part-time) data from the earliest to
-#' the latest year available.
-#' @return A data frame of BEA state employment data from the earliest to the
-#' latest year available.
-getBEAStateEmployment <- function() {
+#' Get BEA state employment (full-time and part-time) data for a specified year.
+#' Use BEA API guide https://apps.bea.gov/API/docs/index.htm.
+#' @param year A numeric value specifying year of interest.
+#' @return A data frame of BEA state employment data for the specified year.
+getBEAStateEmployment <- function(year) {
   APIkey <- readLines(rappdirs::user_data_dir("BEA_API_KEY.txt"), warn = FALSE)
   linecodes_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
                           APIkey,
@@ -19,14 +19,14 @@ getBEAStateEmployment <- function() {
   DateLastModified <- data.frame()
   for (linecode in keys) {
     StateEmp_linecode_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
-                                           APIkey,
-                                           "&method=GetData",
-                                           "&datasetname=Regional",
-                                           "&TableName=SAEMP25N",
-                                           "&LineCode=", linecode,
-                                           "&GeoFIPS=STATE",
-                                           "&Year=Last10",
-                                           "&ResultFormat=json")
+                                    APIkey,
+                                    "&method=GetData",
+                                    "&datasetname=Regional",
+                                    "&TableName=SAEMP25N",
+                                    "&LineCode=", linecode,
+                                    "&GeoFIPS=STATE",
+                                    "&Year=LAST10", # can be "ALL" to incl. 1998-
+                                    "&ResultFormat=json")
     response <- jsonlite::fromJSON(StateEmp_linecode_txt)
     # Get employment data by linecode
     StateEmp_linecode <- response$BEAAPI$Results$Data
@@ -48,7 +48,7 @@ getBEAStateEmployment <- function() {
   }
   
   # Save data
-  for (year in min(StateEmp$TimePeriod):max(StateEmp$TimePeriod)) {
+  if (year <= max(StateEmp$TimePeriod)) {
     # Reshape to wide table
     df <- reshape2::dcast(StateEmp,
                           GeoFips + GeoName + LineCode ~ TimePeriod,
@@ -67,8 +67,10 @@ getBEAStateEmployment <- function() {
                                   url = "https://apps.bea.gov/api",
                                   date_last_modified = unique(DateLastModified[, 1]),
                                   date_accessed = as.character(Sys.Date()))
+  } else {
+    logging::logwarn(paste(year, "state employment data is not avaliable from BEA.",
+                           "Nothing is returned."))
   }
 }
-# Download, save and document BEA state employment data from the earliest to the
-# latest year available.
-getBEAStateEmployment()
+# Download, save and document BEA state employment data
+getBEAStateEmployment(year)
