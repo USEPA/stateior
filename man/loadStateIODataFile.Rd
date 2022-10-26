@@ -2,7 +2,7 @@
 % Please edit documentation in R/UtilityFunctions.R
 \name{loadStateIODataFile}
 \alias{loadStateIODataFile}
-\title{Load state IO data file from Data Commons or local data directory.}
+\title{Load StateIO data file from Data Commons or local data directory.}
 \usage{
 loadStateIODataFile(filename, ver = NULL)
 }
@@ -12,8 +12,8 @@ loadStateIODataFile(filename, ver = NULL)
 \item{ver}{A string specifying version of the data, default is NULL, can be "v0.1.0".}
 }
 \value{
-The pathname to the state IO data file.
+A StateIO data product (usually a list of dataframes).
 }
 \description{
-Load state IO data file from Data Commons or local data directory.
+Load StateIO data file from Data Commons or local data directory.
 }

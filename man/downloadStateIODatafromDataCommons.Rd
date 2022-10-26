@@ -2,7 +2,7 @@
 % Please edit documentation in R/UtilityFunctions.R
 \name{downloadStateIODatafromDataCommons}
 \alias{downloadStateIODatafromDataCommons}
-\title{Download state IO data file from Data Commons and stores in a local data directory.}
+\title{Download StateIO data file from Data Commons and stores in a local data directory.}
 \usage{
 downloadStateIODatafromDataCommons(filename, ver = NULL)
 }
@@ -15,5 +15,5 @@ downloadStateIODatafromDataCommons(filename, ver = NULL)
 An .rds data file downloaded from Data Commons and stored in local directory.
 }
 \description{
-Download state IO data file from Data Commons and stores in a local data directory.
+Download StateIO data file from Data Commons and stores in a local data directory.
 }

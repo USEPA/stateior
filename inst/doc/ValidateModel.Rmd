@@ -106,31 +106,18 @@ cat("\n")
 reportValidationResult(failures)
 ```
 
-### Compare state to US IO tables (negativity in the same cell & state sum == US totals)
-#### 3. Sum of each cell across all state Make tables must almost equal (<= 0.001) the same cell in US Make table.
-```{r check3}
-df0 <- US_Summary_Make
-df1 <- Reduce("+", State_Summary_Make_ls)
-rownames(df1) <- gsub(".*\\.", "", rownames(df1))
-df1 <- df1[rownames(df0), colnames(df0)]
-# Compare aggregated state Make against US Make
-failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
-reportValidationResult(failures)
-```
-
-#### 4. There should not be any negative values in state Make table, unless they are negative in US Make table.
+#### 3. There should not be any negative values in state Make table, unless they are negative in US Make table.
 Note: only exception being Overseas, which isn't used for further calculations, and if the same cell in US Make table is also negative.
-```{r check4}
-US_failures <- formatValidationResult(US_Summary_Make - abs(US_Summary_Make),
-                                      abs_diff = TRUE, tolerance = 0)[["Failure"]]
+```{r check3}
+US_failures <- formatValidationResult(US_Summary_Make,
+                                      abs_diff = TRUE, tolerance = 0)[["Pass"]]
 colnames(US_failures) <- c("Industry", "Commodity")
 # Validate Make table and extract failures for each state
 failures <- data.frame()
 for (state in states[states != "Overseas"]) {
   df <- as.data.frame(State_Summary_Make_ls[[state]])
   # Check if there is zero in state Make table
-  failures_state <- formatValidationResult(df - abs(df), abs_diff = TRUE,
-                                           tolerance = 0)[["Failure"]]
+  failures_state <- formatValidationResult(df, abs_diff = TRUE, tolerance = 0)[["Pass"]]
   colnames(failures_state) <- c("Industry", "Commodity")
   # If failure is in US Make table, remove it from state failures
   if (nrow(failures_state) > 0) {
@@ -146,9 +133,9 @@ for (state in states[states != "Overseas"]) {
 reportValidationResult(failures)
 ```
 
-#### 5. Sum of each industry's output across all states must almost equal (<= 1E7, or $10 million by industry) the industry output in US Make Table.
+#### 4. Sum of each industry's output across all states must almost equal (<= 1E7, or $10 million by industry) the industry output in US Make Table.
 The threshold is set to 1E7 because there are differences (within +/- $10 million) between US industry output summed from Make and that summed from Use, comparing sum of state industry output (summed from state Use) to US industry output summed from US Make should account for those inherent differences at the national level.
-```{r check5}
+```{r check4}
 df0 <- as.data.frame(rowSums(US_Summary_Make))
 df1 <- Reduce("+", State_Summary_IndustryOutput_ls)
 rownames(df1) <- gsub(".*\\.", "", rownames(df1))
@@ -159,9 +146,9 @@ colnames(failures) <- c("Industry", "")
 reportValidationResult(failures)
 ```
 
-#### 6. Sum of each commodity's output across all states must almost equal (<= 1E7, or $10 million by commodity) the commodity output in US Make Table.
+#### 5. Sum of each commodity's output across all states must almost equal (<= 1E7, or $10 million by commodity) the commodity output in US Make Table.
 The threshold is set to 1E7 because there are differences (within +/- $10 million) between US industry output summed from Make and that summed from Use, comparing sum of state industry output (summed from state Use) to US industry output summed from US Make should account for those inherent differences at the national level.
-```{r check6}
+```{r check5}
 df0 <- as.data.frame(colSums(US_Summary_Make))
 df1 <- Reduce("+", State_Summary_CommodityOutput_ls)
 rownames(df1) <- gsub(".*\\.", "", rownames(df1))
@@ -172,10 +159,10 @@ colnames(failures) <- c("Commodity", "")
 reportValidationResult(failures)
 ```
 
-#### 7. Sum of each commodity's output across all states must almost equal (<= 1E^7, or $10 million by commodity) commodity output in US Use Table.
+#### 6. Sum of each commodity's output across all states must almost equal (<= 1E^7, or $10 million by commodity) commodity output in US Use Table.
 Note: even if the threshold is met, track the difference for each commodity. Save result as a type of quality control check.
 
-```{r check7}
+```{r check6}
 df0 <- as.data.frame(rowSums(US_Summary_Use))
 df1 <- Reduce("+", State_Summary_CommodityOutput_ls)
 rownames(df1) <- gsub(".*\\.", "", rownames(df1))
@@ -189,9 +176,8 @@ colnames(diff) <- "q_state_sum - q_US_use"
 knitr::kable(diff, "simple")
 ```
 
-#### 8. All cells that are zero in US Make table must remain zero in state Make tables.
-```{r check8}
-# Find zero values in US Make table
+#### 7. All cells that are zero in US Make table must remain zero in state Make tables. Find zero values in US Make table.
+```{r check7}
 US_zeros <- formatValidationResult(US_Summary_Make - 0, abs_diff = TRUE,
                                    tolerance = 0)[["Pass"]]
 colnames(US_zeros) <- c("Industry", "Commodity")
@@ -211,30 +197,55 @@ for (state in states) {
 reportValidationResult(failures)
 ```
 
-#### 9. Sum of each cell across all state Use tables must almost equal (<= 1E5, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
+#### 8. Sum of each cell across all state Use tables must almost equal (<= 5E6, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
 Note: failures associated with 'F050 - Imports' are acceptable. Because state imports are not directly derived from US imports, a gap in imports between state sum and national total is reasonable.
 
-```{r check9}
+```{r check8}
 StateUseValidationFailures_absdiff <- validateStateUseAgainstNationlUse(domestic = FALSE, rel_diff = FALSE)
 StateDomesticUseValidationFailures_absdiff <- validateStateUseAgainstNationlUse(domestic = TRUE, rel_diff = FALSE)
 StateUseValidationFailures_reldiff <- validateStateUseAgainstNationlUse(domestic = FALSE, rel_diff = TRUE)
 StateDomesticUseValidationFailures_reldiff <- validateStateUseAgainstNationlUse(domestic = TRUE, rel_diff = TRUE)
 
 # State Use tables
-cat("##### 9.1 State Use tables (checking absolute differences)\n")
+cat("##### 8.1 State Use tables (checking absolute differences)\n")
 reportValidationResult(StateUseValidationFailures_absdiff)
 # State Domestic Use tables
-cat("##### 9.2 State Domestic Use tables (checking absolute differences)\n")
+cat("##### 8.2 State Domestic Use tables (checking absolute differences)\n")
 reportValidationResult(StateDomesticUseValidationFailures_absdiff)
 # State Use tables
-cat("##### 9.3 State Use tables (checking relative differences)\n")
+cat("##### 8.3 State Use tables (checking relative differences)\n")
 reportValidationResult(StateUseValidationFailures_reldiff)
 # State Domestic Use tables
-cat("##### 9.4 State Domestic Use tables (checking relative differences)\n")
+cat("##### 8.4 State Domestic Use tables (checking relative differences)\n")
 reportValidationResult(StateDomesticUseValidationFailures_reldiff)
 ```
 
 ### Check two-region model results
+#### 9. Check if commodity output from two-region Make and Domestic Use are almost equal (relative difference <= 0.01).
+```{r check9}
+failures <- c()
+for (state in states[states != "Overseas"]) {
+  # Calculate Commodity Output (q) from Make and Use
+  q_make <- colSums(TwoRegionMake_ls[[state]])
+  use_2r <- TwoRegionDomesticUsewithTrade_ls[[state]]
+  q_use <- c(rowSums(use_2r[["SoI2SoI"]][, c(industries, FD_cols, ITA_col, "ExportResidual")]) +
+               rowSums(use_2r[["SoI2RoUS"]][, c(industries, FD_cols, ITA_col)]),
+             rowSums(use_2r[["RoUS2RoUS"]][, c(industries, FD_cols, ITA_col, "ExportResidual")]) +
+               rowSums(use_2r[["RoUS2SoI"]][, c(industries, FD_cols, ITA_col)]))
+  # Calculate relative differences in q_make and q_use
+  rel_diff <- (q_use - q_make)/q_make
+  # Compare rel_diff against 0 with a tolerance of 1E-3
+  failures_state <- formatValidationResult(rel_diff, abs_diff = TRUE, tolerance = 0.01)[["Failure"]]
+  if (nrow(failures_state) > 0) {
+    failures_state$State <- state
+  }
+  colnames(failures_state)[1:3] <- c("Commodity", "Relative Diff", "Validation")
+  failures <- rbind(failures, failures_state)
+}
+cat("\n")
+reportValidationResult(failures)
+```
+
 #### 10. If SoI commodity output == 0, SoI2SoI ICF ratio == 0
 ```{r check10}
 failures <- c()
@@ -252,7 +263,6 @@ for (state in states[states != "Overseas"]) {
   diff <- setdiff(CO_zeros$Commodity, SoI2SoI_ICF_zeros)
   failures_state <- SoI2SoI_ICF_zeros[SoI2SoI_ICF_zeros %in% diff]
   failures <- c(failures, failures_state)
-  print(state)
 }
 cat("\n")
 reportValidationResult(failures)
@@ -271,7 +281,7 @@ for (state in states[states != "Overseas"]) {
   colnames(df) <- paste(rep(paste(state, c("SoI2SoI", "RoUS2RoUS"), sep = "_"), each = 2),
                         colnames(df), sep = "$")
   # Compare SoI and RoUS interregional exports and imports against 0
-  failures_state <- formatValidationResult(abs(df) - df, abs_diff = FALSE, tolerance = 0)[["Failure"]]
+  failures_state <- formatValidationResult(df, abs_diff = FALSE, tolerance = 0)[["Pass"]]
   failures <- rbind(failures, failures_state)
 }
 reportValidationResult(failures)
@@ -288,7 +298,7 @@ for (state in states[states != "Overseas"]) {
   df <- as.data.frame(sapply(df, round, 1))
   rownames(df) <- rownames(TwoRegionTable_state[["SoI2SoI"]])
   # Compare SoI net exports + RoUS net exports against 0
-  failures_state <- formatValidationResult(df, abs_diff = TRUE, tolerance = 0)[["Failure"]]
+  failures_state <- formatValidationResult(df, abs_diff = TRUE, tolerance = 0)[["Pass"]]
   failures <- rbind(failures, failures_state)
 }
 reportValidationResult(failures)
@@ -321,8 +331,8 @@ reportValidationResult(failures)
 #### 14. Value in SoI2SoI and RoUS2RoUS can be negative only when the same cell is negative in national Use table
 ```{r check14}
 # Find negative values in US Use table
-US_negatives <- formatValidationResult(abs(US_Summary_DomesticUse) - US_Summary_DomesticUse,
-                                       abs_diff = FALSE, tolerance = 0)[["Failure"]]
+US_negatives <- formatValidationResult(US_Summary_DomesticUse,
+                                       abs_diff = FALSE, tolerance = 0)[["Pass"]]
 colnames(US_negatives) <- c("Commodity", "Industry")
 # Validate the position of zero values in state Make tables
 failures <- data.frame()
@@ -332,9 +342,9 @@ for (state in states[states != "Overseas"]) {
   columns <- c(getVectorOfCodes("Summary", "Industry"), getFinalDemandCodes("Summary"))
   # Find negative values in SoI2SoI Use table
   df_SoI <- TwoRegionTable_state[["SoI2SoI"]][, columns]
-  SoI_negatives <- formatValidationResult(abs(df_SoI) - df_SoI, abs_diff = FALSE,
-                                          tolerance = 0)[["Failure"]]
-  colnames(SoI_negatives) <- c("Commodity", "Industry")
+  SoI_negatives <- formatValidationResult(df_SoI, abs_diff = FALSE,
+                                          tolerance = 0)[["Pass"]]
+  colnames(SoI_negatives)[1:2] <- c("Commodity", "Industry")
   SoI_negatives$index <- paste(SoI_negatives$Commodity, SoI_negatives$Industry)
   SoI_negatives$table <- paste(state, "SoI2SoI Use")
   # Find difference between SoI_negatives and US_negatives:
@@ -343,9 +353,9 @@ for (state in states[states != "Overseas"]) {
                          paste(US_negatives$Commodity, US_negatives$Industry))
   # Find negative values in RoUS2RoUS Use table
   df_RoUS <- TwoRegionTable_state[["RoUS2RoUS"]][, columns]
-  RoUS_negatives <- formatValidationResult(abs(df_RoUS) - df_RoUS, abs_diff = FALSE,
-                                           tolerance = 0)[["Failure"]]
-  colnames(RoUS_negatives) <- c("Commodity", "Industry")
+  RoUS_negatives <- formatValidationResult(df_RoUS, abs_diff = FALSE,
+                                           tolerance = 0)[["Pass"]]
+  colnames(RoUS_negatives)[1:2] <- c("Commodity", "Industry")
   RoUS_negatives$index <- paste(RoUS_negatives$Commodity, RoUS_negatives$Industry)
   RoUS_negatives$table <- paste(state, "RoUS2RoUS Use")
   # Find difference between RoUS_negatives and US_negatives:
@@ -429,8 +439,8 @@ reportValidationResult(failures)
 
 #### 17. Number of negative cells in SoI2SoI, SoI2RoUS, RoUS2SoI and RoUS2RoUS <= Number of negative cells in national Use table
 ```{r check17}
-US_negatives <- formatValidationResult(abs(US_Summary_DomesticUse) - US_Summary_DomesticUse,
-                                       abs_diff = FALSE, tolerance = 0)[["Failure"]]
+US_negatives <- formatValidationResult(US_Summary_DomesticUse,
+                                       abs_diff = FALSE, tolerance = 0)[["Pass"]]
 colnames(US_negatives) <- c("Commodity", "Industry")
 failure <- data.frame()
 for (state in states[states != "Overseas"]) {
@@ -441,8 +451,7 @@ for (state in states[states != "Overseas"]) {
   for (table in names(TwoRegionTable_state)[1:4]) {
     # Find number of negative cells in two-region Use table
     df <- TwoRegionTable_state[[table]][, columns]
-    state_negatives <- formatValidationResult(abs(df) - df, abs_diff = FALSE,
-                                              tolerance = 0)[["Failure"]]
+    state_negatives <- formatValidationResult(df, abs_diff = FALSE, tolerance = 0)[["Pass"]]
     colnames(state_negatives) <- c("Commodity", "Industry")
     state_negatives$index <- paste(state_negatives$Commodity, state_negatives$Industry)
     state_negatives$table <- paste(state, table, "Use")
@@ -460,21 +469,32 @@ for (state in states[states != "Overseas"]) {
 reportValidationResult(failures)
 ```
 
+#### 18. Non-square model verification. Validate L matrix of two-region model and final demand against SoI and RoUS output.
 
-### Select states to use for 2R testing
-```{r select-states, include=FALSE}
-sel_states <- c("Georgia","Minnesota","Washington","Oregon")
+##### Absolute difference: L*y - output <= 1^6, or $1 million.
+
+##### Relative difference: (L*y - output)/output <= 1^-2, or 1%.
+```{r check18, include=FALSE}
+source('inst/doc/Check_2R_Leontief.R', local = knitr::knit_global())
+Failures_ls <- list()
+Failures_RelDiff_ls <- list()
+for (state in state.name) {
+  # Generate validation results
+  SoI_2r_LagaintsOutput_Validation <- validateTwoRegionLagainstOutput(state, year, ioschema = 2012, iolevel = "Summary")
+  # Failures
+  Failures_ls[[state]] <- formatValidationResult(SoI_2r_LagaintsOutput_Validation$Validation[, "L*y-output", drop = FALSE],
+                                                 abs_diff = TRUE, tolerance = 1E6)[["Failure"]]
+  Failures_RelDiff_ls[[state]] <- formatValidationResult(SoI_2r_LagaintsOutput_Validation$Validation[, "rel_diff", drop = FALSE],
+                                                         abs_diff = TRUE, tolerance = 1E-2)[["Failure"]]
+}
 ```
 
-
-#### 18. Non-square model verification. Validate L matrix of two-region model and final demand against SoI and RoUS output. L*y - output <= 1^6, or $1 million.
-
-```{r check18, include=FALSE}
-source('inst/doc/Check_2R_Leontief.R',local=knitr::knit_global())
-cat("##### 18. Failures\n")
-
-for (s in sel_states) {
-  cat("Checking for Failures for",s,"...\n")
-  reportValidationResult(TR_LagaintsOutput_failures[[s]])
-}  
+```{r report-results}
+for (state in state.name) {
+  cat(paste0("##### 18.", which(states == state)), state, "and Rest of the US\n")
+  cat("Absolute Difference: \n")
+  reportValidationResult(Failures_ls[[state]])
+  cat("Relative Difference: \n")
+  reportValidationResult(Failures_RelDiff_ls[[state]])
+}
 ```
