@@ -1,6 +1,6 @@
-# Define model version
+# Define model version for accessing data from DataCommons
 # model_ver <- utils::packageDescription(pkg = "stateior", fields = "Version")
-model_ver <- NULL
+model_ver <- NULL # to access the latest available data
 
 #' Build a state supply model for all 52 states/regions (including DC and Overseas)
 #' for a given year
