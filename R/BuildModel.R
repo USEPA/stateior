@@ -1,5 +1,6 @@
 # Define model version
-model_ver <- utils::packageDescription(pkg = "stateior", fields = "Version")
+# model_ver <- utils::packageDescription(pkg = "stateior", fields = "Version")
+model_ver <- NULL
 
 #' Build a state supply model for all 52 states/regions (including DC and Overseas)
 #' for a given year
