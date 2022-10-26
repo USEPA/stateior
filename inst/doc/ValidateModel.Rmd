@@ -17,51 +17,36 @@ knitr::opts_chunk$set(echo = FALSE,
 logging::basicConfig(level = 40)
 ```
 
-```{r report-function}
-reportValidationResult <- function(failures) {
-  if (any(nrow(failures) == 0, length(failures) == 0)) {
-    cat("There are no failures.\n")
-  } else if (any(nrow(failures) == 1, length(failures) == 1)) {
-    cat("There is", nrow(failures), "failure, and it is")
-    print(knitr::kable(failures, "simple"))
-  } else {
-    cat("There are", nrow(failures), "failures, and they are")
-    print(knitr::kable(failures, "simple"))
-  }
-  cat("\n")
-}
+```{r load-stateior}
+library(devtools)
+load_all()
 ```
 
 ### Prepare data
-#### 0. Load state and two-region IO data.
-```{r load-data}
-devtools::load_all()
-# Define basic IO variabls
-commodities <- getVectorOfCodes("Summary", "Commodity")
-industries <- getVectorOfCodes("Summary", "Industry")
-FD_cols <- getFinalDemandCodes("Summary")
-VA_rows <- getVectorOfCodes("Summary", "ValueAdded")
-ITA_col <- "F051"
-# Load Us Make, Use, and DomesticUse
-US_Summary_Make <- getNationalMake("Summary", year)
-US_Summary_Use <- getNationalUse("Summary", year)
-US_Summary_DomesticUse <- generateUSDomesticUse("Summary", year)
-# Load state Make, industry and commodity output
-State_Summary_Make_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year))
-states <- names(State_Summary_Make_ls)
-# Load state total Use and domestic Use
-State_Summary_Use_ls <- loadStateIODataFile(paste0("State_Summary_Use_", year))
-State_Summary_DomesticUse_ls <- loadStateIODataFile(paste0("State_Summary_DomesticUse_", year))
-State_Summary_IndustryOutput_ls <- loadStateIODataFile(paste0("State_Summary_IndustryOutput_", year))
-State_Summary_CommodityOutput_ls <- loadStateIODataFile(paste0("State_Summary_CommodityOutput_", year))
-# Load two-region tables
-TwoRegionMake_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_Make_", year))
-TwoRegionCommodityOutput_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_CommodityOutput_", year))
-TwoRegionIndustryOutput_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_IndustryOutput_", year))
-TwoRegionDomesticUse_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_DomesticUse_", year))
-TwoRegionDomesticUsewithTrade_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_DomesticUsewithTrade_", year))
-TwoRegionITA_ls <- loadStateIODataFile(paste0("TwoRegion_Summary_InternationalTradeAdjustment_", year))
-cat("State and two-region IO data successfully loaded.")
+#### 0. Load data
+```{r load-meta-data}
+source('inst/doc/DefineMetadata.R',local=knitr::knit_global())
+```
+
+```{r set-year}
+if (!exists("year")) {
+  year <- 2012
+}
+```
+
+```{r load-US-data}
+source('inst/doc/LoadUSdata.R',local=knitr::knit_global())
+cat(paste(year,"US IO data for states successfully loaded."))
+```
+
+```{r load-1R-data}
+source('inst/doc/Load1Rdata.R',local=knitr::knit_global())
+cat(paste(year,"single-region IO data for states successfully loaded."))
+```
+
+```{r load-2R-data}
+source('inst/doc/Load2Rdata.R',local=knitr::knit_global())
+cat(paste(year,"two region IO data for states successfully loaded."))
 ```
 
 ### Check state IO tables
@@ -86,15 +71,38 @@ cat("\n")
 reportValidationResult(failures)
 ```
 
-### Compare state to US IO tables (negativity in the same cell & state sum == US totals)
-#### 2. Sum of each cell across all state Make tables must almost equal (<= 0.001) the same cell in US Make table.
-```{r check2}
-df0 <- US_Summary_Make
-df1 <- Reduce("+", State_Summary_Make_ls)
-rownames(df1) <- gsub(".*\\.", "", rownames(df1))
-df1 <- df1[rownames(df0), colnames(df0)]
-# Compare aggregated state Make against US Make
-failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
+#### 2. Check commodity output
+#### 2.1. Check if commodity output from state Make and Use are almost equal (relative difference <= 0.01).
+```{r check2.1}
+failures <- c()
+for (state in states[states != "Overseas"]) {
+  # Calculate Commodity Output (q) from Make and Use
+  q_make <- colSums(State_Summary_Make_ls[[state]])
+  q_use <- rowSums(State_Summary_Use_ls[[state]][rownames(US_Summary_Use), colnames(US_Summary_Use)])
+  # Calculate relative differences in q_make and q_use
+  rel_diff <- (q_use - q_make)/q_make
+  # Compare rel_diff against 0 with a tolerance of 1E-3
+  failures_state <- formatValidationResult(rel_diff, abs_diff = TRUE, tolerance = 0.01)[["Failure"]]
+  if (nrow(failures_state) > 0) {
+    failures_state$State <- state
+  }
+  colnames(failures_state)[1:3] <- c("Commodity", "Relative Diff", "Validation")
+  failures <- rbind(failures, failures_state)
+}
+cat("\n")
+reportValidationResult(failures)
+```
+
+#### 2.2. Check if sum of commodity output from state Use and sum demand from Domestic Use are almost equal (relative difference <= 0.01).
+```{r check2.2}
+q_sum <- Reduce("+", State_Summary_CommodityOutput_ls)
+demand_sum <- Reduce("+", lapply(State_Summary_DomesticUse_ls, rowSums))[commodities]
+# Calculate relative differences in q_sum and demand_sum
+rel_diff <- (q_sum - demand_sum)/demand_sum
+# Compare rel_diff against 0 with a tolerance of 1E-3
+failures <- formatValidationResult(rel_diff, abs_diff = TRUE, tolerance = 0.01)[["Failure"]]
+colnames(failures_state)[1:3] <- c("Commodity", "Relative Diff", "Validation")
+cat("\n")
 reportValidationResult(failures)
 ```
 
@@ -193,50 +201,6 @@ reportValidationResult(failures)
 Note: failures associated with 'F050 - Imports' are acceptable. Because state imports are not directly derived from US imports, a gap in imports between state sum and national total is reasonable.
 
 ```{r check8}
-# Create a function to implement the validation
-validateStateUseAgainstNationlUse <- function(domestic = FALSE, rel_diff = FALSE) {
-  if (domestic) {
-    Use_ls <- State_Summary_DomesticUse_ls
-    df0 <- US_Summary_DomesticUse
-  } else {
-    Use_ls <- State_Summary_Use_ls
-    df0 <- US_Summary_Use
-  }
-  df1 <- Reduce("+", Use_ls)
-  rownames(df1) <- gsub(".*\\.", "", rownames(df1))
-  df1 <- df1[rownames(df0), colnames(df0)]
-  # Compare aggregated state Use table against US Use table
-  if (rel_diff) {
-    failures <- formatValidationResult((df1 - df0)/df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
-    rownames(failures) <- NULL
-    colnames(failures) <- c("Commodity", "Industry/Final Demand", "Relative Diff", "Validation")
-    # Provide values in df0 and df1 for failures
-    if (nrow(failures) > 0) {
-      failures[, c("US", "StateSum")] <- 0
-      for (i in 1:nrow(failures)) {
-        row <- failures[i, "Commodity"]
-        col <- failures[i, "Industry/Final Demand"]
-        failures[i, "US"] <- df0[row, col]
-        failures[i, "StateSum"] <- df1[row, col]
-      }
-    }
-  } else {
-    failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 5E6)[["Failure"]]
-    rownames(failures) <- NULL
-    colnames(failures) <- c("Commodity", "Industry/Final Demand", "Absolute Diff", "Validation")
-    # Compare failures to US values
-    if (nrow(failures) > 0) {
-      failures[, "AbsDiffPortioninNationalTotals"] <- 0
-      for (i in 1:nrow(failures)) {
-        row <- failures[i, "Commodity"]
-        col <- failures[i, "Industry/Final Demand"]
-        failures[i, "AbsDiffPortioninNationalTotals"] <- failures[i, "Absolute Diff"]/df0[row, col]
-      }
-    }
-  }
-  
-  return(failures)
-}
 StateUseValidationFailures_absdiff <- validateStateUseAgainstNationlUse(domestic = FALSE, rel_diff = FALSE)
 StateDomesticUseValidationFailures_absdiff <- validateStateUseAgainstNationlUse(domestic = TRUE, rel_diff = FALSE)
 StateUseValidationFailures_reldiff <- validateStateUseAgainstNationlUse(domestic = FALSE, rel_diff = TRUE)
@@ -511,146 +475,7 @@ reportValidationResult(failures)
 
 ##### Relative difference: (L*y - output)/output <= 1^-2, or 1%.
 ```{r check18, include=FALSE}
-#' @param state A text value specifying state of interest.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
-#' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
-#' @return A list of validation components and result.
-validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
-  startLogging()
-  # Define industries and commodities
-  industries <- getVectorOfCodes(iolevel, "Industry")
-  commodities <- getVectorOfCodes(iolevel, "Commodity")
-  ita_column <- ifelse(iolevel == "Detail", "F05100", "F051")
-  # Define state abbreviation
-  state_abb <- state.abb[which(state.name == state)]
-  logging::loginfo("Generating A matrix of SoI Make table ...")
-  # SoI Make
-  TwoRegionMake <- TwoRegionMake_ls[[state]]
-  SoI_Make <- TwoRegionMake[endsWith(rownames(TwoRegionMake), state_abb),
-                            endsWith(colnames(TwoRegionMake), state_abb)]
-  # SoI commodity output
-  # SoI_Commodity_Output <- State_Summary_CommodityOutput_ls[[state]]
-  TwoRegionCommodityOutput <- TwoRegionCommodityOutput_ls[[state]]
-  SoI_Commodity_Output <- TwoRegionCommodityOutput[endsWith(names(TwoRegionCommodityOutput),
-                                                            state_abb)]
-  # SoI A matrix
-  SoI_A <- useeior:::normalizeIOTransactions(SoI_Make, SoI_Commodity_Output)
-  # Check column sums of SoI_A
-  if (all(abs(colSums(SoI_A) - 1) < 1E-3)) {
-    logging::loginfo("FACT CHECK: column sums of A matrix of SoI Make table == 1.")
-  } else {
-    logging::logwarn("Column sums of A matrix of SoI Make table != 1")
-  }
-
-  logging::loginfo("Generating A matrix of RoUS Make table ...")
-  # RoUS Make
-  RoUS_Make <- TwoRegionMake[endsWith(rownames(TwoRegionMake), "RoUS"),
-                             endsWith(colnames(TwoRegionMake), "RoUS")]
-  # RoUS commodity output
-  RoUS_Commodity_Output <- TwoRegionCommodityOutput[endsWith(names(TwoRegionCommodityOutput),
-                                                            "RoUS")]
-
-  # RoUS A matrix
-  RoUS_A <- useeior:::normalizeIOTransactions(RoUS_Make, RoUS_Commodity_Output)
-  # Check column sums of RoUS_A
-  if (all(abs(colSums(RoUS_A) - 1) < 1E-3)) {
-    logging::loginfo("FACT CHECK: column sums of A matrix of RoUS Make table == 1.")
-  } else {
-    logging::logerror("Column sums of A matrix of RoUS Make table != 1")
-  }
-
-  # Two-region A matrix
-  #                       Commodity                Commodity                  Industry                     Industry
-  #                          SoI                     RoUS                        SoI                         RoUS
-  #               +-----------------------+-------------------------+---------------------------+----------------------------+
-  # Commodity SoI |           0           |            0            |norm(SoI2SoI_Use,  SoI_TIO)|norm(SoI2RoUS_Use, RoUS_TIO)|
-  #               +-----------------------+-------------------------+---------------------------+----------------------------+
-  # Commodity RoUS|           0           |            0            |norm(RoUS2SoI_Use, SoI_TIO)|norm(RoUS2RoUS_Use,RoUS_TIO)|
-  #               +-----------------------+-------------------------+---------------------------+----------------------------+
-  # Industry  SoI |norm(SoI_Make, SoI_TCO)|            0            |             0             |             0              |
-  #               +-----------------------+-------------------------+---------------------------+----------------------------+
-  # Industry  RoUS|           0           |norm(RoUS_Make, RoUS_TCO)|             0             |             0              |
-  #               +-----------------------+-------------------------+---------------------------+----------------------------+
-  #                           Total column sum must equal 1                 Total column sum can but shouldn't equal 1
-
-  logging::loginfo("Generating two-region Domestic Use tables ...")
-  ls <- TwoRegionDomesticUsewithTrade_ls[[state]]
-  TwoRegionIndustryOutput <- TwoRegionIndustryOutput_ls[[state]]
-  SoI_Industry_Output <- TwoRegionIndustryOutput[endsWith(names(TwoRegionIndustryOutput),
-                                                          state_abb)]
-  RoUS_Industry_Output <- TwoRegionIndustryOutput[endsWith(names(TwoRegionIndustryOutput),
-                                                          "RoUS")]
-  # If industry/comm output == 0, it's not viable to generate A matrix, hence set it to 1.
-  SoI_Industry_Output[SoI_Industry_Output == 0] <- 1
-
-  logging::loginfo("Generating A matrix of SoI2SoI Domestic Use table ...")
-  SoI2SoI_A <- useeior:::normalizeIOTransactions(ls[["SoI2SoI"]][, industries],
-                                                 SoI_Industry_Output)
-
-  logging::loginfo("Generating A matrix of RoUS2SoI Domestic Use table ...")
-  RoUS2SoI_A <- useeior:::normalizeIOTransactions(ls[["RoUS2SoI"]][, industries],
-                                                  SoI_Industry_Output)
-
-  logging::loginfo("Generating A matrix of SoI2RoUS Domestic Use table ...")
-  SoI2RoUS_A <- useeior:::normalizeIOTransactions(ls[["SoI2RoUS"]][, industries],
-                                                  RoUS_Industry_Output)
-
-  logging::loginfo("Generating A matrix of RoUS2RoUS Domestic Use table ...")
-  RoUS2RoUS_A <- useeior:::normalizeIOTransactions(ls[["RoUS2RoUS"]][, industries],
-                                                   RoUS_Industry_Output)
-
-  logging::loginfo("Assembling the complete A matrix ...")
-  # Assemble A matrix
-  A_top <- cbind(diag(rep(0, length(commodities)*2)),
-                 cbind(rbind(SoI2SoI_A, RoUS2SoI_A),
-                       rbind(SoI2RoUS_A, RoUS2RoUS_A)))
-  colnames(A_top) <- c(1:ncol(A_top))
-  A_btm <- cbind(as.matrix(Matrix::bdiag(list(as.matrix(SoI_A),
-                                              as.matrix(RoUS_A)))),
-                 diag(rep(0, length(industries)*2)))
-  A <- as.matrix(rbind(A_top, setNames(A_btm, colnames(A_top))))
-  rownames(A) <- paste(c(rep(c(state, "RoUS"), each = length(commodities)),
-                         rep(c(state, "RoUS"), each = length(industries))),
-                       c(rep(commodities, 2), rep(industries, 2)),
-                       c(rep("Commodity", length(commodities)*2),
-                         rep("Industry", length(industries)*2)),
-                       sep = ".")
-  colnames(A) <- rownames(A)
-
-  logging::loginfo("Generating the L matrix ...")
-  # Calculate L matrix
-  I <- diag(nrow(A))
-  L <- solve(I - A, tol = 1E-20)
-
-  logging::loginfo("Calculating y (Final Demand totals) of SoI and RoUS ...")
-  # Calculate Final Demand (y)
-  FD_columns  <- getFinalDemandCodes("Summary")
-  ita_column <- ifelse(iolevel == "Detail", "F05100", "F051")
-  SoI2SoI_y   <- rowSums(ls[["SoI2SoI"]][, c(FD_columns, ita_column, "ExportResidual")])
-  SoI2RoUS_y  <- rowSums(ls[["SoI2RoUS"]][, c(FD_columns, ita_column)])
-  RoUS2SoI_y  <- rowSums(ls[["RoUS2SoI"]][, c(FD_columns, ita_column)])
-  RoUS2RoUS_y <- rowSums(ls[["RoUS2RoUS"]][, c(FD_columns, ita_column, "ExportResidual")])
-  y <- c(SoI2SoI_y + SoI2RoUS_y, RoUS2SoI_y + RoUS2RoUS_y, rep(0, length(industries)*2))
-  names(y) <- rownames(L)
-
-  logging::loginfo("Validating L*y == commodity and industry output ...")
-  # Validate L * y == Output
-  # Output = c(SoI_TCO, RoUS_TCO, SoI_TIO, RoUS_TIO)
-  output <- c(SoI_Commodity_Output, RoUS_Commodity_Output,
-              SoI_Industry_Output, RoUS_Industry_Output)
-  validation <- as.data.frame(L %*% y - output)
-  colnames(validation) <- "L*y-output"
-
-  validation$rel_diff <- validation$`L*y-output`/output
-  validation$Ly <- as.numeric(L %*% y)
-  validation$output <- output
-  validation[validation$output == 1, "rel_diff"] <- 0
-
-  logging::loginfo("Validation complete.")
-  return(list(A = A, L = L, y = y, Validation = validation))
-}
-
+source('inst/doc/Check_2R_Leontief.R', local = knitr::knit_global())
 Failures_ls <- list()
 Failures_RelDiff_ls <- list()
 for (state in state.name) {
