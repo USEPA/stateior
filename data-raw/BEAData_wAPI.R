@@ -45,6 +45,7 @@ getBEAStateEmployment <- function(year) {
     DateLastModified_linecode <- stringr::str_match(toString(notes),
                                                     "Last updated: (.*?)--")[2]
     DateLastModified <- rbind(DateLastModified, DateLastModified_linecode)
+    Sys.sleep(3)
   }
   
   # Save data
@@ -73,4 +74,7 @@ getBEAStateEmployment <- function(year) {
   }
 }
 # Download, save and document BEA state employment data
-getBEAStateEmployment(year)
+for (year in 2012:2020) {
+  getBEAStateEmployment(year)
+  print(year)
+}
