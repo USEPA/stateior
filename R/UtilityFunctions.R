@@ -145,6 +145,9 @@ getTwoRegionDataFileName <- function(year, iolevel, dataname) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state data from FLOWSA.
 getFlowsaData <- function(dataname, year) {
+  if (is.null(model_ver)) {
+    model_ver <- "NULL"
+  }
   # Load metadata
   if (dataname == "Employment") {
     meta <- configr::read.config(system.file("extdata/", "FlowBySector_metadata.yml",
