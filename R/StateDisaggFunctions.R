@@ -9,7 +9,8 @@ getStateModelDisaggSpecs <- function(){
   disaggConfigpath <- system.file(paste0("extdata/disaggspecs/"), paste0(configfile,".yml"), package = "stateior")
   
   model$specs$DisaggregationSpecs <- configfile
-  
+  model$specs$IODataSource <- ""
+
   model <- useeior:::getDisaggregationSpecs(model, disaggConfigpath)
   return(model)
   
