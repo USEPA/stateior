@@ -39,6 +39,7 @@ joinStringswithSlashes <- function(...) {
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param colName A text value specifying desired column name.
 #' @return A vector of codes.
+#' @export
 getVectorOfCodes <- function(iolevel, colName) {
   SchemaInfo <- readCSV(system.file("extdata",
                                     paste0("2012_", iolevel, "_Schema_Info.csv"),
