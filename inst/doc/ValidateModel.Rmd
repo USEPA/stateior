@@ -25,7 +25,7 @@ load_all()
 ### Prepare data
 #### 0. Load data
 ```{r load-meta-data}
-source('inst/doc/DefineMetadata.R',local=knitr::knit_global())
+source('DefineMetadata.R',local=knitr::knit_global())
 ```
 
 ```{r set-year}
@@ -35,17 +35,17 @@ if (!exists("year")) {
 ```
 
 ```{r load-US-data}
-source('inst/doc/LoadUSdata.R',local=knitr::knit_global())
+source('LoadUSdata.R',local=knitr::knit_global())
 cat(paste(year,"US IO data for states successfully loaded."))
 ```
 
 ```{r load-1R-data}
-source('inst/doc/Load1Rdata.R',local=knitr::knit_global())
+source('Load1Rdata.R',local=knitr::knit_global())
 cat(paste(year,"single-region IO data for states successfully loaded."))
 ```
 
 ```{r load-2R-data}
-source('inst/doc/Load2Rdata.R',local=knitr::knit_global())
+source('Load2Rdata.R',local=knitr::knit_global())
 cat(paste(year,"two region IO data for states successfully loaded."))
 ```
 
@@ -475,7 +475,7 @@ reportValidationResult(failures)
 
 ##### Relative difference: (L*y - output)/output <= 1^-2, or 1%.
 ```{r check18, include=FALSE}
-source('inst/doc/Check_2R_Leontief.R', local = knitr::knit_global())
+source('Check_2R_Leontief.R', local = knitr::knit_global())
 Failures_ls <- list()
 Failures_RelDiff_ls <- list()
 for (state in state.name) {
