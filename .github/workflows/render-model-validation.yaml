@@ -3,28 +3,6 @@
 name: Model Validation
 
 on:
-  # push:
-  #   branches: [main, master]
-  #   paths-ignore:
-  #     - '**.md'  # prevent md files (e.g., README.md) in any repo dir from trigering workflow
-  #     - '**.bib'
-  #     - '**.ya?ml'  # captures both .yml and .yaml
-  #     - '**.png'
-  #     # - '**.Rmd'
-  #     - 'LICENSE'
-  #     - '.gitignore'
-  #     - '.gitattributes'
-  # pull_request:
-  #   branches: [master, dev]
-  #   paths-ignore:
-  #     - '**.md'  # prevent md files (e.g., README.md) in any repo dir from trigering workflow
-  #     - '**.bib'
-  #     - '**.ya?ml'  # captures both .yml and .yaml
-  #     - '**.png'
-  #     # - '**.Rmd'
-  #     - 'LICENSE'
-  #     - '.gitignore'
-  #     - '.gitattributes'
   workflow_dispatch:  # also allow manual trigger, for testing purposes
 
 jobs:
@@ -44,10 +22,9 @@ jobs:
       R_KEEP_PKG_SOURCE: yes
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           fetch-depth: 0
-          ref: 'ver-0.2.1'
       # - run: git checkout HEAD^
 
       - uses: r-lib/actions/setup-pandoc@v2
@@ -76,10 +53,10 @@ jobs:
         
       - name: Commit model validation results
         run: |
-          git fetch origin ver-0.2.1
-          git pull origin ver-0.2.1
+          git fetch
+          git pull
           git config user.name "GitHub Actions Bot"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add inst/doc/output/ValidateModel*.md
           git commit -m "Update model validation documents"
-          git push origin ver-0.2.1
+          git push
