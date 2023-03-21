@@ -475,7 +475,6 @@ reportValidationResult(failures)
 
 ##### Relative difference: (L*y - output)/output <= 1^-2, or 1%.
 ```{r check18, include=FALSE}
-source('Check_2R_Leontief.R', local = knitr::knit_global())
 Failures_ls <- list()
 Failures_RelDiff_ls <- list()
 for (state in state.name) {
