@@ -4,7 +4,7 @@ model_spec <- "StateIOv1.0.0-75"
 year <- "2017"
 
 # Load model spec
-specs <- getConfiguration(model_spec, "model")
+specs <- useeior:::getConfiguration(model_spec, "model", pkg="stateior")
 
 # Build model
 TwoRegionModel <- assembleTwoRegionIO(year, iolevel = specs$BaseIOLevel,
