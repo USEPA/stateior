@@ -592,11 +592,11 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
-#' @param disaggState TEMPORARY boolean to trigger disaggregation.
+#' @param disagg_specs name of disaggregation.
 #' @return A list of two-region make, use, domestic use, and Use tables
 #' as well as commodity and industry outputs by state.
 #' @export
-assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
+assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
   startLogging()
   # Define industries, commodities, value added rows, final demand columns, and
   # international trade adjustment column
@@ -627,10 +627,10 @@ assembleTwoRegionIO <- function(year, iolevel, disaggState=FALSE) {
                                                          year),
                                                   ver = model_ver)
   disagg <- NULL # Initialization
-  if(disaggState == TRUE){
+  if(!is.na(disagg_specs)){
 
     # Initialize model 
-    model <- getStateModelDisaggSpecs()
+    model <- getStateModelDisaggSpecs(disagg_specs)
     
     if(length(model$DisaggregationSpecs)!=0){
       disagg <- model$DisaggregationSpecs[[1]]

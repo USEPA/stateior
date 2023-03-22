@@ -15,7 +15,7 @@ IODataSource: "BEA"
 BasePriceType: "PRO"
 BasewithRedefinitions: FALSE
 ScrapIncluded: FALSE
-DisaggregationSpecs: TBD
+DisaggregationSpecs: "UtilityDisaggregation"
 
 DataProduct:
   - "Make"

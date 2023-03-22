@@ -1,16 +1,12 @@
 
 #' Read and assign disaggregation specifications
+#' @param configfile str, name of disaggregation specification
 #' @return A stateior model object with the disaggregation specs loaded.
-getStateModelDisaggSpecs <- function(){
-
-  # Initialize model for every state
+getStateModelDisaggSpecs <- function(configfile){
   model <- list() 
-  configfile <- "UtilityDisaggregation"
-  disaggConfigpath <- system.file(paste0("extdata/disaggspecs/"), paste0(configfile,".yml"), package = "stateior")
-  
   model$specs$DisaggregationSpecs <- configfile
   model$specs$IODataSource <- ""
-
+  disaggConfigpath <- system.file(paste0("extdata/disaggspecs/"), paste0(configfile,".yml"), package = "stateior")
   model <- useeior:::getDisaggregationSpecs(model, disaggConfigpath)
   return(model)
   

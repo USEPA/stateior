@@ -386,6 +386,29 @@ capitalize <- function(string) {
   return(string)
 }
 
+
+#' Gets a stored or user specified model configuration file
+#' @param configname str, name of the configuration file
+#' @param configtype str, configuration type, can be "model"
+#' @param configpaths str vector, paths (including file name) of model configuration file
+#' and optional agg/disagg configuration file(s). If NULL, built-in config files are used.
+#' @return A list of model specifications.
+getConfiguration <- function(configname, configtype, configpaths = NULL) {
+  configfile <- paste0(configname, ".yml")
+  if (is.null(configpaths)) {
+    configpath <- system.file(paste0("extdata/", configtype, "specs/"), configfile, package = "stateior")
+  } else {
+    configpath <- configpaths[endsWith(configpaths, configfile)]
+  }
+  if (!file.exists(configpath)) {
+    stop(paste(configfile, "must be available in ", dirname(configpath)),
+         call. = FALSE)
+  }
+  config <- configr::read.config(configpath)
+  return(config)
+}
+
+
 ##############################################################
 ### All functions below are archived and need modification ###
 ##############################################################
