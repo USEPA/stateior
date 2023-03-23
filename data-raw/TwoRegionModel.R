@@ -5,7 +5,8 @@
 # year <- 2017
 
 # Load model spec
-configpath <- system.file("extdata/modelspecs/", paste0(model_spec, ".yml"))
+logging::loginfo(paste("Generating two region model for", model_spec))
+configpath <- system.file("extdata/modelspecs/", paste0(model_spec, ".yml"), package = "stateior")
 specs <- configr::read.config(configpath)
 # specs <- useeior:::getConfiguration(model_spec, "model", pkg="stateior")
 
