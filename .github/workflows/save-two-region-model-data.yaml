@@ -8,6 +8,7 @@ on:
             description: "Model spec file"
             required: true
             default: "StateIOv1.0.0-s"
+            type: string
 
 
 jobs:
