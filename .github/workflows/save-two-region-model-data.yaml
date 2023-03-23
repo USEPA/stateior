@@ -62,12 +62,10 @@ jobs:
 
       # Load package and generate two-region data
       - name: Load stateior, generate and save two-region tables
-        env:
-          MODEL-SPEC: ${{ github.event.inputs.model_spec }}
         run: |
           devtools::load_all()
           year <- ${{ matrix.data-year }}
-          model_spec <- $MODEL-SPEC
+          model_spec <- ${{ github.event.inputs.model_spec }}
           source("${{ matrix.script-run }}")
         shell: Rscript {0}
       
