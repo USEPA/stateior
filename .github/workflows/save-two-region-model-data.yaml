@@ -5,7 +5,7 @@ on:
   workflow_dispatch: # allow manual trigger
     inputs:
         model_spec:
-            description: "Model spec file"
+            description: "Model spec file (in quotes)"
             required: true
             default: "StateIOv1.0.0-s"
             type: string

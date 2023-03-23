@@ -5,7 +5,10 @@
 # year <- 2017
 
 # Load model spec
-specs <- useeior:::getConfiguration(model_spec, "model", pkg="stateior")
+configfile <- paste0(model_spec, ".yml")
+configpath <- system.file("extdata/modelspecs/", configfile, package = "stateior")
+specs <- configr::read.config(configpath)
+# specs <- useeior:::getConfiguration(model_spec, "model", pkg="stateior")
 
 # Build model
 TwoRegionModel <- assembleTwoRegionIO(year, iolevel = specs$BaseIOLevel,
