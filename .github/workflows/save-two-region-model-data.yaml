@@ -65,7 +65,6 @@ jobs:
         env:
           MODEL-SPEC: ${{ github.event.inputs.model_spec }}
         run: |
-          echo "Generating model: $MODEL-SPEC"
           devtools::load_all()
           year <- ${{ matrix.data-year }}
           model_spec <- $MODEL-SPEC
