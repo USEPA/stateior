@@ -38,7 +38,7 @@ Imports:
 Depends:
   R (>= 3.6)
 Remotes:
-  github::USEPA/useeior@v1.1.0
+  github::USEPA/useeior@linkstateior
 License: file LICENSE
 Encoding: UTF-8
 LazyData: true
