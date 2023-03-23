@@ -627,7 +627,7 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
                                                          year),
                                                   ver = model_ver)
   disagg <- NULL # Initialization
-  if(!is.na(disagg_specs)){
+  if(!is.null(disagg_specs)){
 
     # Initialize model 
     model <- getStateModelDisaggSpecs(disagg_specs)

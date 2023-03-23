@@ -5,8 +5,7 @@
 # year <- 2017
 
 # Load model spec
-configfile <- paste0(model_spec, ".yml")
-configpath <- system.file("extdata/modelspecs/", configfile, package = "stateior")
+configpath <- system.file("extdata/modelspecs/", paste0(model_spec, ".yml"))
 specs <- configr::read.config(configpath)
 # specs <- useeior:::getConfiguration(model_spec, "model", pkg="stateior")
 
