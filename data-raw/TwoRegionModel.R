@@ -1,11 +1,23 @@
 # Generate and save two-region IO tables
+## Temp code inputs:
+# model_spec <- "StateIOv1.0.0-75"
+# model_spec <- "StateIOv1.0.0-s"
+# year <- 2017
+
+# Load model spec
+specs <- useeior:::getConfiguration(model_spec, "model", pkg="stateior")
+
 # Build model
-TwoRegionModel <- assembleTwoRegionIO(year, iolevel = "Summary")
+TwoRegionModel <- assembleTwoRegionIO(year, iolevel = specs$BaseIOLevel,
+                                      disagg_specs = specs$DisaggregationSpecs)
+
+stub <- ifelse(is.null(specs$DisaggregationSpecs), "", specs$DisaggregationSpecs)
+
 # Subset data set
 for (name in names(TwoRegionModel)) {
   df <- TwoRegionModel[[name]]
   # Write data to .rds
-  data_name <- paste("TwoRegion_Summary", name, year,
+  data_name <- paste("TwoRegion_Summary", name, stub, year,
                      utils::packageDescription("stateior", fields = "Version"),
                      sep = "_")
   saveRDS(object = df,
