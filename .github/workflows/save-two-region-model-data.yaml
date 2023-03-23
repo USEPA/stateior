@@ -63,7 +63,7 @@ jobs:
       # Load package and generate two-region data
       - name: Load stateior, generate and save two-region tables
         env:
-          MODEL-SPEC: ${{ github.event.inputs.model-spec }}
+          MODEL-SPEC: ${{ github.event.inputs.model_spec }}
         run: |
           echo "Generating model: $MODEL-SPEC"
           devtools::load_all()
