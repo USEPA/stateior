@@ -24,15 +24,15 @@ jobs:
         script-run:
           - data-raw/TwoRegionModel.R
         data-year:
-          - 2012
-          - 2013
-          - 2014
-          - 2015
-          - 2016
+          # - 2012
+          # - 2013
+          # - 2014
+          # - 2015
+          # - 2016
           - 2017
-          - 2018
-          - 2019
-          - 2020
+          # - 2018
+          # - 2019
+          # - 2020
 
     # env:
       # R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
@@ -62,10 +62,13 @@ jobs:
 
       # Load package and generate two-region data
       - name: Load stateior, generate and save two-region tables
+        env:
+          MODEL-SPEC: ${{ github.event.inputs.model-spec }}
         run: |
+          echo "Generating model: $MODEL-SPEC"
           devtools::load_all()
           year <- ${{ matrix.data-year }}
-          model_spec <- ${{ github.event.inputs.model-spec }}
+          model_spec <- $MODEL-SPEC
           source("${{ matrix.script-run }}")
         shell: Rscript {0}
       
