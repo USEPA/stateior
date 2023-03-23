@@ -95,7 +95,8 @@ reportValidationResult <- function(failures) {
     cat("There are no failures.\n\n")
   } else {
     cat("There are", nrow(failures), "failures, and they are")
-    knitr::kable(failures, "simple")
+    print(knitr::kable(failures, "simple"))
+    cat("\n\n")
   }
 }
 
