@@ -46,7 +46,7 @@ jobs:
       - name: Render model validation Rmarkdown file
         run: |
           install.packages("rmarkdown")
-          for (year in 2018:2020) {
+          for (year in 2012:2020) {
             rmarkdown::render("inst/doc/ValidateModel.Rmd", output_dir = "inst/doc/output", output_file = paste0("ValidateModel_", year, ".md"))
           }
         shell: Rscript {0}
