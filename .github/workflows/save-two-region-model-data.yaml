@@ -72,7 +72,7 @@ jobs:
       
       # Upload .rds files
       - name: Upload .rds files and prepare zip for manual download
-        uses: actions/upload-artifact@v2.3.0
+        uses: actions/upload-artifact@v3.1.1
         with:
           # Artifact name
           name: data and metadata
@@ -83,7 +83,7 @@ jobs:
       
       # Upload .json files 
       - name: Upload .json files and prepare zip for manual download
-        uses: actions/upload-artifact@v2.3.0
+        uses: actions/upload-artifact@v3.1.1
         with:
           # Artifact name
           name: data and metadata
