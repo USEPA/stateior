@@ -71,9 +71,21 @@ cat("\n")
 reportValidationResult(failures)
 ```
 
-#### 2. Check commodity output
-#### 2.1. Check if commodity output from state Make and Use are almost equal (relative difference <= 0.01).
-```{r check2.1}
+### Compare state to US IO tables (negativity in the same cell & state sum == US totals)
+#### 2. Sum of each cell across all state Make tables must almost equal (<= 0.001) the same cell in US Make table.
+```{r check2}
+df0 <- US_Summary_Make
+df1 <- Reduce("+", State_Summary_Make_ls)
+rownames(df1) <- gsub(".*\\.", "", rownames(df1))
+df1 <- df1[rownames(df0), colnames(df0)]
+# Compare aggregated state Make against US Make
+failures <- formatValidationResult(df1 - df0, abs_diff = TRUE, tolerance = 1E-3)[["Failure"]]
+reportValidationResult(failures)
+```
+
+```{r check2.1, eval=FALSE}
+#### (DEPRECATED) 2. Check commodity output
+#### (DEPRECATED) 2.1. Check if commodity output from state Make and Use are almost equal (relative difference <= 0.01).
 failures <- c()
 for (state in states[states != "Overseas"]) {
   # Calculate Commodity Output (q) from Make and Use
@@ -93,8 +105,8 @@ cat("\n")
 reportValidationResult(failures)
 ```
 
-#### 2.2. Check if sum of commodity output from state Use and sum demand from Domestic Use are almost equal (relative difference <= 0.01).
-```{r check2.2}
+```{r check2.2, eval=FALSE}
+#### (DEPRECATED) 2.2. Check if sum of commodity output from state Use and sum demand from Domestic Use are almost equal (relative difference <= 0.01).
 q_sum <- Reduce("+", State_Summary_CommodityOutput_ls)
 demand_sum <- Reduce("+", lapply(State_Summary_DomesticUse_ls, rowSums))[commodities]
 # Calculate relative differences in q_sum and demand_sum
