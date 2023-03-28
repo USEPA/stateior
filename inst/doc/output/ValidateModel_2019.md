@@ -3,9 +3,13 @@ model.
 
 ### Prepare data
 
-#### 0. Load state and two-region IO data.
+#### 0. Load data
 
-State and two-region IO data successfully loaded.
+2019 US IO data for states successfully loaded.
+
+2019 single-region IO data for states successfully loaded.
+
+2019 two region IO data for states successfully loaded.
 
 ### Check state IO tables
 
@@ -25,23 +29,23 @@ Note: only exception being Overseas, which isn’t used for further
 calculations, and if the same cell in US Make table is also negative.
 There are no failures.
 
-#### 4. Sum of each industry’s output across all states must almost equal (\<= 1E7, or $10 million by industry) the industry output in US Make Table.
+#### 4. Sum of each industry’s output across all states must almost equal (\<= 1E7, or \$10 million by industry) the industry output in US Make Table.
 
 The threshold is set to 1E7 because there are differences (within +/-
-$10 million) between US industry output summed from Make and that summed
-from Use, comparing sum of state industry output (summed from state Use)
-to US industry output summed from US Make should account for those
-inherent differences at the national level. There are no failures.
+\$10 million) between US industry output summed from Make and that
+summed from Use, comparing sum of state industry output (summed from
+state Use) to US industry output summed from US Make should account for
+those inherent differences at the national level. There are no failures.
 
-#### 5. Sum of each commodity’s output across all states must almost equal (\<= 1E7, or $10 million by commodity) the commodity output in US Make Table.
+#### 5. Sum of each commodity’s output across all states must almost equal (\<= 1E7, or \$10 million by commodity) the commodity output in US Make Table.
 
 The threshold is set to 1E7 because there are differences (within +/-
-$10 million) between US industry output summed from Make and that summed
-from Use, comparing sum of state industry output (summed from state Use)
-to US industry output summed from US Make should account for those
-inherent differences at the national level. There are no failures.
+\$10 million) between US industry output summed from Make and that
+summed from Use, comparing sum of state industry output (summed from
+state Use) to US industry output summed from US Make should account for
+those inherent differences at the national level. There are no failures.
 
-#### 6. Sum of each commodity’s output across all states must almost equal (\<= 1E^7, or $10 million by commodity) commodity output in US Use Table.
+#### 6. Sum of each commodity’s output across all states must almost equal (\<= 1E^7, or \$10 million by commodity) commodity output in US Use Table.
 
 Note: even if the threshold is met, track the difference for each
 commodity. Save result as a type of quality control check.
@@ -50,7 +54,7 @@ There are no failures.
 
 |        | q_state_sum - q_US_use |
 |--------|-----------------------:|
-| 111CA  |             -6.100e-05 |
+| 111CA  |              6.100e-05 |
 | 113FF  |             -1.000e+06 |
 | 211    |              4.000e+06 |
 | 212    |              1.530e-05 |
@@ -104,7 +108,7 @@ There are no failures.
 | 5415   |              4.000e+06 |
 | 5412OP |             -5.000e+06 |
 | 55     |              2.000e+06 |
-| 561    |              1.221e-04 |
+| 561    |             -2.441e-04 |
 | 562    |              3.000e+06 |
 | 61     |             -1.000e+06 |
 | 621    |             -2.000e+06 |
@@ -117,18 +121,18 @@ There are no failures.
 | 722    |             -2.000e+06 |
 | 81     |             -2.000e+06 |
 | GFGD   |              0.000e+00 |
-| GFGN   |              1.221e-04 |
+| GFGN   |              6.100e-05 |
 | GFE    |              1.000e+06 |
-| GSLG   |              0.000e+00 |
+| GSLG   |             -9.766e-04 |
 | GSLE   |              1.000e+06 |
-| Used   |              0.000e+00 |
+| Used   |             -1.900e-06 |
 | Other  |              1.000e+06 |
 
 #### 7. All cells that are zero in US Make table must remain zero in state Make tables. Find zero values in US Make table.
 
 There are no failures.
 
-#### 8. Sum of each cell across all state Use tables must almost equal (\<= 5E6, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
+#### 8. Sum of each cell across all state Use tables must almost equal (\<= 5E6, or \$5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
 
 Note: failures associated with ‘F050 - Imports’ are acceptable. Because
 state imports are not directly derived from US imports, a gap in imports
@@ -212,7 +216,7 @@ There are no failures.
 
 #### 18. Non-square model verification. Validate L matrix of two-region model and final demand against SoI and RoUS output.
 
-##### Absolute difference: L\*y - output \<= 1^6, or $1 million.
+##### Absolute difference: L\*y - output \<= 1^6, or \$1 million.
 
 ##### Relative difference: (L\*y - output)/output \<= 1^-2, or 1%.
 
@@ -246,8 +250,8 @@ Absolute Difference: There are 2 failures, and they are
 
 |     | rownames                |   result | check       |
 |-----|:------------------------|---------:|:------------|
-| 159 | California.334.Industry |  1170883 | L\*y-output |
-| 230 | RoUS.334.Industry       | -1170779 | L\*y-output |
+| 159 | California.334.Industry |  1170951 | L\*y-output |
+| 230 | RoUS.334.Industry       | -1171015 | L\*y-output |
 
 Relative Difference: There are no failures.
 
@@ -479,10 +483,10 @@ Absolute Difference: There are 4 failures, and they are
 
 |     | rownames           |   result | check       |
 |-----|:-------------------|---------:|:------------|
-| 170 | Texas.324.Industry | -1035754 | L\*y-output |
-| 193 | Texas.525.Industry | -1060201 | L\*y-output |
-| 241 | RoUS.324.Industry  |  1037574 | L\*y-output |
-| 264 | RoUS.525.Industry  |  1049360 | L\*y-output |
+| 170 | Texas.324.Industry | -1035147 | L\*y-output |
+| 193 | Texas.525.Industry | -1060222 | L\*y-output |
+| 241 | RoUS.324.Industry  |  1037275 | L\*y-output |
+| 264 | RoUS.525.Industry  |  1049359 | L\*y-output |
 
 Relative Difference: There are no failures.
 

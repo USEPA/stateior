@@ -3,9 +3,13 @@ model.
 
 ### Prepare data
 
-#### 0. Load state and two-region IO data.
+#### 0. Load data
 
-State and two-region IO data successfully loaded.
+2020 US IO data for states successfully loaded.
+
+2020 single-region IO data for states successfully loaded.
+
+2020 two region IO data for states successfully loaded.
 
 ### Check state IO tables
 
@@ -25,23 +29,23 @@ Note: only exception being Overseas, which isn’t used for further
 calculations, and if the same cell in US Make table is also negative.
 There are no failures.
 
-#### 4. Sum of each industry’s output across all states must almost equal (\<= 1E7, or $10 million by industry) the industry output in US Make Table.
+#### 4. Sum of each industry’s output across all states must almost equal (\<= 1E7, or \$10 million by industry) the industry output in US Make Table.
 
 The threshold is set to 1E7 because there are differences (within +/-
-$10 million) between US industry output summed from Make and that summed
-from Use, comparing sum of state industry output (summed from state Use)
-to US industry output summed from US Make should account for those
-inherent differences at the national level. There are no failures.
+\$10 million) between US industry output summed from Make and that
+summed from Use, comparing sum of state industry output (summed from
+state Use) to US industry output summed from US Make should account for
+those inherent differences at the national level. There are no failures.
 
-#### 5. Sum of each commodity’s output across all states must almost equal (\<= 1E7, or $10 million by commodity) the commodity output in US Make Table.
+#### 5. Sum of each commodity’s output across all states must almost equal (\<= 1E7, or \$10 million by commodity) the commodity output in US Make Table.
 
 The threshold is set to 1E7 because there are differences (within +/-
-$10 million) between US industry output summed from Make and that summed
-from Use, comparing sum of state industry output (summed from state Use)
-to US industry output summed from US Make should account for those
-inherent differences at the national level. There are no failures.
+\$10 million) between US industry output summed from Make and that
+summed from Use, comparing sum of state industry output (summed from
+state Use) to US industry output summed from US Make should account for
+those inherent differences at the national level. There are no failures.
 
-#### 6. Sum of each commodity’s output across all states must almost equal (\<= 1E^7, or $10 million by commodity) commodity output in US Use Table.
+#### 6. Sum of each commodity’s output across all states must almost equal (\<= 1E^7, or \$10 million by commodity) commodity output in US Use Table.
 
 Note: even if the threshold is met, track the difference for each
 commodity. Save result as a type of quality control check.
@@ -128,7 +132,7 @@ There are no failures.
 
 There are no failures.
 
-#### 8. Sum of each cell across all state Use tables must almost equal (\<= 5E6, or $5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
+#### 8. Sum of each cell across all state Use tables must almost equal (\<= 5E6, or \$5 million) the same cell in US Use table. This validates that Total state demand == Total national demand.
 
 Note: failures associated with ‘F050 - Imports’ are acceptable. Because
 state imports are not directly derived from US imports, a gap in imports
@@ -212,7 +216,7 @@ There are no failures.
 
 #### 18. Non-square model verification. Validate L matrix of two-region model and final demand against SoI and RoUS output.
 
-##### Absolute difference: L\*y - output \<= 1^6, or $1 million.
+##### Absolute difference: L\*y - output \<= 1^6, or \$1 million.
 
 ##### Relative difference: (L\*y - output)/output \<= 1^-2, or 1%.
 

@@ -6,3 +6,4 @@
 ^inst/doc$
 ^inst/img$
 ^\.github$
+^.zenodo$
