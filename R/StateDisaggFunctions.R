@@ -1,14 +1,36 @@
 
 #' Read and assign disaggregation specifications
-#' @param configfile str, name of disaggregation specification
+#' Function assumes all states will be disaggregated with the same config file/allocations unless a statefile parameter is included as input.
+#' In this case, the function assumes the statefile paramter will modify the allocation values present in configfile for each state, rather than loading in 50 different sets of allocation values.
+#' @param configfile str, name of disaggregation specification file
+#' @param statefile str, name of state-specific disaggregation spec file that will modify the standard configfile for each state. Should be 1 config file that has the required modifications of configfile for each state
 #' @return A stateior model object with the disaggregation specs loaded.
-getStateModelDisaggSpecs <- function(configfile){
+getStateModelDisaggSpecs <- function(configfile, statefile = NULL){
   model <- list() 
   model$specs$DisaggregationSpecs <- configfile
   model$specs$IODataSource <- ""
   disaggConfigpath <- system.file(paste0("extdata/disaggspecs/"), paste0(configfile,".yml"), package = "stateior")
   model <- useeior:::getDisaggregationSpecs(model, disaggConfigpath, pkg = "stateior")
+  
+  if(!is.null(statefile)){
+    model$specs$StateDisaggSpecs <- getStateSpecificDisaggSpecs(disaggConfigpath, statefile)
+  }
+  
   return(model)
+  
+}
+
+#' Read in state-specific disaggregation values
+#' This function assumes values contained in statefile will modify disaggregation values present in the main disaggregation config file.
+#' @param statefile str, name of state-specific disaggregation spec file that will modify the standard configfile for each state. Should be 1 config file that has the required modifications of configfile for each state
+#' @param disaggConfigpath str, path for statefile 
+#' @return A stateior model object with the state-specific disaggregation specs included in model$specs$STateDisaggSpecs object
+getStateSpecificDisaggSpecs <- function(disaggConfigpath, statefile){
+  
+  temp <-1
+  filename <- file.path(dirname(disaggConfigpath), statefile)
+  stateFileDF <- utils::read.table(filename, sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
+  return(stateFileDF)
   
 }
 
