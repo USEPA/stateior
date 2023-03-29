@@ -1,4 +1,4 @@
-"IndustryCode","CommodityCode","PercentUse","Note"
+"IndustryCode","CommodityCode","PercentUsed","Note"
 "221100/US","221100/US",0.558191280736159,"IntersectionDisagg"
 "221100/US","221200/US",0.0356388595564942,"IntersectionDisagg"
 "221100/US","221300/US",0.00365816865288882,"IntersectionDisagg"

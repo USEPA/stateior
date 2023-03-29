@@ -6,4 +6,5 @@ Disaggregation:
     SectorFile: UtilityDisaggregation_Sectors.csv
     MakeFile: UtilityDisaggregationSummary_Make.csv
     UseFile: UtilityDisaggregationSummary_Use.csv
-    EnvFile: UtilityDisaggregationSummary_Env.csv 
+    EnvFile: UtilityDisaggregationSummary_Env.csv
+    package: "stateior"
