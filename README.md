@@ -9,7 +9,7 @@
 Currently, `stateior` is capable of creating IO tables for each US state and building two-region MRIO models based on those state IO tables at the [BEA](https://www.bea.gov/) Summary level of resolution in the US for all years from 2012-2020.
 The two regions are State of Interest (SoI) and Rest of the US (RoUS).
 `stateior` was initially conceived in support of creating state-specific versions of [USEEIO models](https://www.epa.gov/land-research/us-environmentally-extended-input-output-useeio-models), but may be used for other purposes where state input-output tables are used.
-The methodology used to build the State IO models is described in a [paper in International Regional Science Review](https://doi.org/10.1177/01600176221145874).
+The methodology used to build the StateIO models is described in a [paper in International Regional Science Review](https://doi.org/10.1177/01600176221145874).
 The package is intended to add transparency and reproducibility to the complex process of generating subnational input-output tables, which are not compiled by any statistical agency.
 
 `stateior` implements a robust commodity-industry modeling framework that models supply, use and trade of commodities by industries and final users in 50 U.S. states plus the District of Columbia and includes international import and export. 
