@@ -2,6 +2,8 @@
 <!-- badges: start -->
 [![R CI/CD test](https://github.com/USEPA/stateior/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/USEPA/stateior/actions/workflows/R-CMD-check.yaml)
 [![v0.1.0](http://img.shields.io/badge/v0.1.0-10.5281/zenodo.6954423-blue.svg)](https://doi.org/10.5281/zenodo.6954423)
+[![StateIO paper](http://img.shields.io/badge/StateIO%20paper-10.3390/app12094469-blue.svg)](https://doi.org/10.1177/01600176221145874)
+<!-- badges: end -->
 
 `stateior` is an R package for building multi-regional economic input-output (MRIO) tables of states in the United States, refered to as **StateIO** models. 
 Currently, `stateior` is capable of creating IO tables for each US state and building two-region MRIO models based on those state IO tables at the [BEA](https://www.bea.gov/) Summary level of resolution in the US for all years from 2012-2020.
