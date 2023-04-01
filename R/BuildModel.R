@@ -693,7 +693,14 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
 
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
-  for (state in sort(c(state.name, "District of Columbia"))) {
+  #TEMPORARY FOR DEBUGGING
+  for (state in c("Virginia")){
+#  for (state in sort(c(state.name, "District of Columbia"))) {
+
+    if(state == "Virginia"){
+      temp <-1
+    }
+    
     ## Two-region Make
     model$MakeTransactions <- State_Make_ls[[state]]
     model$FullUse <- State_Use_ls[[state]]
