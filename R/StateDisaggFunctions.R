@@ -12,8 +12,12 @@ getStateModelDisaggSpecs <- function(configfile, statefile = NULL){
   disaggConfigpath <- system.file(paste0("extdata/disaggspecs/"), paste0(configfile,".yml"), package = "stateior")
   model <- useeior:::getDisaggregationSpecs(model, disaggConfigpath, pkg = "stateior")
   
-  if(!is.null(statefile)){
-    model$specs$StateDisaggSpecs <- getStateSpecificDisaggSpecs(disaggConfigpath, statefile)
+  for(disagg in model$DisaggregationSpecs)
+  {
+    if(!is.null(disagg$stateFile)){
+      disagg$stateDF <- getStateSpecificDisaggSpecs(disaggConfigpath, disagg$stateFile) 
+      model$DisaggregationSpecs[[disagg$OriginalSectorCode]] <- disagg
+    }
   }
   
   return(model)
