@@ -648,6 +648,8 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
       #ERROR HERE FOR DISAGG BY PROXY: NEED TO DECIDE IF WE WANT TO REFACTOR THIS CODE TO WORK ONLY FOR DISAGG BY PROXY, IF WE WANT TO KEEP THIS VERSION (DISAGG BASED ON
       # 2020 DETAIL MODEL), OR IF WE WANT TO KEEP BOTH
       # Disaggregate national model objects once (i.e. not for each state)
+      model <- createDisaggFilesFromProxyData(model, disagg, year, "US")
+      
       model <- disaggregateNationalObjectsInStateModel(model, disagg)
   
       # Assign the disaggregated model objects to the original stateior objects, rename some as national
