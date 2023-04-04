@@ -631,8 +631,7 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
 
     # Initialize model 
     model <- getStateModelDisaggSpecs(disagg_specs)
-    #stateDisaggFile <- "Employment_ratios.csv"
-    #model <- getStateModelDisaggSpecs(disagg_specs, stateDisaggFile)
+
     
     if(length(model$DisaggregationSpecs)!=0){
       disagg <- model$DisaggregationSpecs[[1]]
