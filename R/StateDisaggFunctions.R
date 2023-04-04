@@ -290,3 +290,33 @@ disaggregateStateSectorLists <- function(code_vector, disagg) {
 
   return(newList)
 }
+
+
+#### Functions below this line are used for creating disaggFiles from Proxy data, e.g., Make and USe files from Employment ratios.
+
+#' Create Make, Use, and Env ratio files for each state from Proxy data for the relevant sectors.
+#' @param model An stateior model object with model specs and specific IO tables loaded
+#' @param disagg Specifications for disaggregating the current Table
+#' @param disaggYear Integer specifying the state model year
+#' @param disaggState A string value that indicates the state model being disaggregated. For national models, string should be "US"
+#' @return 
+createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggState){
+  
+  temp <-1
+  
+  #Get subset of ratios for current year
+  stateDFYear <- subset(disagg$stateDF, Year == disaggYear & State == disaggState)
+ # outputDF <- data.frame(IndustryCode = character(), CommodityCode = character(), PercentUse = double(), Note = character())
+  # Default Make DF based on proxy employment values
+  industries <- c(rep(disagg$OriginalSectorCode,length(disagg$DisaggregatedSectorCodes)))
+  commodities <- disagg$DisaggregatedSectorCodes
+  PercentUse <- stateDFYear$Share # need to add code to ensure that the order of stateDF$Share is the same as the order of disagg$DisaggregatedSectorCodes
+  note <- c(rep("CommodityDisagg", length(disagg$DisaggregatedSectorCodes)))
+  UseDF <- data.frame(cbind(industries, commodities, PercentUse, note)) #need to rename the columns with the correct column names
+  
+  
+  
+  temp <-2 
+  return(model)
+  
+}
