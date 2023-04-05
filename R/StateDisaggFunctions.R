@@ -109,8 +109,8 @@ disaggregateNationalObjectsInStateModel <- function(model, disagg){
   model <- splitFullUse(model, domestic = FALSE)
   
   # Disaggregate model objects
-  model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
-  model$MakeTransactions[is.na(model$MakeTransactions)] <- 0
+  # model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
+  # model$MakeTransactions[is.na(model$MakeTransactions)] <- 0
   
   model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
   model$DomesticUseTransactions[is.na(model$DomesticUseTransactions)] <- 0
@@ -123,6 +123,9 @@ disaggregateNationalObjectsInStateModel <- function(model, disagg){
   model$UseValueAdded <- useeior:::disaggregateVA(model, disagg)
   model$UseValueAdded[is.na(model$UseValueAdded)] <- 0  
 
+  model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
+  model$MakeTransactions[is.na(model$MakeTransactions)] <- 0
+  
   model$Industries <- disaggregateStateSectorLists(model$Industries, disagg)
   model$Commodities <- disaggregateStateSectorLists(model$Commodities, disagg)
   
@@ -302,18 +305,45 @@ disaggregateStateSectorLists <- function(code_vector, disagg) {
 #' @return 
 createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggState){
   
+  # Note: this function assumes: 
+  # 1) The disaggregation will use the same proxy values for all disaggregated sectors across all rows and columns. 
+  #    That is, if we are disaggregating Summary 22 into the 3 Detail utility sectors, and the proxy allocations are (for example) 0.5/0.25/0.25, then 
+  #    in the Use table, the three Detail utility commodities (rows) will have that same split for across all columns (industries/final demand)
+  # 2) The disagg parameter will contain a disagg$stateDF variable that includes the data for the relevant disaggState and disaggYear parameters.
+  
   temp <-1
   
   #Get subset of ratios for current year
   stateDFYear <- subset(disagg$stateDF, Year == disaggYear & State == disaggState)
- # outputDF <- data.frame(IndustryCode = character(), CommodityCode = character(), PercentUse = double(), Note = character())
+
   # Default Make DF based on proxy employment values
+  # Specifying commodity disaggregation (column splits) for Make DF
   industries <- c(rep(disagg$OriginalSectorCode,length(disagg$DisaggregatedSectorCodes)))
   commodities <- disagg$DisaggregatedSectorCodes
-  PercentUse <- stateDFYear$Share # need to add code to ensure that the order of stateDF$Share is the same as the order of disagg$DisaggregatedSectorCodes
+  PercentMake <- stateDFYear$Share # need to add code to ensure that the order of stateDF$Share is the same as the order of disagg$DisaggregatedSectorCodes
   note <- c(rep("CommodityDisagg", length(disagg$DisaggregatedSectorCodes)))
-  UseDF <- data.frame(cbind(industries, commodities, PercentUse, note)) #need to rename the columns with the correct column names
   
+  makeDF <- data.frame(cbind(industries, commodities, PercentMake, note)) #need to rename the columns with the correct column names
+  colnames(makeDF) <- c("IndustryCode","CommodityCode",	"PercentMake",	"Note")
+  
+  
+  # Default Use DF based on employment ratios
+  # Specifying industry disaggregation (column splits) for Use DF
+  industries <- disagg$DisaggregatedSectorCodes
+  commodities <- c(rep(disagg$OriginalSectorCode,length(disagg$DisaggregatedSectorCodes)))
+  PercentUse <- stateDFYear$Share
+  note <- c(rep("IndustryDisagg", length(disagg$DisaggregatedSectorCodes)))
+  
+  useDF <- data.frame(cbind(industries, commodities, PercentUse, note)) #need to rename the columns with the correct column names
+  colnames(useDF) <- c("IndustryCode","CommodityCode",	"PercentUse",	"Note")
+  
+  useDF <- rbind(useDF, makeDF) #need to bid makeDF because disaggregation procedure requires the UseDF to have the default commodity and industry output.
+  
+  # Add new DFs to disagg and to model
+  disagg$MakeFileDF <- makeDF
+  disagg$UseFileDF <- useDF
+  
+  model$DisaggregationSpecs[[disagg$OriginalSectorCode]] <- disagg
   
   
   temp <-2 
