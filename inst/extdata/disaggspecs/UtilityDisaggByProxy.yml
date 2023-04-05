@@ -4,8 +4,8 @@ Disaggregation:
     OrignalSectorName: "Utilities"
     DisaggregationType: "Userdefined"
     SectorFile: UtilityDisaggregation_Sectors.csv
-    MakeFile: UtilityStateDummy_Make.csv
-    UseFile: UtilityStateDummy_Use.csv
-    # EnvFile: UtilityDisaggregationSummary_Env.csv
-#    stateFile: Employment_ratios.csv #Uncomment this when the above Make and USe files are working in stateior disagg
+#    MakeFile: UtilityStateDummy_Make.csv
+#    UseFile: UtilityStateDummy_Use.csv
+#    EnvFile: UtilityDisaggregationSummary_Env.csv
+    stateFile: Employment_ratios.csv #Uncomment this when the above Make and USe files are working in stateior disagg
     package: "stateior"
