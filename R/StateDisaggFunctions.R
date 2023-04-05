@@ -319,26 +319,28 @@ createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggStat
   # Default Make DF based on proxy employment values
   # Specifying commodity disaggregation (column splits) for Make DF
   industries <- c(rep(disagg$OriginalSectorCode,length(disagg$DisaggregatedSectorCodes)))
-  commodities <- disagg$DisaggregatedSectorCodes
+  commodities <- unlist(disagg$DisaggregatedSectorCodes)
   PercentMake <- stateDFYear$Share # need to add code to ensure that the order of stateDF$Share is the same as the order of disagg$DisaggregatedSectorCodes
   note <- c(rep("CommodityDisagg", length(disagg$DisaggregatedSectorCodes)))
   
-  makeDF <- data.frame(cbind(industries, commodities, PercentMake, note)) #need to rename the columns with the correct column names
+  makeDF <- data.frame(cbind(data.frame(industries), data.frame(commodities), data.frame(PercentMake), data.frame(note))) #need to rename the columns with the correct column names
   colnames(makeDF) <- c("IndustryCode","CommodityCode",	"PercentMake",	"Note")
   
   
   # Default Use DF based on employment ratios
   # Specifying industry disaggregation (column splits) for Use DF
-  industries <- disagg$DisaggregatedSectorCodes
+  industries <- unlist(disagg$DisaggregatedSectorCodes)
   commodities <- c(rep(disagg$OriginalSectorCode,length(disagg$DisaggregatedSectorCodes)))
   PercentUse <- stateDFYear$Share
   note <- c(rep("IndustryDisagg", length(disagg$DisaggregatedSectorCodes)))
   
-  useDF <- data.frame(cbind(industries, commodities, PercentUse, note)) #need to rename the columns with the correct column names
+  useDF <- data.frame(cbind(data.frame(industries), data.frame(commodities), data.frame(PercentUse), data.frame(note))) #need to rename the columns with the correct column names
+  useDF_2 <- makeDF # so that colnames match
   colnames(useDF) <- c("IndustryCode","CommodityCode",	"PercentUse",	"Note")
+  colnames(useDF_2) <- c("IndustryCode","CommodityCode",	"PercentUse",	"Note")
   
-  useDF <- rbind(useDF, makeDF) #need to bid makeDF because disaggregation procedure requires the UseDF to have the default commodity and industry output.
-  
+  useDF <- rbind(useDF, useDF_2) #need to bid makeDF because disaggregation procedure requires the UseDF to have the default commodity and industry output.
+    
   # Add new DFs to disagg and to model
   disagg$MakeFileDF <- makeDF
   disagg$UseFileDF <- useDF

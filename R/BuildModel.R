@@ -645,12 +645,10 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
       model$FullUse <- US_Use
       model$DomesticFullUse <- US_DomesticUse # Note that the domestic full use object does not include value added rows
       
-      #ERROR HERE FOR DISAGG BY PROXY: NEED TO DECIDE IF WE WANT TO REFACTOR THIS CODE TO WORK ONLY FOR DISAGG BY PROXY, IF WE WANT TO KEEP THIS VERSION (DISAGG BASED ON
-      # 2020 DETAIL MODEL), OR IF WE WANT TO KEEP BOTH
       # Disaggregate national model objects once (i.e. not for each state)
       if(!is.null(disagg$stateDF)){
         
-        model <- createDisaggFilesFromProxyData(model, disagg, year, "US")
+        model <- createDisaggFilesFromProxyData(model, disagg, year, "US") #Function to disagg by proxy
         disagg <- model$DisaggregationSpecs[[disagg$OriginalSectorCode]] #update disagg
       }
  
@@ -701,8 +699,8 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
   #TEMPORARY FOR DEBUGGING
-  for (state in c("Virginia")){
-#  for (state in sort(c(state.name, "District of Columbia"))) {
+#  for (state in c("Virginia")){
+  for (state in sort(c(state.name, "District of Columbia"))) {
 
     if(state == "Virginia"){
       temp <-1
