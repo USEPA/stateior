@@ -315,7 +315,24 @@ createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggStat
   
   #Get subset of ratios for current year
   stateDFYear <- subset(disagg$stateDF, Year == disaggYear & State == disaggState)
+  
+  # If the state/year combination is not found, assume a uniform split between sectors
+  if(dim(stateDFYear)[1] == 0){
 
+    activity <- unlist(disagg$DisaggregatedSectorCodes)
+    uniformAllocationVector <- 1/length(disagg$DisaggregatedSectorCodes)
+    share <- rep(uniformAllocationVector,length(disagg$DisaggregatedSectorCodes))
+    
+    stateDFYear <- data.frame(State = rep(disaggState, length(disagg$DisaggregatedSectorCodes)),
+                              Activity = activity,
+                              Share = share,
+                              Year = rep(disaggYear, length(disagg$DisaggregatedSectorCodes)))
+    
+  }
+
+  print(paste0("For ",disaggState,"-",disaggYear, " the allocation to disaggregate ", 
+               disagg$OriginalSectorCode, " into ", disagg$DisaggregatedSectorCodes, " is ", stateDFYear$Share))
+  
   # Default Make DF based on proxy employment values
   # Specifying commodity disaggregation (column splits) for Make DF
   industries <- c(rep(disagg$OriginalSectorCode,length(disagg$DisaggregatedSectorCodes)))
