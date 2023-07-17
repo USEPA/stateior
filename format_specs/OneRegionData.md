@@ -12,7 +12,7 @@ One region IO data created by `stateior` are data for single states saved as `.r
 | Commodity Output               | State_Summary_CommodityOutput_`year`_`version` | numeric vector | [Output Vectors](https://github.com/USEPA/useeior/blob/v1.1.0/format_specs/Model.md#output-vectors) |
 | Industry Output                | State_Summary_IndustryOutput_`year`_`version`  | numeric vector | [Output Vectors](https://github.com/USEPA/useeior/blob/v1.1.0/format_specs/Model.md#output-vectors)|
 
-<sup>1</sup> Data names on [Data Commons](https://edap-ord-data-commons.s3.amazonaws.com/index.html?prefix=stateio/). `year` and `version` are subject to change.
+<sup>1</sup> Data names on [Data Commons](https://dmap-data-commons-ord.s3.amazonaws.com/index.html?prefix=stateio/). `year` and `version` are subject to change.
 
 <sup>2</sup> These Use tables add, as the final column, the international trade adjustment (ITA) containing the value of all transportation and insurance services and customs duties 
 
