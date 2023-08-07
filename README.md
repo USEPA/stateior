@@ -1,7 +1,7 @@
 # stateior <img src="inst/img/logo.png" align="right" width="240" />
 <!-- badges: start -->
 [![R CI/CD test](https://github.com/USEPA/stateior/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/USEPA/stateior/actions/workflows/R-CMD-check.yaml)
-[![v0.1.0](http://img.shields.io/badge/v0.1.0-10.5281/zenodo.6954423-blue.svg)](https://doi.org/10.5281/zenodo.6954423)
+[![DOI](https://zenodo.org/badge/279373285.svg)](https://zenodo.org/badge/latestdoi/279373285)
 [![StateIO paper](http://img.shields.io/badge/StateIO%20paper-10.3390/app12094469-blue.svg)](https://doi.org/10.1177/01600176221145874)
 <!-- badges: end -->
 
