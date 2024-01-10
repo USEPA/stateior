@@ -30,7 +30,7 @@ Install the most recent release version of `stateior` and attach it to the curre
 
 ```r
 install.packages("devtools")
-devtools::install_github("USEPA/stateior@v0.2.0")
+devtools::install_github("USEPA/stateior@0.2.0")
 library(stateior)
 ```
 
