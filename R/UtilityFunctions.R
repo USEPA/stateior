@@ -213,6 +213,10 @@ findLatestStateIODataonDataCommons <- function(filename) {
   registry <- getRegistryonDataCommons(data_group = "stateio")
   f <- registry[startsWith(registry$Key, filename) &
                   endsWith(registry$Key, ".rds"), ]
+  f$version <- sub(paste0(filename, "_"), "", f$Key)
+  f$version <- sub(".[^.]*$", "", f$version)
+  # sort so latest version on top in case of duplicate LastModified dates
+  f <- f[order(f$version, decreasing=TRUE), ]
   f <- basename(f[which.max(as.Date(f$LastModified)), "Key"])
   if (length(f) == 0) {
     stop(paste(filename, "not avaialble on Data Commons."))
