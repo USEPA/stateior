@@ -772,6 +772,7 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
     
     ## Two-region Domestic Use table with interregional exports and imports
     TwoRegionIO[["DomesticUsewithTrade"]][[state]] <- TwoRegionDomesticUseModel[1:4]
+    TwoRegionIO[["UsewithTrade"]][[state]] <- TwoRegionUseModel[1:4]
     
     ## Two-region Commodity Output
     SoI_CommodityOutput <- rowSums(TwoRegionDomesticUseModel[["SoI2SoI"]][, c(industries, FD_cols, ITA_col, "ExportResidual")]) +

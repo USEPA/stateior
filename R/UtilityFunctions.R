@@ -178,7 +178,7 @@ getFlowsaData <- function(dataname, year) {
   # Define file directory
   directory <- file.path(rappdirs::user_data_dir(), subdirectory)
   if (!file.exists(file.path(directory, filename))) {
-    url <- paste0("https://edap-ord-data-commons.s3.amazonaws.com/", subdirectory)
+    url <- paste0("https://dmap-data-commons-ord.s3.amazonaws.com/", subdirectory)
     logging::loginfo(paste0("file not found, downloading from ", url))
     # Check for and create directory if necessary
     if (!file.exists(directory)) {
@@ -201,7 +201,7 @@ getFlowsaData <- function(dataname, year) {
 #' "flowsa/FlowByActivity".
 #' @return A dataframe of StateIO data registry on Data Commons.
 getRegistryonDataCommons <- function(data_group = "stateio") {
-  registry_ls <- aws.s3::get_bucket(bucket = "edap-ord-data-commons",
+  registry_ls <- aws.s3::get_bucket(bucket = "dmap-data-commons-ord",
                                     prefix = data_group)
   registry <- cbind.data.frame(basename(sapply(registry_ls, `[[`, "Key")),
                                sapply(registry_ls, `[[`, "LastModified"),
@@ -217,6 +217,10 @@ findLatestStateIODataonDataCommons <- function(filename) {
   registry <- getRegistryonDataCommons(data_group = "stateio")
   f <- registry[startsWith(registry$Key, filename) &
                   endsWith(registry$Key, ".rds"), ]
+  f$version <- sub(paste0(filename, "_"), "", f$Key)
+  f$version <- sub(".[^.]*$", "", f$version)
+  # sort so latest version on top in case of duplicate LastModified dates
+  f <- f[order(f$version, decreasing=TRUE), ]
   f <- basename(f[which.max(as.Date(f$LastModified)), "Key"])
   if (length(f) == 0) {
     stop(paste(filename, "not avaialble on Data Commons."))
@@ -255,7 +259,7 @@ downloadStateIODatafromDataCommons <- function(filename, ver = NULL) {
     f <- paste0(paste(filename, ver, sep = "_"), ".rds")
   }
   # Download file
-  url <- "https://edap-ord-data-commons.s3.amazonaws.com/stateio"
+  url <- "https://dmap-data-commons-ord.s3.amazonaws.com/stateio"
   utils::download.file(file.path(url, f),
                        file.path(directory, f), mode = "wb", quiet = TRUE)
 }
@@ -300,7 +304,7 @@ loadStateIODataFile <- function(filename, ver = NULL) {
                                    "not found in local data directory, either."))
             message("Please confirm ", filename, " is correctly spelled. ",
                     "You should be able to find the correctly spelled file on ",
-                    "https://edap-ord-data-commons.s3.amazonaws.com/index.html?prefix=stateio/. ",
+                    "https://dmap-data-commons-ord.s3.amazonaws.com/index.html?prefix=stateio/. ",
                     "If it's not found there, please open an issue at ",
                     "https://github.com/USEPA/stateior/issues/new ",
                     "and inform package maintainers.\n",

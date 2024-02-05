@@ -19,7 +19,7 @@ Each two-region matrix has a four-quadrant structure. In each matrix, `SoI` is r
 | Commodity Output               | TwoRegion_Summary_CommodityOutput_`year`_`version` | numeric vector | [Two-region total output by commodity](#Two-Region-Output-Vectors) |
 | Industry Output                | TwoRegion_Summary_IndustryOutput_`year`_`version`  | numeric vector | [Two-region total output by industry](#Two-Region-Output-Vectors) |
 
-<sup>1</sup> Data names on [Data Commons](https://edap-ord-data-commons.s3.amazonaws.com/index.html?prefix=stateio/). `year` and `version` are subject to change.
+<sup>1</sup> Data names on [Data Commons](https://dmap-data-commons-ord.s3.amazonaws.com/index.html?prefix=stateio/). `year` and `version` are subject to change.
 
 ### Two Region Make
 The two-region Make is an `industry x commodity` matrix with amounts of commodities (in model year USD) being made by industries.
