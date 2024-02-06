@@ -30,8 +30,13 @@ Install the most recent release version of `stateior` and attach it to the curre
 
 ```r
 install.packages("devtools")
-devtools::install_github("USEPA/stateior@0.2.0")
+devtools::install_github("USEPA/stateior")
 library(stateior)
+```
+
+```r
+# For a specific release:
+devtools::install_github("USEPA/stateior@0.2.1")
 ```
 
 Load desired StateIO data. See [One Region Data](format_specs/OneRegionData.md#data) and [Two Region Data](format_specs/TwoRegionData.md#data) for names and details of one- and two-region MRIO data sets that are currently available, respectively.
