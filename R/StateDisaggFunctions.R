@@ -269,7 +269,7 @@ calculateStateIndustryCommodityOuput <- function(model){
   rownames(model$IndustryOutput) <- rowLabels
   
   # Calculating and formatting CommodityOuput
-  model$CommodityOutput <- data.frame(rowSums(model$UseTransactions) + rowSums(model$FinalDemand))
+  model$CommodityOutput <- data.frame(colSums(model$MakeTransactions))
   colnames(model$CommodityOutput) <- "Output"
   rowLabels <- rownames(model$CommodityOutput)
   rowLabels <- gsub("\\/.*","",rowLabels) # remove everything after "/"
