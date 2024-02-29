@@ -48,7 +48,7 @@ disaggregateStateModel <- function(model, state){
 
   for (disagg in model$DisaggregationSpecs){
 
-    logging::loginfo(paste0("Disaggregating ", disagg$OrignalSectorName," for ", state))
+    logging::loginfo(paste0("Disaggregating ", disagg$OriginalSectorName," for ", state))
     
     # Formatting model objects according to useeior disaggregation formats
     model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state) #Formatting MakeTransactions object
@@ -225,7 +225,7 @@ formatFullUseFromUSEEIOtoState <- function(model, state, domestic = FALSE){
     
     tempVA <- cbind(model$UseValueAdded, VAbyFDSection) # combine UseValueAdded and VAbyFDSection columns
     
-    # Assemble FullUse table and remane according to stateior formats
+    # Assemble FullUse table and rename according to stateior formats
     model$FullUse <- rbind(tempFullUse, tempVA)
     rownames(model$FullUse) <- gsub("\\/.*","",rownames(model$FullUse)) # remove everything after "/"
     colnames(model$FullUse) <- gsub("\\/.*","",colnames(model$FullUse)) # remove everything after "/"
