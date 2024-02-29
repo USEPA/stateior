@@ -40,7 +40,7 @@ Imports:
 Depends:
   R (>= 3.6)
 Remotes:
-  github::USEPA/useeior@2r_disagg
+  github::USEPA/useeior@linkstateiorImportF
 License: file LICENSE
 Encoding: UTF-8
 LazyData: true
