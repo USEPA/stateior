@@ -6,4 +6,4 @@ Disaggregation:
     SectorFile: UtilityDisaggregation_Sectors.csv
     MakeFile: UtilityDisaggregationSummary_Make.csv # Ratios from 2012 US Make table
     UseFile: UtilityDisaggregationSummary_Use.csv # Ratios from 2012 US Use table
-    package: "stateior"
+    package: "useeior"
