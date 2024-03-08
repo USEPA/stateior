@@ -803,6 +803,10 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
     names(RoUS_ITA) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel, disagg)
     TwoRegionIO[["InternationalTradeAdjustment"]][[state]] <- c(SoI_ITA, RoUS_ITA)
     
+    # if(!is.null(disagg_specs)){
+    #   model <- useeior:::balanceDisagg(model, disagg)
+    # }
+    
     print(state)
   }
   return(TwoRegionIO)
