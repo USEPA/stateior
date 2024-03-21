@@ -649,6 +649,7 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
       if(!is.null(disagg$stateDF)){
         
         model <- createDisaggFilesFromProxyData(model, disagg, year, "US") #Function to disagg by proxy
+        #model <- useeior:::createDisaggFilesFromProxyData(model, disagg, year, "US") #Function to disagg by proxy
         disagg <- model$DisaggregationSpecs[[disagg$OriginalSectorCode]] #update disagg
       }
  
@@ -675,6 +676,7 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
         if(!is.null(disagg$stateDF)) {
           # Get the correct disaggregation percentages for each state
           model <- createDisaggFilesFromProxyData(model, disagg, year, state)
+          #model <- useeior:::createDisaggFilesFromProxyData(model, disagg, year, state)
           disagg <- model$DisaggregationSpecs[[disagg$OriginalSectorCode]]
         } 
         model <- disaggregateStateModel(model, state)
