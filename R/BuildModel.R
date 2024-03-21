@@ -672,10 +672,11 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
         model$CommodityOutput <- State_CommodityOutput_ls[[state]]
         model$IndustryOutput <- State_IndustryOutput_ls[[state]]
  
-        # if(!is.null(disagg$stateDF)) {
-        #   model <- createDisaggFilesFromProxyData(model, disagg, year, state)
-        #   disagg <- model$DisaggregationSpecs[[disagg$OriginalSectorCode]]
-        # }
+        if(!is.null(disagg$stateDF)) {
+          # Get the correct disaggregation percentages for each state
+          model <- createDisaggFilesFromProxyData(model, disagg, year, state)
+          disagg <- model$DisaggregationSpecs[[disagg$OriginalSectorCode]]
+        } 
         model <- disaggregateStateModel(model, state)
 
         # Assign the disaggregated model objects to the stateior lists
