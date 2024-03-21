@@ -704,19 +704,7 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
 
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
-  #TEMPORARY FOR DEBUGGING
-#  for (state in c("District of Columbia")){
   for (state in sort(c(state.name, "District of Columbia"))) {
-
-    
-    #LEFT OFF HERE: NEED TO TEST THE FOLLOWING CODE TO MAKE SURE EACH STATE IS DISAGGREGATED PROPERLY:
-    # Disaggregate STATE model objects
-    if(!is.null(disagg$stateDF)){
-
-      model <- createDisaggFilesFromProxyData(model, disagg, year, state) #Function to disagg by proxy
-      disagg <- model$DisaggregationSpecs[[disagg$OriginalSectorCode]] #update disagg
-    }
-    
     
     ## Two-region Make
     model$MakeTransactions <- State_Make_ls[[state]]
