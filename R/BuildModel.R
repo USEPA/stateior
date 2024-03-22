@@ -550,7 +550,9 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   } else {
     q_SoI_use <- rowSums(SoI2SoI_Use[, c(industries, FD_cols, "ExportResidual")]) + rowSums(SoI2RoUS_Use[, c(industries, FD_cols)])
   }
-  if (max(abs((q_SoI - q_SoI_use)/q_SoI_use)) > 1E-2) {
+  q_SoI_check <- abs((q_SoI - q_SoI_use)/q_SoI_use)
+  q_SoI_check[is.na(q_SoI_check)] <- 0 # Convert all N/As to 0
+  if (max(q_SoI_check) > 1E-2) {
     if (domestic) {
       stop(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
                   "doesn't equal to ", state, "'s commodity output."))
@@ -566,7 +568,9 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   } else {
     q_RoUS_use <- rowSums(RoUS2RoUS_Use[, c(industries, FD_cols, "ExportResidual")]) + rowSums(RoUS2SoI_Use[, c(industries, FD_cols)])
   }
-  if (max(abs((q_RoUS - q_RoUS_use)/q_RoUS_use)) > 1E-2) {
+  q_RoUS_check <- abs((q_RoUS - q_RoUS_use)/q_RoUS_use)
+  q_RoUS_check[is.na(q_RoUS_check)] <- 0 # Convert all N/As to 0
+  if (max(q_RoUS_check) > 1E-2) {
     if (domestic) {
       stop(paste0("RoUS (of ", state, ")'s commodity output summed from two-region Domestic Use table ",
                   "doesn't equal to RoUS's commodity output."))
