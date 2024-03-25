@@ -1,4 +1,4 @@
-Model: "StateIOv1.0.0-75" # 75 represents Summary level disaggregated model (73 + 2 = 75 commodities & 71 + 2 = 73 industries)
+Model: "StateIOv1.0.0-75_Proxy" # 75 represents Summary level disaggregated model (73 + 2 = 75 commodities & 71 + 2 = 73 industries)
 BaseIOSchema: 2012
 BaseIOLevel: "Summary"
 IOYear:
