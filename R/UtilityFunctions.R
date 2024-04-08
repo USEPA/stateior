@@ -8,7 +8,12 @@ startLogging <- function() {
 #' @param dataset A string specifying name of the data to load
 #' @return The data loaded from useeior
 loadDatafromUSEEIOR <- function(dataset) {
-  utils::data(package = "useeior", list = dataset)
+  if(!"sch" %in% dataset) {
+    dataset_srch <- paste0(dataset, "_12sch")
+    # currently only uses 2012 schema
+    # required due to renaming in useeior #280
+  }
+  utils::data(package = "useeior", list = dataset_srch)
   df <- get(dataset)
   return(df)
 }
