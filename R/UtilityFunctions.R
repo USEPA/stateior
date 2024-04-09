@@ -6,12 +6,15 @@ startLogging <- function() {
 
 #' Load data from useeior using flexible dataset name
 #' @param dataset A string specifying name of the data to load
+#' @param appendSchema bool, set to FALSE to ignore schema in name
 #' @return The data loaded from useeior
-loadDatafromUSEEIOR <- function(dataset) {
-  if(!"sch" %in% dataset) {
+loadDatafromUSEEIOR <- function(dataset, appendSchema = TRUE) {
+  if(appendSchema && !"sch" %in% dataset) {
     dataset_srch <- paste0(dataset, "_12sch")
     # currently only uses 2012 schema
     # required due to renaming in useeior #280
+  } else {
+    dataset_srch <- dataset
   }
   utils::data(package = "useeior", list = dataset_srch)
   df <- get(dataset)
