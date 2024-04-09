@@ -30,8 +30,6 @@ getStateModelDisaggSpecs <- function(configfile, statefile = NULL){
 #' @param disaggConfigpath str, path for statefile 
 #' @return A stateior model object with the state-specific disaggregation specs included in model$specs$STateDisaggSpecs object
 getStateSpecificDisaggSpecs <- function(disaggConfigpath, statefile){
-  
-  temp <-1
   filename <- file.path(dirname(disaggConfigpath), statefile)
   stateFileDF <- utils::read.table(filename, sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   return(stateFileDF)
@@ -285,7 +283,7 @@ calculateStateIndustryCommodityOuput <- function(model){
 disaggregateStateSectorLists <- function(code_vector, disagg) {
   
   originalSectorCode <- gsub("\\/.*","",disagg$OriginalSectorCode) # remove everything after "/"
-  disaggCodes <- gsub("\\/.*","",disagg$DisaggregatedSectorCodes) # remove everything after "/"
+  disaggCodes <- gsub("\\/.*","",disagg$NewSectorCodes) # remove everything after "/"
   originalIndex <- grep(paste0("^",originalSectorCode,"$"), code_vector) # the ^ and $ are required to find an exact match
  
   newList <- append(code_vector[1:originalIndex -1], disaggCodes)
@@ -319,26 +317,26 @@ createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggStat
   # If the state/year combination is not found, assume a uniform split between sectors
   if(dim(stateDFYear)[1] == 0){
 
-    activity <- unlist(disagg$DisaggregatedSectorCodes)
-    uniformAllocationVector <- 1/length(disagg$DisaggregatedSectorCodes)
-    share <- rep(uniformAllocationVector,length(disagg$DisaggregatedSectorCodes))
+    activity <- unlist(disagg$NewSectorCodes)
+    uniformAllocationVector <- 1/length(disagg$NewSectorCodes)
+    share <- rep(uniformAllocationVector,length(disagg$NewSectorCodes))
     
-    stateDFYear <- data.frame(State = rep(disaggState, length(disagg$DisaggregatedSectorCodes)),
+    stateDFYear <- data.frame(State = rep(disaggState, length(disagg$NewSectorCodes)),
                               Activity = activity,
                               Share = share,
-                              Year = rep(disaggYear, length(disagg$DisaggregatedSectorCodes)))
+                              Year = rep(disaggYear, length(disagg$NewSectorCodes)))
     
   }
 
   print(paste0("For ",disaggState,"-",disaggYear, " the allocation to disaggregate ", 
-               disagg$OriginalSectorCode, " into ", disagg$DisaggregatedSectorCodes, " is ", stateDFYear$Share))
+               disagg$OriginalSectorCode, " into ", disagg$NewSectorCodes, " is ", stateDFYear$Share))
   
   # Default Make DF based on proxy employment values
   # Specifying commodity disaggregation (column splits) for Make DF
-  industries <- c(rep(disagg$OriginalSectorCode,length(disagg$DisaggregatedSectorCodes)))
-  commodities <- unlist(disagg$DisaggregatedSectorCodes)
-  PercentMake <- stateDFYear$Share # need to add code to ensure that the order of stateDF$Share is the same as the order of disagg$DisaggregatedSectorCodes
-  note <- c(rep("CommodityDisagg", length(disagg$DisaggregatedSectorCodes)))
+  industries <- c(rep(disagg$OriginalSectorCode,length(disagg$NewSectorCodes)))
+  commodities <- unlist(disagg$NewSectorCodes)
+  PercentMake <- stateDFYear$Share # need to add code to ensure that the order of stateDF$Share is the same as the order of disagg$NewSectorCodes
+  note <- c(rep("CommodityDisagg", length(disagg$NewSectorCodes)))
   
   makeDF <- data.frame(cbind(data.frame(industries), data.frame(commodities), data.frame(PercentMake), data.frame(note))) #need to rename the columns with the correct column names
   colnames(makeDF) <- c("IndustryCode","CommodityCode",	"PercentMake",	"Note")
@@ -346,10 +344,10 @@ createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggStat
   
   # Default Use DF based on employment ratios
   # Specifying industry disaggregation (column splits) for Use DF
-  industries <- unlist(disagg$DisaggregatedSectorCodes)
-  commodities <- c(rep(disagg$OriginalSectorCode,length(disagg$DisaggregatedSectorCodes)))
+  industries <- unlist(disagg$NewSectorCodes)
+  commodities <- c(rep(disagg$OriginalSectorCode,length(disagg$NewSectorCodes)))
   PercentUse <- stateDFYear$Share
-  note <- c(rep("IndustryDisagg", length(disagg$DisaggregatedSectorCodes)))
+  note <- c(rep("IndustryDisagg", length(disagg$NewSectorCodes)))
   
   useDF <- data.frame(cbind(data.frame(industries), data.frame(commodities), data.frame(PercentUse), data.frame(note))) #need to rename the columns with the correct column names
   useDF_2 <- makeDF # so that colnames match
