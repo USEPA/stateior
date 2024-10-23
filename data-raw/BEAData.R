@@ -1,3 +1,5 @@
+# 10/07/24 updates: created directories if not available.
+
 #' Get BEA state GDP data (including GVA, Employment Compensation, Tax, and GOS)
 #' for a specified year.
 #' @param dataname A text indicating what state data to get.
@@ -8,16 +10,47 @@ getBEAStateGDPData <- function(dataname, year) {
   # Create the placeholder file
   StateGVAzip <- "inst/extdata/SAGDP.zip"
   dir <- "inst/extdata/SAGDP"
+  
+  # Create directories if they don't exist
+  if (!dir.exists("inst/extdata")){
+    dir.create("inst/extdata", recursive = TRUE)
+    print("Created inst/extdata directory")
+  }
+  
+  if(!dir.exists(dir)){
+    dir.create(dir,recursive = TRUE)
+    print("Created inst/extdata/SAGDP directory")
+  }
+  
+  # Check if StateGVAzip is defined
+  if (exists("StateGVAzip")){
+    print(paste("StateGVAzip is defined as:", StateGVAzip))
+    
+  }else{
+    stop("StateGVAzip is not define")
+  }
+  
   # Download all BEA IO tables into the placeholder file
   if (!file.exists(StateGVAzip)) {
-    utils::download.file("https://apps.bea.gov/regional/zip/SAGDP.zip",
-                         StateGVAzip, mode = "wb")
-    # Get the name of all files in the zip archive
-    tmp <- unzip(StateGVAzip, list = TRUE)
-    fname <- tmp[tmp$Length > 0, ]$Name
-    # Unzip the file to the designated directory
-    unzip(StateGVAzip, files = fname, exdir = dir, overwrite = TRUE)
+    tryCatch({
+      utils::download.file("https://apps.bea.gov/regional/zip/SAGDP.zip",
+                           StateGVAzip, mode = "wb")
+      # Get the name of all files in the zip archive
+      tmp <- unzip(StateGVAzip, list = TRUE)
+      fname <- tmp[tmp$Length > 0, ]$Name
+      # Unzip the file to the designated directory
+      unzip(StateGVAzip, files = fname, exdir = dir, overwrite = TRUE)
+    }, error = function(e) {
+      stop("Error in downloading or unzipping the file:", e$message)
+    })  
   }
+  
+  if (file.exists(StateGVAzip)) {
+    print("SAGDP.zip exists")
+  } else {
+    print("SAGDP.zip does not exist")
+  }
+  
   # Determine data filename
   if (dataname == "GVA") {
     FileName <- list.files(dir, pattern = "SAGDP2N__ALL_AREAS.*\\.csv")
@@ -28,6 +61,13 @@ getBEAStateGDPData <- function(dataname, year) {
   } else if (dataname == "GOS") {
     FileName <- list.files(dir, pattern = "SAGDP7N__ALL_AREAS.*\\.csv")
   }
+  
+  print("data filename determined")
+  if (length(FileName) == 0) {
+    stop("No files found matching the pattern for", dataname)
+  }
+  
+  
   FullFileName <- file.path(dir, FileName)
   # Get date_accessed
   date_accessed <- as.character(as.Date(file.mtime(StateGVAzip)))
@@ -71,8 +111,13 @@ getBEAStateGDPData <- function(dataname, year) {
     data_name <- paste("State", dataname, year,
                        utils::packageDescription("stateior", fields = "Version"),
                        sep = "_")
+    # create data folder if not exist
+    if (!dir.exists("data")) {
+      dir.create("data")
+    }
     saveRDS(object = df,
             file = paste0(file.path("data", data_name), ".rds"))
+    
     # Write metadata to JSON
     useeior:::writeMetadatatoJSON(package = "stateior",
                                   name = data_name,
