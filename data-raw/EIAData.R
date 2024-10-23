@@ -1,3 +1,6 @@
+#10/07/2024 update: line 19-20, the excel file from EIA was updated. 
+#Updated the sheet name from "Codes_and_Descriptions" to "MSN descriptions", and skip row from 9 to 10
+
 #' Get EIA State Energy Data Systems (SEDS) code and description of state electricity data.
 #' @return A data frame of EIA SEDS code and description of state electricity data.
 getEIASEDSCodeDescription <- function() {
@@ -13,8 +16,8 @@ getEIASEDSCodeDescription <- function() {
                                            "Released: (.*?)<br/>")[2]
   date_accessed <- as.character(as.Date(file.mtime(CodeDescFile)))
   CodeDesc <- as.data.frame(readxl::read_excel(CodeDescFile,
-                                               sheet = "Codes_and_Descriptions",
-                                               skip = 9))
+                                               sheet = "MSN descriptions",
+                                               skip = 10))
   # Write data to .rds
   data_name <- paste("EIA_SEDS_CodeDescription",
                      utils::packageDescription("stateior", fields = "Version"),
@@ -32,6 +35,7 @@ getEIASEDSCodeDescription <- function() {
 }
 # Download, save and document state electricity consumption code and description (from EIA)
 getEIASEDSCodeDescription()
+
 
 #' Get state electricity consumption data (total consumption and interstate trade,
 #' in million kilowatt hours) from EIA State Energy Data Systems (SEDS), for a
