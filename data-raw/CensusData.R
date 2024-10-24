@@ -201,6 +201,8 @@ getStateLocalGovExpenditure <- function(year) {
             skip_rows <- 7
           } else if (year %in% c(2009:2011)) {
             skip_rows <- 8
+          } else if (year %in% c(2013:2016)) {
+            skip_rows <- 9
           }
           # Load table
           df_i <- as.data.frame(readxl::read_excel(FullFileName, sheet = 1,
@@ -226,7 +228,8 @@ getStateLocalGovExpenditure <- function(year) {
         }
       )
     }
-    
+    df_ls[["b"]][, "Description"] <- NULL
+    df <- cbind(Line, df_ls[["a"]], df_ls[["b"]])
   } else {
     # Specify table to download
     FileType <- ".xlsx"
@@ -252,34 +255,27 @@ getStateLocalGovExpenditure <- function(year) {
         skip_rows <- 10
         
         # Load table
-        df_i <- as.data.frame(readxl::read_excel(FullFileName, sheet = 1,
+        df<- as.data.frame(readxl::read_excel(FullFileName, sheet = 1,
                                                  col_names = TRUE, skip = skip_rows))
         # Save date_last_modified
-        date_last_modified_i <- sub("Revision date: ",
+        date_last_modified_ls <- sub("Revision date: ",
                                     "",
-                                    df_i[grep("Revision date: ",
-                                              df_i$Description), "Description"])
-        date_last_modified_ls[[table]] <- date_last_modified_i
+                                    df[grep("Revision date: ",
+                                              df$Description), "Description"])
         # Keep Expenditures only
-        df_i <- df_i[which(df_i$Description == "Expenditure1"):nrow(df_i), ]
+        df<- df[which(df$Description == "Expenditure1"):nrow(df), ]
         if (year > 2011) {
-          Line <- as.integer(df_i[complete.cases(df_i), 1])
+          Line <- as.integer(df_i[complete.cases(df), 1])
         }
-        df_i <- df_i[, colnames(df_i) %in% c("Description", "United States Total",
+        df <- df[, colnames(df) %in% c("Description", "United States Total",
                                              state.name, "District of Columbia")]
-        df_ls[[table]] <- df_i[complete.cases(df_i), ]
+        df <- df[complete.cases(df), ]
       },
       error = function(e) {
         stop(paste(year, "state and local government expenditure data",
                    "is not avaliable from Census. Nothing is returned."))
       }
     )
-  }
-  if (length(df_ls) > 1) {
-    df_ls[["b"]][, "Description"] <- NULL
-    df <- cbind(Line, df_ls[["a"]], df_ls[["b"]])
-  }else{
-    df <- df_ls
   }
     
     # Convert values to numeric and $
@@ -291,6 +287,7 @@ getStateLocalGovExpenditure <- function(year) {
                        sep = "_")
     saveRDS(object = df,
             file = paste0(file.path("data", data_name), ".rds"))
+    print("data saved to .rds")
     # Write metadata to JSON
     useeior:::writeMetadatatoJSON(package = "stateior",
                                   name = data_name,
@@ -299,6 +296,7 @@ getStateLocalGovExpenditure <- function(year) {
                                   url = base_url,
                                   date_last_modified = date_last_modified,
                                   date_accessed = date_accessed)
+    print("data saved to JSON")
 }
 
 # Download, save and document Census state local government expenditure data
