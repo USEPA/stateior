@@ -1,3 +1,5 @@
+# 10/24/2024 updates: updated the base_urls; set the download timeout as 300 seconds
+
 # Get Freight Analysis Framework (FAF) data since 2012.
 #' @param year A numeric value specifying year of interest.
 #' @return A data frame contains FAF data since 2012.
@@ -13,18 +15,19 @@ getFAF <- function(year) {
       filename <- paste0("inst/extdata/FAF4.5.1_State_", year, ".csv")
     }
     file_baseurl <- paste0("https://www.bts.gov/sites/bts.dot.gov/files/",
-                           "legacy/AdditionalAttachmentFiles/")
+                           "2024-03/")
     # Use published date on www.bts.gov as the date last modified for FAF data
     url <- "https://www.bts.gov/faf/faf4"
     notes <- readLines(url)
+    print("notes were read")
     date_note <- notes[grep("About the Freight Analysis Framework", notes) - 4]
     date_last_modified <- stringr::str_match(date_note, "day, (.*?)</div>")[2]
   } else {
     ### FAF 5.3 ###
     # Create placeholder for zip file and specify filename based on year
     # Use forecast data set that includes 2019 and 2020 (mid-range estimates only)
-    FAFzip <- "inst/extdata/FAF5.3_State.zip"
-    filename <- "inst/extdata/FAF5.3_State.csv"
+    FAFzip <- "inst/extdata/FAF5.6.1_State_2018-2023.zip"
+    filename <- "inst/extdata/FAF5.6.1_State_2018-2023.csv"
     file_baseurl <- "https://faf.ornl.gov/faf5/data/download_files/"
     # Use last modified date on www.faf.ornl.gov
     url <- "https://faf.ornl.gov/faf5"
@@ -37,7 +40,7 @@ getFAF <- function(year) {
   # Download all FAF tables into the placeholder file
   if (!file.exists(FAFzip)) {
     utils::download.file(paste0(file_baseurl, gsub("inst/extdata/", "", FAFzip)),
-                         FAFzip, mode = "wb")
+                         FAFzip, mode = "wb", timeout = 300)
     # Get the name of all files in the zip archive
     fname <- unzip(FAFzip, list = TRUE)[unzip(FAFzip, list = TRUE)$Length > 0, ]$Name
     # Unzip the file to the designated directory
