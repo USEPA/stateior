@@ -1,12 +1,15 @@
 # stateior <img src="inst/img/logo.png" align="right" width="240" />
 <!-- badges: start -->
 [![R CI/CD test](https://github.com/USEPA/stateior/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/USEPA/stateior/actions/workflows/R-CMD-check.yaml)
-[![v0.1.0](http://img.shields.io/badge/v0.1.0-10.5281/zenodo.6954423-blue.svg)](https://doi.org/10.5281/zenodo.6954423)
+[![DOI](https://zenodo.org/badge/279373285.svg)](https://zenodo.org/badge/latestdoi/279373285)
+[![StateIO paper](http://img.shields.io/badge/StateIO%20paper-10.3390/app12094469-blue.svg)](https://doi.org/10.1177/01600176221145874)
+<!-- badges: end -->
 
 `stateior` is an R package for building multi-regional economic input-output (MRIO) tables of states in the United States, refered to as **StateIO** models. 
 Currently, `stateior` is capable of creating IO tables for each US state and building two-region MRIO models based on those state IO tables at the [BEA](https://www.bea.gov/) Summary level of resolution in the US for all years from 2012-2020.
 The two regions are State of Interest (SoI) and Rest of the US (RoUS).
 `stateior` was initially conceived in support of creating state-specific versions of [USEEIO models](https://www.epa.gov/land-research/us-environmentally-extended-input-output-useeio-models), but may be used for other purposes where state input-output tables are used.
+The methodology used to build the StateIO models is described in a [paper in International Regional Science Review](https://doi.org/10.1177/01600176221145874).
 The package is intended to add transparency and reproducibility to the complex process of generating subnational input-output tables, which are not compiled by any statistical agency.
 
 `stateior` implements a robust commodity-industry modeling framework that models supply, use and trade of commodities by industries and final users in 50 U.S. states plus the District of Columbia and includes international import and export. 
@@ -27,8 +30,13 @@ Install the most recent release version of `stateior` and attach it to the curre
 
 ```r
 install.packages("devtools")
-devtools::install_github("USEPA/stateior@v0.2.0")
+devtools::install_github("USEPA/stateior")
 library(stateior)
+```
+
+```r
+# For a specific release:
+devtools::install_github("USEPA/stateior@0.2.1")
 ```
 
 Load desired StateIO data. See [One Region Data](format_specs/OneRegionData.md#data) and [Two Region Data](format_specs/TwoRegionData.md#data) for names and details of one- and two-region MRIO data sets that are currently available, respectively.
