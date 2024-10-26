@@ -550,7 +550,9 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   } else {
     q_SoI_use <- rowSums(SoI2SoI_Use[, c(industries, FD_cols, "ExportResidual")]) + rowSums(SoI2RoUS_Use[, c(industries, FD_cols)])
   }
-  if (max(abs((q_SoI - q_SoI_use)/q_SoI_use)) > 1E-2) {
+  q_SoI_check <- abs((q_SoI - q_SoI_use)/q_SoI_use)
+  q_SoI_check[is.na(q_SoI_check)] <- 0 # Convert all N/As to 0
+  if (max(q_SoI_check) > 1E-2) {
     if (domestic) {
       stop(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
                   "doesn't equal to ", state, "'s commodity output."))
@@ -566,7 +568,9 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
   } else {
     q_RoUS_use <- rowSums(RoUS2RoUS_Use[, c(industries, FD_cols, "ExportResidual")]) + rowSums(RoUS2SoI_Use[, c(industries, FD_cols)])
   }
-  if (max(abs((q_RoUS - q_RoUS_use)/q_RoUS_use)) > 1E-2) {
+  q_RoUS_check <- abs((q_RoUS - q_RoUS_use)/q_RoUS_use)
+  q_RoUS_check[is.na(q_RoUS_check)] <- 0 # Convert all N/As to 0
+  if (max(q_RoUS_check) > 1E-2) {
     if (domestic) {
       stop(paste0("RoUS (of ", state, ")'s commodity output summed from two-region Domestic Use table ",
                   "doesn't equal to RoUS's commodity output."))
@@ -631,8 +635,7 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
 
     # Initialize model 
     model <- getStateModelDisaggSpecs(disagg_specs)
-    #stateDisaggFile <- "Employment_ratios.csv"
-    #model <- getStateModelDisaggSpecs(disagg_specs, stateDisaggFile)
+
     
     if(length(model$DisaggregationSpecs)!=0){
       disagg <- model$DisaggregationSpecs[[1]]
@@ -647,7 +650,15 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
       model$DomesticFullUse <- US_DomesticUse # Note that the domestic full use object does not include value added rows
       
       # Disaggregate national model objects once (i.e. not for each state)
+      if(!is.null(disagg$stateDF)){
+        
+        #model <- createDisaggFilesFromProxyData(model, disagg, year, "US") #Function to disagg by proxy
+        model <- useeior:::createDisaggFilesFromProxyData(model, disagg, year, "US") #Function to disagg by proxy
+        disagg <- model$DisaggregationSpecs[[disagg$OriginalSectorCode]] #update disagg
+      }
+ 
       model <- disaggregateNationalObjectsInStateModel(model, disagg)
+      ## ^^ this should always use national level disaggregation data
   
       # Assign the disaggregated model objects to the original stateior objects, rename some as national
       US_Make <- model$MakeTransactions
@@ -666,6 +677,12 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
         model$CommodityOutput <- State_CommodityOutput_ls[[state]]
         model$IndustryOutput <- State_IndustryOutput_ls[[state]]
  
+        if(!is.null(disagg$stateDF)) {
+          # Get the correct disaggregation percentages for each state
+          #model <- createDisaggFilesFromProxyData(model, disagg, year, state)
+          model <- useeior:::createDisaggFilesFromProxyData(model, disagg, year, state)
+          disagg <- model$DisaggregationSpecs[[disagg$OriginalSectorCode]]
+        } 
         model <- disaggregateStateModel(model, state)
 
         # Assign the disaggregated model objects to the stateior lists
@@ -693,13 +710,7 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
 
   # Assemble two-region IO tables 
   TwoRegionIO <- list()
-  #TEMPORARY FOR DEBUGGING
-  for (state in c("Virginia")){
-#  for (state in sort(c(state.name, "District of Columbia"))) {
-
-    if(state == "Virginia"){
-      temp <-1
-    }
+  for (state in sort(c(state.name, "District of Columbia"))) {
     
     ## Two-region Make
     model$MakeTransactions <- State_Make_ls[[state]]
@@ -786,6 +797,10 @@ assembleTwoRegionIO <- function(year, iolevel, disagg_specs=NULL) {
     RoUS_ITA <- Reduce("+", State_Use_ls)[commodities, ITA_col] - SoI_ITA
     names(RoUS_ITA) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel, disagg)
     TwoRegionIO[["InternationalTradeAdjustment"]][[state]] <- c(SoI_ITA, RoUS_ITA)
+    
+    # if(!is.null(disagg_specs)){
+    #   model <- useeior:::balanceDisagg(model, disagg)
+    # }
     
     print(state)
   }

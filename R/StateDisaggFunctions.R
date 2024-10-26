@@ -12,8 +12,12 @@ getStateModelDisaggSpecs <- function(configfile, statefile = NULL){
   disaggConfigpath <- system.file(paste0("extdata/disaggspecs/"), paste0(configfile,".yml"), package = "stateior")
   model <- useeior:::getDisaggregationSpecs(model, disaggConfigpath, pkg = "stateior")
   
-  if(!is.null(statefile)){
-    model$specs$StateDisaggSpecs <- getStateSpecificDisaggSpecs(disaggConfigpath, statefile)
+  for(disagg in model$DisaggregationSpecs)
+  {
+    if(!is.null(disagg$stateFile)){
+      disagg$stateDF <- getStateSpecificDisaggSpecs(disaggConfigpath, disagg$stateFile) 
+      model$DisaggregationSpecs[[disagg$OriginalSectorCode]] <- disagg
+    }
   }
   
   return(model)
@@ -26,8 +30,6 @@ getStateModelDisaggSpecs <- function(configfile, statefile = NULL){
 #' @param disaggConfigpath str, path for statefile 
 #' @return A stateior model object with the state-specific disaggregation specs included in model$specs$STateDisaggSpecs object
 getStateSpecificDisaggSpecs <- function(disaggConfigpath, statefile){
-  
-  temp <-1
   filename <- file.path(dirname(disaggConfigpath), statefile)
   stateFileDF <- utils::read.table(filename, sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   return(stateFileDF)
@@ -44,7 +46,7 @@ disaggregateStateModel <- function(model, state){
 
   for (disagg in model$DisaggregationSpecs){
 
-    logging::loginfo(paste0("Disaggregating ", disagg$OrignalSectorName," for ", state))
+    logging::loginfo(paste0("Disaggregating ", disagg$OriginalSectorName," for ", state))
     
     # Formatting model objects according to useeior disaggregation formats
     model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state) #Formatting MakeTransactions object
@@ -105,8 +107,8 @@ disaggregateNationalObjectsInStateModel <- function(model, disagg){
   model <- splitFullUse(model, domestic = FALSE)
   
   # Disaggregate model objects
-  model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
-  model$MakeTransactions[is.na(model$MakeTransactions)] <- 0
+  # model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
+  # model$MakeTransactions[is.na(model$MakeTransactions)] <- 0
   
   model$DomesticUseTransactions <- useeior:::disaggregateUseTable(model, disagg, domestic = TRUE)
   model$DomesticUseTransactions[is.na(model$DomesticUseTransactions)] <- 0
@@ -119,6 +121,9 @@ disaggregateNationalObjectsInStateModel <- function(model, disagg){
   model$UseValueAdded <- useeior:::disaggregateVA(model, disagg)
   model$UseValueAdded[is.na(model$UseValueAdded)] <- 0  
 
+  model$MakeTransactions <- useeior:::disaggregateMakeTable(model, disagg)
+  model$MakeTransactions[is.na(model$MakeTransactions)] <- 0
+  
   model$Industries <- disaggregateStateSectorLists(model$Industries, disagg)
   model$Commodities <- disaggregateStateSectorLists(model$Commodities, disagg)
   
@@ -218,7 +223,7 @@ formatFullUseFromUSEEIOtoState <- function(model, state, domestic = FALSE){
     
     tempVA <- cbind(model$UseValueAdded, VAbyFDSection) # combine UseValueAdded and VAbyFDSection columns
     
-    # Assemble FullUse table and remane according to stateior formats
+    # Assemble FullUse table and rename according to stateior formats
     model$FullUse <- rbind(tempFullUse, tempVA)
     rownames(model$FullUse) <- gsub("\\/.*","",rownames(model$FullUse)) # remove everything after "/"
     colnames(model$FullUse) <- gsub("\\/.*","",colnames(model$FullUse)) # remove everything after "/"
@@ -262,7 +267,7 @@ calculateStateIndustryCommodityOuput <- function(model){
   rownames(model$IndustryOutput) <- rowLabels
   
   # Calculating and formatting CommodityOuput
-  model$CommodityOutput <- data.frame(rowSums(model$UseTransactions) + rowSums(model$FinalDemand))
+  model$CommodityOutput <- data.frame(colSums(model$MakeTransactions))
   colnames(model$CommodityOutput) <- "Output"
   rowLabels <- rownames(model$CommodityOutput)
   rowLabels <- gsub("\\/.*","",rowLabels) # remove everything after "/"
@@ -278,11 +283,89 @@ calculateStateIndustryCommodityOuput <- function(model){
 disaggregateStateSectorLists <- function(code_vector, disagg) {
   
   originalSectorCode <- gsub("\\/.*","",disagg$OriginalSectorCode) # remove everything after "/"
-  disaggCodes <- gsub("\\/.*","",disagg$DisaggregatedSectorCodes) # remove everything after "/"
+  disaggCodes <- gsub("\\/.*","",disagg$NewSectorCodes) # remove everything after "/"
   originalIndex <- grep(paste0("^",originalSectorCode,"$"), code_vector) # the ^ and $ are required to find an exact match
  
   newList <- append(code_vector[1:originalIndex -1], disaggCodes)
   newList <- append(newList, code_vector[-(1:originalIndex)] ) # have to do this in two steps otherwise get an error
 
   return(newList)
+}
+
+
+#### Functions below this line are used for creating disaggFiles from Proxy data, e.g., Make and USe files from Employment ratios.
+
+#' Create Make, Use, and Env ratio files for each state from Proxy data for the relevant sectors.
+#' @param model An stateior model object with model specs and specific IO tables loaded
+#' @param disagg Specifications for disaggregating the current Table
+#' @param disaggYear Integer specifying the state model year
+#' @param disaggState A string value that indicates the state model being disaggregated. For national models, string should be "US"
+#' @return 
+createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggState){
+  
+  # Note: this function assumes: 
+  # 1) The disaggregation will use the same proxy values for all disaggregated sectors across all rows and columns. 
+  #    That is, if we are disaggregating Summary 22 into the 3 Detail utility sectors, and the proxy allocations are (for example) 0.5/0.25/0.25, then 
+  #    in the Use table, the three Detail utility commodities (rows) will have that same split for across all columns (industries/final demand)
+  # 2) The disagg parameter will contain a disagg$stateDF variable that includes the data for the relevant disaggState and disaggYear parameters.
+  
+  stop("The function is not yet valid")
+  
+  temp <-1
+  
+  #Get subset of ratios for current year
+  stateDFYear <- subset(disagg$stateDF, Year == disaggYear & State == disaggState)
+  
+  # If the state/year combination is not found, assume a uniform split between sectors
+  if(dim(stateDFYear)[1] == 0){
+
+    activity <- unlist(disagg$NewSectorCodes)
+    uniformAllocationVector <- 1/length(disagg$NewSectorCodes)
+    share <- rep(uniformAllocationVector,length(disagg$NewSectorCodes))
+    
+    stateDFYear <- data.frame(State = rep(disaggState, length(disagg$NewSectorCodes)),
+                              Activity = activity,
+                              Share = share,
+                              Year = rep(disaggYear, length(disagg$NewSectorCodes)))
+    
+  }
+
+  print(paste0("For ",disaggState,"-",disaggYear, " the allocation to disaggregate ", 
+               disagg$OriginalSectorCode, " into ", disagg$NewSectorCodes, " is ", stateDFYear$Share))
+  
+  # Default Make DF based on proxy employment values
+  # Specifying commodity disaggregation (column splits) for Make DF
+  industries <- c(rep(disagg$OriginalSectorCode,length(disagg$NewSectorCodes)))
+  commodities <- unlist(disagg$NewSectorCodes)
+  PercentMake <- stateDFYear$Share # need to add code to ensure that the order of stateDF$Share is the same as the order of disagg$NewSectorCodes
+  note <- c(rep("CommodityDisagg", length(disagg$NewSectorCodes)))
+  
+  makeDF <- data.frame(cbind(data.frame(industries), data.frame(commodities), data.frame(PercentMake), data.frame(note))) #need to rename the columns with the correct column names
+  colnames(makeDF) <- c("IndustryCode","CommodityCode",	"PercentMake",	"Note")
+  
+  
+  # Default Use DF based on employment ratios
+  # Specifying industry disaggregation (column splits) for Use DF
+  industries <- unlist(disagg$NewSectorCodes)
+  commodities <- c(rep(disagg$OriginalSectorCode,length(disagg$NewSectorCodes)))
+  PercentUse <- stateDFYear$Share
+  note <- c(rep("IndustryDisagg", length(disagg$NewSectorCodes)))
+  
+  useDF <- data.frame(cbind(data.frame(industries), data.frame(commodities), data.frame(PercentUse), data.frame(note))) #need to rename the columns with the correct column names
+  useDF_2 <- makeDF # so that colnames match
+  colnames(useDF) <- c("IndustryCode","CommodityCode",	"PercentUse",	"Note")
+  colnames(useDF_2) <- c("IndustryCode","CommodityCode",	"PercentUse",	"Note")
+  
+  useDF <- rbind(useDF, useDF_2) #need to bid makeDF because disaggregation procedure requires the UseDF to have the default commodity and industry output.
+    
+  # Add new DFs to disagg and to model
+  disagg$MakeFileDF <- makeDF
+  disagg$UseFileDF <- useDF
+  
+  model$DisaggregationSpecs[[disagg$OriginalSectorCode]] <- disagg
+  
+  
+  temp <-2 
+  return(model)
+  
 }

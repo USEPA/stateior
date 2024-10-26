@@ -143,7 +143,8 @@ generateDomestic2RegionICFs <- function(state, year, ioschema, iolevel,
   # Merge ICF_2r_wide with complete BEA Commodity list
   CommodityCodeName <- loadDatafromUSEEIOR(paste(iolevel,
                                                  "CommodityCodeName_2012",
-                                                 sep = "_"))
+                                                 sep = "_"),
+                                           appendSchema = FALSE)
   # Update commodities from disaggregation
   if (!is.null(disagg)){
     disagg_df <- data.frame(BEA_2012_Summary_Commodity_Code = c("221100", "221200", "221300"),
