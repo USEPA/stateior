@@ -14,13 +14,13 @@ specs <- configr::read.config(configpath)
 TwoRegionModel <- assembleTwoRegionIO(year, iolevel = specs$BaseIOLevel,
                                       disagg_specs = specs$DisaggregationSpecs)
 
-stub <- ifelse(is.null(specs$DisaggregationSpecs), "", specs$DisaggregationSpecs)
-
 # Subset data set
 for (name in names(TwoRegionModel)) {
   df <- TwoRegionModel[[name]]
   # Write data to .rds
-  data_name <- paste("TwoRegion_Summary", name, stub, year,
+  name <- ifelse(is.null(specs$DisaggregationSpecs), name,
+                 paste0(name, "_", specs$DisaggregationSpecs))
+  data_name <- paste("TwoRegion_Summary", name, year,
                      utils::packageDescription("stateior", fields = "Version"),
                      sep = "_")
   saveRDS(object = df,
