@@ -1,0 +1,7 @@
+IndustryCode,CommodityCode,PercentUsed,Note,
+221100/US,22/US,0.63541758,IndustryDisagg,
+221200/US,22/US,0.108148191,IndustryDisagg,
+221300/US,22/US,0.256434229,IndustryDisagg,
+22/US,221100/US,0.63541758,CommodityDisagg,
+22/US,221200/US,0.108148191,CommodityDisagg,
+22/US,221300/US,0.256434229,CommodityDisagg,
