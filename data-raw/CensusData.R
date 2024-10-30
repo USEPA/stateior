@@ -265,7 +265,7 @@ getStateLocalGovExpenditure <- function(year) {
         # Keep Expenditures only
         df<- df[which(df$Description == "Expenditure1"):nrow(df), ]
         if (year > 2011) {
-          Line <- as.integer(df_i[complete.cases(df), 1])
+          Line <- as.integer(df[complete.cases(df), 1])
         }
         df <- df[, colnames(df) %in% c("Description", "United States Total",
                                              state.name, "District of Columbia")]
