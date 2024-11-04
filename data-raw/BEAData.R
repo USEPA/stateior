@@ -1,4 +1,4 @@
-# 10/07/24 updates: created directories if not available.
+source("data-raw/data_raw.R")
 
 #' Get BEA state GDP data (including GVA, Employment Compensation, Tax, and GOS)
 #' for a specified year.
@@ -8,27 +8,9 @@
 #' @return A data frame of BEA state data for the specified year.
 getBEAStateGDPData <- function(dataname, year) {
   # Create the placeholder file
-  StateGVAzip <- "inst/extdata/SAGDP.zip"
-  dir <- "inst/extdata/SAGDP"
-  
-  # Create directories if they don't exist
-  if (!dir.exists("inst/extdata")){
-    dir.create("inst/extdata", recursive = TRUE)
-    print("Created inst/extdata directory")
-  }
-  
-  if(!dir.exists(dir)){
-    dir.create(dir,recursive = TRUE)
-    print("Created inst/extdata/SAGDP directory")
-  }
-  
-  # Check if StateGVAzip is defined
-  if (exists("StateGVAzip")){
-    print(paste("StateGVAzip is defined as:", StateGVAzip))
-    
-  }else{
-    stop("StateGVAzip is not define")
-  }
+  StateGVAzip <- file.path(stateio_dir, "SAGDP.zip")
+  dir <- file.path(stateio_dir, "SAGDP")
+  dir.create(dir, showWarnings = FALSE)
   
   # Download all BEA IO tables into the placeholder file
   if (!file.exists(StateGVAzip)) {
@@ -44,13 +26,7 @@ getBEAStateGDPData <- function(dataname, year) {
       stop("Error in downloading or unzipping the file:", e$message)
     })  
   }
-  
-  if (file.exists(StateGVAzip)) {
-    print("SAGDP.zip exists")
-  } else {
-    print("SAGDP.zip does not exist")
-  }
-  
+
   # Determine data filename
   if (dataname == "GVA") {
     FileName <- list.files(dir, pattern = "SAGDP2N__ALL_AREAS.*\\.csv")
@@ -111,10 +87,6 @@ getBEAStateGDPData <- function(dataname, year) {
     data_name <- paste("State", dataname, year,
                        utils::packageDescription("stateior", fields = "Version"),
                        sep = "_")
-    # create data folder if not exist
-    if (!dir.exists("data")) {
-      dir.create("data")
-    }
     saveRDS(object = df,
             file = paste0(file.path("data", data_name), ".rds"))
     
@@ -142,8 +114,8 @@ for (dataname in c("GVA", "Tax", "Compensation", "GOS")) {
 #' available.
 getBEAStatePCE <- function(year) {
   # Create the placeholder file
-  StatePCEzip <- "inst/extdata/SAPCE.zip"
-  dir <- "inst/extdata/SAPCE"
+  StatePCEzip <- file.path(stateio_dir, "SAPCE.zip")
+  dir <- file.path(stateio_dir, "SAPCE")
   # Download all BEA IO tables into the placeholder file
   if (!file.exists(StatePCEzip)) {
     utils::download.file("https://apps.bea.gov/regional/zip/SAPCE.zip",
@@ -214,8 +186,8 @@ getBEAStatePCE(year)
 #' the latest year available.
 getBEAStateResidentAndNonresidentSpending <- function() {
   # Create the placeholder file
-  StatePCEzip <- "inst/extdata/SAPCE.zip"
-  dir <- "inst/extdata/SAPCE"
+  StatePCEzip <- file.path(stateio_dir, "SAPCE.zip")
+  dir <- file.path(stateio_dir, "SAPCE")
   # Download all BEA IO tables into the placeholder file
   if (!file.exists(StatePCEzip)) {
     utils::download.file("https://apps.bea.gov/regional/zip/SAPCE.zip",
@@ -289,10 +261,9 @@ getBEAStateResidentAndNonresidentSpending()
 #' @return A data frame of BEA US Gov Expenditure data (NIPA table).
 downloadBEAGovExpenditure <- function() {
   TableName <- "Section3All_xls.xlsx"
-  dir <- "inst/extdata/StateLocalGovFinances"
-  if (!dir.exists(dir)) {
-    dir.create(dir)
-  }
+  dir <- file.path(stateio_dir, "StateLocalGovFinances")
+  dir.create(dir, showWarnings = FALSE)
+
   FullFileName <- file.path(dir, TableName)
   url <- "https://apps.bea.gov/national/Release/XLS/Survey/Section3All_xls.xlsx"
   # Download NIPA table file
@@ -315,7 +286,7 @@ getBEAGovInvestment <- function(year) {
   date_accessed <- downloadBEAGovExpenditure()[["date_accessed"]]
   # Load Gov Investment table
   TableName <- "Section3All_xls.xlsx"
-  FullFileName <- file.path("inst/extdata/StateLocalGovFinances", TableName)
+  FullFileName <- file.path(stateio_dir, "StateLocalGovFinances", TableName)
   # Get date_last_modified
   notes <- as.data.frame(readxl::read_excel(FullFileName,
                                             sheet = "T30905-A",
@@ -373,7 +344,7 @@ getBEAGovConsumption <- function(year) {
   date_accessed <- downloadBEAGovExpenditure()[["date_accessed"]]
   # Load Gov Consumption table
   TableName <- "Section3All_xls.xlsx"
-  FullFileName <- paste0("inst/extdata/StateLocalGovFinances/", TableName)
+  FullFileName <- file.path(stateio_dir, "StateLocalGovFinances", TableName)
   # Get date_last_modified
   notes <- as.data.frame(readxl::read_excel(FullFileName,
                                             sheet = "T31005-A",
