@@ -96,6 +96,8 @@ mapFIPS5toLocationNames <- function(fipscodes, fipssystem) {
 loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
   filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO2012Schema.csv")
   mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
+  #TODO: temporary
+  colnames(mapping) <- gsub("BEA_2012_", "BEA_2017_", colnames(mapping))
   return(mapping)
 }
 

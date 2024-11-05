@@ -34,6 +34,9 @@ mapStateTabletoBEASummary <- function(statetablename, year) {
   GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
   # Merge state table with BEA Summary sector code and name
   StateTableBEA <- merge(StateTable, GVAtoBEAmapping, by = "LineCode")
+  
+  #TODO: temporary
+  colnames(StateTableBEA) <- gsub("BEA_2012_", "BEA_2017_", colnames(StateTableBEA))
   return(StateTableBEA)
 }
 
@@ -41,11 +44,13 @@ mapStateTabletoBEASummary <- function(statetablename, year) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param allocationweightsource A string specifying the source being used
 #' as the weight in the allocation.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains allocation factors
 #' for all states with row names being BEA sector code.
-calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsource) {
+calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsource, specs) {
   # Define BEA_col and year_col
-  BEA_col <- "BEA_2012_Summary_Code"
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   year_col <- as.character(year)
   # Load State GVA to BEA Summary sector-mapping table
   GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
@@ -54,9 +59,9 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
                                           duplicated(GVAtoBEAmapping$LineCode,
                                                      fromLast = TRUE), ]
   allocation_codes <- allocation_sectors[, BEA_col]
-  # Generate a mapping table only for allocation_codes based on MasterCrosswalk2012
-  crosswalk <- useeior::MasterCrosswalk2012[useeior::MasterCrosswalk2012[, BEA_col]
-                                            %in% allocation_codes, ]
+  # Generate a mapping table only for allocation_codes based on useeior MasterCrosswalk
+  cw <- loadDatafromUSEEIOR(paste0('MasterCrosswalk', schema))
+  crosswalk <- cw[cw[, BEA_col] %in% allocation_codes, ]
   # Generate allocation_weight df based on pre-saved data
   if (allocationweightsource == "Employment") {
     # Load BEA State Emp to BEA Summary mapping
@@ -124,16 +129,18 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
 #' can be GVA, Tax, Employment Compensation, and GOS.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param allocationweightsource Source of allocation weight, can be "Employment".
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains allocated state value
 #' for all states with row names being BEA sector code.
-allocateStateTabletoBEASummary <- function(statetablename, year, allocationweightsource) {
+allocateStateTabletoBEASummary <- function(statetablename, year, allocationweightsource, specs) {
   # Define BEA_col and year_col
-  BEA_col <- "BEA_2012_Summary_Code"
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   year_col <- as.character(year)
   # Generate StateTableBEA
   StateTableBEA <- mapStateTabletoBEASummary(statetablename, year)
   # Generate allocation factor
-  allocation_df <- calculateStatetoBEASummaryAllocationFactor(year, allocationweightsource)
+  allocation_df <- calculateStatetoBEASummaryAllocationFactor(year, allocationweightsource, specs)
   total_before_allocation <- unique(StateTableBEA[StateTableBEA$LineCode %in% allocation_df$LineCode,
                                                   c("GeoName", "LineCode", year_col)])
   # Merge StateTableBEA with allocation_df
@@ -182,14 +189,16 @@ allocateStateTabletoBEASummary <- function(statetablename, year, allocationweigh
 #' introduce national GVA to disaggregate state employment
 #' in real estate and gov industries from LineCode to BEA Summary.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains ratios of state/US GVA (value added)
 #' for all states at a specific year at BEA Summary level.
-calculateStateUSValueAddedRatio <- function(year) {
+calculateStateUSValueAddedRatio <- function(year, specs) {
   # Define BEA_col and year_col
-  BEA_col <- "BEA_2012_Summary_Code"
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   year_col <- as.character(year)
   # Generate state GVA (value added) table
-  StateValueAdded <- allocateStateTabletoBEASummary("GVA", year, "Employment")
+  StateValueAdded <- allocateStateTabletoBEASummary("GVA", year, "Employment", specs)
   # Extract US value added
   US_VA <- StateValueAdded[StateValueAdded$GeoName == "United States *", ]
   # Extract state value added

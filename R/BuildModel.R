@@ -7,12 +7,13 @@ model_ver <- NULL
 #' @description Build a state supply model for all 52 states/regions
 #' (including DC and Overseas) for a given year.
 #' @param year A numeric value between 2007 and 2017.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A list of state Make table and commodity output.
 #' @export
-buildStateSupplyModel <- function(year) {
+buildStateSupplyModel <- function(year, specs) {
   startLogging()
   logging::loginfo("Calculate state/US Gross Value Added (GVA) ratios...")
-  StateUS_VA_Ratio <- calculateStateUSValueAddedRatio(year)
+  StateUS_VA_Ratio <- calculateStateUSValueAddedRatio(year, specs)
   states <- unique(StateUS_VA_Ratio$GeoName)
   
   logging::loginfo("Estimating state Make table and commodity output...")
