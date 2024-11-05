@@ -19,16 +19,16 @@ jobs:
           - BEAData.R
           - CensusData.R
           - EIAData.R
-          - FAFData.R
-          - USASpendingData.R
+          # - FAFData.R
+          # - USASpendingData.R
         data-year:
-          - 2012
-          - 2013
-          - 2014
-          - 2015
-          - 2016
-          - 2017
-          - 2018
+          # - 2012
+          # - 2013
+          # - 2014
+          # - 2015
+          # - 2016
+          # - 2017
+          # - 2018
           - 2019
           - 2020
           - 2021
@@ -95,6 +95,7 @@ jobs:
   merge:
     runs-on: ubuntu-latest
     needs: generate-save-data
+    if: always() && !cancelled()
     steps:
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v4
