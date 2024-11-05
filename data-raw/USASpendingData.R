@@ -1,3 +1,4 @@
+source("data-raw/data_raw.R")
 #' Download Federal Government Spending data by 6-digit NAICS code
 #' By state and county from USASpending.gov.
 #' @param year A numeric value specifying year of interest.
@@ -32,8 +33,9 @@ getFedGovSpending <- function(year) {
   if (year + 1 <= gsub("\\-.*", "", date_last_modified)) {
     for (year_N in year_range) {
       # Create the placeholder file
-      FedGovExpzip <- paste0("inst/extdata/FY", year_N, "_All_Contracts_Full_",
+      FedGovExpzip <- paste0(stateio_dir, "/FY",year_N, "_All_Contracts_Full_",
                              data_date, ".zip")
+      
       if (!file.exists(FedGovExpzip)) {
         utils::download.file(paste0("https://files.usaspending.gov/award_data_archive/FY",
                                     year_N, "_All_Contracts_Full_", data_date, ".zip"),
@@ -42,7 +44,7 @@ getFedGovSpending <- function(year) {
       # Get the name of all files in the zip archive
       fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
       # Unzip the file to the designated directory
-      unzip(FedGovExpzip, files = fname, exdir = "inst/extdata/USAspending", overwrite = TRUE)
+      unzip(FedGovExpzip, files = fname, exdir = paste0(stateio_dir, "/USAspending"), overwrite = TRUE)
       file.remove(FedGovExpzip)
       # Load data
       df <- data.frame()
@@ -55,7 +57,7 @@ getFedGovSpending <- function(year) {
                      "primary_place_of_performance_county_name",
                      "award_type_code", "naics_code", "product_or_service_code")
         # Define filename
-        filename <- paste0("inst/extdata/USAspending/", fname[i])
+        filename <- paste0(stateio_dir, "/USAspending/", fname[i])
         # Load data
         df_slice <- as.data.frame(data.table::fread(filename,
                                                     select = columns,
