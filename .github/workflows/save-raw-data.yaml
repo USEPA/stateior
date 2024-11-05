@@ -92,6 +92,10 @@ jobs:
           if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
           # retention-days: 5 # cannot exceed the retention limit set by the repository, organization, or enterprise.
 
+  merge:
+    runs-on: ubuntu-latest
+    needs: upload
+    steps:
       - name: Merge Artifacts
         uses: actions/upload-artifact/merge@v4
         with:
