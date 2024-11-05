@@ -1,11 +1,11 @@
-#10/07/2024 update: line 19-20, the excel file from EIA was updated. 
+source("data-raw/data_raw.R")
 #Updated the sheet name from "Codes_and_Descriptions" to "MSN descriptions", and skip row from 9 to 10
 
 #' Get EIA State Energy Data Systems (SEDS) code and description of state electricity data.
 #' @return A data frame of EIA SEDS code and description of state electricity data.
 getEIASEDSCodeDescription <- function() {
   # Download SEDS Codes and Descriptions table
-  CodeDescFile <- "inst/extdata/EIA_SEDS_CodesDescriptions.xlsx"
+  CodeDescFile <- file.path(stateio_dir, "EIA_SEDS_CodesDescriptions.xlsx")
   url <- "https://www.eia.gov/state/seds/CDF/Codes_and_Descriptions.xlsx"
   # Download EIA State Energy Data Systems (SEDS) consumption data
   if (!file.exists(CodeDescFile)) {
@@ -46,7 +46,7 @@ getEIASEDSCodeDescription()
 #' year.
 getEIASEDSStateElectricityConsumption <- function(year) {
   # Download state electricity consumption data from EIA State Energy Data Systems (SEDS)
-  ConsumptionFile <- "inst/extdata/EIA_SEDS_consumption.csv"
+  ConsumptionFile <- file.path(stateio_dir, "EIA_SEDS_consumption.csv")
   url <- "https://www.eia.gov/state/seds/sep_use/total/csv/use_all_phy.csv"
   if (!file.exists(ConsumptionFile)) {
     utils::download.file(url, ConsumptionFile, mode = "wb")
