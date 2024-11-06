@@ -1,4 +1,4 @@
-#10/07/24 updates: updated the getStateLocalExpenditure() function to grab 2021 data
+source("data-raw/data_raw.R")
 
 #' Get US import/export table from usatrade.census.gov, and convert it to Census
 #' import/export table format.
@@ -184,7 +184,7 @@ getStateLocalGovExpenditure <- function(year) {
       url <- paste0(base_url, year, "/summary-tables/", substr(year, 3, 4),
                     "slsstab1", table, FileType)
       TableName <- paste0(substr(year, 3, 4), "slsstab1", table, FileType)
-      directory <- "inst/extdata/StateLocalGovFinances"
+      directory <- paste0(stateio_dir, "/StateLocalGovFinances")
       tryCatch(
         exp = {
           if (!file.exists(directory)) {
@@ -237,7 +237,7 @@ getStateLocalGovExpenditure <- function(year) {
                   "slsstab1", FileType)
     
     TableName <- paste0(substr(year, 3, 4), "slsstab1", FileType)
-    directory <- "inst/extdata/StateLocalGovFinances"
+    directory <- paste0(stateio_dir, "/StateLocalGovFinances")
     
     tryCatch(
       exp = {
