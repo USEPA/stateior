@@ -142,7 +142,8 @@ generateDomestic2RegionICFs <- function(state, year, ioschema, iolevel,
   # Merge ICF_2r_wide with complete BEA Commodity list
   CommodityCodeName <- loadDatafromUSEEIOR(paste(iolevel,
                                                  "CommodityCodeName_2012",
-                                                 sep = "_"))
+                                                 sep = "_"),
+                                           appendSchema = FALSE)
   ICF <- merge(ICF_2r_wide, CommodityCodeName, by.x = bea,
                by.y = paste("BEA", ioschema, iolevel, "Commodity_Code", sep = "_"),
                all.y = TRUE)
