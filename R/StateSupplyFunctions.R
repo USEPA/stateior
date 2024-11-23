@@ -66,7 +66,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   if (allocationweightsource == "Employment") {
     # Load BEA State Emp to BEA Summary mapping
     EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
-    sectors <- unique(crosswalk[crosswalk$BEA_2012_Sector_Code %in% c("44RT", "FIRE", "G"), BEA_col])
+    sectors <- unique(crosswalk[crosswalk$BEA_2017_Sector_Code %in% c("44RT", "FIRE", "G"), BEA_col])
     EmptoBEAmapping <- EmptoBEAmapping[EmptoBEAmapping[, BEA_col] %in% sectors, ]
     # For real estate (FIRE) and gov (G) sectors, calculate allocation factors using US GVA by industry
     allocation_factors <- merge(EmptoBEAmapping,
@@ -206,7 +206,6 @@ calculateStateUSValueAddedRatio <- function(year, specs) {
   # Generate sum of state GVA (value added)
   StateVA_sum <- stats::aggregate(StateVA[, year_col], by = list(StateVA[, BEA_col]), sum)
   colnames(StateVA_sum) <- c(BEA_col, "StateVA_sum")
-  
   # Merge sum of state GVA with US VA to get VA of Overseas region
   OverseasVA <- merge(StateVA_sum, US_VA, by = BEA_col)
   OverseasVA[, paste0(year, ".x")] <- OverseasVA[, year_col] - OverseasVA$StateVA_sum
@@ -294,11 +293,11 @@ calculateStateIndustryOutputbyLineCode <- function(year) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state commodity output from alternative sources
 #' and calculated state/US commodity ratios for each state.
-estimateStateCommodityOutputRatiofromAlternativeSources <- function(year) {
+estimateStateCommodityOutputRatiofromAlternativeSources <- function(year, specs) {
   # Generate Ag, Fishery, Forestry commodity output
-  AgFisheryForestry <- getAgFisheryForestryCommodityOutput(year)
+  AgFisheryForestry <- getAgFisheryForestryCommodityOutput(year, specs)
   # Generate FAF commodity output
-  FAF <- getFAFCommodityOutput(year)
+  FAF <- getFAFCommodityOutput(year, specs)
   # Combine all commodity output
   StateCommodityOutputRatio <- rbind(AgFisheryForestry, FAF)
   return(StateCommodityOutputRatio)
@@ -309,7 +308,10 @@ estimateStateCommodityOutputRatiofromAlternativeSources <- function(year) {
 #' Map to BEA Summary sectors.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains State Employment by BEA Summary.
-getStateEmploymentbyBEASummary <- function(year) {
+getStateEmploymentbyBEASummary <- function(year,specs) {
+  # Define BEA_col
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # BEA State Emp
   BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
                                      ver = model_ver)
@@ -318,16 +320,16 @@ getStateEmploymentbyBEASummary <- function(year) {
                        EmptoBEAmapping, by = "LineCode")
   # Aggregate StateEmployment by BEA
   BEAStateEmp <- stats::aggregate(BEAStateEmp[, as.character(year)],
-                                  by = list(BEAStateEmp$BEA_2012_Summary_Code,
+                                  by = list(BEAStateEmp[[BEA_col]],
                                             BEAStateEmp$GeoName), sum)
-  colnames(BEAStateEmp) <- c("BEA_2012_Summary_Code", "State", "Emp")
+  colnames(BEAStateEmp) <- c(BEA_col, "State", "Emp")
   # Employment FlowBySector from flowsa
   EmpFBS <- getFlowsaData("Employment", year)
-  EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary")
+  EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary", specs)
   EmpFBS$State <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
   # Prioritize BEAStateEmp, replace NAs in Emp with values from EmpFBS
   StateEmp <- merge(BEAStateEmp[BEAStateEmp$State %in% EmpFBS$State, ],
-                    EmpFBS, by = c("State", "BEA_2012_Summary_Code"), all = TRUE)
+                    EmpFBS, by.x = c("State", BEA_col), by.y = c("State","BEA_2012_Summary_Code"), all = TRUE)
   StateEmp[is.na(StateEmp$Emp), "Emp"] <- StateEmp[is.na(StateEmp$Emp), "FlowAmount"]
   # Replace the remaining NAs in Emp with zero
   StateEmp[is.na(StateEmp$Emp), "Emp"] <- 0
@@ -340,7 +342,10 @@ getStateEmploymentbyBEASummary <- function(year) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state Ag, Fishery and Forestry commodity output
 #' for specified state with row names being BEA sector code.
-getAgFisheryForestryCommodityOutput <- function(year) {
+getAgFisheryForestryCommodityOutput <- function(year, specs) {
+  # Define BEA_col
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load state FIPS
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   # Load USDA_ERS_FIWS data from flowsa
@@ -354,10 +359,10 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   # Calculate Commodity Output Ratio
   Ag$Ratio <- Ag$FlowAmount/sum(Ag$FlowAmount)
   # Assign BEA Code
-  Ag$BEA_2012_Summary_Code <- "111CA"
+  Ag[[BEA_col]]<- "111CA"
   Ag$Value <- Ag$FlowAmount
   # Re-order columns and drop unwanted columns
-  Ag <- Ag[, c("BEA_2012_Summary_Code", "State", "Value", "Ratio")]
+  Ag <- Ag[, c(BEA_col, "State", "Value", "Ratio")]
   
   # Load Fishery Landings and Forestry CutValue data from flowsa
   Fishery <- getFlowsaData("NOAA_FisheriesLandings", year)
@@ -374,7 +379,7 @@ getAgFisheryForestryCommodityOutput <- function(year) {
   # Calculate Commodity Output Ratio
   FisheryForestry$Ratio <- FisheryForestry$Value/sum(FisheryForestry$Value)
   # Assign BEA Code
-  FisheryForestry$BEA_2012_Summary_Code <- "113FF"
+  FisheryForestry[[BEA_col]] <- "113FF"
   # Re-order columns and drop unwanted columns
   FisheryForestry <- FisheryForestry[, colnames(Ag)]
   
@@ -387,9 +392,10 @@ getAgFisheryForestryCommodityOutput <- function(year) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state FAF commodity output
 #' for specified state with row names being BEA sector code.
-getFAFCommodityOutput <- function(year) {
+getFAFCommodityOutput <- function(year, specs) {
   # Define BEA_col
-  BEA_col <- "BEA_2012_Summary_Code"
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load state FIPS
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv",
                                     package = "stateior"))
@@ -425,12 +431,12 @@ getFAFCommodityOutput <- function(year) {
   allocation_sectors <- allocation_sectors[!allocation_sectors[, BEA_col]
                                            %in% c("111CA", "113FF", "311FT"), ]
   # Use State Emp to allocate
-  StateEmp <- getStateEmploymentbyBEASummary(year)
+  StateEmp <- getStateEmploymentbyBEASummary(year,specs)
   # Merge StateEmp with allocation_sectors
   StateEmp <- merge(StateEmp, allocation_sectors, by = BEA_col)
   # Process FAF for each state
   # Generate AFF
-  AgFisheryForestry <- getAgFisheryForestryCommodityOutput(year)
+  AgFisheryForestry <- getAgFisheryForestryCommodityOutput(year, specs)
   FAF_state_ls <- list()
   for (state in unique(FAF$State)) {
     FAF_state <- FAF[FAF$State == state, ]

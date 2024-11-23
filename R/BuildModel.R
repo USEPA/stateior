@@ -15,7 +15,6 @@ buildStateSupplyModel <- function(year, specs) {
   logging::loginfo("Calculate state/US Gross Value Added (GVA) ratios...")
   StateUS_VA_Ratio <- calculateStateUSValueAddedRatio(year, specs)
   states <- unique(StateUS_VA_Ratio$GeoName)
-  
   logging::loginfo("Estimating state Make table and commodity output...")
   # Apply the adjusted VA_ratio to calculate
   # State Summary Make, IndustryOutput, and CommodityOutput
@@ -49,7 +48,7 @@ buildStateSupplyModel <- function(year, specs) {
   }
   
   logging::loginfo("Estimating state/US commodity output ratios using data from alternative data...")
-  AlternativeStateCOR <- estimateStateCommodityOutputRatiofromAlternativeSources(year)
+  AlternativeStateCOR <- estimateStateCommodityOutputRatiofromAlternativeSources(year, specs)
   
   logging::loginfo("Adjusting state Make table...")
   # Adjust estimated state commodity output and calculate state commodity adjustment ratio
