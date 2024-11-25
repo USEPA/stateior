@@ -58,7 +58,7 @@ buildStateSupplyModel <- function(year, specs) {
     # Calculate state/US commodity output ratio * US Summary Comm Output
     AdjustedStateCommOutput <- merge(US_CommodityOutput,
                                      AlternativeStateCOR[AlternativeStateCOR$State == state, ],
-                                     by.x = 0, by.y = "BEA_2012_Summary_Code")
+                                     by.x = 0, by.y = paste0("BEA_", schema,"_Summary_Code"))
     AdjustedStateCommOutput$Output <- AdjustedStateCommOutput$x*AdjustedStateCommOutput$Ratio
     # Replace commodity output value in State_CommodityOutput_ls
     commodities <- AdjustedStateCommOutput$Row.names
@@ -70,7 +70,7 @@ buildStateSupplyModel <- function(year, specs) {
     # Merge two sets of state-US commodity output ratio
     COR_df <- merge(State_CommodityOutputRatio_ls[[state]],
                     AlternativeStateCOR[AlternativeStateCOR$State == state, ],
-                    by.x = 0, by.y = "BEA_2012_Summary_Code", all.x = TRUE)
+                    by.x = 0, by.y = paste0("BEA_", schema,"_Summary_Code"), all.x = TRUE)
     # Replace NA in Ratio with values in OutputRatio
     COR_df[is.na(COR_df$Ratio), "Ratio"] <- COR_df[is.na(COR_df$Ratio), "OutputRatio"]
     rownames(COR_df) <- COR_df$Row.names

@@ -2,8 +2,9 @@
 #' @param fbs A data frame contains FlowBySector (by NAICS) data from flowsa.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param iolevel A character value, the level of BEA sector to map to.
+#' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains FlowBySector by BEA.
-mapFlowBySectorfromNAICStoBEA <- function(fbs, year, iolevel,specs) {
+mapFlowBySectorfromNAICStoBEA <- function(fbs, year, iolevel, specs) {
   # Get NAICStoBEA crosswalk
   schema <- specs$BaseIOSchema
   BEA_cols <- paste("BEA", schema, c("Sector", "Summary", "Detail"), "Code", sep = "_")

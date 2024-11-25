@@ -291,6 +291,7 @@ calculateStateIndustryOutputbyLineCode <- function(year) {
 #' USDA Census of Agriculture, NOAA Fisheries, USFS Forestry Inventory, and ORNL
 #' Feight Analysis Framework (FAF).
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains state commodity output from alternative sources
 #' and calculated state/US commodity ratios for each state.
 estimateStateCommodityOutputRatiofromAlternativeSources <- function(year, specs) {
@@ -307,6 +308,7 @@ estimateStateCommodityOutputRatiofromAlternativeSources <- function(year, specs)
 #' FlowBySector data from flowsa.
 #' Map to BEA Summary sectors.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains State Employment by BEA Summary.
 getStateEmploymentbyBEASummary <- function(year,specs) {
   # Define BEA_col
@@ -339,7 +341,8 @@ getStateEmploymentbyBEASummary <- function(year,specs) {
 }
 
 #' Estimate state Ag, Fishery and Forestry commodity output ratios
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value between 2007 and 2021 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains state Ag, Fishery and Forestry commodity output
 #' for specified state with row names being BEA sector code.
 getAgFisheryForestryCommodityOutput <- function(year, specs) {
@@ -390,6 +393,7 @@ getAgFisheryForestryCommodityOutput <- function(year, specs) {
 
 #' Estimate state FAF commodity output ratios
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains state FAF commodity output
 #' for specified state with row names being BEA sector code.
 getFAFCommodityOutput <- function(year, specs) {
