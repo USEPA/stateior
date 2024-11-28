@@ -3,14 +3,25 @@
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @param SoI A logical variable indicating whether to calculate
 #' local and traded ratios for SoI or RoUS.
-#' @param ioschema A numeric value of either 2012 or 2007.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data frame contains local and traded ratios by BEA sectors
 #' for the specified state.
-calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, ioschema, iolevel) {
-  # Specify BEA code
-  bea <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
+calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, iolevel) {
+  # Define BEA and year_col
+  schema <- specs$BaseIOSchema
+  bea <- paste("BEA", schema, iolevel, "Code", sep = "_")
+  NAICSCode< paste0("NAICS_", schema, "_Code")
+  # Load useeio Crosswalk 
+  if (schema == 2017){
+    MasterCrosswalk<- useeior::MasterCrosswalk2017
+  } else if (schema == 2012) {
+    MasterCrosswalk<- useeior::MasterCrosswalk2012
+  } else {
+    MasterCrosswalk<- useeior::MasterCrosswalk2017
+    print("default 2017 schema used")
+  }
   # Load the cluster mapping for NAICS to Traded/Local (from clustermapping.us)
   clustermapping <- system.file("extdata",
                                 "Crosswalk_ClusterMappingNAICStoTradedorLocal.csv",
@@ -22,27 +33,27 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, ioschema, iol
   # (Detail/Summary or Detail/Sector) to estimate in one BEA commodity category
   # how much is Traded and how much is Local.
   if (iolevel == "Detail") {
-    crosswalk <- unique(useeior::MasterCrosswalk2012[, c("NAICS_2012_Code", bea)])
+    crosswalk <- unique(MasterCrosswalk[, c(NAICSCode, bea)])
     BEAtoTradedorLocal <- merge(crosswalk, NAICStoTradedorLocal,
-                                by.x = "NAICS_2012_Code", by.y = "NAICS")
+                                by.x = NAICSCode, by.y = "NAICS")
     BEAtoTradedorLocal <- unique(BEAtoTradedorLocal[, c(bea, "Type")])
     BEAtoTradedorLocal$weight <- 1
   } else {
-    crosswalk <- unique(useeior::MasterCrosswalk2012[, c("NAICS_2012_Code",
-                                                         "BEA_2012_Detail_Code",
+    crosswalk <- unique(MasterCrosswalk[, c(NAICSCode,
+                                                         paste0("BEA_", schema, "Detail_Code"),
                                                          bea)])
     BEAtoTradedorLocal <- merge(crosswalk, NAICStoTradedorLocal,
-                                by.x = "NAICS_2012_Code", by.y = "NAICS")
-    # Use 2012 US data (substitute with more recent data when available)
-    USCommOutput <- as.data.frame(colSums(getNationalMake("Detail", 2012)))
+                                by.x = NAICSCode, by.y = "NAICS")
+    # Use schema year US data (substitute with more recent data when available)
+    USCommOutput <- as.data.frame(colSums(getNationalMake("Detail", schema)))
     colnames(USCommOutput) <- "CommodityOutput"
-    BEA_cols <- paste("BEA", ioschema, c("Sector", "Summary", "Detail"),
+    BEA_cols <- paste("BEA", schema, c("Sector", "Summary", "Detail"),
                       "Code", sep = "_")
-    USCommOutput <- merge(unique(useeior::MasterCrosswalk2012[, BEA_cols]),
-                          USCommOutput, by.x = "BEA_2012_Detail_Code", by.y = 0,
+    USCommOutput <- merge(unique(MasterCrosswalk[, BEA_cols]),
+                          USCommOutput, by.x = paste0 ("BEA_", schema, "_Detail_Code"), by.y = 0,
                           all.y = TRUE)
     BEAtoTradedorLocal <- merge(BEAtoTradedorLocal, USCommOutput,
-                                by = paste("BEA", ioschema, c("Detail", iolevel),
+                                by = paste("BEA", schema, c("Detail", iolevel),
                                            "Code", sep = "_"),
                                 all.x = TRUE)
     BEAtoTradedorLocal <- stats::aggregate(BEAtoTradedorLocal$CommodityOutput,
@@ -69,7 +80,7 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, ioschema, iol
                     "AdjustedCommodityOutput"] <- value*(weight/sum(weight))
   }
   if (SoI == FALSE) {
-    USCommOutput <- colSums(getNationalMake(iolevel, 2012))
+    USCommOutput <- colSums(getNationalMake(iolevel, schema))
     StateCommOutput <- merge(StateCommOutput, USCommOutput, by.x = bea, by.y = 0)
     adjusted_output <- StateCommOutput$y - StateCommOutput$AdjustedCommodityOutput
     StateCommOutput$AdjustedCommodityOutput <- adjusted_output
@@ -89,7 +100,7 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, ioschema, iol
 #' Generate domestic 2 region inter-regional commodity flows (ICFs) table.
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
-#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param ICF_sensitivity_analysis A logical value indicating whether to conduct
@@ -97,18 +108,20 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, ioschema, iol
 #' @param adjust_by A numeric value between 0 and 1 indicating the manual adjustment
 #' to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.
 #' #' @return A data frame contains domestic 2 region ICFs.
-generateDomestic2RegionICFs <- function(state, year, ioschema, iolevel,
+generateDomestic2RegionICFs <- function(state, year, specs, iolevel,
                                         ICF_sensitivity_analysis = FALSE,
                                         adjust_by = 0) {
+  # Define BEA_col and year_col
+  schema <- specs$BaseIOSchema
+  bea <- paste0("BEA_", schema, "_Summary_Code")
   # Specify BEA code
-  bea <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
   # Generate SoI-RoUS commodity flow ratios from FAF
-  ICF_2r <- calculateCommodityFlowRatios(state, year, "domestic", ioschema, iolevel)
+  ICF_2r <- calculateCommodityFlowRatios(state, year, "domestic", specs, iolevel)
   ICF_2r$flowpath <- paste0(ICF_2r$ORIG, "2", ICF_2r$DEST)
   ICF_2r_wide <- reshape2::dcast(ICF_2r[, c(bea, "ratio", "flowpath")],
                                  paste(bea, "~", "flowpath"), value.var = "ratio")
   # Assume Other Transportation (487OS) has SoI2SoI and RoUS2RoUS ratio == 1
-  ICF_2r_wide[ICF_2r_wide$BEA_2012_Summary_Code == "487OS", c("SoI2SoI", "RoUS2RoUS")] <- 1
+  ICF_2r_wide[ICF_2r_wide[[paste0("BEA_",schema,"_Summary_Code")]] == "487OS", c("SoI2SoI", "RoUS2RoUS")] <- 1
   # Fill NAs
   ICF_2r_wide[is.na(ICF_2r_wide$SoI2SoI) & is.na(ICF_2r_wide$RoUS2SoI), "SoI2SoI"] <- 0.5
   ICF_2r_wide[is.na(ICF_2r_wide$RoUS2RoUS) & is.na(ICF_2r_wide$SoI2RoUS), "SoI2RoUS"] <- 0.5
@@ -141,11 +154,11 @@ generateDomestic2RegionICFs <- function(state, year, ioschema, iolevel,
   }
   # Merge ICF_2r_wide with complete BEA Commodity list
   CommodityCodeName <- loadDatafromUSEEIOR(paste(iolevel,
-                                                 "CommodityCodeName_2012",
+                                                 paste0("CommodityCodeName_" , schema),
                                                  sep = "_"),
                                            appendSchema = FALSE)
   ICF <- merge(ICF_2r_wide, CommodityCodeName, by.x = bea,
-               by.y = paste("BEA", ioschema, iolevel, "Commodity_Code", sep = "_"),
+               by.y = paste("BEA", schema, iolevel, "Commodity_Code", sep = "_"),
                all.y = TRUE)
   if (iolevel == "Summary") {
     # Adjust utilities
@@ -160,17 +173,17 @@ generateDomestic2RegionICFs <- function(state, year, ioschema, iolevel,
     ICF[ICF[, bea] %in% c("23", "Other", "Used"), "source"] <- "Assuming no interregional trade"
   }
   # Assume Transit and ground passenger transportation has SoI2SoI and RoUS2RoUS ratio == 1
-  bea_name <- paste("BEA", ioschema, iolevel, "Commodity_Name", sep = "_")
+  bea_name <- paste("BEA", schema, iolevel, "Commodity_Name", sep = "_")
   transit_name <- "Transit and ground passenger transportation"
   ICF[ICF[, bea_name] == transit_name, cols] <- c(1, 0, 0, 1)
   ICF[ICF[, bea_name] == transit_name, "source"] <- "Assuming no interregional trade"
   
   # Calculate SoI local and traded ratios
   LocalTradeSoI <- calculateLocalandTradedRatios(state, year, SoI = TRUE,
-                                                 ioschema, iolevel)
+                                                 specs, iolevel)
   # Calculate RoUS local and traded ratios
   LocalTradeRoUS <- calculateLocalandTradedRatios(state, year, SoI = FALSE,
-                                                  ioschema, iolevel)
+                                                  specs, iolevel)
   # Generate state Commodity Output ratio
   CommOutput_ratio <- calculateStateCommodityOutputRatio(year)
   CommOutput_ratio <- CommOutput_ratio[CommOutput_ratio$State == state, ]

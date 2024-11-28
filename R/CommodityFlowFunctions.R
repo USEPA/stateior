@@ -2,11 +2,14 @@
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @param flow_ratio_type Type of commodity flow, can be "domestic", "export", or "import".
-#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data frame contains commodity flow ratios by BEA.
-calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema, iolevel) {
+calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, iolevel) {
+  # Define BEA_col and year_col
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load pre-saved FAF4 commodity flow data
   FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"),
                              ver = model_ver)
@@ -60,7 +63,7 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
   ## Calculate commodity flow amount in transportation sectors
   filename <- "Crosswalk_FAFTransportationModetoBEA.csv"
   FAF_mode <- readCSV(system.file("extdata", filename, package = "stateior"))
-  bea <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
+  bea <- paste("BEA", schema, iolevel, "Code", sep = "_")
   FAF_2r_transportation <- merge(unique(FAF_mode[, c(bea, "Code", "Mode")]),
                                  FAF_2r, by.x = "Code", by.y = "MODE")
   
@@ -137,11 +140,14 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, ioschema,
 #' Calculate Census import/export commodity flow ratios by BEA for all available states.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @param flow_ratio_type Type of commodity flow, can be "export" or "import".
-#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A data frame contains international commodity flow ratios by BEA for all available states.
-calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, ioschema, iolevel) {
+calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, specs, iolevel) {
+  # Define BEA_col and year_col
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load pre-saved state export/import data
   if (year < 2013) {
     trade <- loadStateIODataFile(paste0("Census_USATrade",
@@ -155,9 +161,21 @@ calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, ios
                                  ver = model_ver)
   }
   # Map from NAICS to BEA
-  bea_code <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
-  trade <- merge(unique(useeior::MasterCrosswalk2012[, c("NAICS_2012_Code", bea_code)]),
-                 trade, by.x = "NAICS_2012_Code", by.y = "NAICS")
+  bea_code <- paste("BEA", schema, iolevel, "Code", sep = "_")
+  if(schema == 2012){
+    trade <- merge(unique(useeior::MasterCrosswalk2012[, c("NAICS_2012_Code", bea_code)]),
+                   trade, by.x = "NAICS_2012_Code", by.y = "NAICS")
+    print("2012 schema used")
+  } else if(schema == 2017){
+    trade <- merge(unique(useeior::MasterCrosswalk2017[, c("NAICS_2017_Code", bea_code)]),
+                   trade, by.x = "NAICS_2017_Code", by.y = "NAICS")
+    print("2017 schema used")
+  } else {
+    print("default 2017 schema is used")
+    trade <- merge(unique(useeior::MasterCrosswalk2017[, c("NAICS_2017_Code", bea_code)]),
+                   trade, by.x = "NAICS_2017_Code", by.y = "NAICS")
+  }
+
   # Adjust the import data using the following logic:
   # For each BEA code, find all possible corresponding 4-digit NAICS (dig = 4)
   # and create a subset, then determine:

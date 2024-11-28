@@ -31,7 +31,7 @@ buildStateSupplyModel <- function(year, specs) {
     # Replace NA with zero
     VA_ratio[is.na(VA_ratio$Ratio), "Ratio"] <- 0
     # Re-order StateUS_VA_Ratio
-    rownames(VA_ratio) <- VA_ratio$BEA_2012_Summary_Code
+    rownames(VA_ratio) <- VA_ratio[[paste0("BEA_", schema,"_Summary_Code")]]
     VA_ratio <- VA_ratio[rownames(US_Make), ]
     # Calculate State_Make by multiplying US_Make with VA_ratio
     State_Make <- diag(VA_ratio$Ratio, names = TRUE) %*% as.matrix(US_Make)
@@ -140,9 +140,10 @@ buildStateSupplyModel <- function(year, specs) {
 #' @description Build a state Use model for all 52 states/regions
 #' (including DC and Overseas) for a given year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A list of state Use table, Domestic Use table and industry output.
 #' @export
-buildStateUseModel <- function(year) {
+buildStateUseModel <- function(year, specs) {
   startLogging()
   # Define industries, commodities, final demand columns, import column, and
   # non-import columns
@@ -153,11 +154,11 @@ buildStateUseModel <- function(year) {
   import_col <- getVectorOfCodes("Summary", "Import")
   # Prepare State Intermediate Consumption tables
   logging::loginfo("Estimating state intermediate consumption...")
-  State_Use_Intermediate_ls <- estimateStateIntermediateConsumption(year)
+  State_Use_Intermediate_ls <- estimateStateIntermediateConsumption(year, specs)
   states <- names(State_Use_Intermediate_ls)
   # Prepare State Final Demand
   logging::loginfo("Estimating state personal consumption expenditure...")
-  State_PCE <- estimateStateHouseholdDemand(year)
+  State_PCE <- estimateStateHouseholdDemand(year, specs)
   logging::loginfo("Estimating state final demand...")
   # Assemble final demand columns and create a temporary State_Import as placeholder
   State_Import <- State_PCE
@@ -165,11 +166,11 @@ buildStateUseModel <- function(year) {
   State_Import[, import_col] <- 0
   row_names <- rownames(State_PCE)
   StateFinalDemand <- cbind(State_PCE,
-                            estimateStatePrivateInvestment(year)[row_names, ],
-                            estimateStateExport(year)[row_names, , drop = FALSE],
+                            estimateStatePrivateInvestment(year, specs)[row_names, ],
+                            estimateStateExport(year, specs)[row_names, , drop = FALSE],
                             State_Import[row_names, , drop = FALSE],
-                            estimateStateFedGovExpenditure(year)[row_names, ],
-                            estimateStateSLGovExpenditure(year)[row_names, ])
+                            estimateStateFedGovExpenditure(year,specs)[row_names, ],
+                            estimateStateSLGovExpenditure(year,specs)[row_names, ])
   StateFinalDemand$State <- gsub("\\..*", "", rownames(StateFinalDemand))
   StateFinalDemand$Commodity <- gsub(".*\\.", "", rownames(StateFinalDemand))
   
@@ -566,13 +567,15 @@ buildTwoRegionUseModel <- function(state, year, ioschema, iolevel,
 
 #' Assemble two-region make, use, domestic use, and Use tables as well as commodity and industry outputs.
 #' @description Assemble two-region make and use tables as well as commodity and industry outputs.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value between 2007 and 2021 specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
+#' @param specs A list of model specs including 'BaseIOSchema',
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @return A list of two-region make, use, domestic use, and Use tables
 #' as well as commodity and industry outputs by state.
 #' @export
-assembleTwoRegionIO <- function(year, iolevel) {
+assembleTwoRegionIO <- function(year, iolevel, specs) {
+  schema <- specs$BaseIOSchema
   startLogging()
   # Define industries, commodities, value added rows, final demand columns, and
   # international trade adjustment column
@@ -615,13 +618,13 @@ assembleTwoRegionIO <- function(year, iolevel) {
     TwoRegionIO[["Make"]][[state]] <- TwoRegionMake
     
     ## Two-region Use and Domestic Use table
-    TwoRegionUseModel <- buildTwoRegionUseModel(state, year, ioschema = 2012,
+    TwoRegionUseModel <- buildTwoRegionUseModel(state, year, ioschema = schema,
                                                 iolevel = iolevel, domestic = FALSE)
     TwoRegionUse <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
                                 TwoRegionUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
                           rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
                                 TwoRegionUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
-    TwoRegionDomesticUseModel <- buildTwoRegionUseModel(state, year, ioschema = 2012,
+    TwoRegionDomesticUseModel <- buildTwoRegionUseModel(state, year, ioschema = schema,
                                                         iolevel = iolevel, domestic = TRUE)
     TwoRegionDomesticUse <- cbind(rbind(TwoRegionDomesticUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
                                         TwoRegionDomesticUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
