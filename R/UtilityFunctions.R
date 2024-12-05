@@ -46,23 +46,27 @@ joinStringswithSlashes <- function(...) {
 #' Extract desired columns from SchemaInfo, return vectors with strings of codes.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param colName A text value specifying desired column name.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A vector of codes.
 #' @export
-getVectorOfCodes <- function(iolevel, colName) {
+getVectorOfCodes <- function(iolevel, colName, specs) {
+  # Define BEA_col and year_col
+  schema <- specs$BaseIOSchema
   SchemaInfo <- readCSV(system.file("extdata",
-                                    paste0("2017_", iolevel, "_Schema_Info.csv"),
+                                    paste0(schema,"_", iolevel, "_Schema_Info.csv"),
                                     package = "stateior"))
   return(as.vector(stats::na.omit(SchemaInfo[, c("Code", colName)])[, "Code"]))
 }
 
 #' Get codes of final demand.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A vector of final demand codes.
-getFinalDemandCodes <- function(iolevel) {
+getFinalDemandCodes <- function(iolevel, specs) {
   FinalDemandCodes <- unlist(sapply(list("HouseholdDemand", "InvestmentDemand",
                                          "ChangeInventories", "Export", "Import",
                                          "GovernmentDemand"),
-                                    getVectorOfCodes, iolevel = iolevel))
+                                    getVectorOfCodes, iolevel = iolevel, specs = specs))
   return(FinalDemandCodes)
 }
 
@@ -115,8 +119,9 @@ loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
 #' @param location A text value specifying desired location,
 #' can be state name like "Georgia" or "RoUS" representing Rest of US.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A text value in the format of code/location.
-getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
+getBEASectorCodeLocation <- function(sector_type, location, iolevel, specs) {
   # Get code
   if (sector_type != "FinalDemand") {
     if (sector_type == "InternationalTradeAdjustment") {
@@ -125,7 +130,7 @@ getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
       code <- getVectorOfCodes(iolevel, sector_type)
     }
   } else {
-    code <- getFinalDemandCodes(iolevel)
+    code <- getFinalDemandCodes(iolevel, specs)
   }
   # Get code_loc
   if (location != "RoUS") {

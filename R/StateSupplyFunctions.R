@@ -1,14 +1,15 @@
 #' Get US Make table of specified iolevel and year.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param year A numeric value specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return The US make table of specified iolevel and year.
-getNationalMake <- function(iolevel, year) {
+getNationalMake <- function(iolevel, year, specs) {
   # Load pre-saved US Make table
   dataset <- paste(iolevel, "Make", year, "BeforeRedef", sep = "_")
   Make <- loadDatafromUSEEIOR(dataset)*1E6
   # Keep industry and commodity
-  Make <- Make[getVectorOfCodes(iolevel, "Industry"),
-               getVectorOfCodes(iolevel, "Commodity")]
+  Make <- Make[getVectorOfCodes(iolevel, "Industry", specs),
+               getVectorOfCodes(iolevel, "Commodity", specs)]
   return(Make)
 }
 

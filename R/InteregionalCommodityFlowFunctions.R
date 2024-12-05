@@ -45,7 +45,7 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, ioleve
     BEAtoTradedorLocal <- merge(crosswalk, NAICStoTradedorLocal,
                                 by.x = NAICSCode, by.y = "NAICS")
     # Use schema year US data (substitute with more recent data when available)
-    USCommOutput <- as.data.frame(colSums(getNationalMake("Detail", schema)))
+    USCommOutput <- as.data.frame(colSums(getNationalMake("Detail", schema, specs)))
     colnames(USCommOutput) <- "CommodityOutput"
     BEA_cols <- paste("BEA", schema, c("Sector", "Summary", "Detail"),
                       "Code", sep = "_")
@@ -80,7 +80,7 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, ioleve
                     "AdjustedCommodityOutput"] <- value*(weight/sum(weight))
   }
   if (SoI == FALSE) {
-    USCommOutput <- colSums(getNationalMake(iolevel, schema))
+    USCommOutput <- colSums(getNationalMake(iolevel, year, specs))
     StateCommOutput <- merge(StateCommOutput, USCommOutput, by.x = bea, by.y = 0)
     adjusted_output <- StateCommOutput$y - StateCommOutput$AdjustedCommodityOutput
     StateCommOutput$AdjustedCommodityOutput <- adjusted_output
