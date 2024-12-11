@@ -5,6 +5,9 @@
 #' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains FlowBySector by BEA.
 mapFlowBySectorfromNAICStoBEA <- function(fbs, year, iolevel, specs) {
+  # Define BEA_col and year_col
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Get NAICStoBEA crosswalk
   schema <- specs$BaseIOSchema
   BEA_cols <- paste("BEA", schema, c("Sector", "Summary", "Detail"), "Code", sep = "_")

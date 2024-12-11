@@ -61,7 +61,7 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, io
     FAF_2r_ws <- stats::aggregate(VALUE ~ DEST, FAF, sum)
   }
   ## Calculate commodity flow amount in transportation sectors
-  filename <- "Crosswalk_FAFTransportationModetoBEA.csv"
+  filename <- paste0("Crosswalk_FAFTransportationModetoBEA", schema, "Schema.csv")
   FAF_mode <- readCSV(system.file("extdata", filename, package = "stateior"))
   bea <- paste("BEA", schema, iolevel, "Code", sep = "_")
   FAF_2r_transportation <- merge(unique(FAF_mode[, c(bea, "Code", "Mode")]),
@@ -80,12 +80,12 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, io
     allocation_sectors <- SCTGtoBEA[duplicated(SCTGtoBEA$SCTG) |
                                       duplicated(SCTGtoBEA$SCTG, fromLast = TRUE), ]
     # Use State Emp to allocate
-    StateEmp <- getStateEmploymentbyBEASummary(year)
+    StateEmp <- getStateEmploymentbyBEASummary(year, specs)
     # Merge StateEmp with allocation_sectors
-    Emp <- merge(StateEmp, allocation_sectors, by = "BEA_2012_Summary_Code")
+    Emp <- merge(StateEmp, allocation_sectors, by = BEA_col)
     # Merge FAF_2r and Emp
     FAF_2r <- merge(FAF_2r, Emp[Emp$State == state, ],
-                    by = c("SCTG", "BEA_2012_Summary_Code"), all.x = TRUE)
+                    by = c("SCTG", BEA_col), all.x = TRUE)
     FAF_2r[is.na(FAF_2r$State), "State"] <- state
     FAF_2r[is.na(FAF_2r$Emp), "Emp"] <- 1
     for (sctg in unique(FAF_2r$SCTG)) {
@@ -97,38 +97,38 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, io
       FAF_2r[FAF_2r$SCTG == sctg, "VALUE"] <- value
       # Aggregate by BEA and ORIG/DEST
       if (flow_ratio_type == "domestic") {
-        FAF_2r <- stats::aggregate(VALUE ~ ORIG + DEST + BEA_2012_Summary_Code,
-                                   FAF_2r, sum, na.rm = TRUE)
+        formula <- as.formula(paste("VALUE ~ ORIG + DEST +", BEA_col))
       } else if (flow_ratio_type == "export") {
-        FAF_2r <- stats::aggregate(VALUE ~ ORIG + BEA_2012_Summary_Code,
-                                   FAF_2r, sum, na.rm = TRUE)
+        formula <- as.formula(paste("VALUE ~ ORIG +", BEA_col))
       } else if (flow_ratio_type == "import") {
-        FAF_2r <- stats::aggregate(VALUE ~ DEST + BEA_2012_Summary_Code,
-                                   FAF_2r, sum, na.rm = TRUE)
+        formula <- as.formula(paste("VALUE ~ DEST +", BEA_col))
       }
+      FAF_2r <- stats::aggregate(formula, FAF_2r, sum, na.rm = TRUE)
     }
     # Combine FAF_2r with FAF_2r_transportation and FAF_2r_ws
-    common_cols <- c("BEA_2012_Summary_Code", "ORIG", "DEST", "VALUE")
-    FAF_2r_ws[, "BEA_2012_Summary_Code"] <- "493"
-    FAF_2r_transportation <- stats::aggregate(VALUE ~ ORIG + DEST + BEA_2012_Summary_Code,
-                                              FAF_2r_transportation, sum, na.rm = TRUE)
+    common_cols <- c(BEA_col, "ORIG", "DEST", "VALUE")
+    FAF_2r_ws[, BEA_col] <- "493"
+    formula <- as.formula(paste("VALUE ~ ORIG + DEST +", BEA_col))
+    FAF_2r_transportation <- stats::aggregate(formula, FAF_2r_transportation, sum, na.rm = TRUE)
     FAF_2r <- rbind(FAF_2r[, common_cols], FAF_2r_ws[, common_cols],
                     FAF_2r_transportation[, common_cols])
     
     # Calculate commodity flow ratio
     if (flow_ratio_type == "domestic") {
-      totalflow <- stats::aggregate(VALUE ~ DEST + BEA_2012_Summary_Code, FAF_2r, sum)
-      FAF_2r <- merge(FAF_2r, totalflow, by = c("DEST", "BEA_2012_Summary_Code"))
+      formula <- as.formula(paste("VALUE ~ DEST +", BEA_col))
+      totalflow <- stats::aggregate(formula, FAF_2r, sum)
+      FAF_2r <- merge(FAF_2r, totalflow, by = c("DEST", BEA_col))
       FAF_2r$ratio <- FAF_2r$VALUE.x / FAF_2r$VALUE.y
-      FAF_2r <- FAF_2r[, c("ORIG", "DEST", "BEA_2012_Summary_Code", "ratio")]
+      FAF_2r <- FAF_2r[, c("ORIG", "DEST", BEA_col, "ratio")]
     } else {
-      totalflow <- stats::aggregate(VALUE ~ BEA_2012_Summary_Code, FAF_2r, sum)
-      FAF_2r <- merge(FAF_2r, totalflow, by = "BEA_2012_Summary_Code")
+      formula <- as.formula(paste("VALUE ~ +", BEA_col))
+      totalflow <- stats::aggregate(formula, FAF_2r, sum)
+      FAF_2r <- merge(FAF_2r, totalflow, by = BEA_col)
       FAF_2r$ratio <- FAF_2r$VALUE.x / FAF_2r$VALUE.y
       if (flow_ratio_type == "export") {
-        FAF_2r <- FAF_2r[, c("ORIG", "BEA_2012_Summary_Code", "ratio")]
+        FAF_2r <- FAF_2r[, c("ORIG", BEA_col, "ratio")]
       } else if (flow_ratio_type == "import") {
-        FAF_2r <- FAF_2r[, c("DEST", "BEA_2012_Summary_Code", "ratio")]
+        FAF_2r <- FAF_2r[, c("DEST", BEA_col, "ratio")]
       }
     }
   } else if (iolevel == "Sector") {
@@ -227,8 +227,12 @@ calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, spe
 #' Calculate domestic hazardous waste management services flow ratios by state
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains hazardous waste management services flow ratios by BEA.
-calculateHazWasteManagementServiceFlowRatios <- function(state, year) {
+calculateHazWasteManagementServiceFlowRatios <- function(state, year, specs) {
+  # Define BEA_col and year_col
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Modify year due to the fact that RCRAInfo is biennial
   year <- ifelse(year %% 2 == 0, year - 1, year)
   # Load data
@@ -280,18 +284,19 @@ calculateHazWasteManagementServiceFlowRatios <- function(state, year) {
 #' Calculate domestic waste management services flow ratios by state
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains waste management services flow ratios by BEA.
-calculateWasteManagementServiceFlowRatios <- function(state, year) {
+calculateWasteManagementServiceFlowRatios <- function(state, year, specs) {
   # Assume non-haz waste ICF ratios == commodity output ratios
-  COR <- calculateStateCommodityOutputRatio(year)
-  SoIWasteCOR <- COR[COR$BEA_2012_Summary_Code == "562" & COR$State == state, "Ratio"]
+  COR <- calculateStateCommodityOutputRatio(year, specs)
+  SoIWasteCOR <- COR[COR[[BEA_col]] == "562" & COR$State == state, "Ratio"]
   RoUSWasteCOR <- 1 - SoIWasteCOR
   NonHazWaste_ICF_2r <- data.frame("SoI2SoI"   = SoIWasteCOR,
                                    "SoI2RoUS"  = 1 - SoIWasteCOR,
                                    "RoUS2SoI"  = 1 - RoUSWasteCOR,
                                    "RoUS2RoUS" = RoUSWasteCOR)
   # Generate haz waste two-region ICF ratios
-  HazWaste_ICF_2r <- calculateHazWasteManagementServiceFlowRatios(state, year)
+  HazWaste_ICF_2r <- calculateHazWasteManagementServiceFlowRatios(state, year, specs)
   # Combine ICF ratios
   Waste_ICF_2r <- (HazWaste_ICF_2r + NonHazWaste_ICF_2r)*0.5
   return(Waste_ICF_2r)
@@ -355,17 +360,21 @@ calculateElectricityFlowRatios <- function(state, year) {
 #' natural gas distribution and water, sewage and other
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains domestic interregional utilities flow ratios by state.
-calculateUtilitiesFlowRatios <- function(state, year) {
+calculateUtilitiesFlowRatios <- function(state, year, specs) {
+  # Define BEA_col and year_col
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Get state employment for utilities sector
   EmploymentFBS <- getFlowsaData("Employment", year)
-  StateDetailEmp <- mapFlowBySectorfromNAICStoBEA(EmploymentFBS, year, "Detail")
+  StateDetailEmp <- mapFlowBySectorfromNAICStoBEA(EmploymentFBS, year, "Detail", specs)
   StateDetailEmp$State <- mapFIPS5toLocationNames(StateDetailEmp$FIPS, "FIPS")
   utilities <- c("221100", "221200", "221300")
-  StateUtilitiesEmp <- StateDetailEmp[StateDetailEmp$BEA_2012_Detail_Code %in% utilities &
+  StateUtilitiesEmp <- StateDetailEmp[StateDetailEmp[[BEA_col]] %in% utilities &
                                         StateDetailEmp$State == state, ]
   # Calulate weight and ratios, matching utilities sector order
-  weight <- StateUtilitiesEmp[match(utilities, StateUtilitiesEmp$BEA_2012_Detail_Code),
+  weight <- StateUtilitiesEmp[match(utilities, StateUtilitiesEmp[[BEA_col]]),
                               "FlowAmount"]
   ratios <- weight/sum(weight)
   # Assume natural gas distribution and water, sewage and other are all 100% local.

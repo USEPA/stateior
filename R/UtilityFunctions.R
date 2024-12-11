@@ -10,9 +10,8 @@ startLogging <- function() {
 #' @return The data loaded from useeior
 loadDatafromUSEEIOR <- function(dataset, appendSchema = TRUE) {
   if(appendSchema && !"sch" %in% dataset) {
-    dataset_srch <- paste0(dataset, "_12sch")
-    # currently only uses 2012 schema
-    # required due to renaming in useeior #280
+    dataset_srch <- paste0(dataset, "_17sch")
+    # default 2017 schema
   } else {
     dataset_srch <- dataset
   }
@@ -127,7 +126,7 @@ getBEASectorCodeLocation <- function(sector_type, location, iolevel, specs) {
     if (sector_type == "InternationalTradeAdjustment") {
       code <- ifelse(iolevel == "Detail", "F05100", "F051")
     } else {
-      code <- getVectorOfCodes(iolevel, sector_type)
+      code <- getVectorOfCodes(iolevel, sector_type, specs)
     }
   } else {
     code <- getFinalDemandCodes(iolevel, specs)

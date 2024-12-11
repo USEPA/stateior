@@ -4,8 +4,10 @@
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return The US make table of specified iolevel and year.
 getNationalMake <- function(iolevel, year, specs) {
+  # Define BEA and year_col
+  schema <- specs$BaseIOSchema
   # Load pre-saved US Make table
-  dataset <- paste(iolevel, "Make", year, "BeforeRedef", sep = "_")
+  dataset <- paste(iolevel, "Make", year, "BeforeRedef", "17sch", sep = "_")
   Make <- loadDatafromUSEEIOR(dataset)*1E6
   # Keep industry and commodity
   Make <- Make[getVectorOfCodes(iolevel, "Industry", specs),

@@ -1,5 +1,7 @@
 # Generate and save two-region IO tables
 # Build model
+specs <- {}
+specs$BaseIOSchema <- 2017
 TwoRegionModel <- assembleTwoRegionIO(year, iolevel = "Summary", specs)
 # Subset data set
 for (name in names(TwoRegionModel)) {

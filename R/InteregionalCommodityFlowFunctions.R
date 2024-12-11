@@ -12,7 +12,7 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, ioleve
   # Define BEA and year_col
   schema <- specs$BaseIOSchema
   bea <- paste("BEA", schema, iolevel, "Code", sep = "_")
-  NAICSCode< paste0("NAICS_", schema, "_Code")
+  NAICSCode<- paste0("NAICS_", schema, "_Code")
   # Load useeio Crosswalk 
   if (schema == 2017){
     MasterCrosswalk<- useeior::MasterCrosswalk2017
@@ -39,8 +39,7 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, ioleve
     BEAtoTradedorLocal <- unique(BEAtoTradedorLocal[, c(bea, "Type")])
     BEAtoTradedorLocal$weight <- 1
   } else {
-    crosswalk <- unique(MasterCrosswalk[, c(NAICSCode,
-                                                         paste0("BEA_", schema, "Detail_Code"),
+    crosswalk <- unique(MasterCrosswalk[, c(NAICSCode,paste0("BEA_", schema, "_Detail_Code"),
                                                          bea)])
     BEAtoTradedorLocal <- merge(crosswalk, NAICStoTradedorLocal,
                                 by.x = NAICSCode, by.y = "NAICS")
@@ -162,10 +161,10 @@ generateDomestic2RegionICFs <- function(state, year, specs, iolevel,
                all.y = TRUE)
   if (iolevel == "Summary") {
     # Adjust utilities
-    ICF[ICF[, bea] == "22", cols] <- calculateUtilitiesFlowRatios(state, year)[, cols]
+    ICF[ICF[, bea] == "22", cols] <- calculateUtilitiesFlowRatios(state, year, specs)[, cols]
     ICF[ICF[, bea] == "22", "source"] <- "EIA"
     # Adjust waste management and remediation services
-    ICF[ICF[, bea] == "562", cols] <- calculateWasteManagementServiceFlowRatios(state, year)[, cols]
+    ICF[ICF[, bea] == "562", cols] <- calculateWasteManagementServiceFlowRatios(state, year, specs)[, cols]
     ICF[ICF[, bea] == "562", "source"] <- "RCRAInfo and SMP"
     # Adjust construction, used and other
     ICF[ICF[, bea] == "23", cols] <- c(1, 0, 0, 1)
@@ -185,7 +184,7 @@ generateDomestic2RegionICFs <- function(state, year, specs, iolevel,
   LocalTradeRoUS <- calculateLocalandTradedRatios(state, year, SoI = FALSE,
                                                   specs, iolevel)
   # Generate state Commodity Output ratio
-  CommOutput_ratio <- calculateStateCommodityOutputRatio(year)
+  CommOutput_ratio <- calculateStateCommodityOutputRatio(year, specs)
   CommOutput_ratio <- CommOutput_ratio[CommOutput_ratio$State == state, ]
   # Use local and traded ratios and SoI CommOutput_ratio
   for (BEAcode in Reduce(intersect, list(ICF[is.na(ICF$SoI2SoI), bea],
