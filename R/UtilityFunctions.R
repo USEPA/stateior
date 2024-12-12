@@ -9,7 +9,7 @@ startLogging <- function() {
 #' @param appendSchema bool, set to FALSE to ignore schema in name
 #' @return The data loaded from useeior
 loadDatafromUSEEIOR <- function(dataset, appendSchema = TRUE) {
-  if(appendSchema && !"sch" %in% dataset) {
+  if(appendSchema && !(grepl("sch", dataset))) {
     dataset_srch <- paste0(dataset, "_17sch")
     # default 2017 schema
   } else {
