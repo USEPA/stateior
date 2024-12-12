@@ -3,7 +3,8 @@
 #' @param year A numeric value specifying year of interest.
 #' @return A data frame of BEA state employment data for the specified year.
 getBEAStateEmployment <- function(year) {
-  APIkey <- readLines(rappdirs::user_data_dir("BEA_API_KEY.txt"), warn = FALSE)
+  # Store API key in text file within local data dir (e.g. ../USER/AppData/Local/BEA_API_KEY.txt)
+  APIkey <- readLines(file.path(rappdirs::user_data_dir(), "BEA_API_KEY.txt"), warn = FALSE)
   linecodes_txt <- paste0("https://apps.bea.gov/api/data/?&UserID=",
                           APIkey,
                           "&method=GetParameterValuesFiltered",
@@ -74,7 +75,7 @@ getBEAStateEmployment <- function(year) {
   }
 }
 # Download, save and document BEA state employment data
-for (year in 2012:2020) {
+for (year in 2012:2023) {
   getBEAStateEmployment(year)
   print(year)
 }
