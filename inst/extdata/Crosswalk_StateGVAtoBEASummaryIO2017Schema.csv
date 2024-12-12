@@ -1,0 +1,72 @@
+LineCode,Description,BEA_2017_Summary_Code,BEA_2017_Summary_Name
+4,   Farms,111CA,Farms
+5,"   Forestry, fishing, and related activities",113FF,"Forestry, fishing, and related activities"
+7,   Oil and gas extraction,211,Oil and gas extraction
+8,   Mining (except oil and gas),212,"Mining, except oil and gas"
+9,   Support activities for mining,213,Support activities for mining
+10,  Utilities,22,Utilities
+11,  Construction,23,Construction
+14,    Wood product manufacturing,321,Wood products
+15,    Nonmetallic mineral product manufacturing,327,Nonmetallic mineral products
+16,    Primary metal manufacturing,331,Primary metals
+17,    Fabricated metal product manufacturing,332,Fabricated metal products
+18,    Machinery manufacturing,333,Machinery
+19,    Computer and electronic product manufacturing,334,Computer and electronic products
+20,"    Electrical equipment, appliance, and component manufacturing",335,"Electrical equipment, appliances, and components"
+21,"    Motor vehicles, bodies and trailers, and parts manufacturing",3361MV,"Motor vehicles, bodies and trailers, and parts"
+22,    Other transportation equipment manufacturing,3364OT,Other transportation equipment
+23,    Furniture and related product manufacturing,337,Furniture and related products
+24,    Miscellaneous manufacturing,339,Miscellaneous manufacturing
+26,    Food and beverage and tobacco product manufacturing,311FT,Food and beverage and tobacco products
+27,    Textile mills and textile product mills,313TT,Textile mills and textile product mills
+28,"    Apparel, leather, and allied product manufacturing",315AL,Apparel and leather and allied products
+29,    Paper manufacturing,322,Paper products
+30,    Printing and related support activities,323,Printing and related support activities
+31,    Petroleum and coal products manufacturing,324,Petroleum and coal products
+32,    Chemical manufacturing,325,Chemical products
+33,    Plastics and rubber products manufacturing,326,Plastics and rubber products
+34,  Wholesale trade,42,Wholesale trade
+35,  Retail trade,441,Motor vehicle and parts dealers
+35,  Retail trade,445,Food and beverage stores
+35,  Retail trade,452,General merchandise stores
+35,  Retail trade,4A0,Other retail
+37,   Air transportation,481,Air transportation
+38,   Rail transportation,482,Rail transportation
+39,   Water transportation,483,Water transportation
+40,   Truck transportation,484,Truck transportation
+41,   Transit and ground passenger transportation,485,Transit and ground passenger transportation
+42,   Pipeline transportation,486,Pipeline transportation
+43,   Other transportation and support activities,487OS,Other transportation and support activities
+44,   Warehousing and storage,493,Warehousing and storage
+46,   Publishing industries (except Internet),511,"Publishing industries, except internet (includes software)"
+47,   Motion picture and sound recording industries,512,Motion picture and sound recording industries
+48,   Broadcasting (except Internet) and telecommunications,513,Broadcasting and telecommunications
+49,"   Data processing, hosting, and other information services",514,"Data processing, internet publishing, and other information services"
+52,"    Monetary Authorities- central bank, credit intermediation, and related services",521CI,"Federal Reserve banks, credit intermediation, and related activities"
+53,"    Securities, commodity contracts, and other financial investments and related activities",523,"Securities, commodity contracts, and investments"
+54,    Insurance carriers and related activities,524,Insurance carriers and related activities
+55,"    Funds, trusts, and other financial vehicles",525,"Funds, trusts, and other financial vehicles"
+57,    Real estate,HS,Housing
+57,    Real estate,ORE,Other real estate
+58,    Rental and leasing services and lessors of nonfinancial intangible assets,532RL,Rental and leasing services and lessors of intangible assets
+61,    Legal services,5411,Legal services
+62,    Computer systems design and related services,5415,Computer systems design and related services
+63,"    Miscellaneous professional, scientific, and technical services",5412OP,"Miscellaneous professional, scientific, and technical services"
+64,   Management of companies and enterprises,55,Management of companies and enterprises
+66,    Administrative and support services,561,Administrative and support services
+67,    Waste management and remediation services,562,Waste management and remediation services
+69,   Educational services,61,Educational services
+71,    Ambulatory health care services,621,Ambulatory health care services
+72,    Hospitals,622,Hospitals
+73,    Nursing and residential care facilities,623,Nursing and residential care facilities
+74,    Social assistance,624,Social assistance
+77,"    Performing arts, spectator sports, museums, and related activities",711AS,"Performing arts, spectator sports, museums, and related activities"
+78,"    Amusement, gambling, and recreation industries",713,"Amusements, gambling, and recreation industries"
+80,    Accommodation,721,Accommodation
+81,    Food services and drinking places,722,Food services and drinking places
+82,  Other services (except government and government enterprises),81,"Other services, except government"
+85,  Military,GFGD,Federal general government (defense)
+84,  Federal civilian,GFGN,Federal general government (nondefense)
+84,  Federal civilian,GFE,Federal government enterprises
+86,  State and local,GSLG,State and local general government
+86,  State and local,GSLE,State and local government enterprises
