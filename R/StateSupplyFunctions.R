@@ -63,7 +63,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
                                                      fromLast = TRUE), ]
   allocation_codes <- allocation_sectors[, BEA_col]
   # Generate a mapping table only for allocation_codes based on useeior MasterCrosswalk
-  cw <- loadDatafromUSEEIOR(paste0('MasterCrosswalk', schema))
+  cw <- loadDatafromUSEEIOR(paste0('MasterCrosswalk', schema), appendSchema = FALSE)
   crosswalk <- cw[cw[, BEA_col] %in% allocation_codes, ]
   # Generate allocation_weight df based on pre-saved data
   if (allocationweightsource == "Employment") {
