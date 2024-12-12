@@ -74,6 +74,28 @@ writeStateIODatatoCSV <- ("State_Summary_DomesticUse_2012", "Georgia", outputfol
 writeStateIODatatoCSV <- ("TwoRegion_Summary_DomesticUse_2012", "Georgia", outputfolder)
 ```
 
+Employment data is also available for each state and year, containing employment by BEA Summary sector.
+
+```r
+Employment_2012 <- getStateEmploymentTable(2012)
+#   BEA_2012_Summary_Code   State   Emp
+# 1                 111CA Alabama 38191
+# 2                 113FF Alabama 15773
+# 3                   211 Alabama  4334
+# 4                   212 Alabama  8205
+```
+
+Industry output data is also available, and can be used to calculate the direct requirements matrix.
+
+```r
+OneRegionIndustryOutput_2012 <- loadStateIODataFile("State_Summary_IndustryOutput_2012")
+GA_IndustryOutput_2012 <- OneRegionIndustryOutput_2012[["Georgia"]]
+# Drop extra rows from the DomesticUse table; these do not correspond to actual BEA Summary industries.
+GA_DomesticUse_2012 <- GA_DomesticUse_2012[!rownames(GA_DomesticUse_2012) %in% c("V001", "V002", "V003", "Used", "Other"), ]
+# Calculate the direct requirements matrix
+GA_DirectRequirements_2012 <- GA_DomesticUse_2012 / GA_IndustryOutput_2012$Output
+```
+
 ### Use for Developers (usage type #2)
 
 For studying, replicating or modify the code, users will want to clone or copy the source code and review the code in R. See more in [Instructions for Developers](https://github.com/USEPA/stateior/wiki/Instructions-for-developers).
