@@ -16,7 +16,7 @@ loadDatafromUSEEIOR <- function(dataset, appendSchema = TRUE) {
     dataset_srch <- dataset
   }
   utils::data(package = "useeior", list = dataset_srch)
-  df <- get(dataset)
+  df <- get(dataset_srch)
   return(df)
 }
 
