@@ -40,7 +40,7 @@ getFAF <- function(year) {
   
   # Download all FAF tables into the placeholder file
   if (!file.exists(FAFzip)) {
-    utils::download.file(paste0(file_baseurl, gsub(stateio_dir, "", FAFzip_short)),
+    utils::download.file(paste0(file_baseurl, basename(FAFzip)),
                          FAFzip, mode = "wb", timeout = 1500)
     
     # Get the name of all files in the zip archive
