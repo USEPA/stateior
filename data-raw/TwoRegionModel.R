@@ -2,6 +2,8 @@
 # Build model
 specs <- {}
 specs$BaseIOSchema <- 2017
+specs$model_ver <- "0.4.0"
+
 TwoRegionModel <- assembleTwoRegionIO(year, iolevel = "Summary", specs)
 # Subset data set
 for (name in names(TwoRegionModel)) {

@@ -311,14 +311,14 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
                                                 iolevel,
                                                 "_DomesticUse_",
                                                 year),
-                                         ver = model_ver)[[state]][commodities, ]
+                                         ver = specs$model_ver)[[state]][commodities, ]
   # Load state commodity output
   logging::loginfo("Loading state commodity output...")
   SoI_CommodityOutput <- loadStateIODataFile(paste0("State_",
                                                     iolevel,
                                                     "_CommodityOutput_",
                                                     year),
-                                             ver = model_ver)[[state]]
+                                             ver = specs$model_ver)[[state]]
   
   # 2 - Generate 2-region ICFs
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios...")
@@ -591,18 +591,20 @@ assembleTwoRegionIO <- function(year, iolevel, specs) {
   US_Make <- getNationalMake(iolevel, year, specs)
   US_DomesticUse <- generateUSDomesticUse(iolevel, year, specs)
   # Load state Make, industry and commodity output
-  State_Make_ls <- loadStateIODataFile(paste0("State_", iolevel, "_Make_", year))
-  State_Use_ls <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year))
+  State_Make_ls <- loadStateIODataFile(paste0("State_", iolevel, "_Make_", year),
+                                       ver = specs$model_ver)
+  State_Use_ls <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year),
+                                      ver = specs$model_ver)
   State_IndustryOutput_ls <- loadStateIODataFile(paste0("State_",
                                                         iolevel,
                                                         "_IndustryOutput_",
                                                         year),
-                                                 ver = model_ver)
+                                                 ver = specs$model_ver)
   State_CommodityOutput_ls <- loadStateIODataFile(paste0("State_",
                                                          iolevel,
                                                          "_CommodityOutput_",
                                                          year),
-                                                  ver = model_ver)
+                                                  ver = specs$model_ver)
   # Assemble two-region IO tables
   TwoRegionIO <- list()
   for (state in sort(c(state.name, "District of Columbia"))) {
