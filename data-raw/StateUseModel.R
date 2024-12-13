@@ -2,6 +2,8 @@
 # Build model
 specs <- {}
 specs$BaseIOSchema <- 2017
+specs$model_ver <- "0.4.0"
+
 StateUseModel <- buildStateUseModel(year, specs)
 # Subset data set
 for (name in names(StateUseModel)) {

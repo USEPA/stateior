@@ -72,7 +72,7 @@ calculateStateCommodityOutputRatio <- function(year, specs) {
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load state Make table
   StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year),
-                                      ver = model_ver)
+                                      ver = specs$model_ver)
   states <- names(StateMake_ls)
   # Load US Commodity output
   US_Make <- getNationalMake("Summary", year, specs)
@@ -105,7 +105,7 @@ estimateStateIntermediateConsumption <- function(year, specs) {
   
   # Load state Make table
   StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year),
-                                      ver = model_ver)
+                                      ver = specs$model_ver)
   # Load US Make and Use tables
   US_Make <- getNationalMake("Summary", year, specs)
   US_Use <- getNationalUse("Summary", year, specs)
@@ -481,7 +481,7 @@ estimateStateExport <- function(year, specs) {
   
   # Adjust state international exports to avoid state exports > state commodity output
   StateMake_ls <- loadStateIODataFile(paste0("State_Summary_Make_", year),
-                                      ver = model_ver)
+                                      ver = specs$model_ver)
   State_CommOutput <- as.data.frame(unlist(lapply(names(StateMake_ls),
                                                   function(x) colSums(StateMake_ls[[x]]))))
   rownames(State_CommOutput) <- paste(rep(names(StateMake_ls), each = ncol(StateMake_ls[[1]])),
