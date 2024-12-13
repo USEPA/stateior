@@ -250,32 +250,34 @@ getStateLocalGovExpenditure <- function(year) {
           suppressWarnings(utils::download.file(url, FullFileName, mode = "wb"))
         }
         date_accessed <- as.character(as.Date(file.mtime(FullFileName)))
-  
-        # Specify rows to skip 
-        skip_rows <- 10
-        
-        # Load table
-        df<- as.data.frame(readxl::read_excel(FullFileName, sheet = 1,
-                                                 col_names = TRUE, skip = skip_rows))
-        # Save date_last_modified
-        date_last_modified_ls <- sub("Revision date: ",
-                                    "",
-                                    df[grep("Revision date: ",
-                                              df$Description), "Description"])
-        # Keep Expenditures only
-        df<- df[which(df$Description == "Expenditure1"):nrow(df), ]
-        if (year > 2011) {
-          Line <- as.integer(df[complete.cases(df), 1])
-        }
-        df <- df[, colnames(df) %in% c("Description", "United States Total",
-                                             state.name, "District of Columbia")]
-        df <- cbind(Line, df[complete.cases(df), ])
       },
-      error = function(e) {
-        stop(paste(year, "state and local government expenditure data",
-                   "is not avaliable from Census. Nothing is returned."))
-      }
+        error = function(e) {
+          stop(paste(year, "state and local government expenditure data",
+                     "is not avaliable from Census. Nothing is returned."))
+        }
     )
+    # Specify rows to skip 
+    if(year == 2022) {
+      skip_rows <- 8
+    } else {
+      skip_rows <- 10  
+    }
+    # Load table
+    df<- as.data.frame(readxl::read_excel(FullFileName, sheet = 1,
+                                             col_names = TRUE, skip = skip_rows))
+    # Save date_last_modified
+    date_last_modified_ls <- sub("Revision date: ",
+                                "",
+                                df[grep("Revision date: ",
+                                          df$Description), "Description"])
+    # Keep Expenditures only
+    df<- df[which(df$Description == "Expenditure1"):nrow(df), ]
+    if (year > 2011) {
+      Line <- as.integer(df[complete.cases(df), 1])
+    }
+    df <- df[, colnames(df) %in% c("Description", "United States Total",
+                                         state.name, "District of Columbia")]
+    df <- cbind(Line, df[complete.cases(df), ])
   }
     
     # Convert values to numeric and $
