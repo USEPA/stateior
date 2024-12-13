@@ -1,4 +1,5 @@
 source("data-raw/data_raw.R")
+library(stringr)
 #' Download Federal Government Spending data by 6-digit NAICS code
 #' By state and county from USASpending.gov.
 #' @param year A numeric value specifying year of interest.

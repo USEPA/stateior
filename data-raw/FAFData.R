@@ -9,7 +9,7 @@ getFAF <- function(year) {
     # Create placeholder for zip file and specify filename based on year
     if (year == 2012) {
       FAFzip <- file.path(stateio_dir, "FAF4.5.1_csv_State.zip")
-      filename <- file.path(Stateio_dir, "FAF4.5.1_State.csv")
+      filename <- file.path(stateio_dir, "FAF4.5.1_State.csv")
       
     } else if (year %in% c(2013:2018)) {
       FAFzip <- file.path(stateio_dir, "FAF4.5.1_csv_State_2013-2018.zip")
