@@ -289,6 +289,7 @@ calculateHazWasteManagementServiceFlowRatios <- function(state, year, specs) {
 calculateWasteManagementServiceFlowRatios <- function(state, year, specs) {
   # Assume non-haz waste ICF ratios == commodity output ratios
   COR <- calculateStateCommodityOutputRatio(year, specs)
+  BEA_col <- paste0("BEA_", specs$BaseIOSchema, "_Summary_Code")
   SoIWasteCOR <- COR[COR[[BEA_col]] == "562" & COR$State == state, "Ratio"]
   RoUSWasteCOR <- 1 - SoIWasteCOR
   NonHazWaste_ICF_2r <- data.frame("SoI2SoI"   = SoIWasteCOR,
