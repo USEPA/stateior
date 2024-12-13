@@ -7,7 +7,7 @@ getNationalMake <- function(iolevel, year, specs) {
   # Define BEA and year_col
   schema <- specs$BaseIOSchema
   # Load pre-saved US Make table
-  dataset <- paste(iolevel, "Make", year, "BeforeRedef", "17sch", sep = "_")
+  dataset <- paste(iolevel, "Make", year, "BeforeRedef", sep = "_")
   Make <- loadDatafromUSEEIOR(dataset)*1E6
   # Keep industry and commodity
   Make <- Make[getVectorOfCodes(iolevel, "Industry", specs),
