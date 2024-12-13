@@ -13,6 +13,7 @@ model_ver <- NULL
 buildStateSupplyModel <- function(year, specs) {
   startLogging()
   logging::loginfo("Calculate state/US Gross Value Added (GVA) ratios...")
+  schema <- specs$BaseIOSchema
   StateUS_VA_Ratio <- calculateStateUSValueAddedRatio(year, specs)
   states <- unique(StateUS_VA_Ratio$GeoName)
   logging::loginfo("Estimating state Make table and commodity output...")
