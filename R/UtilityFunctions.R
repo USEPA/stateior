@@ -297,22 +297,22 @@ findLatestStateIODatainLocalDirectory <- function(filename) {
 loadStateIODataFile <- function(filename, ver = NULL) {
   # Define file name
   if (is.null(ver)) {
-    # Look for the latest file in Data Commons first.
+    # Look for the latest file in local data directory first.
     tryCatch(
       expr = {
-        f <- findLatestStateIODataonDataCommons(filename)
+        f <- findLatestStateIODatainLocalDirectory(filename)
       },
       error = function(e) {
-        logging::logwarn(paste(filename, "not found on Data Commons.",
-                               "Looking in local data directory now..."))
-        # If filename not found in Data Commons, look for it in local data directory.
+        logging::logwarn(paste(filename, "not found in local data directory.",
+                               "Looking on Data Commons now..."))
+        # If filename not found locally, look for it on Data Commons.
         tryCatch(
           expr = {
-            f <<- findLatestStateIODatainLocalDirectory(filename)
+            f <<- findLatestStateIODataonDataCommons(filename)
           },
           error = function(e) {
             logging::logwarn(paste(filename,
-                                   "not found in local data directory, either."))
+                                   "not found on Data Commons, either."))
             message("Please confirm ", filename, " is correctly spelled. ",
                     "You should be able to find the correctly spelled file on ",
                     "https://dmap-data-commons-ord.s3.amazonaws.com/index.html?prefix=stateio/. ",
