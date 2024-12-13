@@ -215,7 +215,7 @@ buildStateUseModel <- function(year, specs) {
   # import ratio matrix (US_Import/US_Use) by state Use table.
   # Derive an import_ratio matrix from US Import matrix
   US_Import_file <- paste("Summary_Import", year, "BeforeRedef",
-                          paste0(substr(schema, 3, 4), "sch"), sep = "_")
+                          paste0(substr(specs$BaseIOSchema, 3, 4), "sch"), sep = "_")
   US_Import_m <- loadDatafromUSEEIOR(US_Import_file)[commodities,
                                                      c(industries, FD_cols)]*1E6
   import_ratio <- US_Import_m/US_Use[commodities, c(industries, FD_cols)]
