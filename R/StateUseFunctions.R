@@ -1,16 +1,16 @@
-#' Get US Use table (intermediaete + final demand) of specified iolevel and year.
+#' Get US Use table (intermediadete + final demand) of specified iolevel and year.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
-#' @return The US Use table (intermediaete + final demand) of specified iolevel and year.
+#' @return The US Use table (intermediate + final demand) of specified iolevel and year.
 getNationalUse <- function(iolevel, year, specs) {
   # Define BEA_col and year_col
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load pre-saved US Use table
   Use <- loadDatafromUSEEIOR(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
-  # Keep intermediaete and final demand
+  # Keep intermediate and final demand
   Use <- Use[getVectorOfCodes("Summary", "Commodity", specs),
              c(getVectorOfCodes("Summary", "Industry", specs), getFinalDemandCodes("Summary", specs))]
   return(Use)
