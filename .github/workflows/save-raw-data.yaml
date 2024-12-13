@@ -73,6 +73,7 @@ jobs:
       # Upload .rds files
       - name: Upload .rds files and prepare zip for manual download
         uses: actions/upload-artifact@v4
+        if: success() || failure()
         with:
           # Artifact name
           name: data - ${{ matrix.script-run }} - ${{ matrix.data-year }}
@@ -84,6 +85,7 @@ jobs:
       # Upload .json files 
       - name: Upload .json files and prepare zip for manual download
         uses: actions/upload-artifact@v4
+        if: success() || failure()
         with:
           # Artifact name
           name: metadata - ${{ matrix.script-run }} - ${{ matrix.data-year }}
