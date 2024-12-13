@@ -66,7 +66,7 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, ioleve
                                                 iolevel,
                                                 "_CommodityOutput_",
                                                 year),
-                                         ver = model_ver)[[state]]
+                                         ver = specs$model_ver)[[state]]
   colnames(StateCommOutput) <- "CommodityOutput"
   # Merge with BEAtoTradedorLocal
   StateCommOutput <- merge(BEAtoTradedorLocal, StateCommOutput,
