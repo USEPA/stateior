@@ -162,19 +162,9 @@ calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, spe
   }
   # Map from NAICS to BEA
   bea_code <- paste("BEA", schema, iolevel, "Code", sep = "_")
-  if(schema == 2012){
-    trade <- merge(unique(useeior::MasterCrosswalk2012[, c("NAICS_2012_Code", bea_code)]),
-                   trade, by.x = "NAICS_2012_Code", by.y = "NAICS")
-    print("2012 schema used")
-  } else if(schema == 2017){
-    trade <- merge(unique(useeior::MasterCrosswalk2017[, c("NAICS_2017_Code", bea_code)]),
-                   trade, by.x = "NAICS_2017_Code", by.y = "NAICS")
-    print("2017 schema used")
-  } else {
-    print("default 2017 schema is used")
-    trade <- merge(unique(useeior::MasterCrosswalk2017[, c("NAICS_2017_Code", bea_code)]),
-                   trade, by.x = "NAICS_2017_Code", by.y = "NAICS")
-  }
+  cw <- loadDatafromUSEEIOR(paste0("MasterCrosswalk", schema), appendSchema = FALSE)
+  trade <- merge(unique(cw[, c(paste0("NAICS_", schema, "_Code"), bea_code)]),
+                 trade, by.x = paste0("NAICS_", schema, "_Code"), by.y = "NAICS")
 
   # Adjust the import data using the following logic:
   # For each BEA code, find all possible corresponding 4-digit NAICS (dig = 4)

@@ -13,15 +13,8 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, ioleve
   schema <- specs$BaseIOSchema
   bea <- paste("BEA", schema, iolevel, "Code", sep = "_")
   NAICSCode<- paste0("NAICS_", schema, "_Code")
-  # Load useeio Crosswalk 
-  if (schema == 2017){
-    MasterCrosswalk<- useeior::MasterCrosswalk2017
-  } else if (schema == 2012) {
-    MasterCrosswalk<- useeior::MasterCrosswalk2012
-  } else {
-    MasterCrosswalk<- useeior::MasterCrosswalk2017
-    print("default 2017 schema used")
-  }
+  # Load useeio Crosswalk
+  MasterCrosswalk <- loadDatafromUSEEIOR(paste0('MasterCrosswalk', schema), appendSchema = FALSE)
   # Load the cluster mapping for NAICS to Traded/Local (from clustermapping.us)
   clustermapping <- system.file("extdata",
                                 "Crosswalk_ClusterMappingNAICStoTradedorLocal.csv",

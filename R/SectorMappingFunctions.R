@@ -11,8 +11,8 @@ mapFlowBySectorfromNAICStoBEA <- function(fbs, year, iolevel, specs) {
   # Get NAICStoBEA crosswalk
   schema <- specs$BaseIOSchema
   BEA_cols <- paste("BEA", schema, c("Sector", "Summary", "Detail"), "Code", sep = "_")
-  MasterCrosswalk <- paste0("MasterCrosswalk",schema)
-  NAICStoBEA <- unique(useeior::MasterCrosswalk[, c(BEA_cols, paste0("NAICS_", schema, "_Code"))])
+  MasterCrosswalk <- loadDatafromUSEEIOR(paste0("MasterCrosswalk",schema), appendSchema = FALSE)
+  NAICStoBEA <- unique(MasterCrosswalk[, c(BEA_cols, paste0("NAICS_", schema, "_Code"))])
   NAICStoBEA <- NAICStoBEA[!is.na(NAICStoBEA[, paste0("NAICS_", schema, "_Code")]),]
   # Merge fbs with NAICStoBEA
   fbs <- merge(fbs[, c("Location", "SectorProducedBy", "FlowAmount")],
