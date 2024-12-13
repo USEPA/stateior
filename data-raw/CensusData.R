@@ -269,7 +269,7 @@ getStateLocalGovExpenditure <- function(year) {
         }
         df <- df[, colnames(df) %in% c("Description", "United States Total",
                                              state.name, "District of Columbia")]
-        df <- df[complete.cases(df), ]
+        df <- cbind(Line, df[complete.cases(df), ])
       },
       error = function(e) {
         stop(paste(year, "state and local government expenditure data",
