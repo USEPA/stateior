@@ -7,6 +7,7 @@ generateUSDomesticUse <- function(iolevel, year, specs) {
   # Load Use table and Import matrix
   Use <- getNationalUse(iolevel, year, specs)
   Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
+                                      paste0(substr(schema, 3, 4), "sch"),
                                       sep = "_"))*1E6
   # Subtract Import from Use
   DomesticUse <- Use - Import[rownames(Use), colnames(Use)]
@@ -30,6 +31,7 @@ generateInternationalTradeAdjustmentVector <- function(iolevel, year, specs) {
   # Load Use table and Import matrix
   Use <- getNationalUse(iolevel, year, specs)
   Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
+                                      paste0(substr(schema, 3, 4), "sch"),
                                       sep = "_"))*1E6
   # Define Import code
   ImportCode <- getVectorOfCodes(iolevel, "Import", specs)
@@ -54,6 +56,7 @@ calculateUSInternationalTransportMarginsRatioMatrix <- function(iolevel, year, s
   # Load US Use and Import tables
   US_Use <- getNationalUse(iolevel, year, specs)
   US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
+                                         paste0(substr(schema, 3, 4), "sch"),
                                          sep = "_"))*1E6
   # Calculate US Domestic Use ratios (w/ International Transport Margins)
   DomesticUsewIntlTransMarginsRatio <- (US_Use - US_Import[rownames(US_Use), colnames(US_Use)])/US_Use

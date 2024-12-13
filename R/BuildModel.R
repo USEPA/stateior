@@ -214,7 +214,8 @@ buildStateUseModel <- function(year, specs) {
   # The state Import matrix is created by multiplying the national average
   # import ratio matrix (US_Import/US_Use) by state Use table.
   # Derive an import_ratio matrix from US Import matrix
-  US_Import_file <- paste("Summary_Import", year, "BeforeRedef", sep = "_")
+  US_Import_file <- paste("Summary_Import", year, "BeforeRedef",
+                          paste0(substr(schema, 3, 4), "sch"), sep = "_")
   US_Import_m <- loadDatafromUSEEIOR(US_Import_file)[commodities,
                                                      c(industries, FD_cols)]*1E6
   import_ratio <- US_Import_m/US_Use[commodities, c(industries, FD_cols)]
@@ -783,6 +784,7 @@ buildFullTwoRegionIOTable <- function(state, year, iolevel, specs) {
                                                            c(industries, FD_cols)]
   US_Use <- getNationalUse(iolevel, year, specs)
   US_Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
+                                         paste0(substr(schema, 3, 4), "sch"),
                                          sep = "_"))*1E6
   US_ImportRatios <- US_Import[rownames(US_Use), colnames(US_Use)]/US_Use
   US_ImportRatios[is.na(US_ImportRatios)] <- 0

@@ -9,7 +9,8 @@ getNationalUse <- function(iolevel, year, specs) {
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load pre-saved US Use table
-  Use <- loadDatafromUSEEIOR(paste(iolevel, "Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  Use <- loadDatafromUSEEIOR(paste(iolevel, "Use", year, "PRO_BeforeRedef",
+                                   paste0(substr(schema, 3, 4), "sch"), sep = "_"))*1E6
   # Keep intermediate and final demand
   Use <- Use[getVectorOfCodes("Summary", "Commodity", specs),
              c(getVectorOfCodes("Summary", "Industry", specs), getFinalDemandCodes("Summary", specs))]
@@ -253,7 +254,8 @@ assembleStateSummaryGrossValueAdded <- function(year, specs) {
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Prepare US_Use, industries, and VA_rows
-  US_Use <- loadDatafromUSEEIOR(paste("Summary_Use", year, "PRO_BeforeRedef", sep = "_"))*1E6
+  US_Use <- loadDatafromUSEEIOR(paste("Summary_Use", year, "PRO_BeforeRedef",
+                                      paste0(substr(schema, 3, 4), "sch"), sep = "_"))*1E6
   industries <- getVectorOfCodes("Summary", "Industry", specs)
   VA_rows <- getVectorOfCodes("Summary", "ValueAdded", specs)
   

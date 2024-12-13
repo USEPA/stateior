@@ -15,6 +15,7 @@ loadDatafromUSEEIOR <- function(dataset, appendSchema = TRUE) {
   } else {
     dataset_srch <- dataset
   }
+  logging::loginfo(paste0("Loading ", dataset_srch, " from USEEIOr."))
   utils::data(package = "useeior", list = dataset_srch)
   df <- get(dataset_srch)
   return(df)
