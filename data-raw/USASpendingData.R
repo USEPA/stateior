@@ -29,6 +29,12 @@ getFedGovSpending <- function(year) {
   date_last_modified <- stringr::str_match(notes[grep("USAspending Database", notes)],
                                            "Database (.*?) zip")[2]
   data_date <- gsub("-", "", date_last_modified)
+  
+  # In some cases, the data_date is not correct on the home page, instead
+  # acquire it from reading the xml data
+  lines <- readLines("https://files.usaspending.gov/award_data_archive/")[2]
+  data_date <- str_sub(str_sub(lines, str_locate(lines, "<Key>")[1], str_locate(lines, ".zip")[1]-1), -8)
+  
   # Use date_last_modified to determine whether data for input year is available
   if (year + 1 <= gsub("\\-.*", "", date_last_modified)) {
     for (year_N in year_range) {
@@ -37,9 +43,10 @@ getFedGovSpending <- function(year) {
                              data_date, ".zip")
       
       if (!file.exists(FedGovExpzip)) {
+        options(timeout = 1050)
         utils::download.file(paste0("https://files.usaspending.gov/award_data_archive/FY",
                                     year_N, "_All_Contracts_Full_", data_date, ".zip"),
-                             FedGovExpzip, mode = "wb", timeout = 600)
+                             FedGovExpzip, mode = "wb")
       }
       # Get the name of all files in the zip archive
       fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
