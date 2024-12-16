@@ -318,29 +318,17 @@ getStateEmploymentbyBEASummary <- function(year,specs) {
   # Define BEA_col
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
-  # BEA State Emp
-  BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
-                                     ver = model_ver)
-  EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
-  BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
-                       EmptoBEAmapping, by = "LineCode")
-  # Aggregate StateEmployment by BEA
-  BEAStateEmp <- stats::aggregate(BEAStateEmp[, as.character(year)],
-                                  by = list(BEAStateEmp[[BEA_col]],
-                                            BEAStateEmp$GeoName), sum)
-  colnames(BEAStateEmp) <- c(BEA_col, "State", "Emp")
   # Employment FlowBySector from flowsa
   EmpFBS <- getFlowsaData("Employment", year)
   EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary", specs)
   EmpFBS$State <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
-  # Prioritize BEAStateEmp, replace NAs in Emp with values from EmpFBS
-  StateEmp <- merge(BEAStateEmp[BEAStateEmp$State %in% EmpFBS$State, ],
-                    EmpFBS, by.x = c("State", BEA_col), by.y = c("State","BEA_2012_Summary_Code"), all = TRUE)
-  StateEmp[is.na(StateEmp$Emp), "Emp"] <- StateEmp[is.na(StateEmp$Emp), "FlowAmount"]
-  # Replace the remaining NAs in Emp with zero
-  StateEmp[is.na(StateEmp$Emp), "Emp"] <- 0
-  # Drop unwanted columns
-  StateEmp <- StateEmp[, colnames(BEAStateEmp)]
+  names(EmpFBS)[names(EmpFBS) == 'FlowAmount'] <- 'Emp'
+  
+  # Make sure 0 values are expicit
+  combinations <- expand.grid(State = unique(EmpFBS$State), Summary = unique(EmpFBS[[BEA_col]]))
+  EmpFBS <- merge(EmpFBS, combinations, by.x = c("State", BEA_col), by.y = c("State", "Summary"), all.y = TRUE)
+  EmpFBS$Emp[is.na(EmpFBS$Emp)] <- 0
+  StateEmp <- EmpFBS[, c(BEA_col, "State", "Emp")]
   return(StateEmp)
 }
 
