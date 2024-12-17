@@ -2,13 +2,30 @@
 % Please edit documentation in R/StateDisaggFunctions.R
 \name{getStateModelDisaggSpecs}
 \alias{getStateModelDisaggSpecs}
-\title{Read and assign disaggregation specifications}
+\title{Read and assign disaggregation specifications
+Function assumes all states will be disaggregated with the same config file 
+and allocations unless a statefile parameter is included as input.
+In this case, the function assumes the statefile paramter will modify the
+allocation values present in configfile for each state, rather than loading
+in 50 different sets of allocation values.}
 \usage{
-getStateModelDisaggSpecs()
+getStateModelDisaggSpecs(configfile, statefile = NULL)
+}
+\arguments{
+\item{configfile}{str, name of disaggregation specification file}
+
+\item{statefile}{str, name of state-specific disaggregation spec file that will
+modify the standard configfile for each state. Should be 1 config file that has
+the required modifications of configfile for each state}
 }
 \value{
 A stateior model object with the disaggregation specs loaded.
 }
 \description{
 Read and assign disaggregation specifications
+Function assumes all states will be disaggregated with the same config file 
+and allocations unless a statefile parameter is included as input.
+In this case, the function assumes the statefile paramter will modify the
+allocation values present in configfile for each state, rather than loading
+in 50 different sets of allocation values.
 }
