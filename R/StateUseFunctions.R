@@ -554,8 +554,25 @@ calculateStateSLGovExpenditureRatio <- function(year, specs) {
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load state and local government expenditure
-  GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year),
-                                ver = model_ver)
+  if(year > 2022) {
+    # Until 2023 data year available, revert to 2022
+    tryCatch({
+        GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year),
+                                      ver = model_ver)
+        },
+      error = function(e) {
+        logging::logwarn(paste0("State and Local Government Expenditure data not ",
+                        "available for ", year, ". Using the prior year's data."))
+        },
+      finally = {
+        GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year - 1),
+                                      ver = model_ver)
+        }
+    )
+  } else {
+    GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year),
+                                  ver = model_ver)    
+  }
   GovExp_statetotal <- rowSums(GovExp[, c(state.name, "District of Columbia")])
   GovExp[, "Overseas"] <- GovExp[, "United States Total"] - GovExp_statetotal
   # Map to BEA Summary sectors
