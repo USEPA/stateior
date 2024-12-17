@@ -68,6 +68,10 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   crosswalk <- cw[cw[, BEA_col] %in% allocation_codes, ]
   # Generate allocation_weight df based on pre-saved data
   if (allocationweightsource == "Employment") {
+    
+    # TODO update this pull data directly from flowsa
+    
+    
     # Load BEA State Emp to BEA Summary mapping
     EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
     sectors <- unique(crosswalk[crosswalk$BEA_2017_Sector_Code %in% c("44RT", "FIRE", "G"), BEA_col])
