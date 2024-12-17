@@ -1,4 +1,4 @@
-Model: "StateIOv1.0.0-s" # s represents Summary level (73 commodities & 71 industries)
+Model: "StateIOv1.2-milkbar" # alias milkbar reflects summary level disaggregated model for utilities
 BaseIOSchema: 2012
 BaseIOLevel: "Summary"
 IOYear:
@@ -18,7 +18,7 @@ IODataSource: "BEA"
 BasePriceType: "PRO"
 BasewithRedefinitions: FALSE
 ScrapIncluded: FALSE
-DisaggregationSpecs: NULL
+DisaggregationSpecs: "UtilityDisaggregation"
 
 DataProduct:
   - "Make"

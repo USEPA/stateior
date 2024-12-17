@@ -1,4 +1,4 @@
-Model: "StateIOv1.0.0-75" # 75 represents Summary level disaggregated model (73 + 2 = 75 commodities & 71 + 2 = 73 industries)
+Model: "StateIOv1.2-shoofly" # Summary level (73 commodities & 71 industries), no adjustments
 BaseIOSchema: 2012
 BaseIOLevel: "Summary"
 IOYear:
@@ -18,7 +18,7 @@ IODataSource: "BEA"
 BasePriceType: "PRO"
 BasewithRedefinitions: FALSE
 ScrapIncluded: FALSE
-DisaggregationSpecs: "UtilityDisaggregation"
+DisaggregationSpecs: NULL
 
 DataProduct:
   - "Make"

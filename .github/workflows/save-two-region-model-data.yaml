@@ -7,7 +7,7 @@ on:
         model_spec:
             description: "Model spec file (in quotes)"
             required: true
-            default: "StateIOv1.0.0-s"
+            default: "StateIOv1.2-shoofly"
             type: string
 
 
