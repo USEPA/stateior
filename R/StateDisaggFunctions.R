@@ -1,9 +1,13 @@
-
 #' Read and assign disaggregation specifications
-#' Function assumes all states will be disaggregated with the same config file/allocations unless a statefile parameter is included as input.
-#' In this case, the function assumes the statefile paramter will modify the allocation values present in configfile for each state, rather than loading in 50 different sets of allocation values.
+#' Function assumes all states will be disaggregated with the same config file 
+#' and allocations unless a statefile parameter is included as input.
+#' In this case, the function assumes the statefile paramter will modify the
+#' allocation values present in configfile for each state, rather than loading
+#' in 50 different sets of allocation values.
 #' @param configfile str, name of disaggregation specification file
-#' @param statefile str, name of state-specific disaggregation spec file that will modify the standard configfile for each state. Should be 1 config file that has the required modifications of configfile for each state
+#' @param statefile str, name of state-specific disaggregation spec file that will
+#' modify the standard configfile for each state. Should be 1 config file that has
+#' the required modifications of configfile for each state
 #' @return A stateior model object with the disaggregation specs loaded.
 getStateModelDisaggSpecs <- function(configfile, statefile = NULL){
   model <- list() 
@@ -19,21 +23,22 @@ getStateModelDisaggSpecs <- function(configfile, statefile = NULL){
       model$DisaggregationSpecs[[disagg$OriginalSectorCode]] <- disagg
     }
   }
-  
   return(model)
-  
 }
 
 #' Read in state-specific disaggregation values
-#' This function assumes values contained in statefile will modify disaggregation values present in the main disaggregation config file.
-#' @param statefile str, name of state-specific disaggregation spec file that will modify the standard configfile for each state. Should be 1 config file that has the required modifications of configfile for each state
+#' This function assumes values contained in statefile will modify disaggregation
+#' values present in the main disaggregation config file.
+#' @param statefile str, name of state-specific disaggregation spec file that will
+#' modify the standard configfile for each state. Should be 1 config file that has
+#' the required modifications of configfile for each state
 #' @param disaggConfigpath str, path for statefile 
-#' @return A stateior model object with the state-specific disaggregation specs included in model$specs$STateDisaggSpecs object
+#' @return A stateior model object with the state-specific disaggregation specs
+#' included in model$specs$STateDisaggSpecs object
 getStateSpecificDisaggSpecs <- function(disaggConfigpath, statefile){
   filename <- file.path(dirname(disaggConfigpath), statefile)
   stateFileDF <- utils::read.table(filename, sep = ",", header = TRUE, stringsAsFactors = FALSE, check.names = FALSE)
   return(stateFileDF)
-  
 }
 
 #' Disaggregate state make and use tables
@@ -42,7 +47,8 @@ getStateSpecificDisaggSpecs <- function(disaggConfigpath, statefile){
 #' @return A stateior model with the disaggregateed objects
 disaggregateStateModel <- function(model, state){
 
-  # TODO: Include validation checks for row/column sums - note that there may be unexpected results due to existing negative values in state use tables.
+  # TODO: Include validation checks for row/column sums - note that there may be unexpected
+  # results due to existing negative values in state use tables.
 
   for (disagg in model$DisaggregationSpecs){
 
@@ -74,17 +80,12 @@ disaggregateStateModel <- function(model, state){
       model <- calculateStateIndustryCommodityOuput(model) # Also formats the disaggregated industry and commodity outputs to stateior formats
       
     }
-    
     # Formatting disaggregated model objects back to stateior formats
     model$MakeTransactions <- formatMakeFromUSEEIOtoState(model, state)
     model$FullUse <- formatFullUseFromUSEEIOtoState(model, state)
     model$DomesticFullUse <- formatFullUseFromUSEEIOtoState(model, state, domestic = TRUE)
-    
   }
-  
   return(model)
-  
-  
 } 
 
 
@@ -101,8 +102,10 @@ disaggregateNationalObjectsInStateModel <- function(model, disagg){
   model$MakeTransactions <- formatMakeFromStateToUSEEIO(model, state) #Formatting MakeTransactions object
 
   # Format individual domestic use objects (DomesticUseTransactions, DomesticFinalDemand)
-  model$DomesticFullUse <- formatFullUseFromStateToUSEEIO(model$DomesticFullUse) # Note that the domestic full use object does not include value added rows
-  model <- splitFullUse(model, domestic = TRUE) # Splitting FullUse into UseTransactions, UseValueAdded, and FinalDemand objects
+  # Note that the domestic full use object does not include value added rows
+  model$DomesticFullUse <- formatFullUseFromStateToUSEEIO(model$DomesticFullUse)
+  # Splitting FullUse into UseTransactions, UseValueAdded, and FinalDemand objects
+  model <- splitFullUse(model, domestic = TRUE)
   model$FullUse <- formatFullUseFromStateToUSEEIO(model$FullUse)
   model <- splitFullUse(model, domestic = FALSE)
   
@@ -241,17 +244,20 @@ splitFullUse <- function(model, domestic = FALSE){
   numCommodities <- model$origCommodities # Find number of commodities
   numIndustries <- model$origIndustries # Find number of industries
   if(domestic == TRUE){
-    model$DomesticUseTransactions <- model$DomesticFullUse[1:numCommodities, 1:numIndustries] # Get subset of FullUse with numCommodities rows and numIndustries columns
-    model$DomesticFinalDemand <- model$DomesticFullUse[1:numCommodities,-(1:numIndustries)] # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
+    # Get subset of FullUse with numCommodities rows and numIndustries columns
+    model$DomesticUseTransactions <- model$DomesticFullUse[1:numCommodities, 1:numIndustries]
+    # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
+    model$DomesticFinalDemand <- model$DomesticFullUse[1:numCommodities,-(1:numIndustries)]
     
-  }else{
-    model$UseTransactions <- model$FullUse[1:numCommodities, 1:numIndustries] # Get subset of FullUse with numCommodities rows and numIndustries columns
-    model$UseValueAdded <- model$FullUse[-(1:numCommodities),1:numIndustries] # Get subset of FullUse, starting from rows after numCommodities, with numIndustries columns
-    model$FinalDemand <- model$FullUse[1:numCommodities,-(1:numIndustries)] # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
+  } else {
+    # Get subset of FullUse with numCommodities rows and numIndustries columns
+    model$UseTransactions <- model$FullUse[1:numCommodities, 1:numIndustries]
+    # Get subset of FullUse, starting from rows after numCommodities, with numIndustries columns
+    model$UseValueAdded <- model$FullUse[-(1:numCommodities),1:numIndustries]
+    # Get subset of FullUse, with numCommodities rows and starting from columns after numIndustries
+    model$FinalDemand <- model$FullUse[1:numCommodities,-(1:numIndustries)]
   }
-
   return(model)
-  
 }
 
 #' Calculate output from model objects
@@ -327,7 +333,6 @@ createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggStat
                               Activity = activity,
                               Share = share,
                               Year = rep(disaggYear, length(disagg$NewSectorCodes)))
-    
   }
 
   print(paste0("For ",disaggState,"-",disaggYear, " the allocation to disaggregate ", 
@@ -337,10 +342,12 @@ createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggStat
   # Specifying commodity disaggregation (column splits) for Make DF
   industries <- c(rep(disagg$OriginalSectorCode,length(disagg$NewSectorCodes)))
   commodities <- unlist(disagg$NewSectorCodes)
-  PercentMake <- stateDFYear$Share # need to add code to ensure that the order of stateDF$Share is the same as the order of disagg$NewSectorCodes
+  PercentMake <- stateDFYear$Share
+  # need to add code to ensure that the order of stateDF$Share is the same as the order of disagg$NewSectorCodes
   note <- c(rep("CommodityDisagg", length(disagg$NewSectorCodes)))
   
-  makeDF <- data.frame(cbind(data.frame(industries), data.frame(commodities), data.frame(PercentMake), data.frame(note))) #need to rename the columns with the correct column names
+  # need to rename the columns with the correct column names
+  makeDF <- data.frame(cbind(data.frame(industries), data.frame(commodities), data.frame(PercentMake), data.frame(note)))
   colnames(makeDF) <- c("IndustryCode","CommodityCode",	"PercentMake",	"Note")
   
   
@@ -351,20 +358,21 @@ createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggStat
   PercentUse <- stateDFYear$Share
   note <- c(rep("IndustryDisagg", length(disagg$NewSectorCodes)))
   
-  useDF <- data.frame(cbind(data.frame(industries), data.frame(commodities), data.frame(PercentUse), data.frame(note))) #need to rename the columns with the correct column names
+  # need to rename the columns with the correct column names
+  useDF <- data.frame(cbind(data.frame(industries), data.frame(commodities), data.frame(PercentUse), data.frame(note)))
   useDF_2 <- makeDF # so that colnames match
   colnames(useDF) <- c("IndustryCode","CommodityCode",	"PercentUse",	"Note")
   colnames(useDF_2) <- c("IndustryCode","CommodityCode",	"PercentUse",	"Note")
   
-  useDF <- rbind(useDF, useDF_2) #need to bid makeDF because disaggregation procedure requires the UseDF to have the default commodity and industry output.
+  # need to bind makeDF because disaggregation procedure requires the UseDF to have the default commodity and industry output.
+  useDF <- rbind(useDF, useDF_2) 
     
   # Add new DFs to disagg and to model
   disagg$MakeFileDF <- makeDF
   disagg$UseFileDF <- useDF
   
   model$DisaggregationSpecs[[disagg$OriginalSectorCode]] <- disagg
-  
-  
+
   temp <-2 
   return(model)
   
