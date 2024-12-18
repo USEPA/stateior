@@ -18,10 +18,11 @@ getNationalMake <- function(iolevel, year, specs) {
 
 #' Get industry-level GVA for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema
 #' @return A data frame contains state GVA for all states at a specific year.
-getStateGVA <- function(year) {
+getStateGVA <- function(year, specs) {
   # Load pre-saved state GVA data
-  StateGVA <- loadStateIODataFile(paste0("State_GVA_", year), ver = model_ver)
+  StateGVA <- loadStateIODataFile(paste0("State_GVA_", year), ver = specs$model_ver)
   StateGVA <- StateGVA[, c("GeoName", "LineCode", as.character(year))]
   return(StateGVA)
 }
@@ -30,8 +31,9 @@ getStateGVA <- function(year) {
 #' @param statetablename Name of pre-saved state table,
 #' can be GVA, Tax, Employment Compensation, and GOS.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state value for all states with row names being BEA sector code.
-mapStateTabletoBEASummary <- function(statetablename, year) {
+mapStateTabletoBEASummary <- function(statetablename, year, specs) {
   # Load and adjust State tables
   StateTable <- adjustGVAComponent(year, statetablename)
   # Load State GVA to BEA Summary sector-mapping table
@@ -81,7 +83,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   US_GrossOutput <- cbind.data.frame("United States *",
                                      rownames(Summary_GrossOutput_IO),
                                      Summary_GrossOutput_IO[, year_col, drop = FALSE])
-  colnames(US_GrossOutput) <- colnames(allocation_weight)
+  colnames(US_GrossOutput) <- c("GeoName", BEA_col, "Weight")
   # Calculate allocation factor
   df <- merge(rbind(allocation_weight, US_GrossOutput), allocation_sectors, by = BEA_col)
   df$Weight <- as.numeric(df$Weight)
@@ -212,11 +214,11 @@ calculateStateUSValueAddedRatio <- function(year, specs) {
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains ratios of state/US GVA (value added)
 #' for all states at a specific year by BEA State LineCode.
-calculateStateUSVARatiobyLineCode <- function(year) {
+calculateStateUSVARatiobyLineCode <- function(year, specs) {
   # Define year_col
   year_col <- as.character(year)
   # Load LineCode-coded State ValueAdded
-  ValueAdded <- getStateGVA(year)
+  ValueAdded <- getStateGVA(year, specs)
   # Extract US value added
   US_VA <- ValueAdded[ValueAdded$GeoName == "United States *", ]
   # Generate sum of State ValueAdded table
@@ -244,14 +246,14 @@ calculateStateUSVARatiobyLineCode <- function(year) {
 #' by multiplying state_US_VA_ratio_LineCode by USGrossOutput_LineCode.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state industry output by BEA State LineCode.
-calculateStateIndustryOutputbyLineCode <- function(year) {
+calculateStateIndustryOutputbyLineCode <- function(year, specs) {
   # Define BEA_col and year_col
-  BEA_col <- "BEA_2012_Summary_Code"
+  BEA_col <- paste0("BEA_", specs$BaseIOSchema, "_Summary_Code")
   year_col <- as.character(year)
   # Generate state_US_VA_ratio_LineCode
-  state_US_VA_ratio_LineCode <- calculateStateUSVARatiobyLineCode(year)
+  state_US_VA_ratio_LineCode <- calculateStateUSVARatiobyLineCode(year, specs)
   # Get US Industry Output from US Make table
-  US_Summary_Make <- getNationalMake("Summary", year)
+  US_Summary_Make <- getNationalMake("Summary", year, specs)
   # Sum US_Summary_Make by row to get US_Summary_IndustryOutput
   USGrossOutput <- as.data.frame(rowSums(US_Summary_Make))
   colnames(USGrossOutput) <- year_col

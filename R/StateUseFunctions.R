@@ -20,10 +20,10 @@ getNationalUse <- function(iolevel, year, specs) {
 #' Get industry-level Compensation for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state Compensation for all states at a specific year.
-getStateEmpCompensation <- function(year) {
+getStateEmpCompensation <- function(year, specs) {
   # Load pre-saved state Compensation 2007-2017
   StateEmpCompensation <- loadStateIODataFile(paste0("State_Compensation_", year),
-                                              ver = model_ver)
+                                              ver = specs$model_ver)
   StateEmpCompensation <- StateEmpCompensation[, c("GeoName", "LineCode", as.character(year))]
   return(StateEmpCompensation)
 }
@@ -31,10 +31,10 @@ getStateEmpCompensation <- function(year) {
 #' Get industry-level Tax for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state Tax for all states at a specific year.
-getStateTax <- function(year) {
+getStateTax <- function(year, specs) {
   # Load pre-saved state Tax 2007-2017
   StateTax <- loadStateIODataFile(paste0("State_Tax_", year),
-                                  ver = model_ver)
+                                  ver = specs$model_ver)
   StateTax <- StateTax[, c("GeoName", "LineCode", as.character(year))]
   return(StateTax)
 }
@@ -42,10 +42,10 @@ getStateTax <- function(year) {
 #' Get industry-level Gross Operating Surplus (GOS) for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state GOS for all states at a specific year.
-getStateGOS <- function(year) {
+getStateGOS <- function(year, specs) {
   # Load pre-saved state GOS 2007-2017
   StateGOS <- loadStateIODataFile(paste0("State_GOS_", year),
-                                  ver = model_ver)
+                                  ver = specs$model_ver)
   StateGOS <- StateGOS[, c("GeoName", "LineCode", as.character(year))]
   return(StateGOS)
 }
@@ -53,10 +53,10 @@ getStateGOS <- function(year) {
 #' Get commodity-level Personal Consumption Expenditure (PCE) for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains state PCE for all states at a specific year.
-getStatePCE <- function(year) {
+getStatePCE <- function(year, specs) {
   # Load pre-saved state PCE
   StatePCE <- loadStateIODataFile(paste0("State_PCE_", year),
-                                  ver = model_ver)
+                                  ver = specs$model_ver)
   StatePCE <- StatePCE[, c("GeoName", "LineCode", as.character(year))]
   return(StatePCE)
 }
@@ -132,10 +132,10 @@ estimateStateIntermediateConsumption <- function(year, specs) {
 #' @return A data frame contains adjusted EmpComp, Tax, GOS, and GVA.
 adjustGVAComponent <- function(year, return) {
   # 0. Load data
-  gva <- getStateGVA(year)
-  comp <- getStateEmpCompensation(year)
-  tax <- getStateTax(year)
-  gos <- getStateGOS(year)
+  gva <- getStateGVA(year, specs)
+  comp <- getStateEmpCompensation(year, specs)
+  tax <- getStateTax(year, specs)
+  gos <- getStateGOS(year, specs)
 
   # 1. Join into one table
   # Note #1: NaN represents (L), meaning Less than $50,000.
@@ -655,7 +655,7 @@ calculateStateUSEmpCompensationRatio <- function(year, specs) {
   # Separate into state Employee Compensation
   StateEmpComp <- StateEmpComp[StateEmpComp$GeoName != "United States *", ]
   # Map US Employee Compensation to BEA
-  USEmpComp <- getStateEmpCompensation(year)
+  USEmpComp <- getStateEmpCompensation(year, specs)
   USEmpComp <- USEmpComp[USEmpComp$GeoName == "United States *", ]
   GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
   allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
