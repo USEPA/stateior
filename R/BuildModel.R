@@ -29,11 +29,11 @@ buildStateSupplyModel <- function(year, specs) {
   for (state in states) {
     # Subset the StateUS_VA_Ratio for specified state
     VA_ratio <- StateUS_VA_Ratio[StateUS_VA_Ratio$GeoName == state, ]
-    # Replace NA with zero
-    VA_ratio[is.na(VA_ratio$Ratio), "Ratio"] <- 0
     # Re-order StateUS_VA_Ratio
     rownames(VA_ratio) <- VA_ratio[[paste0("BEA_", schema,"_Summary_Code")]]
     VA_ratio <- VA_ratio[rownames(US_Make), ]
+    # Replace NA with zero
+    VA_ratio[is.na(VA_ratio$Ratio), "Ratio"] <- 0
     # Calculate State_Make by multiplying US_Make with VA_ratio
     State_Make <- diag(VA_ratio$Ratio, names = TRUE) %*% as.matrix(US_Make)
     rownames(State_Make) <- rownames(US_Make)
@@ -92,7 +92,7 @@ buildStateSupplyModel <- function(year, specs) {
                                     time = length(names(State_Make_ls))),
                                 sep = ".")
   colnames(State_Make) <- colnames(US_Make)
-  
+  State_Make[is.na(State_Make)] <- 0
   logging::loginfo("Performing RAS balancing on state Make table...")
   # Separate the state Make transaction table by industry (row) into 71 matrices.
   # Each matrix, m0, has dimensions of 52x73 (states x commodities)
