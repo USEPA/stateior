@@ -68,46 +68,23 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   crosswalk <- cw[cw[, BEA_col] %in% allocation_codes, ]
   # Generate allocation_weight df based on pre-saved data
   if (allocationweightsource == "Employment") {
-    
-    # TODO update this pull data directly from flowsa
-    
-    
-    # Load BEA State Emp to BEA Summary mapping
-    EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
-    sectors <- unique(crosswalk[crosswalk$BEA_2017_Sector_Code %in% c("44RT", "FIRE", "G"), BEA_col])
-    EmptoBEAmapping <- EmptoBEAmapping[EmptoBEAmapping[, BEA_col] %in% sectors, ]
-    # For real estate (FIRE) and gov (G) sectors, calculate allocation factors using US GVA by industry
-    allocation_factors <- merge(EmptoBEAmapping,
-                                useeior::Summary_ValueAdded_IO[, year_col, drop = FALSE],
-                                by.x = BEA_col, by.y = 0)
-    for (linecode in unique(allocation_factors$LineCode)) {
-      weight_vector <- allocation_factors[allocation_factors$LineCode == linecode, year_col]
-      allocation_factors[allocation_factors$LineCode == linecode, "factor"] <- weight_vector/sum(weight_vector)
-    }
     # Load BEA state Emp
-    BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
-                                       ver = model_ver)
-    # Map BEA state Emp (from LineCode) to BEA Summary
-    BEAStateEmp <- merge(BEAStateEmp[BEAStateEmp$GeoName %in%
-                                       c(state.name, "District of Columbia"),
-                                     c("GeoName", "LineCode", year_col)],
-                         allocation_factors[, c(BEA_col, "LineCode", "factor")],
-                         by = "LineCode")
-    # Adjust BEA state Emp value based on allocation factor
-    BEAStateEmp[, year_col] <- BEAStateEmp[, year_col]*BEAStateEmp$factor
-    allocation_weight <- stats::aggregate(BEAStateEmp[, year_col],
-                                          by = list(BEAStateEmp$GeoName,
-                                                    BEAStateEmp[, BEA_col]),
-                                          sum)
-    colnames(allocation_weight) <- c("GeoName", BEA_col, "Weight")
+    EmpFBS <- getFlowsaData("Employment", year)
+    EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary", specs)
+    EmpFBS$GeoName <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
+    EmpFBS$FIPS <- NULL
+    names(EmpFBS)[names(EmpFBS) == 'FlowAmount'] <- 'Weight'
+    allocation_weight <- EmpFBS
   }
   # Add US allocation weight (Summary Gross Output)
+  Summary_GrossOutput_IO <- loadDatafromUSEEIOR("Summary_GrossOutput_IO")
   US_GrossOutput <- cbind.data.frame("United States *",
-                                     rownames(useeior::Summary_GrossOutput_IO),
-                                     useeior::Summary_GrossOutput_IO[, year_col, drop = FALSE])
+                                     rownames(Summary_GrossOutput_IO),
+                                     Summary_GrossOutput_IO[, year_col, drop = FALSE])
   colnames(US_GrossOutput) <- colnames(allocation_weight)
   # Calculate allocation factor
   df <- merge(rbind(allocation_weight, US_GrossOutput), allocation_sectors, by = BEA_col)
+  df$Weight <- as.numeric(df$Weight)
   for (state in unique(df$GeoName)) {
     for (linecode in unique(df$LineCode)) {
       weight_vector <- df[df$GeoName == state & df$LineCode == linecode, "Weight"]
