@@ -1,3 +1,5 @@
+## This dataset has been deprecated by BEA and is no longer available.
+
 #' Get BEA state employment (full-time and part-time) data for a specified year.
 #' Use BEA API guide https://apps.bea.gov/API/docs/index.htm.
 #' @param year A numeric value specifying year of interest.
@@ -74,8 +76,8 @@ getBEAStateEmployment <- function(year) {
                            "Nothing is returned."))
   }
 }
-# Download, save and document BEA state employment data
-for (year in 2012:2023) {
-  getBEAStateEmployment(year)
-  print(year)
-}
+# # Download, save and document BEA state employment data
+# for (year in 2012:2023) {
+#   getBEAStateEmployment(year)
+#   print(year)
+# }

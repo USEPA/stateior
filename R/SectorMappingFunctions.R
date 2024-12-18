@@ -21,7 +21,7 @@ mapFlowBySectorfromNAICStoBEA <- function(fbs, year, iolevel, specs) {
   fbs_BEA <- stats::aggregate(fbs$FlowAmount,
                               by = list(fbs[, paste("BEA", schema,iolevel,"Code", sep = "_")],
                                         fbs$Location),sum)
-  colnames(fbs_BEA) <- c(paste("BEA_2012", iolevel, "Code", sep = "_"),
+  colnames(fbs_BEA) <- c(paste("BEA", schema, iolevel, "Code", sep = "_"),
                          "FIPS",
                          "FlowAmount")
   return(fbs_BEA)

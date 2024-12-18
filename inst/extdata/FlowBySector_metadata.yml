@@ -7,6 +7,9 @@ Employment:
     2019: *ext_18-19
     2020: &ext_20
       Extension: "v1.2.4_7c15ea5.parquet"
+  0.4.0: &ext_12-23
+    Extension: "v2.0.4_1bc9c63.parquet"
+    
   "NULL":
     2012: *ext_12-17
     2013: *ext_12-17
@@ -17,3 +20,6 @@ Employment:
     2018: *ext_18-19
     2019: *ext_18-19
     2020: *ext_20
+    2021: *ext_12-23
+    2022: *ext_12-23
+    2023: *ext_12-23
