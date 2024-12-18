@@ -159,8 +159,9 @@ getTwoRegionDataFileName <- function(year, iolevel, dataname) {
 #' Load flowsa FlowByActivity or FlowBySector data from Data Commons
 #' @param dataname A string specifying data name, can be "NOAA_FisheryLandings".
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param model_ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return A data frame contains state data from FLOWSA.
-getFlowsaData <- function(dataname, year) {
+getFlowsaData <- function(dataname, year, model_ver = NULL) {
   if (is.null(model_ver)) {
     model_ver <- "NULL"
   }

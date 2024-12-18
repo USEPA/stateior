@@ -69,7 +69,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   # Generate allocation_weight df based on pre-saved data
   if (allocationweightsource == "Employment") {
     # Load BEA state Emp
-    EmpFBS <- getFlowsaData("Employment", year)
+    EmpFBS <- getFlowsaData("Employment", year, specs$model_ver)
     EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary", specs)
     EmpFBS$GeoName <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
     EmpFBS$FIPS <- NULL
@@ -300,7 +300,7 @@ getStateEmploymentbyBEASummary <- function(year,specs) {
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Employment FlowBySector from flowsa
-  EmpFBS <- getFlowsaData("Employment", year)
+  EmpFBS <- getFlowsaData("Employment", year, specs$model_ver)
   EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary", specs)
   EmpFBS$State <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
   names(EmpFBS)[names(EmpFBS) == 'FlowAmount'] <- 'Emp'
@@ -325,7 +325,7 @@ getAgFisheryForestryCommodityOutput <- function(year, specs) {
   # Load state FIPS
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   # Load USDA_ERS_FIWS data from flowsa
-  USDA_ERS_FIWS <- getFlowsaData("USDA_ERS_FIWS", year)
+  USDA_ERS_FIWS <- getFlowsaData("USDA_ERS_FIWS", year, specs$model_ver)
   # Select All Commodities as Ag products
   Ag <- USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy == "All Commodities", ]
   # Convert State_FIPS to numeric values
@@ -341,7 +341,7 @@ getAgFisheryForestryCommodityOutput <- function(year, specs) {
   Ag <- Ag[, c(BEA_col, "State", "Value", "Ratio")]
   
   # Load Fishery Landings and Forestry CutValue data from flowsa
-  Fishery <- getFlowsaData("NOAA_FisheriesLandings", year)
+  Fishery <- getFlowsaData("NOAA_FisheriesLandings", year, specs$model_ver)
   FisheryForestry <- rbind(Fishery,
                            USDA_ERS_FIWS[USDA_ERS_FIWS$ActivityProducedBy == "All Species", ])
   # Convert State_FIPS to numeric values

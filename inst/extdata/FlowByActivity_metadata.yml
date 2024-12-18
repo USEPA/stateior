@@ -7,6 +7,8 @@ USDA_ERS_FIWS:
     2019: &usda_ext_19-20
       Extension: "v1.2.4_7c15ea5.parquet"
     2020: *usda_ext_19-20
+  0.4.0: &usda_ext_12-23
+    Extension: "v2.0.4_9a9b687.parquet"
   "NULL":
     2012: *usda_ext_12-17
     2013: *usda_ext_12-17
@@ -17,9 +19,14 @@ USDA_ERS_FIWS:
     2018: *usda_ext_18
     2019: *usda_ext_19-20
     2020: *usda_ext_19-20
+    2021: *usda_ext_12-23
+    2022: *usda_ext_12-23
+    2023: *usda_ext_12-23
 
 NOAA_FisheriesLandings:
   0.1.0: &noaa_ext
     Extension: "v1.2.4_7c15ea5.parquet"
   0.2.0: *noaa_ext
+  0.4.0:
+    Extension: "v2.0.4_9a9b687.parquet"
   "NULL": *noaa_ext

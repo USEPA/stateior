@@ -2,6 +2,7 @@
 # Build model
 specs <- {}
 specs$BaseIOSchema <- 2017
+specs$model_ver <- "0.4.0"
 
 StateSupplyModel <- buildStateSupplyModel(year, specs)
 # Subset data set
