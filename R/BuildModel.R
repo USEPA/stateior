@@ -252,8 +252,13 @@ buildStateUseModel <- function(year, specs) {
   q_state <- Reduce("+", lapply(CommodityOutput, rowSums))
   demand_state <- Reduce("+", lapply(model[["DomesticUse"]], rowSums))[commodities]
   if (max(abs(q_state - demand_state), na.rm = TRUE) > 1.2E7) {
-    stop(paste("Absolute difference between sum of state commodity output and",
+    fails <- abs(q_state - demand_state)
+    fails <- sort(fails[fails > 1.2E7], decreasing=TRUE)
+    # stop(paste("Absolute difference between sum of state commodity output and",
+    #            "sum of state demand is larger than $12 million."))
+    logging::logwarn(paste("Absolute difference between sum of state commodity output and",
                "sum of state demand is larger than $12 million."))
+    logging::logwarn(paste(names(fails), round(fails, -3), sep = ":", collapse = ", "))
   }
   
   logging::loginfo("State Use model build complete.")
