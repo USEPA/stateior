@@ -310,7 +310,7 @@ calculateStateUSPCERatio <- function(year, specs) {
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load state and US PCE
-  PCE <- getStatePCE(year)
+  PCE <- getStatePCE(year, specs)
   # Extract State PCE
   StatePCE <- PCE[PCE$GeoName != "United States", ]
   # Generate sum of state PCE
