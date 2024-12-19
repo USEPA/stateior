@@ -12,7 +12,7 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, io
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load pre-saved FAF4 commodity flow data
   FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"),
-                             ver = model_ver)
+                             ver = specs$model_ver)
   # Load state FIPS and determine fips code for the state of interest (SoI)
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv", package = "stateior"))
   fips <- FIPS_STATE[FIPS_STATE$State == state, "State_FIPS"]
@@ -24,7 +24,7 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, io
     value_col <- paste0("curval_", year)
   } else if (year == 2019) {
     value_col <- paste0("current_value_", year)
-  } else if (year == 2020) { # forecast of 2020 data are in 2012 dollar (value_2020)
+  } else if (year >= 2020) { # forecast of 2020 data are in 2012 dollar (value_2020)
     value_col <- paste0("value_", year)
   }
   orig_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_orig")]
@@ -297,13 +297,13 @@ calculateWasteManagementServiceFlowRatios <- function(state, year, specs) {
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
 #' @return A data frame contains domestic interregional electricity flow ratios by state.
-calculateElectricityFlowRatios <- function(state, year) {
+calculateElectricityFlowRatios <- function(state, year, specs) {
   state_abb <- getStateAbbreviation(state)
   # Load consumption data
-  CodeDesc <- loadStateIODataFile("EIA_SEDS_CodeDescription", ver = model_ver)
+  CodeDesc <- loadStateIODataFile("EIA_SEDS_CodeDescription", ver = specs$model_ver)
   Consumption <- loadStateIODataFile(paste0("EIA_SEDS_StateElectricityConsumption_",
                                             year),
-                                     ver = model_ver)
+                                     ver = specs$model_ver)
   # Subset SoI and RoUS total consumption
   consumption_desc <- "Electricity total consumption (i.e., retail sales)"
   ConsumptionMSN <- CodeDesc[CodeDesc$Description == consumption_desc &
@@ -374,7 +374,7 @@ calculateUtilitiesFlowRatios <- function(state, year, specs) {
                                            "RoUS2SoI" = 0,
                                            "RoUS2RoUS" = 1)
   # Generate electricity two-region ICF ratios
-  Elec_ICF_2r <- calculateElectricityFlowRatios(state, year)
+  Elec_ICF_2r <- calculateElectricityFlowRatios(state, year, specs)
   # Combine ICF ratios based on state employment
   Utilities_ICF_2r <- Elec_ICF_2r*ratios[1] + Gas_ICF_2r*ratios[2] + Water_ICF_2r*ratios[3]
   return(Utilities_ICF_2r)

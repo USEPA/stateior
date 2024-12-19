@@ -7,7 +7,7 @@ generateUSDomesticUse <- function(iolevel, year, specs) {
   # Load Use table and Import matrix
   Use <- getNationalUse(iolevel, year, specs)
   Import <- loadDatafromUSEEIOR(paste(iolevel, "Import", year, "BeforeRedef",
-                                      paste0(substr(schema, 3, 4), "sch"),
+                                      paste0(substr(specs$BaseIOSchema, 3, 4), "sch"),
                                       sep = "_"))*1E6
   # Subtract Import from Use
   DomesticUse <- Use - Import[rownames(Use), colnames(Use)]
