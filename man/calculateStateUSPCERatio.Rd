@@ -4,10 +4,12 @@
 \alias{calculateStateUSPCERatio}
 \title{Calculate state-US PCE (personal consumption expenditures) ratios at BEA Summary level.}
 \usage{
-calculateStateUSPCERatio(year)
+calculateStateUSPCERatio(year, specs)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains ratios of state/US PCE for all states at a specific year at BEA Summary level.

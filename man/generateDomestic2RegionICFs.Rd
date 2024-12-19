@@ -7,7 +7,7 @@
 generateDomestic2RegionICFs(
   state,
   year,
-  ioschema,
+  specs,
   iolevel,
   ICF_sensitivity_analysis = FALSE,
   adjust_by = 0
@@ -18,7 +18,7 @@ generateDomestic2RegionICFs(
 
 \item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
 
-\item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 
 \item{iolevel}{BEA sector level of detail, currently can only be "Summary",
 theoretically can be "Detail", or "Sector" in future versions.}

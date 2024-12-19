@@ -6,10 +6,12 @@
 Apply state PCE ratio to F02R.
 Apply state Gross Output ratio to F02S, F02E, F02N, and F030.}
 \usage{
-estimateStatePrivateInvestment(year)
+estimateStatePrivateInvestment(year, specs)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains state household demand for all states at a specific year at BEA Summary level.

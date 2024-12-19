@@ -6,10 +6,12 @@
 Apply row sum to state and US Make tables to get commodity output vectors and
 then Commodity Output Ratio (COR).}
 \usage{
-calculateStateCommodityOutputRatio(year)
+calculateStateCommodityOutputRatio(year, specs)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains state-US Commodity Output ratios at BEA Summary level.

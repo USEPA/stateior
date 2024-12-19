@@ -212,6 +212,7 @@ calculateStateUSValueAddedRatio <- function(year, specs) {
 
 #' Calculate state-US GVA (value added) ratios by BEA State LineCode.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains ratios of state/US GVA (value added)
 #' for all states at a specific year by BEA State LineCode.
 calculateStateUSVARatiobyLineCode <- function(year, specs) {
@@ -245,6 +246,7 @@ calculateStateUSVARatiobyLineCode <- function(year, specs) {
 #' Calculate state industry output by BEA State LineCode
 #' by multiplying state_US_VA_ratio_LineCode by USGrossOutput_LineCode.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state industry output by BEA State LineCode.
 calculateStateIndustryOutputbyLineCode <- function(year, specs) {
   # Define BEA_col and year_col

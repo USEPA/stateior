@@ -4,7 +4,7 @@
 \alias{getBEASectorCodeLocation}
 \title{Combine sector code and location to the form of code/location.}
 \usage{
-getBEASectorCodeLocation(sector_type, location, iolevel)
+getBEASectorCodeLocation(sector_type, location, iolevel, specs)
 }
 \arguments{
 \item{sector_type}{A text value specifying desired sector type,
@@ -14,6 +14,8 @@ can be "Commodity", "Industry", "FinalDemand", or "ValueAdded".}
 can be state name like "Georgia" or "RoUS" representing Rest of US.}
 
 \item{iolevel}{Level of detail, can be "Sector", "Summary, "Detail".}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A text value in the format of code/location.

@@ -4,17 +4,17 @@
 \alias{buildFullTwoRegionIOTable}
 \title{Build a full two-region IO table for specified state and rest of US for a given year.}
 \usage{
-buildFullTwoRegionIOTable(state, year, ioschema, iolevel)
+buildFullTwoRegionIOTable(state, year, iolevel, specs)
 }
 \arguments{
 \item{state}{A text value specifying state of interest.}
 
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 
-\item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
-
 \item{iolevel}{BEA sector level of detail, currently can only be "Summary",
 theoretically can be "Detail", or "Sector" in future versions.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A full two-region IO table for specified state and rest of US for a given year.

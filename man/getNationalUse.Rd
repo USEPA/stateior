@@ -2,19 +2,21 @@
 % Please edit documentation in R/StateUseFunctions.R
 \name{getNationalUse}
 \alias{getNationalUse}
-\title{Get US Use table (intermediaete + final demand) of specified iolevel and year.}
+\title{Get US Use table (intermediadete + final demand) of specified iolevel and year.}
 \usage{
-getNationalUse(iolevel, year)
+getNationalUse(iolevel, year, specs)
 }
 \arguments{
 \item{iolevel}{BEA sector level of detail, currently can only be "Summary",
 theoretically can be "Detail", or "Sector" in future versions.}
 
 \item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
-The US Use table (intermediaete + final demand) of specified iolevel and year.
+The US Use table (intermediate + final demand) of specified iolevel and year.
 }
 \description{
-Get US Use table (intermediaete + final demand) of specified iolevel and year.
+Get US Use table (intermediadete + final demand) of specified iolevel and year.
 }

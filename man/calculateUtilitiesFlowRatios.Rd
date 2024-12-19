@@ -6,12 +6,14 @@
 utilities include electricity generation, transmission and distribution,
 natural gas distribution and water, sewage and other}
 \usage{
-calculateUtilitiesFlowRatios(state, year)
+calculateUtilitiesFlowRatios(state, year, specs)
 }
 \arguments{
 \item{state}{State name.}
 
 \item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains domestic interregional utilities flow ratios by state.

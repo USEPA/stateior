@@ -4,10 +4,12 @@
 \alias{getStateEmpCompensation}
 \title{Get industry-level Compensation for all states at a specific year.}
 \usage{
-getStateEmpCompensation(year)
+getStateEmpCompensation(year, specs)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains state Compensation for all states at a specific year.

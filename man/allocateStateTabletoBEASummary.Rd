@@ -5,7 +5,12 @@
 \title{Allocate state table (GVA, Tax, Employment Compensation, and GOS)
 to BEA Summary based on specified weight}
 \usage{
-allocateStateTabletoBEASummary(statetablename, year, allocationweightsource)
+allocateStateTabletoBEASummary(
+  statetablename,
+  year,
+  allocationweightsource,
+  specs
+)
 }
 \arguments{
 \item{statetablename}{Name of pre-saved state table,
@@ -14,6 +19,8 @@ can be GVA, Tax, Employment Compensation, and GOS.}
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 
 \item{allocationweightsource}{Source of allocation weight, can be "Employment".}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains allocated state value

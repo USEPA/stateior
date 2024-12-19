@@ -4,13 +4,15 @@
 \alias{mapStateTabletoBEASummary}
 \title{Map state table to BEA Summary, mark sectors that need allocation}
 \usage{
-mapStateTabletoBEASummary(statetablename, year)
+mapStateTabletoBEASummary(statetablename, year, specs)
 }
 \arguments{
 \item{statetablename}{Name of pre-saved state table,
 can be GVA, Tax, Employment Compensation, and GOS.}
 
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains state value for all states with row names being BEA sector code.

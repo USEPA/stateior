@@ -4,10 +4,12 @@
 \alias{calculateStateFedGovExpenditureRatio}
 \title{Calculate state fed government expenditure ratio at BEA Summary level.}
 \usage{
-calculateStateFedGovExpenditureRatio(year)
+calculateStateFedGovExpenditureRatio(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2008 and 2019 specifying the year of interest.}
+\item{year}{A numeric value between 2008 and 2023 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains state fed government expenditure ratio

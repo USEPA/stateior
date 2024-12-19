@@ -4,10 +4,12 @@
 \alias{getStatePCE}
 \title{Get commodity-level Personal Consumption Expenditure (PCE) for all states at a specific year.}
 \usage{
-getStatePCE(year)
+getStatePCE(year, specs)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains state PCE for all states at a specific year.

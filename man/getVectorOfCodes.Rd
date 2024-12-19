@@ -4,12 +4,14 @@
 \alias{getVectorOfCodes}
 \title{Extract desired columns from SchemaInfo, return vectors with strings of codes.}
 \usage{
-getVectorOfCodes(iolevel, colName)
+getVectorOfCodes(iolevel, colName, specs)
 }
 \arguments{
 \item{iolevel}{Level of detail, can be "Sector", "Summary, "Detail".}
 
 \item{colName}{A text value specifying desired column name.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A vector of codes.

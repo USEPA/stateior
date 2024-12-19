@@ -4,7 +4,7 @@
 \alias{calculateLocalandTradedRatios}
 \title{Calculate domestic local and traded ratio, used for calculating ICF ratios.}
 \usage{
-calculateLocalandTradedRatios(state, year, SoI = TRUE, ioschema, iolevel)
+calculateLocalandTradedRatios(state, year, SoI = TRUE, specs, iolevel)
 }
 \arguments{
 \item{state}{State name.}
@@ -14,7 +14,7 @@ calculateLocalandTradedRatios(state, year, SoI = TRUE, ioschema, iolevel)
 \item{SoI}{A logical variable indicating whether to calculate
 local and traded ratios for SoI or RoUS.}
 
-\item{ioschema}{A numeric value of either 2012 or 2007.}
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 
 \item{iolevel}{BEA sector level of detail, currently can only be "Summary",
 theoretically can be "Detail", or "Sector" in future versions.}

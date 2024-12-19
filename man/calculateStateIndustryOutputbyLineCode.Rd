@@ -5,10 +5,12 @@
 \title{Calculate state industry output by BEA State LineCode
 by multiplying state_US_VA_ratio_LineCode by USGrossOutput_LineCode.}
 \usage{
-calculateStateIndustryOutputbyLineCode(year)
+calculateStateIndustryOutputbyLineCode(year, specs)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains state industry output by BEA State LineCode.

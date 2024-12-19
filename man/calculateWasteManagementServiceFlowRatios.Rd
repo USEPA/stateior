@@ -4,12 +4,14 @@
 \alias{calculateWasteManagementServiceFlowRatios}
 \title{Calculate domestic waste management services flow ratios by state}
 \usage{
-calculateWasteManagementServiceFlowRatios(state, year)
+calculateWasteManagementServiceFlowRatios(state, year, specs)
 }
 \arguments{
 \item{state}{State name.}
 
 \item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains waste management services flow ratios by BEA.

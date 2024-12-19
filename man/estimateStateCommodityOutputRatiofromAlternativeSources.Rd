@@ -6,10 +6,12 @@
 USDA Census of Agriculture, NOAA Fisheries, USFS Forestry Inventory, and ORNL
 Feight Analysis Framework (FAF).}
 \usage{
-estimateStateCommodityOutputRatiofromAlternativeSources(year)
+estimateStateCommodityOutputRatiofromAlternativeSources(year, specs)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema',}
 }
 \value{
 A data frame contains state commodity output from alternative sources

@@ -296,6 +296,7 @@ calculateWasteManagementServiceFlowRatios <- function(state, year, specs) {
 #' Calculate domestic interregional electricity flow ratios by state
 #' @param state State name.
 #' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains domestic interregional electricity flow ratios by state.
 calculateElectricityFlowRatios <- function(state, year, specs) {
   state_abb <- getStateAbbreviation(state)

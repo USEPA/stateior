@@ -5,10 +5,12 @@
 \title{Build a state supply model for all 52 states/regions (including DC and Overseas)
 for a given year}
 \usage{
-buildStateSupplyModel(year)
+buildStateSupplyModel(year, specs)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A list of state Make table and commodity output.

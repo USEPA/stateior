@@ -19,6 +19,7 @@ getNationalUse <- function(iolevel, year, specs) {
 
 #' Get industry-level Compensation for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state Compensation for all states at a specific year.
 getStateEmpCompensation <- function(year, specs) {
   # Load pre-saved state Compensation 2007-2017
@@ -30,6 +31,7 @@ getStateEmpCompensation <- function(year, specs) {
 
 #' Get industry-level Tax for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state Tax for all states at a specific year.
 getStateTax <- function(year, specs) {
   # Load pre-saved state Tax 2007-2017
@@ -41,6 +43,7 @@ getStateTax <- function(year, specs) {
 
 #' Get industry-level Gross Operating Surplus (GOS) for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state GOS for all states at a specific year.
 getStateGOS <- function(year, specs) {
   # Load pre-saved state GOS 2007-2017
@@ -52,6 +55,7 @@ getStateGOS <- function(year, specs) {
 
 #' Get commodity-level Personal Consumption Expenditure (PCE) for all states at a specific year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state PCE for all states at a specific year.
 getStatePCE <- function(year, specs) {
   # Load pre-saved state PCE
@@ -728,8 +732,8 @@ calculateUSGovExpenditureWeightFactor <- function(year, defense) {
   return(WeightFactor)
 }
 
-#penditure ratio at BEA Summary level.
-#' @param year A numeric value betwe' Calculate state fed government exen 2008 and 2019 specifying the year of interest.
+#' Calculate state fed government expenditure ratio at BEA Summary level.
+#' @param year A numeric value between 2008 and 2023 specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state fed government expenditure ratio
 #' for all states at a specific year at BEA Summary level.

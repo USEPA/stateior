@@ -4,10 +4,12 @@
 \alias{estimateStateExport}
 \title{Estimate state export at BEA Summary level.}
 \usage{
-estimateStateExport(year)
+estimateStateExport(year, specs)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains state export for all states at a specific year at BEA Summary level.

@@ -5,16 +5,16 @@
 \title{Validate Leontief matrix (L) of two-region model and final demand against
 SoI and RoUS output.}
 \usage{
-validateTwoRegionLagainstOutput(state, year, ioschema, iolevel)
+validateTwoRegionLagainstOutput(state, year, iolevel, specs)
 }
 \arguments{
 \item{state}{A text value specifying state of interest.}
 
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 
-\item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
-
 \item{iolevel}{BEA sector level of detail, can be "Detail", "Summary", or "Sector".}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A list of validation components and result.

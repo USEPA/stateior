@@ -4,12 +4,14 @@
 \alias{generateUSDomesticUse}
 \title{Generate US domestic Use table by adjusting US Use table based on Import matrix.}
 \usage{
-generateUSDomesticUse(iolevel, year)
+generateUSDomesticUse(iolevel, year, specs)
 }
 \arguments{
 \item{iolevel}{Level of detail, can be "Sector", "Summary, "Detail".}
 
 \item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A US Domestic Use table with rows as commodity codes and columns as industry and final demand codes

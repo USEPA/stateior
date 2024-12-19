@@ -7,8 +7,8 @@
 buildTwoRegionUseModel(
   state,
   year,
-  ioschema,
   iolevel,
+  specs,
   ICF_sensitivity_analysis = FALSE,
   adjust_by = 0,
   domestic = TRUE
@@ -19,9 +19,9 @@ buildTwoRegionUseModel(
 
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
 
-\item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
+\item{iolevel}{BEA sector level of detail, currently can only be "Summary",}
 
-\item{iolevel}{BEA sector level of detail, currently can only be "Summary",
+\item{specs}{A list of model specs including 'BaseIOSchema'
 theoretically can be "Detail", or "Sector" in future versions.}
 
 \item{ICF_sensitivity_analysis}{A logical value indicating whether to conduct
@@ -32,9 +32,11 @@ to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.}
 
 \item{domestic}{A logical value indicating whether to use Domestic Use tables,
 default is TRUE.}
+
+\item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
 }
 \value{
-A list of domestic two-region Use tables.
+A list of domestic two-region Use tabl es.
 }
 \description{
 Generate two-region (SoI and RoUS) Use tables

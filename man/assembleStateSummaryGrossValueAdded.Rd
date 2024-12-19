@@ -6,10 +6,12 @@
 for all states at a specific year. For each value added sector, the same set of
 state/US GVA ratios is used to regionalize US VA to states.}
 \usage{
-assembleStateSummaryGrossValueAdded(year)
+assembleStateSummaryGrossValueAdded(year, specs)
 }
 \arguments{
 \item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains Summary-level gross value added (V001, V002, V003)
