@@ -147,10 +147,24 @@ generateDomestic2RegionICFs <- function(state, year, ioschema, iolevel,
                                            appendSchema = FALSE)
   # Update commodities from disaggregation
   if (!is.null(disagg)){
-    disagg_df <- data.frame(BEA_2012_Summary_Commodity_Code = c("221100", "221200", "221300"),
-                         BEA_2012_Summary_Commodity_Name = c("Elec", "NG", "Water"))
-    CommodityCodeName <- CommodityCodeName[CommodityCodeName$BEA_2012_Summary_Commodity_Code!="22",]
+    # disagg_df <- data.frame(BEA_2012_Summary_Commodity_Code = c("221100", "221200", "221300"),
+    #                      BEA_2012_Summary_Commodity_Name = c("Elec", "NG", "Water"))
+    # CommodityCodeName <- CommodityCodeName[CommodityCodeName$BEA_2012_Summary_Commodity_Code!="22",]
+    # CommodityCodeName <- rbind(CommodityCodeName, disagg_df)
+    
+    disagg_df <- disagg$NAICSSectorCW[,c("USEEIO_Code", "USEEIO_Name")] # Get new sector codes and names
+    disagg_df <- unique(disagg_df) # Keep a unique list
+    colnames(disagg_df) <- c(paste0("BEA_",year,"_Summary_Commodity_Code"), 
+                             paste0("BEA_",year,"_Summary_Commodity_Name")) # Make col headers match CommodityCodeName headers
+    # Remove last 3 characters from the code, i.e., remove /US
+    disagg_df$BEA_2012_Summary_Commodity_Code <- substr(disagg_df$BEA_2012_Summary_Commodity_Code,
+                                                        1,nchar(disagg_df$BEA_2012_Summary_Commodity_Code)-3)
+    # Remove original aggregate code, e.g., 22 for utilities
+    CommodityCodeName <- CommodityCodeName[CommodityCodeName$BEA_2012_Summary_Commodity_Code!= 
+                                             substr(disagg$OriginalSectorCode,1,nchar(disagg$OriginalSectorCode)-3) ,]
+    # Add disagg codes to CommodityCodeName
     CommodityCodeName <- rbind(CommodityCodeName, disagg_df)
+    
   }
 
   ICF <- merge(ICF_2r_wide, CommodityCodeName, by.x = bea,
@@ -158,7 +172,8 @@ generateDomestic2RegionICFs <- function(state, year, ioschema, iolevel,
                all.y = TRUE)
   if (iolevel == "Summary") {
     # Adjust utilities
-    if (is.null(disagg)){
+    if (is.null(disagg) || disagg$OriginalSectorCode != "22/US"){
+      # If there are no disagg sectors, or if the disagg sectors is not the utilities sector, calculate flow ratios for summary sector 22
       ICF[ICF[, bea] == "22", cols] <- calculateUtilitiesFlowRatios(state, year)[, cols]
       ICF[ICF[, bea] == "22", "source"] <- "EIA"      
     } else {
