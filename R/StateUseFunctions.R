@@ -772,8 +772,8 @@ calculateStateFedGovExpenditureRatio <- function(year, specs) {
     GovExpBEA <- merge(mapping, GovExp, by.x = paste0("NAICS_", schema, "_Code"), by.y = "NAICS")
     # Aggregate by BEA
     GovExpBEA <- GovExpBEA %>%
-           group_by(!!sym(BEA_col), Year, State) %>%
-           summarise(Amount = sum(Amount, na.rm = TRUE), .groups = "keep")
+           dplyr::group_by(!!sym(BEA_col), Year, State) %>%
+           dplyr::summarise(Amount = sum(Amount, na.rm = TRUE), .groups = "keep")
     # Transform table from long to wide
     formula <- as.formula(paste(BEA_col, "~ State"))
     GovExpBEA <- reshape2::dcast(GovExpBEA, formula, value.var = "Amount")
