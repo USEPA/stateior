@@ -13,7 +13,7 @@ getBEAStateCompensation <- function(years) {
                             GeoFips + GeoName + LineCode ~ TimePeriod,
                             value.var = "DataValue")
       # Write data to .rds
-      data_name <- paste("State_Compensation", year,
+      data_name <- paste("State_CompensationByIndustry", year,
                          utils::packageDescription("stateior", fields = "Version"),
                          sep = "_")
       saveRDS(object = df,
@@ -48,7 +48,7 @@ getBEAStateWages <- function(years) {
                             GeoFips + GeoName + LineCode ~ TimePeriod,
                             value.var = "DataValue")
       # Write data to .rds
-      data_name <- paste("State_Wages", year,
+      data_name <- paste("State_WagesByIndustry", year,
                          utils::packageDescription("stateior", fields = "Version"),
                          sep = "_")
       saveRDS(object = df,
