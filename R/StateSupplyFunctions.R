@@ -375,7 +375,7 @@ getStateCompensationbyBEASummary <- function(year,specs) {
   # BEA State Emp
   StateDF <- loadStateIODataFile(paste0("State_CompensationByIndustry_", year),
                                      ver = model_ver)
-  DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
+  DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Compensation")
   StateDF <- merge(StateDF[, c("GeoName", "LineCode", as.character(year))],
                    DatatoBEAmapping, by = "LineCode")
   # Aggregate by BEA
