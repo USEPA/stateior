@@ -319,8 +319,9 @@ estimateStateCommodityOutputRatiofromAlternativeSources <- function(year, specs)
 #' Map to BEA Summary sectors.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema',
+#' @param datasource A str to differentiate primary data source for employment
 #' @return A data frame contains State Employment by BEA Summary.
-getStateEmploymentbyBEASummary <- function(year,specs) {
+getStateEmploymentbyBEASummary <- function(year, specs, datasource="BEA") {
   # Switch to flowsa from BEA was implemented in 652b3ae
   # Define BEA_col
   schema <- specs$BaseIOSchema
@@ -329,13 +330,36 @@ getStateEmploymentbyBEASummary <- function(year,specs) {
   EmpFBS <- getFlowsaData("Employment", year, specs$model_ver)
   EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary", specs)
   EmpFBS$State <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
-  names(EmpFBS)[names(EmpFBS) == 'FlowAmount'] <- 'Emp'
-  
-  # Make sure 0 values are explicit
-  combinations <- expand.grid(State = unique(EmpFBS$State), Summary = unique(EmpFBS[[BEA_col]]))
-  EmpFBS <- merge(EmpFBS, combinations, by.x = c("State", BEA_col), by.y = c("State", "Summary"), all.y = TRUE)
-  EmpFBS$Emp[is.na(EmpFBS$Emp)] <- 0
-  StateEmp <- EmpFBS[, c(BEA_col, "State", "Emp")]
+  if(datasource == "BEA") {
+    # BEA State Emp
+    BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
+                                       ver = specs$model_ver)
+    EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
+    BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
+                         EmptoBEAmapping, by = "LineCode")
+    # Aggregate StateEmployment by BEA
+    BEAStateEmp <- stats::aggregate(BEAStateEmp[, as.character(year)],
+                                    by = list(BEAStateEmp[[BEA_col]],
+                                              BEAStateEmp$GeoName), sum)
+    colnames(BEAStateEmp) <- c(BEA_col, "State", "Emp")
+    
+    # Prioritize BEAStateEmp, replace NAs in Emp with values from EmpFBS
+    StateEmp <- merge(BEAStateEmp[BEAStateEmp$State %in% EmpFBS$State, ],
+                      EmpFBS, by.x = c("State", BEA_col), by.y = c("State",BEA_col), all = TRUE)
+    StateEmp[is.na(StateEmp$Emp), "Emp"] <- StateEmp[is.na(StateEmp$Emp), "FlowAmount"]
+    # Replace the remaining NAs in Emp with zero
+    StateEmp[is.na(StateEmp$Emp), "Emp"] <- 0
+    # Drop unwanted columns
+    StateEmp <- StateEmp[, colnames(BEAStateEmp)]
+  } else if (datasource == "Flowsa") {
+    names(EmpFBS)[names(EmpFBS) == 'FlowAmount'] <- 'Emp'
+    
+    # Make sure 0 values are explicit
+    combinations <- expand.grid(State = unique(EmpFBS$State), Summary = unique(EmpFBS[[BEA_col]]))
+    EmpFBS <- merge(EmpFBS, combinations, by.x = c("State", BEA_col), by.y = c("State", "Summary"), all.y = TRUE)
+    EmpFBS$Emp[is.na(EmpFBS$Emp)] <- 0
+    StateEmp <- EmpFBS[, c(BEA_col, "State", "Emp")]    
+  }
   return(StateEmp)
 }
 
