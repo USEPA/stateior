@@ -321,6 +321,7 @@ estimateStateCommodityOutputRatiofromAlternativeSources <- function(year, specs)
 #' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains State Employment by BEA Summary.
 getStateEmploymentbyBEASummary <- function(year,specs) {
+  # Switch to flowsa from BEA was implemented in 652b3ae
   # Define BEA_col
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
@@ -330,12 +331,36 @@ getStateEmploymentbyBEASummary <- function(year,specs) {
   EmpFBS$State <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
   names(EmpFBS)[names(EmpFBS) == 'FlowAmount'] <- 'Emp'
   
-  # Make sure 0 values are expicit
+  # Make sure 0 values are explicit
   combinations <- expand.grid(State = unique(EmpFBS$State), Summary = unique(EmpFBS[[BEA_col]]))
   EmpFBS <- merge(EmpFBS, combinations, by.x = c("State", BEA_col), by.y = c("State", "Summary"), all.y = TRUE)
   EmpFBS$Emp[is.na(EmpFBS$Emp)] <- 0
   StateEmp <- EmpFBS[, c(BEA_col, "State", "Emp")]
   return(StateEmp)
+}
+
+#' Load BEA State Compensation data from pre-saved .rds files.
+#' Map to BEA Summary sectors.
+#' @param year A numeric value between 2007 and 2023 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema',
+#' @return A data frame contains State Compensation by BEA Summary.
+getStateCompensationbyBEASummary <- function(year,specs) {
+  # Define BEA_col
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
+  # BEA State Emp
+  StateDF <- loadStateIODataFile(paste0("State_Compensation_", year),
+                                     ver = model_ver)
+  DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("SAINC")
+  StateDF <- merge(StateDF[, c("GeoName", "LineCode", as.character(year))],
+                   DatatoBEAmapping, by = "LineCode")
+  # Aggregate by BEA
+  StateDF <- stats::aggregate(StateDF[, as.character(year)],
+                              by = list(StateDF[[BEA_col]],
+                                        StateDF$GeoName), sum)
+  colnames(StateDF) <- c(BEA_col, "State", "Value")
+
+  return(StateDF)
 }
 
 #' Estimate state Ag, Fishery and Forestry commodity output ratios
