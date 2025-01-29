@@ -538,7 +538,11 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   } else {
     q_SoI_use <- rowSums(SoI2SoI_Use[, c(industries, FD_cols, "ExportResidual")]) + rowSums(SoI2RoUS_Use[, c(industries, FD_cols)])
   }
-  if (max(abs((q_SoI - q_SoI_use)/q_SoI_use)) > 1E-2) {
+  q_SoI_use <- round(q_SoI_use)
+  comparison <- abs((q_SoI - q_SoI_use)/q_SoI_use)
+  comparison[is.na(comparison)] <- 0
+  # to avoid very small diffs when commodity output is nonexistant
+  if (max(comparison) > 1E-2) {
     if (domestic) {
       stop(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
                   "doesn't equal to ", state, "'s commodity output."))

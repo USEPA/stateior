@@ -85,6 +85,9 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, ioleve
   LocalorTraded$Total <- LocalorTraded$Local + LocalorTraded$Traded
   LocalorTraded$LocalRatio <- LocalorTraded$Local/LocalorTraded$Total
   LocalorTraded$TradedRatio <- LocalorTraded$Traded/LocalorTraded$Total
+  LocalorTraded$LocalRatio[is.na(LocalorTraded$LocalRatio)] <- 0
+  LocalorTraded$TradedRatio[is.na(LocalorTraded$TradedRatio)] <- 1
+  # ^^ to avoid errors in the balancing for DC when a commodity has not output
   LocalandTradedRatiosbyBEA <- LocalorTraded[, c(bea, "LocalRatio", "TradedRatio")]
   return(LocalandTradedRatiosbyBEA)
 }
