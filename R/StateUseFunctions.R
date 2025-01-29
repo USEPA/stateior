@@ -750,13 +750,10 @@ calculateStateFedGovExpenditureRatio <- function(year, specs) {
   if(schema == 2012){
     mapping <- unique(useeior::MasterCrosswalk2012[, c(BEA_col,
                                                        paste0("NAICS_", schema, "_Code"))])
-    print("2012 schema used")
   } else if(schema == 2017){
     mapping <- unique(useeior::MasterCrosswalk2017[, c(BEA_col,
                                                        paste0("NAICS_", schema, "_Code"))])
-    print("2017 schema used")
   } else {
-    print("default 2017 schema is used")
     mapping <- unique(useeior::MasterCrosswalk2017[, c(BEA_col,
                                                        paste0("NAICS_", schema, "_Code"))])
   }

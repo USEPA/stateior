@@ -307,7 +307,7 @@ calculateElectricityFlowRatios <- function(state, year, specs) {
                                             year),
                                      ver = specs$model_ver)
   # Subset SoI and RoUS total consumption
-  consumption_desc <- "Electricity total consumption (i.e., retail sales)"
+  consumption_desc <- "Electricity total consumption (electricity sales to ultimate customers)"
   ConsumptionMSN <- CodeDesc[CodeDesc$Description == consumption_desc &
                                CodeDesc$Unit == "Million kilowatthours", "MSN"]
   Consumption_SoI <- Consumption[Consumption$MSN == ConsumptionMSN &
