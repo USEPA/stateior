@@ -69,33 +69,34 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   cw <- loadDatafromUSEEIOR(paste0('MasterCrosswalk', schema), appendSchema = FALSE)
   crosswalk <- cw[cw[, BEA_col] %in% allocation_codes, ]
   # Generate allocation_weight df based on pre-saved data
-  if (allocationweightsource == "Employment") {
-    # Load BEA State Emp to BEA Summary mapping
-    EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
+  if (allocationweightsource == "Employment" || allocationweightsource == "Compensation") {
+    # Load BEA State data to BEA Summary mapping
+    DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping(allocationweightsource)
     sectors <- unique(crosswalk[crosswalk$BEA_2017_Sector_Code %in% c("44RT", "FIRE", "G"), BEA_col])
-    EmptoBEAmapping <- EmptoBEAmapping[EmptoBEAmapping[, BEA_col] %in% sectors, ]
+    DatatoBEAmapping <- DatatoBEAmapping[DatatoBEAmapping[, BEA_col] %in% sectors, ]
     # For real estate (FIRE) and gov (G) sectors, calculate allocation factors using US GVA by industry
-    allocation_factors <- merge(EmptoBEAmapping,
+    allocation_factors <- merge(DatatoBEAmapping,
                                 useeior::Summary_ValueAdded_IO[, year_col, drop = FALSE],
                                 by.x = BEA_col, by.y = 0)
     for (linecode in unique(allocation_factors$LineCode)) {
       weight_vector <- allocation_factors[allocation_factors$LineCode == linecode, year_col]
       allocation_factors[allocation_factors$LineCode == linecode, "factor"] <- weight_vector/sum(weight_vector)
     }
-    # Load BEA state Emp
-    BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
-                                       ver = model_ver)
-    # Map BEA state Emp (from LineCode) to BEA Summary
-    BEAStateEmp <- merge(BEAStateEmp[BEAStateEmp$GeoName %in%
+    # Load BEA state data
+    name <- ifelse(allocationweightsource == "Compensation",
+                   "State_CompensationByIndustry_", "State_Employment_")
+    BEAStateData <- loadStateIODataFile(paste0(name, year), ver = model_ver)
+    # Map BEA state data (from LineCode) to BEA Summary
+    BEAStateData <- merge(BEAStateData[BEAStateData$GeoName %in%
                                        c(state.name, "District of Columbia"),
                                      c("GeoName", "LineCode", year_col)],
                          allocation_factors[, c(BEA_col, "LineCode", "factor")],
                          by = "LineCode")
-    # Adjust BEA state Emp value based on allocation factor
-    BEAStateEmp[, year_col] <- BEAStateEmp[, year_col]*BEAStateEmp$factor
-    allocation_weight <- stats::aggregate(BEAStateEmp[, year_col],
-                                          by = list(BEAStateEmp$GeoName,
-                                                    BEAStateEmp[, BEA_col]),
+    # Adjust BEA state data value based on allocation factor
+    BEAStateData[, year_col] <- BEAStateData[, year_col]*BEAStateData$factor
+    allocation_weight <- stats::aggregate(BEAStateData[, year_col],
+                                          by = list(BEAStateData$GeoName,
+                                                    BEAStateData[, BEA_col]),
                                           sum)
     colnames(allocation_weight) <- c("GeoName", BEA_col, "Weight")
   }
@@ -136,7 +137,8 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
 #' @param statetablename Name of pre-saved state table,
 #' can be GVA, Tax, Employment Compensation, and GOS.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param allocationweightsource Source of allocation weight, can be "Employment".
+#' @param allocationweightsource Source of allocation weight, can be "Employment"
+#' or "Compensation".
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains allocated state value
 #' for all states with row names being BEA sector code.
