@@ -75,8 +75,9 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
     sectors <- unique(crosswalk[crosswalk$BEA_2017_Sector_Code %in% c("44RT", "FIRE", "G"), BEA_col])
     DatatoBEAmapping <- DatatoBEAmapping[DatatoBEAmapping[, BEA_col] %in% sectors, ]
     # For real estate (FIRE) and gov (G) sectors, calculate allocation factors using US GVA by industry
+    Summary_ValueAdded_IO <- loadDatafromUSEEIOR("Summary_ValueAdded_IO")
     allocation_factors <- merge(DatatoBEAmapping,
-                                useeior::Summary_ValueAdded_IO[, year_col, drop = FALSE],
+                                Summary_ValueAdded_IO[, year_col, drop = FALSE],
                                 by.x = BEA_col, by.y = 0)
     for (linecode in unique(allocation_factors$LineCode)) {
       weight_vector <- allocation_factors[allocation_factors$LineCode == linecode, year_col]
