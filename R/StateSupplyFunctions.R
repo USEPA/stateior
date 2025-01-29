@@ -454,14 +454,6 @@ getFAFCommodityOutput <- function(year, specs) {
                                     package = "stateior"))
   # Load pre-saved FAF4 commodity flow data
   FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"), ver = model_ver)
-  # Define value_col and origin_col
-  if (year == 2012) {
-    value_col <- paste0("value_", year)
-  } else if (year %in% c(2013:2018)) {
-    value_col <- paste0("curval_", year)
-  } else {
-    value_col <- paste0("current_value_", year)
-  }
   origin_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_orig")]
   # Keep domestic and export trade, keep useful columns, then rename
   FAF <- FAF[FAF$trade_type %in% c(1, 3),
@@ -483,10 +475,12 @@ getFAFCommodityOutput <- function(year, specs) {
                                     duplicated(SCTGtoBEA$SCTG, fromLast = TRUE), ]
   allocation_sectors <- allocation_sectors[!allocation_sectors[, BEA_col]
                                            %in% c("111CA", "113FF", "311FT"), ]
-  # Use State Emp to allocate
-  StateEmp <- getStateEmploymentbyBEASummary(year,specs)
-  # Merge StateEmp with allocation_sectors
-  StateEmp <- merge(StateEmp, allocation_sectors, by = BEA_col)
+  # Use State Compensation data to allocate
+  # StateDF <- getStateEmploymentbyBEASummary(year,specs)
+  StateDF <- getStateCompensationbyBEASummary(year,specs)
+  names(StateDF)[names(StateDF) == 'Value'] <- 'Compensation'
+  # Merge StateDF with allocation_sectors
+  StateDF <- merge(StateDF, allocation_sectors, by = BEA_col)
   # Process FAF for each state
   # Generate AFF
   AgFisheryForestry <- getAgFisheryForestryCommodityOutput(year, specs)
@@ -512,12 +506,12 @@ getFAFCommodityOutput <- function(year, specs) {
                                     sum)
     colnames(FAF_state_1) <- c("State", BEA_col, "Value")
     # Step 2.2. Allocate FAF_state_2 from SCTG to BEA using BEA state employment
-    Emp <- StateEmp[StateEmp$State == state, ]
+    state_df <- StateDF[StateDF$State == state, ]
     # Merge with FAF_state_2
-    FAF_state_2 <- merge(FAF_state_2, Emp, by = c("State", "SCTG", BEA_col))
+    FAF_state_2 <- merge(FAF_state_2, state_df, by = c("State", "SCTG", BEA_col))
     for (sctg in unique(FAF_state_2$SCTG)) {
       # Calculate allocation factor
-      weight_vector <- FAF_state_2[FAF_state_2$SCTG == sctg, "Emp"]
+      weight_vector <- FAF_state_2[FAF_state_2$SCTG == sctg, "Compensation"]
       allocation_factor <- weight_vector/sum(weight_vector, na.rm = TRUE)
       # Allocate Value
       value <- FAF_state_2[FAF_state_2$SCTG == sctg, "Value"]*allocation_factor
