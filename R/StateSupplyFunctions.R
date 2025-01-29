@@ -208,7 +208,7 @@ calculateStateUSValueAddedRatio <- function(year, specs) {
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   year_col <- as.character(year)
   # Generate state GVA (value added) table
-  StateValueAdded <- allocateStateTabletoBEASummary("GVA", year, "Employment", specs)
+  StateValueAdded <- allocateStateTabletoBEASummary("GVA", year, "Compensation", specs)
   # Extract US value added
   US_VA <- StateValueAdded[StateValueAdded$GeoName == "United States *", ]
   # Extract state value added
