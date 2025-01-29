@@ -79,18 +79,19 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, io
     # Determine BEA sectors that need allocation
     allocation_sectors <- SCTGtoBEA[duplicated(SCTGtoBEA$SCTG) |
                                       duplicated(SCTGtoBEA$SCTG, fromLast = TRUE), ]
-    # Use State Emp to allocate
-    StateEmp <- getStateEmploymentbyBEASummary(year, specs)
-    # Merge StateEmp with allocation_sectors
-    Emp <- merge(StateEmp, allocation_sectors, by = BEA_col)
+    # Use State Compensation data to allocate
+    # StateDF <- getStateEmploymentbyBEASummary(year, specs)
+    StateDF <- getStateCompensationbyBEASummary(year, specs)
+    # Merge with allocation_sectors
+    state_df <- merge(StateDF, allocation_sectors, by = BEA_col)
     # Merge FAF_2r and Emp
-    FAF_2r <- merge(FAF_2r, Emp[Emp$State == state, ],
+    FAF_2r <- merge(FAF_2r, state_df[state_df$State == state, ],
                     by = c("SCTG", BEA_col), all.x = TRUE)
     FAF_2r[is.na(FAF_2r$State), "State"] <- state
-    FAF_2r[is.na(FAF_2r$Emp), "Emp"] <- 1
+    FAF_2r[is.na(FAF_2r$Value), "Value"] <- 1
     for (sctg in unique(FAF_2r$SCTG)) {
       # Calculate allocation factor
-      weight_vector <- FAF_2r[FAF_2r$SCTG == sctg, "Emp"]
+      weight_vector <- FAF_2r[FAF_2r$SCTG == sctg, "Value"]
       allocation_factor <- weight_vector/sum(weight_vector/4, na.rm = TRUE)
       # Allocate Value
       value <- FAF_2r[FAF_2r$SCTG == sctg, "VALUE"]*allocation_factor
