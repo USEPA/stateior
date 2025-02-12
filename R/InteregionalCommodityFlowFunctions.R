@@ -102,16 +102,18 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, ioleve
 #' sensitivity analysis on ICF, default is FALSE.
 #' @param adjust_by A numeric value between 0 and 1 indicating the manual adjustment
 #' to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.
+#' @param allocation_type A string with options "Compensation" or "Employment" for choosing allocation type
+#' If NULL default to compensation
 #' #' @return A data frame contains domestic 2 region ICFs.
 generateDomestic2RegionICFs <- function(state, year, specs, iolevel,
                                         ICF_sensitivity_analysis = FALSE,
-                                        adjust_by = 0) {
+                                        adjust_by = 0, allocation_type = NULL) {
   # Define BEA_col and year_col
   schema <- specs$BaseIOSchema
   bea <- paste0("BEA_", schema, "_Summary_Code")
   # Specify BEA code
   # Generate SoI-RoUS commodity flow ratios from FAF
-  ICF_2r <- calculateCommodityFlowRatios(state, year, "domestic", specs, iolevel)
+  ICF_2r <- calculateCommodityFlowRatios(state, year, "domestic", specs, iolevel, allocation_type)
   ICF_2r$flowpath <- paste0(ICF_2r$ORIG, "2", ICF_2r$DEST)
   ICF_2r_wide <- reshape2::dcast(ICF_2r[, c(bea, "ratio", "flowpath")],
                                  paste(bea, "~", "flowpath"), value.var = "ratio")

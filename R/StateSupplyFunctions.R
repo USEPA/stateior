@@ -305,13 +305,15 @@ calculateStateIndustryOutputbyLineCode <- function(year, specs) {
 #' Feight Analysis Framework (FAF).
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema',
+#' @param allocation_type A string with options "Compensation" or "Employment" for choosing allocation type
+#' If NULL default to compensation
 #' @return A data frame contains state commodity output from alternative sources
 #' and calculated state/US commodity ratios for each state.
-estimateStateCommodityOutputRatiofromAlternativeSources <- function(year, specs) {
+estimateStateCommodityOutputRatiofromAlternativeSources <- function(year, specs, allocation_type = NULL) {
   # Generate Ag, Fishery, Forestry commodity output
   AgFisheryForestry <- getAgFisheryForestryCommodityOutput(year, specs)
   # Generate FAF commodity output
-  FAF <- getFAFCommodityOutput(year, specs)
+  FAF <- getFAFCommodityOutput(year, specs, allocation_type)
   # Combine all commodity output
   StateCommodityOutputRatio <- rbind(AgFisheryForestry, FAF)
   return(StateCommodityOutputRatio)
@@ -444,9 +446,11 @@ getAgFisheryForestryCommodityOutput <- function(year, specs) {
 #' Estimate state FAF commodity output ratios
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema',
+#' @param allocation_type A string with options "Compensation" or "Employment" for choosing allocation type
+#' If NULL default to compensation
 #' @return A data frame contains state FAF commodity output
 #' for specified state with row names being BEA sector code.
-getFAFCommodityOutput <- function(year, specs) {
+getFAFCommodityOutput <- function(year, specs, allocation_type = NULL) {
   # Define BEA_col
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
@@ -477,8 +481,18 @@ getFAFCommodityOutput <- function(year, specs) {
   allocation_sectors <- allocation_sectors[!allocation_sectors[, BEA_col]
                                            %in% c("111CA", "113FF", "311FT"), ]
   # Use State Compensation data to allocate
-  # StateDF <- getStateEmploymentbyBEASummary(year,specs)
-  StateDF <- getStateCompensationbyBEASummary(year,specs)
+  if(is.null(allocation_type)){
+    StateDF <- getStateCompensationbyBEASummary(year,specs)
+    col_header <- "Compensation"
+  }else if(allocation_type == "Employment"){
+    StateDF <- getStateEmploymentbyBEASummary(year,specs)
+    col_header <- "Emp"
+  }else{
+    StateDF <- getStateCompensationbyBEASummary(year,specs)
+    col_header <- "Compensation"
+  }
+  
+
   names(StateDF)[names(StateDF) == 'Value'] <- 'Compensation'
   # Merge StateDF with allocation_sectors
   StateDF <- merge(StateDF, allocation_sectors, by = BEA_col)
@@ -512,7 +526,8 @@ getFAFCommodityOutput <- function(year, specs) {
     FAF_state_2 <- merge(FAF_state_2, state_df, by = c("State", "SCTG", BEA_col))
     for (sctg in unique(FAF_state_2$SCTG)) {
       # Calculate allocation factor
-      weight_vector <- FAF_state_2[FAF_state_2$SCTG == sctg, "Compensation"]
+      #weight_vector <- FAF_state_2[FAF_state_2$SCTG == sctg, "Compensation"]
+      weight_vector <- FAF_state_2[FAF_state_2$SCTG == sctg, col_header]
       allocation_factor <- weight_vector/sum(weight_vector, na.rm = TRUE)
       # Allocate Value
       value <- FAF_state_2[FAF_state_2$SCTG == sctg, "Value"]*allocation_factor
