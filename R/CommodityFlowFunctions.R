@@ -5,10 +5,8 @@
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
-#' @param allocation_type A string with options "Compensation" or "Employment" for choosing allocation type
-#' If NULL default to compensation
 #' @return A data frame contains commodity flow ratios by BEA.
-calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, iolevel, allocation_type) {
+calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, iolevel) {
   # Define BEA_col and year_col
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
@@ -83,19 +81,7 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, io
                                       duplicated(SCTGtoBEA$SCTG, fromLast = TRUE), ]
     # Use State Compensation data to allocate
     # StateDF <- getStateEmploymentbyBEASummary(year, specs)
-    #StateDF <- getStateCompensationbyBEASummary(year, specs)
-    # Use State Compensation data to allocate
-    if(is.null(allocation_type)){
-      StateDF <- getStateCompensationbyBEASummary(year,specs)
-      col_header <- "Compensation"
-    }else if(allocation_type == "Employment"){
-      StateDF <- getStateEmploymentbyBEASummary(year,specs)
-      col_header <- "Emp"
-    }else{
-      StateDF <- getStateCompensationbyBEASummary(year,specs)
-      col_header <- "Compensation"
-    }
-    
+    StateDF <- getStateCompensationbyBEASummary(year, specs)
     # Merge with allocation_sectors
     state_df <- merge(StateDF, allocation_sectors, by = BEA_col)
     # Merge FAF_2r and Emp

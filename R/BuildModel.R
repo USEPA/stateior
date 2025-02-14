@@ -8,11 +8,9 @@ model_ver <- NULL
 #' (including DC and Overseas) for a given year.
 #' @param year A numeric value between 2007 and 2017.
 #' @param specs A list of model specs including 'BaseIOSchema'
-#' @param allocation_type A string with options "Compensation" or "Employment" for choosing allocation type
-#' If NULL default to compensation
 #' @return A list of state Make table and commodity output.
 #' @export
-buildStateSupplyModel <- function(year, specs, allocation_type = NULL) {
+buildStateSupplyModel <- function(year, specs) {
   startLogging()
   logging::loginfo("Calculate state/US Gross Value Added (GVA) ratios...")
   schema <- specs$BaseIOSchema
@@ -51,7 +49,7 @@ buildStateSupplyModel <- function(year, specs, allocation_type = NULL) {
   }
   
   logging::loginfo("Estimating state/US commodity output ratios using data from alternative data...")
-  AlternativeStateCOR <- estimateStateCommodityOutputRatiofromAlternativeSources(year, specs, allocation_type)
+  AlternativeStateCOR <- estimateStateCommodityOutputRatiofromAlternativeSources(year, specs)
   
   logging::loginfo("Adjusting state Make table...")
   # Adjust estimated state commodity output and calculate state commodity adjustment ratio
@@ -144,11 +142,9 @@ buildStateSupplyModel <- function(year, specs, allocation_type = NULL) {
 #' (including DC and Overseas) for a given year.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
-#' @param allocation_type A string with options "Compensation" or "Employment" for choosing allocation type
-#' If NULL default to compensation
 #' @return A list of state Use table, Domestic Use table and industry output.
 #' @export
-buildStateUseModel <- function(year, specs, allocation_type = NULL) {
+buildStateUseModel <- function(year, specs) {
   startLogging()
   # Define industries, commodities, final demand columns, import column, and
   # non-import columns
@@ -284,13 +280,11 @@ buildStateUseModel <- function(year, specs, allocation_type = NULL) {
 #' to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.
 #' @param domestic A logical value indicating whether to use Domestic Use tables,
 #' default is TRUE.
-#' @param allocation_type A string with options "Compensation" or "Employment" for choosing allocation type
-#' If NULL default to compensation
 #' @return A list of domestic two-region Use tabl es.
 #' @export
 buildTwoRegionUseModel <- function(state, year, iolevel, specs,
                                    ICF_sensitivity_analysis = FALSE,
-                                   adjust_by = 0, domestic = TRUE, allocation_type = NULL) {
+                                   adjust_by = 0, domestic = TRUE) {
   startLogging()
   # 0 - Define commodities, industries, final demand columns, import column, and
   # international trade adjustment column
@@ -336,7 +330,7 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   # 2 - Generate 2-region ICFs
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios...")
   ICF <- generateDomestic2RegionICFs(state, year, specs, iolevel,
-                                     ICF_sensitivity_analysis, adjust_by, allocation_type)
+                                     ICF_sensitivity_analysis, adjust_by)
   # Only allocate "error" to rows (commodities) that does not have ICF of 1 or 0
   commodities_notrade <- ICF[ICF$SoI2SoI == 1 & ICF$SoI2RoUS == 0 &
                                ICF$RoUS2RoUS == 1 & ICF$RoUS2SoI == 0, 1]
