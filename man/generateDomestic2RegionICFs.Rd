@@ -10,7 +10,8 @@ generateDomestic2RegionICFs(
   ioschema,
   iolevel,
   ICF_sensitivity_analysis = FALSE,
-  adjust_by = 0
+  adjust_by = 0,
+  disagg = NULL
 )
 }
 \arguments{
@@ -27,7 +28,9 @@ theoretically can be "Detail", or "Sector" in future versions.}
 sensitivity analysis on ICF, default is FALSE.}
 
 \item{adjust_by}{A numeric value between 0 and 1 indicating the manual adjustment
-to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.
+to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.}
+
+\item{disagg}{optional, disaggregation specs
 #' @return A data frame contains domestic 2 region ICFs.}
 }
 \description{

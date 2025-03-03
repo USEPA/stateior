@@ -6,9 +6,17 @@ startLogging <- function() {
 
 #' Load data from useeior using flexible dataset name
 #' @param dataset A string specifying name of the data to load
+#' @param appendSchema bool, set to FALSE to ignore schema in name
 #' @return The data loaded from useeior
-loadDatafromUSEEIOR <- function(dataset) {
-  utils::data(package = "useeior", list = dataset)
+loadDatafromUSEEIOR <- function(dataset, appendSchema = TRUE) {
+  if(appendSchema && !"sch" %in% dataset) {
+    dataset_srch <- paste0(dataset, "_12sch")
+    # currently only uses 2012 schema
+    # required due to renaming in useeior #280
+  } else {
+    dataset_srch <- dataset
+  }
+  utils::data(package = "useeior", list = dataset_srch)
   df <- get(dataset)
   return(df)
 }
@@ -105,14 +113,18 @@ loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
 #' @param location A text value specifying desired location,
 #' can be state name like "Georgia" or "RoUS" representing Rest of US.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param disagg optional, disaggregation specs 
 #' @return A text value in the format of code/location.
-getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
+getBEASectorCodeLocation <- function(sector_type, location, iolevel, disagg=NULL) {
   # Get code
   if (sector_type != "FinalDemand") {
     if (sector_type == "InternationalTradeAdjustment") {
       code <- ifelse(iolevel == "Detail", "F05100", "F051")
     } else {
       code <- getVectorOfCodes(iolevel, sector_type)
+      if (!is.null(disagg)) {
+        code <- disaggregateStateSectorLists(code, disagg)
+      }
     }
   } else {
     code <- getFinalDemandCodes(iolevel)
