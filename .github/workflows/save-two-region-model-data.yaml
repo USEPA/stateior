@@ -78,7 +78,6 @@ jobs:
           name: TwoRegion ${{ matrix.data-year }}
           # A file, directory or wildcard patter that describes what to upload
           path: "data/TwoRegion*.rds"
-            "inst/extdata/metadata/TwoRegion*.json"
           if-no-files-found: error # 'warn' or 'ignore' are also available, defaults to `warn`
           # retention-days: 5 # cannot exceed the retention limit set by the repository, organization, or enterprise.
 
