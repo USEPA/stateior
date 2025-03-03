@@ -154,8 +154,9 @@ generateDomestic2RegionICFs <- function(state, year, ioschema, iolevel,
     
     disagg_df <- disagg$NAICSSectorCW[,c("USEEIO_Code", "USEEIO_Name")] # Get new sector codes and names
     disagg_df <- unique(disagg_df) # Keep a unique list
-    colnames(disagg_df) <- c(paste0("BEA_",year,"_Summary_Commodity_Code"), 
-                             paste0("BEA_",year,"_Summary_Commodity_Name")) # Make col headers match CommodityCodeName headers
+    # Make col headers match CommodityCodeName headers
+    colnames(disagg_df) <- c("BEA_2012_Summary_Commodity_Code", "BEA_2012_Summary_Commodity_Name")
+    #TODO: later update this to reflect alternate schemas
     # Remove last 3 characters from the code, i.e., remove /US
     disagg_df$BEA_2012_Summary_Commodity_Code <- substr(disagg_df$BEA_2012_Summary_Commodity_Code,
                                                         1,nchar(disagg_df$BEA_2012_Summary_Commodity_Code)-3)
