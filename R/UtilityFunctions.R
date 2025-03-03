@@ -287,6 +287,11 @@ findLatestStateIODatainLocalDirectory <- function(filename) {
 }
 
 #' Load StateIO data file from Data Commons or local data directory.
+#' 
+#' If the file is not found locally, it will be downloaded from Data Commons. Available
+#' files can be found on https://dmap-data-commons-ord.s3.amazonaws.com/index.html#stateio/.
+#' These include Use, DomesticUse, and IndustryOutput tables, among others.
+#' 
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return A StateIO data product (usually a list of dataframes).
@@ -312,7 +317,7 @@ loadStateIODataFile <- function(filename, ver = NULL) {
                                    "not found in local data directory, either."))
             message("Please confirm ", filename, " is correctly spelled. ",
                     "You should be able to find the correctly spelled file on ",
-                    "https://dmap-data-commons-ord.s3.amazonaws.com/index.html?prefix=stateio/. ",
+                    "https://dmap-data-commons-ord.s3.amazonaws.com/index.html#stateio/. ",
                     "If it's not found there, please open an issue at ",
                     "https://github.com/USEPA/stateior/issues/new ",
                     "and inform package maintainers.\n",
