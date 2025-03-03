@@ -102,10 +102,11 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, ioleve
 #' sensitivity analysis on ICF, default is FALSE.
 #' @param adjust_by A numeric value between 0 and 1 indicating the manual adjustment
 #' to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.
+#' @param disagg optional, disaggregation specs
 #' #' @return A data frame contains domestic 2 region ICFs.
 generateDomestic2RegionICFs <- function(state, year, specs, iolevel,
                                         ICF_sensitivity_analysis = FALSE,
-                                        adjust_by = 0) {
+                                        adjust_by = 0, disagg = NULL) {
   # Define BEA_col and year_col
   schema <- specs$BaseIOSchema
   bea <- paste0("BEA_", schema, "_Summary_Code")
@@ -152,13 +153,48 @@ generateDomestic2RegionICFs <- function(state, year, specs, iolevel,
                                                  paste0("CommodityCodeName_" , schema),
                                                  sep = "_"),
                                            appendSchema = FALSE)
+
+  # Update commodities from disaggregation
+  if (!is.null(disagg)){
+    # disagg_df <- data.frame(BEA_2012_Summary_Commodity_Code = c("221100", "221200", "221300"),
+    #                      BEA_2012_Summary_Commodity_Name = c("Elec", "NG", "Water"))
+    # CommodityCodeName <- CommodityCodeName[CommodityCodeName$BEA_2012_Summary_Commodity_Code!="22",]
+    # CommodityCodeName <- rbind(CommodityCodeName, disagg_df)
+    
+    disagg_df <- disagg$NAICSSectorCW[,c("USEEIO_Code", "USEEIO_Name")] # Get new sector codes and names
+    disagg_df <- unique(disagg_df) # Keep a unique list
+    # Make col headers match CommodityCodeName headers
+    colnames(disagg_df) <- c("BEA_2012_Summary_Commodity_Code", "BEA_2012_Summary_Commodity_Name")
+    #TODO: later update this to reflect alternate schemas
+    # Remove last 3 characters from the code, i.e., remove /US
+    disagg_df$BEA_2012_Summary_Commodity_Code <- substr(disagg_df$BEA_2012_Summary_Commodity_Code,
+                                                        1,nchar(disagg_df$BEA_2012_Summary_Commodity_Code)-3)
+    # Remove original aggregate code, e.g., 22 for utilities
+    CommodityCodeName <- CommodityCodeName[CommodityCodeName$BEA_2012_Summary_Commodity_Code!= 
+                                             substr(disagg$OriginalSectorCode,1,nchar(disagg$OriginalSectorCode)-3) ,]
+    # Add disagg codes to CommodityCodeName
+    CommodityCodeName <- rbind(CommodityCodeName, disagg_df)
+    
+  }
+
   ICF <- merge(ICF_2r_wide, CommodityCodeName, by.x = bea,
                by.y = paste("BEA", schema, iolevel, "Commodity_Code", sep = "_"),
                all.y = TRUE)
   if (iolevel == "Summary") {
     # Adjust utilities
-    ICF[ICF[, bea] == "22", cols] <- calculateUtilitiesFlowRatios(state, year, specs)[, cols]
-    ICF[ICF[, bea] == "22", "source"] <- "EIA"
+    if (is.null(disagg) || disagg$OriginalSectorCode != "22/US"){
+      # If there are no disagg sectors, or if the disagg sectors is not the utilities sector, calculate flow ratios for summary sector 22
+      ICF[ICF[, bea] == "22", cols] <- calculateUtilitiesFlowRatios(state, year, specs)[, cols]
+      ICF[ICF[, bea] == "22", "source"] <- "EIA"      
+    } else {
+      ICF[ICF[, bea] == "221100", cols] <- calculateElectricityFlowRatios(state, year)[, cols]
+      ICF[ICF[, bea] == "221100", "source"] <- "EIA"
+      ICF[ICF[, bea] %in% c("221200", "221300"), cols] <- data.frame("SoI2SoI" = 1,
+                                                                     "SoI2RoUS" = 0,
+                                                                     "RoUS2SoI" = 0,
+                                                                     "RoUS2RoUS" = 1) 
+      ICF[ICF[, bea]%in% c("221200", "221300"), "source"] <- "Assuming no interregional trade"        
+    }
     # Adjust waste management and remediation services
     ICF[ICF[, bea] == "562", cols] <- calculateWasteManagementServiceFlowRatios(state, year, specs)[, cols]
     ICF[ICF[, bea] == "562", "source"] <- "RCRAInfo and SMP"
