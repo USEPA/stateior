@@ -655,7 +655,7 @@ calculateStateUSEmpCompensationRatio <- function(year, specs) {
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Generate state Employee Compensation table
-  StateEmpComp <- allocateStateTabletoBEASummary("EmpCompensation", year, "Employment", specs)
+  StateEmpComp <- allocateStateTabletoBEASummary("EmpCompensation", year, "Compensation", specs)
   # Separate into state Employee Compensation
   StateEmpComp <- StateEmpComp[StateEmpComp$GeoName != "United States *", ]
   # Map US Employee Compensation to BEA
@@ -665,7 +665,8 @@ calculateStateUSEmpCompensationRatio <- function(year, specs) {
   allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
                                           duplicated(GVAtoBEAmapping$LineCode, fromLast = TRUE), ]
   USEmpComp <- merge(USEmpComp, GVAtoBEAmapping, by = "LineCode")
-  USEmpComp <- merge(USEmpComp,useeior::Summary_GrossOutput_IO[, as.character(year), drop = FALSE],
+  Summary_GrossOutput_IO <- loadDatafromUSEEIOR("Summary_GrossOutput_IO")
+  USEmpComp <- merge(USEmpComp, Summary_GrossOutput_IO[, as.character(year), drop = FALSE],
                      by.x = BEA_col, by.y = 0)
   USEmpComp[, as.character(year)] <- USEmpComp[, paste0(year, ".x")]
   for (linecode in unique(allocation_sectors$LineCode)) {
