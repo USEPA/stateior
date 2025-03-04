@@ -11,7 +11,9 @@ buildTwoRegionUseModel(
   specs,
   ICF_sensitivity_analysis = FALSE,
   adjust_by = 0,
-  domestic = TRUE
+  domestic = TRUE,
+  model = NULL,
+  disagg = NULL
 )
 }
 \arguments{
@@ -33,10 +35,14 @@ to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.}
 \item{domestic}{A logical value indicating whether to use Domestic Use tables,
 default is TRUE.}
 
+\item{model}{optional, a model object with state tables}
+
+\item{disagg}{optional, disaggregation specs}
+
 \item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
 }
 \value{
-A list of domestic two-region Use tabl es.
+A list of domestic two-region Use tables.
 }
 \description{
 Generate two-region (SoI and RoUS) Use tables
