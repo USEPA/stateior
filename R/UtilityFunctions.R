@@ -11,12 +11,17 @@ startLogging <- function() {
 loadDatafromUSEEIOR <- function(dataset, appendSchema = TRUE) {
   if(appendSchema && !(grepl("sch", dataset))) {
     dataset_srch <- paste0(dataset, "_17sch")
+    dataset_name <- dataset_srch
     # default 2017 schema
+  } else if(appendSchema && (grepl("12sch", dataset))) {
+    dataset_srch <- gsub("_12sch", "", dataset)
+    dataset_name <- dataset
   } else {
     dataset_srch <- dataset
+    dataset_name <- dataset_srch
   }
   logging::loginfo(paste0("Loading ", dataset_srch, " from USEEIOr."))
-  utils::data(package = "useeior", list = dataset_srch)
+  utils::data(package = "useeior", list = dataset_name)
   df <- get(dataset_srch)
   return(df)
 }

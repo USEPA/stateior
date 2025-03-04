@@ -68,11 +68,13 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   # Generate allocation_weight df based on pre-saved data
   if (allocationweightsource == "Employment" || allocationweightsource == "Compensation") {
     # Load BEA State data to BEA Summary mapping
-    DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping(allocationweightsource)
-    sectors <- unique(crosswalk[crosswalk$BEA_2017_Sector_Code %in% c("44RT", "FIRE", "G"), BEA_col])
+    DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping(allocationweightsource, schema=schema)
+    sectors <- unique(crosswalk[crosswalk[[paste0("BEA_",schema,"_Sector_Code")]] 
+                                %in% c("44RT", "FIRE", "G"), BEA_col])
     DatatoBEAmapping <- DatatoBEAmapping[DatatoBEAmapping[, BEA_col] %in% sectors, ]
     # For real estate (FIRE) and gov (G) sectors, calculate allocation factors using US GVA by industry
-    Summary_ValueAdded_IO <- loadDatafromUSEEIOR("Summary_ValueAdded_IO")
+    Summary_ValueAdded_IO <- loadDatafromUSEEIOR(paste0("Summary_ValueAdded_IO_",
+                                                 substr(schema, 3, 4), "sch"))
     allocation_factors <- merge(DatatoBEAmapping,
                                 Summary_ValueAdded_IO[, year_col, drop = FALSE],
                                 by.x = BEA_col, by.y = 0)
@@ -81,9 +83,15 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
       allocation_factors[allocation_factors$LineCode == linecode, "factor"] <- weight_vector/sum(weight_vector)
     }
     # Load BEA state data
-    name <- ifelse(allocationweightsource == "Compensation",
-                   "State_CompensationByIndustry_", "State_Employment_")
-    BEAStateData <- loadStateIODataFile(paste0(name, year), ver = model_ver)
+    if(allocationweightsource == "Compensation") {
+      name <- "State_CompensationByIndustry_"
+      ver <- NULL
+      # State_CompensationByIndustry not available prior to v0.4.0
+    } else {
+      name <- "State_Employment_"
+      ver <- specs$model_ver
+    }
+    BEAStateData <- loadStateIODataFile(paste0(name, year), ver = ver)
     # Map BEA state data (from LineCode) to BEA Summary
     BEAStateData <- merge(BEAStateData[BEAStateData$GeoName %in%
                                        c(state.name, "District of Columbia"),
@@ -99,7 +107,8 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
     colnames(allocation_weight) <- c("GeoName", BEA_col, "Weight")
   }
   # Add US allocation weight (Summary Gross Output)
-  Summary_GrossOutput_IO <- loadDatafromUSEEIOR("Summary_GrossOutput_IO")
+  Summary_GrossOutput_IO <- loadDatafromUSEEIOR(paste0("Summary_GrossOutput_IO_",
+                                                       substr(schema, 3, 4), "sch"))
   US_GrossOutput <- cbind.data.frame("United States *",
                                      rownames(Summary_GrossOutput_IO),
                                      Summary_GrossOutput_IO[, year_col, drop = FALSE])
@@ -374,7 +383,7 @@ getStateCompensationbyBEASummary <- function(year,specs) {
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # BEA State Emp
   StateDF <- loadStateIODataFile(paste0("State_CompensationByIndustry_", year),
-                                     ver = specs$model_ver)
+                                     ver = NULL) # force latest version, not available prior to v0.4.0
   DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Compensation", schema=schema)
   StateDF <- merge(StateDF[, c("GeoName", "LineCode", as.character(year))],
                    DatatoBEAmapping, by = "LineCode")
@@ -451,7 +460,7 @@ getFAFCommodityOutput <- function(year, specs) {
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv",
                                     package = "stateior"))
   # Load pre-saved FAF4 commodity flow data
-  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"), ver = model_ver)
+  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"), ver = specs$model_ver)
   origin_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_orig")]
   # Keep domestic and export trade, keep useful columns, then rename
   FAF <- FAF[FAF$trade_type %in% c(1, 3),
