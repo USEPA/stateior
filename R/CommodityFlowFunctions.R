@@ -154,12 +154,12 @@ calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, spe
     trade <- loadStateIODataFile(paste0("Census_USATrade",
                                         capitalize(flow_ratio_type),
                                         "_", year),
-                                 ver = model_ver)
+                                 ver = specs$model_ver)
   } else {
     trade <- loadStateIODataFile(paste0("Census_State",
                                         capitalize(flow_ratio_type),
                                         "_", year),
-                                 ver = model_ver)
+                                 ver = specs$model_ver)
   }
   # Map from NAICS to BEA
   bea_code <- paste("BEA", schema, iolevel, "Code", sep = "_")

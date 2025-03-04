@@ -949,13 +949,13 @@ buildFullTwoRegionIOTable <- function(state, year, iolevel, specs) {
   # Foreign expenditure by U.S. residents
   ForeignExp <- loadStateIODataFile(paste("State_ForeignExpenditureByResident",
                                           year, sep = "_"),
-                                    ver = model_ver)
+                                    ver = specs$model_ver)
   SoIForeignExp <- ForeignExp[ForeignExp$GeoName == state, as.character(year)]
   RoUSForeignExp <- ForeignExp[ForeignExp$GeoName == "United States", as.character(year)] - SoIForeignExp
   # Spending in the U.S. by nonresidents
   DomesticExp <- loadStateIODataFile(paste("State_DomesticExpenditureByNonresident",
                                            year, sep = "_"),
-                                     ver = model_ver)
+                                     ver = specs$model_ver)
   SoIDomesticExp <- DomesticExp[DomesticExp$GeoName == state, as.character(year)]
   RoUSDomesticExp <- DomesticExp[DomesticExp$GeoName == "United States", as.character(year)] - SoIDomesticExp
   

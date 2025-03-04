@@ -562,7 +562,7 @@ calculateStateSLGovExpenditureRatio <- function(year, specs) {
     # Until 2023 data year available, revert to 2022
     tryCatch({
         GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year),
-                                      ver = model_ver)
+                                      ver = specs$model_ver)
         },
       error = function(e) {
         logging::logwarn(paste0("State and Local Government Expenditure data not ",
@@ -570,12 +570,12 @@ calculateStateSLGovExpenditureRatio <- function(year, specs) {
         },
       finally = {
         GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year - 1),
-                                      ver = model_ver)
+                                      ver = specs$model_ver)
         }
     )
   } else {
     GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year),
-                                  ver = model_ver)    
+                                  ver = specs$model_ver)    
   }
   GovExp_statetotal <- rowSums(GovExp[, c(state.name, "District of Columbia")])
   GovExp[, "Overseas"] <- GovExp[, "United States Total"] - GovExp_statetotal
@@ -665,7 +665,8 @@ calculateStateUSEmpCompensationRatio <- function(year, specs) {
   allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
                                           duplicated(GVAtoBEAmapping$LineCode, fromLast = TRUE), ]
   USEmpComp <- merge(USEmpComp, GVAtoBEAmapping, by = "LineCode")
-  Summary_GrossOutput_IO <- loadDatafromUSEEIOR("Summary_GrossOutput_IO")
+  Summary_GrossOutput_IO <- loadDatafromUSEEIOR(paste0("Summary_GrossOutput_IO_",
+                                                       substr(schema, 3, 4), "sch"))
   USEmpComp <- merge(USEmpComp, Summary_GrossOutput_IO[, as.character(year), drop = FALSE],
                      by.x = BEA_col, by.y = 0)
   USEmpComp[, as.character(year)] <- USEmpComp[, paste0(year, ".x")]
@@ -709,9 +710,9 @@ calculateStateUSEmpCompensationRatio <- function(year, specs) {
 calculateUSGovExpenditureWeightFactor <- function(year, defense) {
   # Load data
   GovConsumption <- loadStateIODataFile(paste0("GovConsumption_", year),
-                                        ver = model_ver)
+                                        ver = specs$model_ver)
   GovInvestment <- loadStateIODataFile(paste0("GovInvestment_", year),
-                                       ver = model_ver)
+                                       ver = specs$model_ver)
   # Keep rows by line code
   if (defense) {
     GovConsumption <- GovConsumption[GovConsumption$Line %in% c(26, 28), ]
@@ -759,7 +760,8 @@ calculateStateFedGovExpenditureRatio <- function(year, specs) {
   }
  
   for (type in types) {
-    GovExp <- loadStateIODataFile(paste("FedGovExp", type, year, sep = "_"))
+    GovExp <- loadStateIODataFile(paste("FedGovExp", type, year, sep = "_"),
+                                  ver = specs$model_ver)
     # Change State to full state name
     for (state in unique(GovExp$State)) {
       GovExp[GovExp$State == state, "State"] <- ifelse(state == "DC",
