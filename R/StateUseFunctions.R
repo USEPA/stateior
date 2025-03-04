@@ -661,7 +661,7 @@ calculateStateUSEmpCompensationRatio <- function(year, specs) {
   # Map US Employee Compensation to BEA
   USEmpComp <- getStateEmpCompensation(year, specs)
   USEmpComp <- USEmpComp[USEmpComp$GeoName == "United States *", ]
-  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
+  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA", schema=schema)
   allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
                                           duplicated(GVAtoBEAmapping$LineCode, fromLast = TRUE), ]
   USEmpComp <- merge(USEmpComp, GVAtoBEAmapping, by = "LineCode")

@@ -37,12 +37,9 @@ mapStateTabletoBEASummary <- function(statetablename, year, specs) {
   # Load and adjust State tables
   StateTable <- adjustGVAComponent(year, statetablename)
   # Load State GVA to BEA Summary sector-mapping table
-  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
+  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA", schema=specs$BaseIOSchema)
   # Merge state table with BEA Summary sector code and name
   StateTableBEA <- merge(StateTable, GVAtoBEAmapping, by = "LineCode")
-  
-  #TODO: temporary
-  colnames(StateTableBEA) <- gsub("BEA_2012_", "BEA_2017_", colnames(StateTableBEA))
   return(StateTableBEA)
 }
 
@@ -59,7 +56,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   year_col <- as.character(year)
   # Load State GVA to BEA Summary sector-mapping table
-  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
+  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA", schema=schema)
   # Determine BEA sectors that need allocation
   allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
                                           duplicated(GVAtoBEAmapping$LineCode,
@@ -149,7 +146,7 @@ allocateStateTabletoBEASummary <- function(statetablename, year, allocationweigh
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   year_col <- as.character(year)
   # Generate StateTableBEA
-  StateTableBEA <- mapStateTabletoBEASummary(statetablename, year)
+  StateTableBEA <- mapStateTabletoBEASummary(statetablename, year, specs)
   # Generate allocation factor
   allocation_df <- calculateStatetoBEASummaryAllocationFactor(year, allocationweightsource, specs)
   total_before_allocation <- unique(StateTableBEA[StateTableBEA$LineCode %in% allocation_df$LineCode,
@@ -284,7 +281,7 @@ calculateStateIndustryOutputbyLineCode <- function(year, specs) {
   USGrossOutput <- as.data.frame(rowSums(US_Summary_Make))
   colnames(USGrossOutput) <- year_col
   # Load State GVA to BEA Summary sector-mapping table
-  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
+  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA", schema=specs$BaseIOSchema)
   # Generate LineCode-coded US Gross Output
   USGrossOutput <- merge(USGrossOutput, GVAtoBEAmapping, by.x = 0, by.y = BEA_col)
   USGrossOutput <- stats::aggregate(USGrossOutput[, year_col],
@@ -337,7 +334,7 @@ getStateEmploymentbyBEASummary <- function(year, specs, datasource="BEA") {
     # BEA State Emp
     BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
                                        ver = specs$model_ver)
-    EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
+    EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment", schema=schema)
     BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
                          EmptoBEAmapping, by = "LineCode")
     # Aggregate StateEmployment by BEA
@@ -377,8 +374,8 @@ getStateCompensationbyBEASummary <- function(year,specs) {
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # BEA State Emp
   StateDF <- loadStateIODataFile(paste0("State_CompensationByIndustry_", year),
-                                     ver = model_ver)
-  DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Compensation")
+                                     ver = specs$model_ver)
+  DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Compensation", schema=schema)
   StateDF <- merge(StateDF[, c("GeoName", "LineCode", as.character(year))],
                    DatatoBEAmapping, by = "LineCode")
   # Aggregate by BEA

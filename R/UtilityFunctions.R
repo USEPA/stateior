@@ -104,12 +104,11 @@ mapFIPS5toLocationNames <- function(fipscodes, fipssystem) {
 
 #' Load BEA State data (GVA and Employment) to BEA Summary mapping table
 #' @param dataname A string specifying name of the BEA state data
+#' @param schema A string of the IO schema
 #' @return The mapping table
-loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
-  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO2017Schema.csv")
+loadBEAStateDatatoBEASummaryMapping <- function(dataname, schema) {
+  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO", schema, "Schema.csv")
   mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
-  #TODO: temporary
-  colnames(mapping) <- gsub("BEA_2012_", "BEA_2017_", colnames(mapping))
   return(mapping)
 }
 
