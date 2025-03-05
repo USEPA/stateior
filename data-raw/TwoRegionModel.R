@@ -2,6 +2,7 @@
 
 # model_spec <- "StateIOv1.2-milkbar" # Utilities disaggregation
 # model_spec <- "StateIOv1.2-shoofly" # base model
+# model_spec <- "StateIOv1.3-pecan" # 2017 schema model
 # year <- 2019
 
 # Load model spec
@@ -10,13 +11,13 @@ configpath <- system.file("extdata/modelspecs/", paste0(model_spec, ".yml"), pac
 specs <- configr::read.config(configpath)
 
 # Build model
-specs <- {}
-specs$BaseIOSchema <- 2017
-specs$model_ver <- "0.4.0"
-
+alias <- gsub("^.*-", "", model_spec)
+# Store log file
+sink(file= file.path("inst", "extdata", "metadata",
+                     paste0('TwoRegion_', alias, '_', year, '.txt')), split=TRUE)
 TwoRegionModel <- assembleTwoRegionIO(year, iolevel = "Summary", specs,
                                       disagg_specs = specs$DisaggregationSpecs)
-alias <- gsub("^.*-", "", model_spec)
+sink()
 
 # Subset data set
 for (name in names(TwoRegionModel)) {
