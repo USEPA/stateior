@@ -303,6 +303,11 @@ calculateElectricityFlowRatios <- function(state, year, specs) {
   state_abb <- getStateAbbreviation(state)
   # Load consumption data
   CodeDesc <- loadStateIODataFile("EIA_SEDS_CodeDescription", ver = specs$model_ver)
+  if (year == 2023) {
+    logging::logwarn(paste0("EIA SEDS data for Electricity Consumption not yet final ",
+                            "for ", year, ". Using the prior year's data."))
+    year = year - 1
+    }
   Consumption <- loadStateIODataFile(paste0("EIA_SEDS_StateElectricityConsumption_",
                                             year),
                                      ver = specs$model_ver)
