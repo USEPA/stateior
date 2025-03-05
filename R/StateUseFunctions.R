@@ -582,6 +582,13 @@ calculateStateSLGovExpenditureRatio <- function(year, specs) {
   # Map to BEA Summary sectors
   filename <- paste0("Crosswalk_StateLocalGovExptoBEASummaryIO", schema, "Schema.csv")
   mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
+  if(year < 2022) {
+    # Starting in 2022, a specific line was dropped. Thus, select new mappings should
+    # only be included starting in 2022. Those mappings that are flagged are to be
+    # dropped prior to 2022. See issue #50
+    mapping <- mapping[mapping["method_flag"] != "x", ]
+  }
+  mapping$method_flag <- NULL
   GovExpBEA <- merge(mapping, GovExp, by = c("Line", "Description"))
   # Calculate ratios
   states <- c(state.name, "District of Columbia", "Overseas")
