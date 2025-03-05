@@ -270,7 +270,6 @@ buildStateUseModel <- function(year, specs) {
 #' with interregional exports and imports.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' theoretically can be "Detail", or "Sector" in future versions.
@@ -292,7 +291,6 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   # 0 - Define commodities, industries, final demand columns, import column, and
   # international trade adjustment column
   schema <- specs$BaseIOSchema
-  ioschema <- schema
   # 1 - Load state domestic Use and commodity output for the specified year
   
   if (is.null(model)) {
@@ -345,7 +343,7 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   # All sectors except international imports
   nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
   # BEA column
-  BEA_col <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
+  BEA_col <- paste("BEA", schema, iolevel, "Code", sep = "_")
 
   # Disaggregate remaining objects
   if(!is.null(disagg)){
@@ -356,7 +354,7 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios...")
   ICF <- generateDomestic2RegionICFs(state, year, specs, iolevel,
                                      ICF_sensitivity_analysis, adjust_by, disagg)
-  ICF <- ICF[match(rownames(SoI_CommodityOutput), ICF$BEA_2012_Summary_Code),]
+  ICF <- ICF[match(rownames(SoI_CommodityOutput), ICF[[BEA_col]]),]
 
   # Only allocate "error" to rows (commodities) that does not have ICF of 1 or 0
   commodities_notrade <- ICF[ICF$SoI2SoI == 1 & ICF$SoI2RoUS == 0 &
@@ -838,7 +836,6 @@ assembleTwoRegionIO <- function(year, iolevel, specs, disagg_specs=NULL) {
 buildFullTwoRegionIOTable <- function(state, year, iolevel, specs) {
   # Define BEA_col and year_col
   schema <- specs$BaseIOSchema
-  ioschema<- schema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   startLogging()
   # Define industries, commodities, final demand columns, and non-import columns
