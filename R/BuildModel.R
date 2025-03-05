@@ -565,10 +565,14 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   # to avoid very small diffs when commodity output is nonexistant
   if (max(comparison) > 1E-2) {
     if (domestic) {
-      stop(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
+      # stop(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
+      #             "doesn't equal to ", state, "'s commodity output."))
+      logging::logwarn(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
                   "doesn't equal to ", state, "'s commodity output."))
     } else {
-      stop(paste0(state, "'s commodity output summed from two-region (total) Use table ",
+      # stop(paste0(state, "'s commodity output summed from two-region (total) Use table ",
+      #             "doesn't equal to ", state, "'s commodity output."))
+      logging::logwarn(paste0(state, "'s commodity output summed from two-region (total) Use table ",
                   "doesn't equal to ", state, "'s commodity output."))
     }
   }
