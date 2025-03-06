@@ -323,6 +323,32 @@ estimateStateCommodityOutputRatiofromAlternativeSources <- function(year, specs)
   return(StateCommodityOutputRatio)
 }
 
+#' Get a table of state employment by BEA Summary sector.
+#' @param year A numeric value specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'.
+#' @return A data frame containing employment count by state and BEA Summary sector.
+#' @export
+getStateEmploymentTable <- function(year, specs=NULL) {
+  if(is.null(specs)) {
+    ver <- NULL
+    schema <- 2017
+  } else {
+    ver <- specs$model_ver
+    schema <- specs$BaseIOSchema
+  }
+  BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
+                                     ver = ver)
+  EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment", schema = schema)
+  BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
+                       EmptoBEAmapping, by = "LineCode")
+  # Aggregate StateEmployment by BEA
+  BEAStateEmp <- stats::aggregate(BEAStateEmp[, as.character(year)],
+                                  by = list(BEAStateEmp[[BEA_col]],
+                                            BEAStateEmp$GeoName), sum)
+  colnames(BEAStateEmp) <- c(BEA_col, "State", "Emp")
+  return(BEAStateEmp)
+}
+
 #' Load BEA State Employment data from pre-saved .rds files and State Employment
 #' FlowBySector data from flowsa.
 #' Map to BEA Summary sectors.
@@ -340,18 +366,8 @@ getStateEmploymentbyBEASummary <- function(year, specs, datasource="BEA") {
   EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary", specs)
   EmpFBS$State <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
   if(datasource == "BEA") {
-    # BEA State Emp
-    BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
-                                       ver = specs$model_ver)
-    EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment", schema=schema)
-    BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
-                         EmptoBEAmapping, by = "LineCode")
-    # Aggregate StateEmployment by BEA
-    BEAStateEmp <- stats::aggregate(BEAStateEmp[, as.character(year)],
-                                    by = list(BEAStateEmp[[BEA_col]],
-                                              BEAStateEmp$GeoName), sum)
-    colnames(BEAStateEmp) <- c(BEA_col, "State", "Emp")
-    
+    BEAStateEmp <- getStateEmploymentTable(year, specs)
+
     # Prioritize BEAStateEmp, replace NAs in Emp with values from EmpFBS
     StateEmp <- merge(BEAStateEmp[BEAStateEmp$State %in% EmpFBS$State, ],
                       EmpFBS, by.x = c("State", BEA_col), by.y = c("State",BEA_col), all = TRUE)

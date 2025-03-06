@@ -1,5 +1,5 @@
 {
-    "description": "Prepares US state two-region Make and Use tables", 
+    "description": "stateior is an R package that generates and provides US state Make and Use tables for building regionalized input-output models and other purposes.", 
     "license": "MIT", 
     "title": "stateior", 
     "upload_type": "software", 
@@ -10,25 +10,23 @@
             "orcid": "https://orcid.org/0000-0002-3672-1622"
         }, 
         {
+            "affiliation": "Eastern Research Group", 
+            "name": "Jorge Vendries",
+            "orcid": "https://orcid.org/0000-0002-8452-229X"
+        }, 
+        {
+            "affiliation": "Eastern Research Group", 
+            "name": "Ben Young",
+            "orcid": "https://orcid.org/0000-0001-6276-8670"
+        }, 
+        {
+            "name": "Brandon Istenes"
+        }, 
+        {
             "affiliation": "US Environmental Protection Agency", 
             "name": "Wesley Ingwersen",
             "orcid": "https://orcid.org/0000-0002-9614-701X"
-        }, 
-        {
-            "affiliation": "University of Florida", 
-            "name": "Joao-Pedro Ferreira",
-            "orcid": "https://orcid.org/0000-0002-6726-7856"
-        }, 
-        {
-            "affiliation": "University of Florida", 
-            "name": "Christa Court",
-            "orcid": "https://orcid.org/0000-0002-2690-9015"
-        }, 
-        {
-            "affiliation": "US Environmental Protection Agency", 
-            "name": "David Meyer",
-            "orcid": "https://orcid.org/0000-0001-5753-6103"
-        }
+        } 
     ], 
     "access_right": "open"
 }

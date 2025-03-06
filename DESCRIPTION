@@ -2,14 +2,13 @@ Package: stateior
 Type: Package
 Title: US State Input-Output (stateio) R modeling software
 Version: 0.4.0
-Date: 2024-11-05
+Date: 2025-03-06
 Authors@R: c(
-  person("Mo", "Li", email="mo.li@gdit.com", role="aut"),
-  person("Joao-Pedro", "Ferreira", email="joao.ferreira@ufl.edu", role= c("aut")),
-  person("Yilun", "Zha", email="yilunzha@gatech.eduv", role= c("aut")),
-  person("Christa", "Court", email="ccourt@ufl.edu", role= c("aut")),
-  person("David", "Meyer", email="meyer.david@epa.gov", role= c("aut")),
-  person("Wesley", "Ingwersen", email="ingwersen.wesley@epa.gov", role= c("aut", "cre")))
+  person("Mo","Li", role="aut"),
+  person("Jorge","Vendries", email="jvendries@gmail.com", role="aut"),
+  person("Ben","Young", email="ben.young@erg.com", role="aut"),
+  person("Brandon", "Istenes", email="bistenes@gmail.com", role="aut"),
+  person("Wesley", "Ingwersen", email="ingwersen.wesley@epa.gov", role="cre"))
 Description:
   stateior is an R package that generates and provides US state Make and Use tables
   for building regionalized input-output models and other purposes.
@@ -40,7 +39,7 @@ Imports:
 Depends:
   R (>= 3.6)
 Remotes:
-  github::USEPA/useeior@develop
+  github::USEPA/useeior@v1.7.0
 License: file LICENSE
 Encoding: UTF-8
 LazyData: true
