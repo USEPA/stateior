@@ -4,6 +4,7 @@ Title: US State Input-Output (stateio) R modeling software
 Version: 0.3.0
 Date: 2022-10-20
 Authors@R: c(
+  person("Mo","Li", role="aut"),
   person("Jorge","Vendries", email="jvendries@gmail.com", role="aut"),
   person("Ben","Young", email="ben.young@erg.com", role="aut"),
   person("Brandon", "Istenes", email="bistenes@gmail.com", role="aut"),
