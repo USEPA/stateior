@@ -4,10 +4,12 @@
 \alias{loadDatafromUSEEIOR}
 \title{Load data from useeior using flexible dataset name}
 \usage{
-loadDatafromUSEEIOR(dataset)
+loadDatafromUSEEIOR(dataset, appendSchema = TRUE)
 }
 \arguments{
 \item{dataset}{A string specifying name of the data to load}
+
+\item{appendSchema}{bool, set to FALSE to ignore schema in name}
 }
 \value{
 The data loaded from useeior

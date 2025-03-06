@@ -15,5 +15,7 @@ loadStateIODataFile(filename, ver = NULL)
 A StateIO data product (usually a list of dataframes).
 }
 \description{
-Load StateIO data file from Data Commons or local data directory.
+If the file is not found locally, it will be downloaded from Data Commons. Available
+files can be found on https://dmap-data-commons-ord.s3.amazonaws.com/index.html#stateio/.
+These include Use, DomesticUse, and IndustryOutput tables, among others.
 }

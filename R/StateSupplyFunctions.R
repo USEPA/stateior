@@ -295,23 +295,29 @@ estimateStateCommodityOutputRatiofromAlternativeSources <- function(year) {
   return(StateCommodityOutputRatio)
 }
 
+#' Get a table of state employment by BEA Summary sector.
+#' @param year A numeric value specifying the year of interest.
+#' @return A data frame containing employment count by state and BEA Summary sector.
+#' @export
+getStateEmploymentTable <- function(year) {
+  BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year))
+  EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
+  BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
+                        EmptoBEAmapping, by = "LineCode")
+  BEAStateEmp <- stats::aggregate(BEAStateEmp[, as.character(year)],
+                                  by = list(BEAStateEmp$BEA_2012_Summary_Code,
+                                            BEAStateEmp$GeoName), sum)
+  colnames(BEAStateEmp) <- c("BEA_2012_Summary_Code", "State", "Emp")
+  return(BEAStateEmp)
+}
+
 #' Load BEA State Employment data from pre-saved .rds files and State Employment
 #' FlowBySector data from flowsa.
 #' Map to BEA Summary sectors.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @return A data frame contains State Employment by BEA Summary.
 getStateEmploymentbyBEASummary <- function(year) {
-  # BEA State Emp
-  BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
-                                     ver = model_ver)
-  EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment")
-  BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
-                       EmptoBEAmapping, by = "LineCode")
-  # Aggregate StateEmployment by BEA
-  BEAStateEmp <- stats::aggregate(BEAStateEmp[, as.character(year)],
-                                  by = list(BEAStateEmp$BEA_2012_Summary_Code,
-                                            BEAStateEmp$GeoName), sum)
-  colnames(BEAStateEmp) <- c("BEA_2012_Summary_Code", "State", "Emp")
+  BEAStateEmp <- getStateEmploymentTable(year)
   # Employment FlowBySector from flowsa
   EmpFBS <- getFlowsaData("Employment", year)
   EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary")

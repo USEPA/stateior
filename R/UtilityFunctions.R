@@ -6,9 +6,17 @@ startLogging <- function() {
 
 #' Load data from useeior using flexible dataset name
 #' @param dataset A string specifying name of the data to load
+#' @param appendSchema bool, set to FALSE to ignore schema in name
 #' @return The data loaded from useeior
-loadDatafromUSEEIOR <- function(dataset) {
-  utils::data(package = "useeior", list = dataset)
+loadDatafromUSEEIOR <- function(dataset, appendSchema = TRUE) {
+  if(appendSchema && !"sch" %in% dataset) {
+    dataset_srch <- paste0(dataset, "_12sch")
+    # currently only uses 2012 schema
+    # required due to renaming in useeior #280
+  } else {
+    dataset_srch <- dataset
+  }
+  utils::data(package = "useeior", list = dataset_srch)
   df <- get(dataset)
   return(df)
 }
@@ -105,14 +113,18 @@ loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
 #' @param location A text value specifying desired location,
 #' can be state name like "Georgia" or "RoUS" representing Rest of US.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param disagg optional, disaggregation specs 
 #' @return A text value in the format of code/location.
-getBEASectorCodeLocation <- function(sector_type, location, iolevel) {
+getBEASectorCodeLocation <- function(sector_type, location, iolevel, disagg=NULL) {
   # Get code
   if (sector_type != "FinalDemand") {
     if (sector_type == "InternationalTradeAdjustment") {
       code <- ifelse(iolevel == "Detail", "F05100", "F051")
     } else {
       code <- getVectorOfCodes(iolevel, sector_type)
+      if (!is.null(disagg)) {
+        code <- disaggregateStateSectorLists(code, disagg)
+      }
     }
   } else {
     code <- getFinalDemandCodes(iolevel)
@@ -275,6 +287,11 @@ findLatestStateIODatainLocalDirectory <- function(filename) {
 }
 
 #' Load StateIO data file from Data Commons or local data directory.
+#' 
+#' If the file is not found locally, it will be downloaded from Data Commons. Available
+#' files can be found on https://dmap-data-commons-ord.s3.amazonaws.com/index.html#stateio/.
+#' These include Use, DomesticUse, and IndustryOutput tables, among others.
+#' 
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return A StateIO data product (usually a list of dataframes).
@@ -300,7 +317,7 @@ loadStateIODataFile <- function(filename, ver = NULL) {
                                    "not found in local data directory, either."))
             message("Please confirm ", filename, " is correctly spelled. ",
                     "You should be able to find the correctly spelled file on ",
-                    "https://dmap-data-commons-ord.s3.amazonaws.com/index.html?prefix=stateio/. ",
+                    "https://dmap-data-commons-ord.s3.amazonaws.com/index.html#stateio/. ",
                     "If it's not found there, please open an issue at ",
                     "https://github.com/USEPA/stateior/issues/new ",
                     "and inform package maintainers.\n",
