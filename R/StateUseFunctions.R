@@ -562,7 +562,7 @@ calculateStateSLGovExpenditureRatio <- function(year, specs) {
     # Until 2023 data year available, revert to 2022
     tryCatch({
         GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year),
-                                      ver = model_ver)
+                                      ver = specs$model_ver)
         },
       error = function(e) {
         logging::logwarn(paste0("State and Local Government Expenditure data not ",
@@ -570,18 +570,25 @@ calculateStateSLGovExpenditureRatio <- function(year, specs) {
         },
       finally = {
         GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year - 1),
-                                      ver = model_ver)
+                                      ver = specs$model_ver)
         }
     )
   } else {
     GovExp <- loadStateIODataFile(paste0("Census_StateLocalGovExpenditure_", year),
-                                  ver = model_ver)    
+                                  ver = specs$model_ver)    
   }
   GovExp_statetotal <- rowSums(GovExp[, c(state.name, "District of Columbia")])
   GovExp[, "Overseas"] <- GovExp[, "United States Total"] - GovExp_statetotal
   # Map to BEA Summary sectors
   filename <- paste0("Crosswalk_StateLocalGovExptoBEASummaryIO", schema, "Schema.csv")
   mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
+  if(year < 2022) {
+    # Starting in 2022, a specific line was dropped. Thus, select new mappings should
+    # only be included starting in 2022. Those mappings that are flagged are to be
+    # dropped prior to 2022. See issue #50
+    mapping <- mapping[mapping["method_flag"] != "x", ]
+  }
+  mapping$method_flag <- NULL
   GovExpBEA <- merge(mapping, GovExp, by = c("Line", "Description"))
   # Calculate ratios
   states <- c(state.name, "District of Columbia", "Overseas")
@@ -655,17 +662,19 @@ calculateStateUSEmpCompensationRatio <- function(year, specs) {
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Generate state Employee Compensation table
-  StateEmpComp <- allocateStateTabletoBEASummary("EmpCompensation", year, "Employment", specs)
+  StateEmpComp <- allocateStateTabletoBEASummary("EmpCompensation", year, "Compensation", specs)
   # Separate into state Employee Compensation
   StateEmpComp <- StateEmpComp[StateEmpComp$GeoName != "United States *", ]
   # Map US Employee Compensation to BEA
   USEmpComp <- getStateEmpCompensation(year, specs)
   USEmpComp <- USEmpComp[USEmpComp$GeoName == "United States *", ]
-  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
+  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA", schema=schema)
   allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
                                           duplicated(GVAtoBEAmapping$LineCode, fromLast = TRUE), ]
   USEmpComp <- merge(USEmpComp, GVAtoBEAmapping, by = "LineCode")
-  USEmpComp <- merge(USEmpComp,useeior::Summary_GrossOutput_IO[, as.character(year), drop = FALSE],
+  Summary_GrossOutput_IO <- loadDatafromUSEEIOR(paste0("Summary_GrossOutput_IO_",
+                                                       substr(schema, 3, 4), "sch"))
+  USEmpComp <- merge(USEmpComp, Summary_GrossOutput_IO[, as.character(year), drop = FALSE],
                      by.x = BEA_col, by.y = 0)
   USEmpComp[, as.character(year)] <- USEmpComp[, paste0(year, ".x")]
   for (linecode in unique(allocation_sectors$LineCode)) {
@@ -708,9 +717,9 @@ calculateStateUSEmpCompensationRatio <- function(year, specs) {
 calculateUSGovExpenditureWeightFactor <- function(year, defense) {
   # Load data
   GovConsumption <- loadStateIODataFile(paste0("GovConsumption_", year),
-                                        ver = model_ver)
+                                        ver = specs$model_ver)
   GovInvestment <- loadStateIODataFile(paste0("GovInvestment_", year),
-                                       ver = model_ver)
+                                       ver = specs$model_ver)
   # Keep rows by line code
   if (defense) {
     GovConsumption <- GovConsumption[GovConsumption$Line %in% c(26, 28), ]
@@ -749,19 +758,17 @@ calculateStateFedGovExpenditureRatio <- function(year, specs) {
   if(schema == 2012){
     mapping <- unique(useeior::MasterCrosswalk2012[, c(BEA_col,
                                                        paste0("NAICS_", schema, "_Code"))])
-    print("2012 schema used")
   } else if(schema == 2017){
     mapping <- unique(useeior::MasterCrosswalk2017[, c(BEA_col,
                                                        paste0("NAICS_", schema, "_Code"))])
-    print("2017 schema used")
   } else {
-    print("default 2017 schema is used")
     mapping <- unique(useeior::MasterCrosswalk2017[, c(BEA_col,
                                                        paste0("NAICS_", schema, "_Code"))])
   }
  
   for (type in types) {
-    GovExp <- loadStateIODataFile(paste("FedGovExp", type, year, sep = "_"))
+    GovExp <- loadStateIODataFile(paste("FedGovExp", type, year, sep = "_"),
+                                  ver = specs$model_ver)
     # Change State to full state name
     for (state in unique(GovExp$State)) {
       GovExp[GovExp$State == state, "State"] <- ifelse(state == "DC",

@@ -37,12 +37,9 @@ mapStateTabletoBEASummary <- function(statetablename, year, specs) {
   # Load and adjust State tables
   StateTable <- adjustGVAComponent(year, statetablename)
   # Load State GVA to BEA Summary sector-mapping table
-  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
+  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA", schema=specs$BaseIOSchema)
   # Merge state table with BEA Summary sector code and name
   StateTableBEA <- merge(StateTable, GVAtoBEAmapping, by = "LineCode")
-  
-  #TODO: temporary
-  colnames(StateTableBEA) <- gsub("BEA_2012_", "BEA_2017_", colnames(StateTableBEA))
   return(StateTableBEA)
 }
 
@@ -59,7 +56,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   year_col <- as.character(year)
   # Load State GVA to BEA Summary sector-mapping table
-  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
+  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA", schema=schema)
   # Determine BEA sectors that need allocation
   allocation_sectors <- GVAtoBEAmapping[duplicated(GVAtoBEAmapping$LineCode) |
                                           duplicated(GVAtoBEAmapping$LineCode,
@@ -69,17 +66,49 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
   cw <- loadDatafromUSEEIOR(paste0('MasterCrosswalk', schema), appendSchema = FALSE)
   crosswalk <- cw[cw[, BEA_col] %in% allocation_codes, ]
   # Generate allocation_weight df based on pre-saved data
-  if (allocationweightsource == "Employment") {
-    # Load BEA state Emp
-    EmpFBS <- getFlowsaData("Employment", year, specs$model_ver)
-    EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary", specs)
-    EmpFBS$GeoName <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
-    EmpFBS$FIPS <- NULL
-    names(EmpFBS)[names(EmpFBS) == 'FlowAmount'] <- 'Weight'
-    allocation_weight <- EmpFBS
+  if (allocationweightsource == "Employment" || allocationweightsource == "Compensation") {
+    # Load BEA State data to BEA Summary mapping
+    DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping(allocationweightsource, schema=schema)
+    sectors <- unique(crosswalk[crosswalk[[paste0("BEA_",schema,"_Sector_Code")]] 
+                                %in% c("44RT", "FIRE", "G"), BEA_col])
+    DatatoBEAmapping <- DatatoBEAmapping[DatatoBEAmapping[, BEA_col] %in% sectors, ]
+    # For real estate (FIRE) and gov (G) sectors, calculate allocation factors using US GVA by industry
+    Summary_ValueAdded_IO <- loadDatafromUSEEIOR(paste0("Summary_ValueAdded_IO_",
+                                                 substr(schema, 3, 4), "sch"))
+    allocation_factors <- merge(DatatoBEAmapping,
+                                Summary_ValueAdded_IO[, year_col, drop = FALSE],
+                                by.x = BEA_col, by.y = 0)
+    for (linecode in unique(allocation_factors$LineCode)) {
+      weight_vector <- allocation_factors[allocation_factors$LineCode == linecode, year_col]
+      allocation_factors[allocation_factors$LineCode == linecode, "factor"] <- weight_vector/sum(weight_vector)
+    }
+    # Load BEA state data
+    if(allocationweightsource == "Compensation") {
+      name <- "State_CompensationByIndustry_"
+      ver <- NULL
+      # State_CompensationByIndustry not available prior to v0.4.0
+    } else {
+      name <- "State_Employment_"
+      ver <- specs$model_ver
+    }
+    BEAStateData <- loadStateIODataFile(paste0(name, year), ver = ver)
+    # Map BEA state data (from LineCode) to BEA Summary
+    BEAStateData <- merge(BEAStateData[BEAStateData$GeoName %in%
+                                       c(state.name, "District of Columbia"),
+                                     c("GeoName", "LineCode", year_col)],
+                         allocation_factors[, c(BEA_col, "LineCode", "factor")],
+                         by = "LineCode")
+    # Adjust BEA state data value based on allocation factor
+    BEAStateData[, year_col] <- BEAStateData[, year_col]*BEAStateData$factor
+    allocation_weight <- stats::aggregate(BEAStateData[, year_col],
+                                          by = list(BEAStateData$GeoName,
+                                                    BEAStateData[, BEA_col]),
+                                          sum)
+    colnames(allocation_weight) <- c("GeoName", BEA_col, "Weight")
   }
   # Add US allocation weight (Summary Gross Output)
-  Summary_GrossOutput_IO <- loadDatafromUSEEIOR("Summary_GrossOutput_IO")
+  Summary_GrossOutput_IO <- loadDatafromUSEEIOR(paste0("Summary_GrossOutput_IO_",
+                                                       substr(schema, 3, 4), "sch"))
   US_GrossOutput <- cbind.data.frame("United States *",
                                      rownames(Summary_GrossOutput_IO),
                                      Summary_GrossOutput_IO[, year_col, drop = FALSE])
@@ -115,7 +144,8 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
 #' @param statetablename Name of pre-saved state table,
 #' can be GVA, Tax, Employment Compensation, and GOS.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param allocationweightsource Source of allocation weight, can be "Employment".
+#' @param allocationweightsource Source of allocation weight, can be "Employment"
+#' or "Compensation".
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains allocated state value
 #' for all states with row names being BEA sector code.
@@ -125,7 +155,7 @@ allocateStateTabletoBEASummary <- function(statetablename, year, allocationweigh
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   year_col <- as.character(year)
   # Generate StateTableBEA
-  StateTableBEA <- mapStateTabletoBEASummary(statetablename, year)
+  StateTableBEA <- mapStateTabletoBEASummary(statetablename, year, specs)
   # Generate allocation factor
   allocation_df <- calculateStatetoBEASummaryAllocationFactor(year, allocationweightsource, specs)
   total_before_allocation <- unique(StateTableBEA[StateTableBEA$LineCode %in% allocation_df$LineCode,
@@ -185,7 +215,7 @@ calculateStateUSValueAddedRatio <- function(year, specs) {
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   year_col <- as.character(year)
   # Generate state GVA (value added) table
-  StateValueAdded <- allocateStateTabletoBEASummary("GVA", year, "Employment", specs)
+  StateValueAdded <- allocateStateTabletoBEASummary("GVA", year, "Compensation", specs)
   # Extract US value added
   US_VA <- StateValueAdded[StateValueAdded$GeoName == "United States *", ]
   # Extract state value added
@@ -260,7 +290,7 @@ calculateStateIndustryOutputbyLineCode <- function(year, specs) {
   USGrossOutput <- as.data.frame(rowSums(US_Summary_Make))
   colnames(USGrossOutput) <- year_col
   # Load State GVA to BEA Summary sector-mapping table
-  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA")
+  GVAtoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("GVA", schema=specs$BaseIOSchema)
   # Generate LineCode-coded US Gross Output
   USGrossOutput <- merge(USGrossOutput, GVAtoBEAmapping, by.x = 0, by.y = BEA_col)
   USGrossOutput <- stats::aggregate(USGrossOutput[, year_col],
@@ -293,13 +323,41 @@ estimateStateCommodityOutputRatiofromAlternativeSources <- function(year, specs)
   return(StateCommodityOutputRatio)
 }
 
+#' Get a table of state employment by BEA Summary sector.
+#' @param year A numeric value specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema'.
+#' @return A data frame containing employment count by state and BEA Summary sector.
+#' @export
+getStateEmploymentTable <- function(year, specs=NULL) {
+  if(is.null(specs)) {
+    ver <- NULL
+    schema <- 2017
+  } else {
+    ver <- specs$model_ver
+    schema <- specs$BaseIOSchema
+  }
+  BEAStateEmp <- loadStateIODataFile(paste0("State_Employment_", year),
+                                     ver = ver)
+  EmptoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Employment", schema = schema)
+  BEAStateEmp <- merge(BEAStateEmp[, c("GeoName", "LineCode", as.character(year))],
+                       EmptoBEAmapping, by = "LineCode")
+  # Aggregate StateEmployment by BEA
+  BEAStateEmp <- stats::aggregate(BEAStateEmp[, as.character(year)],
+                                  by = list(BEAStateEmp[[BEA_col]],
+                                            BEAStateEmp$GeoName), sum)
+  colnames(BEAStateEmp) <- c(BEA_col, "State", "Emp")
+  return(BEAStateEmp)
+}
+
 #' Load BEA State Employment data from pre-saved .rds files and State Employment
 #' FlowBySector data from flowsa.
 #' Map to BEA Summary sectors.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema',
+#' @param datasource A str to differentiate primary data source for employment
 #' @return A data frame contains State Employment by BEA Summary.
-getStateEmploymentbyBEASummary <- function(year,specs) {
+getStateEmploymentbyBEASummary <- function(year, specs, datasource="BEA") {
+  # Switch to flowsa from BEA was implemented in 652b3ae
   # Define BEA_col
   schema <- specs$BaseIOSchema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
@@ -307,14 +365,51 @@ getStateEmploymentbyBEASummary <- function(year,specs) {
   EmpFBS <- getFlowsaData("Employment", year, specs$model_ver)
   EmpFBS <- mapFlowBySectorfromNAICStoBEA(EmpFBS, year, "Summary", specs)
   EmpFBS$State <- mapFIPS5toLocationNames(EmpFBS$FIPS, "FIPS")
-  names(EmpFBS)[names(EmpFBS) == 'FlowAmount'] <- 'Emp'
-  
-  # Make sure 0 values are expicit
-  combinations <- expand.grid(State = unique(EmpFBS$State), Summary = unique(EmpFBS[[BEA_col]]))
-  EmpFBS <- merge(EmpFBS, combinations, by.x = c("State", BEA_col), by.y = c("State", "Summary"), all.y = TRUE)
-  EmpFBS$Emp[is.na(EmpFBS$Emp)] <- 0
-  StateEmp <- EmpFBS[, c(BEA_col, "State", "Emp")]
+  if(datasource == "BEA") {
+    BEAStateEmp <- getStateEmploymentTable(year, specs)
+
+    # Prioritize BEAStateEmp, replace NAs in Emp with values from EmpFBS
+    StateEmp <- merge(BEAStateEmp[BEAStateEmp$State %in% EmpFBS$State, ],
+                      EmpFBS, by.x = c("State", BEA_col), by.y = c("State",BEA_col), all = TRUE)
+    StateEmp[is.na(StateEmp$Emp), "Emp"] <- StateEmp[is.na(StateEmp$Emp), "FlowAmount"]
+    # Replace the remaining NAs in Emp with zero
+    StateEmp[is.na(StateEmp$Emp), "Emp"] <- 0
+    # Drop unwanted columns
+    StateEmp <- StateEmp[, colnames(BEAStateEmp)]
+  } else if (datasource == "Flowsa") {
+    names(EmpFBS)[names(EmpFBS) == 'FlowAmount'] <- 'Emp'
+    
+    # Make sure 0 values are explicit
+    combinations <- expand.grid(State = unique(EmpFBS$State), Summary = unique(EmpFBS[[BEA_col]]))
+    EmpFBS <- merge(EmpFBS, combinations, by.x = c("State", BEA_col), by.y = c("State", "Summary"), all.y = TRUE)
+    EmpFBS$Emp[is.na(EmpFBS$Emp)] <- 0
+    StateEmp <- EmpFBS[, c(BEA_col, "State", "Emp")]    
+  }
   return(StateEmp)
+}
+
+#' Load BEA State Compensation data from pre-saved .rds files.
+#' Map to BEA Summary sectors.
+#' @param year A numeric value between 2007 and 2023 specifying the year of interest.
+#' @param specs A list of model specs including 'BaseIOSchema',
+#' @return A data frame contains State Compensation by BEA Summary.
+getStateCompensationbyBEASummary <- function(year,specs) {
+  # Define BEA_col
+  schema <- specs$BaseIOSchema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
+  # BEA State Emp
+  StateDF <- loadStateIODataFile(paste0("State_CompensationByIndustry_", year),
+                                     ver = NULL) # force latest version, not available prior to v0.4.0
+  DatatoBEAmapping <- loadBEAStateDatatoBEASummaryMapping("Compensation", schema=schema)
+  StateDF <- merge(StateDF[, c("GeoName", "LineCode", as.character(year))],
+                   DatatoBEAmapping, by = "LineCode")
+  # Aggregate by BEA
+  StateDF <- stats::aggregate(StateDF[, as.character(year)],
+                              by = list(StateDF[[BEA_col]],
+                                        StateDF$GeoName), sum)
+  colnames(StateDF) <- c(BEA_col, "State", "Value")
+
+  return(StateDF)
 }
 
 #' Estimate state Ag, Fishery and Forestry commodity output ratios
@@ -381,15 +476,7 @@ getFAFCommodityOutput <- function(year, specs) {
   FIPS_STATE <- readCSV(system.file("extdata", "StateFIPS.csv",
                                     package = "stateior"))
   # Load pre-saved FAF4 commodity flow data
-  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"), ver = model_ver)
-  # Define value_col and origin_col
-  if (year == 2012) {
-    value_col <- paste0("value_", year)
-  } else if (year %in% c(2013:2018)) {
-    value_col <- paste0("curval_", year)
-  } else {
-    value_col <- paste0("current_value_", year)
-  }
+  FAF <- loadStateIODataFile(paste("FAF", year, sep = "_"), ver = specs$model_ver)
   origin_col <- colnames(FAF)[startsWith(colnames(FAF), "dms_orig")]
   # Keep domestic and export trade, keep useful columns, then rename
   FAF <- FAF[FAF$trade_type %in% c(1, 3),
@@ -411,10 +498,12 @@ getFAFCommodityOutput <- function(year, specs) {
                                     duplicated(SCTGtoBEA$SCTG, fromLast = TRUE), ]
   allocation_sectors <- allocation_sectors[!allocation_sectors[, BEA_col]
                                            %in% c("111CA", "113FF", "311FT"), ]
-  # Use State Emp to allocate
-  StateEmp <- getStateEmploymentbyBEASummary(year,specs)
-  # Merge StateEmp with allocation_sectors
-  StateEmp <- merge(StateEmp, allocation_sectors, by = BEA_col)
+  # Use State Compensation data to allocate
+  # StateDF <- getStateEmploymentbyBEASummary(year,specs)
+  StateDF <- getStateCompensationbyBEASummary(year,specs)
+  names(StateDF)[names(StateDF) == 'Value'] <- 'Compensation'
+  # Merge StateDF with allocation_sectors
+  StateDF <- merge(StateDF, allocation_sectors, by = BEA_col)
   # Process FAF for each state
   # Generate AFF
   AgFisheryForestry <- getAgFisheryForestryCommodityOutput(year, specs)
@@ -440,12 +529,12 @@ getFAFCommodityOutput <- function(year, specs) {
                                     sum)
     colnames(FAF_state_1) <- c("State", BEA_col, "Value")
     # Step 2.2. Allocate FAF_state_2 from SCTG to BEA using BEA state employment
-    Emp <- StateEmp[StateEmp$State == state, ]
+    state_df <- StateDF[StateDF$State == state, ]
     # Merge with FAF_state_2
-    FAF_state_2 <- merge(FAF_state_2, Emp, by = c("State", "SCTG", BEA_col))
+    FAF_state_2 <- merge(FAF_state_2, state_df, by = c("State", "SCTG", BEA_col))
     for (sctg in unique(FAF_state_2$SCTG)) {
       # Calculate allocation factor
-      weight_vector <- FAF_state_2[FAF_state_2$SCTG == sctg, "Emp"]
+      weight_vector <- FAF_state_2[FAF_state_2$SCTG == sctg, "Compensation"]
       allocation_factor <- weight_vector/sum(weight_vector, na.rm = TRUE)
       # Allocate Value
       value <- FAF_state_2[FAF_state_2$SCTG == sctg, "Value"]*allocation_factor

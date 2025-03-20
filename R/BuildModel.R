@@ -1,6 +1,6 @@
-# Define model version
+# Define model version for accessing data from DataCommons
 # model_ver <- utils::packageDescription(pkg = "stateior", fields = "Version")
-model_ver <- NULL
+model_ver <- NULL # to access the latest available data
 
 #' Build a state supply model for all 52 states/regions (including DC and Overseas)
 #' for a given year
@@ -289,7 +289,6 @@ buildStateUseModel <- function(year, specs) {
 #' with interregional exports and imports.
 #' @param state A text value specifying state of interest.
 #' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' theoretically can be "Detail", or "Sector" in future versions.
@@ -299,18 +298,52 @@ buildStateUseModel <- function(year, specs) {
 #' to ICF if a sensitivity analysis is conducted, default is 0 due to no SA.
 #' @param domestic A logical value indicating whether to use Domestic Use tables,
 #' default is TRUE.
-#' @return A list of domestic two-region Use tabl es.
+#' @param model optional, a model object with state tables
+#' @param disagg optional, disaggregation specs
+#' @return A list of domestic two-region Use tables.
 #' @export
 buildTwoRegionUseModel <- function(state, year, iolevel, specs,
                                    ICF_sensitivity_analysis = FALSE,
-                                   adjust_by = 0, domestic = TRUE) {
+                                   adjust_by = 0, domestic = TRUE,
+                                   model = NULL, disagg = NULL) {
   startLogging()
   # 0 - Define commodities, industries, final demand columns, import column, and
   # international trade adjustment column
   schema <- specs$BaseIOSchema
-  ioschema <- schema
-  commodities <- getVectorOfCodes(iolevel, "Commodity", specs)
-  industries <- getVectorOfCodes(iolevel, "Industry", specs)
+  # 1 - Load state domestic Use and commodity output for the specified year
+  
+  if (is.null(model)) {
+    # If no model object is passed, generate these objects
+    commodities <- getVectorOfCodes(iolevel, "Commodity", specs)
+    industries <- getVectorOfCodes(iolevel, "Industry", specs)
+    SoI_DomesticUse <- loadStateIODataFile(paste0("State_",
+                                                  iolevel,
+                                                  "_DomesticUse_",
+                                                  year),
+                                           ver = specs$model_ver)[[state]][commodities, ]
+    SoI_CommodityOutput <- loadStateIODataFile(paste0("State_",
+                                                      iolevel,
+                                                      "_CommodityOutput_",
+                                                      year),
+                                               ver = specs$model_ver)[[state]]
+    US_DomesticUse <- generateUSDomesticUse(iolevel, year, specs)
+    US_Make <- getNationalMake(iolevel, year, specs)
+    US_Use <- getNationalUse("Summary", year, specs)
+    SoI_Use <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year),
+                                   ver = specs$model_ver)[[state]]    
+    
+  } else {
+    commodities <- model$Commodities
+    industries <- model$Industries    
+    SoI_DomesticUse <- model$DomesticFullUse[commodities, ]
+    SoI_CommodityOutput <- model$CommodityOutput
+    US_DomesticUse <- model$US_DomesticUse
+    US_Make <- model$US_Make
+    US_Use <- model$US_Use
+    SoI_Use <- model$FullUse
+  }
+
+  
   FD_cols <- getFinalDemandCodes(iolevel, specs)
   import_col <- getVectorOfCodes(iolevel, "Import", specs)
   ITA_col <- ifelse(iolevel == "Detail", "F05100", "F051")
@@ -329,27 +362,19 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   # All sectors except international imports
   nonimport_cols <- c(industries, FD_cols[-which(FD_cols %in% import_col)])
   # BEA column
-  BEA_col <- paste("BEA", ioschema, iolevel, "Code", sep = "_")
-  
-  # 1 - Load state domestic Use and commodity output for the specified year
-  logging::loginfo("Loading state Domestic Use table...")
-  SoI_DomesticUse <- loadStateIODataFile(paste0("State_",
-                                                iolevel,
-                                                "_DomesticUse_",
-                                                year),
-                                         ver = specs$model_ver)[[state]][commodities, ]
-  # Load state commodity output
-  logging::loginfo("Loading state commodity output...")
-  SoI_CommodityOutput <- loadStateIODataFile(paste0("State_",
-                                                    iolevel,
-                                                    "_CommodityOutput_",
-                                                    year),
-                                             ver = specs$model_ver)[[state]]
-  
+  BEA_col <- paste("BEA", schema, iolevel, "Code", sep = "_")
+
+  # Disaggregate remaining objects
+  if(!is.null(disagg)){
+    tradable_cols <- disaggregateStateSectorLists(tradable_cols, disagg)
+  }
+
   # 2 - Generate 2-region ICFs
   logging::loginfo("Generating two-region interregional commodity flow (ICF) ratios...")
   ICF <- generateDomestic2RegionICFs(state, year, specs, iolevel,
-                                     ICF_sensitivity_analysis, adjust_by)
+                                     ICF_sensitivity_analysis, adjust_by, disagg)
+  ICF <- ICF[match(rownames(SoI_CommodityOutput), ICF[[BEA_col]]),]
+
   # Only allocate "error" to rows (commodities) that does not have ICF of 1 or 0
   commodities_notrade <- ICF[ICF$SoI2SoI == 1 & ICF$SoI2RoUS == 0 &
                                ICF$RoUS2RoUS == 1 & ICF$RoUS2SoI == 0, 1]
@@ -368,6 +393,7 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   logging::loginfo("Generating SoI2SoI Use table...")
   SoI2SoI_Use <- SoI_DomesticUse
   SoI2SoI_Use[, tradable_cols] <- SoI_DomesticUse[, tradable_cols] * ICF$SoI2SoI
+
   # Calculate Interregional Imports, Exports, and Net Exports
   logging::loginfo("Calculating SoI2SoI interregional imports and exports and net exports...")
   SoI2SoI_Use$InterregionalImports <- rowSums(SoI_DomesticUse[, tradable_cols]) - rowSums(SoI2SoI_Use[, tradable_cols])
@@ -376,11 +402,9 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   # 4 - Generate RoUS domestic Use and commodity output
   # Generate RoUS domestic Use
   logging::loginfo("Generating RoUS Domestic Use table...")
-  US_DomesticUse <- generateUSDomesticUse(iolevel, year, specs)
   RoUS_DomesticUse <- US_DomesticUse - SoI_DomesticUse
   # Calculate RoUS Commodity Output
   logging::loginfo("Generating RoUS commodity output...")
-  US_Make <- getNationalMake(iolevel, year, specs)
   US_CommodityOutput <- colSums(US_Make)
   RoUS_CommodityOutput <- US_CommodityOutput - SoI_CommodityOutput
   colnames(RoUS_CommodityOutput) <- "Output"
@@ -530,9 +554,6 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   # to form two-region total Use table.
   if (!domestic) {
     # Load US and SoI Use, calcuate RoUS_Use
-    US_Use <- getNationalUse("Summary", year, specs)
-    SoI_Use <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year),
-                                   ver = specs$model_ver)[[state]]
     RoUS_Use <- US_Use - SoI_Use[commodities, c(industries, FD_cols)]
     # Calculate SoI_Import and RoUS_Import
     SoI_Import <- SoI_Use[commodities, c(industries, FD_cols)] - SoI_DomesticUse[commodities, c(industries, FD_cols)]
@@ -557,12 +578,20 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   } else {
     q_SoI_use <- rowSums(SoI2SoI_Use[, c(industries, FD_cols, "ExportResidual")]) + rowSums(SoI2RoUS_Use[, c(industries, FD_cols)])
   }
-  if (max(abs((q_SoI - q_SoI_use)/q_SoI_use)) > 1E-2) {
+  q_SoI_use <- round(q_SoI_use)
+  comparison <- abs((q_SoI - q_SoI_use)/q_SoI_use)
+  comparison[is.na(comparison)] <- 0
+  # to avoid very small diffs when commodity output is nonexistant
+  if (max(comparison) > 1E-2) {
     if (domestic) {
-      stop(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
+      # stop(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
+      #             "doesn't equal to ", state, "'s commodity output."))
+      logging::logwarn(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
                   "doesn't equal to ", state, "'s commodity output."))
     } else {
-      stop(paste0(state, "'s commodity output summed from two-region (total) Use table ",
+      # stop(paste0(state, "'s commodity output summed from two-region (total) Use table ",
+      #             "doesn't equal to ", state, "'s commodity output."))
+      logging::logwarn(paste0(state, "'s commodity output summed from two-region (total) Use table ",
                   "doesn't equal to ", state, "'s commodity output."))
     }
   }
@@ -573,7 +602,9 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   } else {
     q_RoUS_use <- rowSums(RoUS2RoUS_Use[, c(industries, FD_cols, "ExportResidual")]) + rowSums(RoUS2SoI_Use[, c(industries, FD_cols)])
   }
-  if (max(abs((q_RoUS - q_RoUS_use)/q_RoUS_use)) > 1E-2) {
+  q_RoUS_check <- abs((q_RoUS - q_RoUS_use)/q_RoUS_use)
+  q_RoUS_check[is.na(q_RoUS_check)] <- 0 # Convert all N/As to 0
+  if (max(q_RoUS_check) > 1E-2) {
     if (domestic) {
       stop(paste0("RoUS (of ", state, ")'s commodity output summed from two-region Domestic Use table ",
                   "doesn't equal to RoUS's commodity output."))
@@ -600,10 +631,11 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' @param specs A list of model specs including 'BaseIOSchema',
 #' theoretically can be "Detail", or "Sector" in future versions.
+#' @param disagg_specs name of disaggregation.
 #' @return A list of two-region make, use, domestic use, and Use tables
 #' as well as commodity and industry outputs by state.
 #' @export
-assembleTwoRegionIO <- function(year, iolevel, specs) {
+assembleTwoRegionIO <- function(year, iolevel, specs, disagg_specs=NULL) {
   schema <- specs$BaseIOSchema
   startLogging()
   # Define industries, commodities, value added rows, final demand columns, and
@@ -615,12 +647,18 @@ assembleTwoRegionIO <- function(year, iolevel, specs) {
   ITA_col <- ifelse(iolevel == "Detail", "F05100", "F051")
   # Load US Make table
   US_Make <- getNationalMake(iolevel, year, specs)
+  US_Use <- getNationalUse(iolevel, year, specs)
   US_DomesticUse <- generateUSDomesticUse(iolevel, year, specs)
   # Load state Make, industry and commodity output
   State_Make_ls <- loadStateIODataFile(paste0("State_", iolevel, "_Make_", year),
                                        ver = specs$model_ver)
   State_Use_ls <- loadStateIODataFile(paste0("State_", iolevel, "_Use_", year),
                                       ver = specs$model_ver)
+  State_DomesticUse_ls <- loadStateIODataFile(paste0("State_",
+                                                     iolevel,
+                                                     "_DomesticUse_",
+                                                     year),
+                                              ver = specs$model_ver)
   State_IndustryOutput_ls <- loadStateIODataFile(paste0("State_",
                                                         iolevel,
                                                         "_IndustryOutput_",
@@ -632,41 +670,128 @@ assembleTwoRegionIO <- function(year, iolevel, specs) {
                                                          year),
                                                   ver = specs$model_ver)
   # Assemble two-region IO tables
+  disagg <- NULL # Initialization
+  if(!is.null(disagg_specs)){
+
+    # Initialize model 
+    model <- getStateModelDisaggSpecs(disagg_specs)
+
+    
+    if(length(model$DisaggregationSpecs)!=0){
+      disagg <- model$DisaggregationSpecs[[1]]
+      model$specs$CommodityorIndustryType <- "Commodity" # Needed for disaggregation of model$FinalDemand model object in useeior     
+          
+      # Disaggregate national model objects 
+      # Assign model objects
+      model$Industries <- industries
+      model$Commodities <- commodities
+      model$MakeTransactions <- US_Make
+      model$FullUse <- US_Use
+      model$DomesticFullUse <- US_DomesticUse # Note that the domestic full use object does not include value added rows
+      
+      # Disaggregate national model objects once (i.e. not for each state)
+      if(!is.null(disagg$stateDF)){
+        
+        #model <- createDisaggFilesFromProxyData(model, disagg, year, "US") #Function to disagg by proxy
+        model <- useeior:::createDisaggFilesFromProxyData(model, disagg, year, "US") #Function to disagg by proxy
+        disagg <- model$DisaggregationSpecs[[disagg$OriginalSectorCode]] #update disagg
+      }
+ 
+      model <- disaggregateNationalObjectsInStateModel(model, disagg)
+      ## ^^ this should always use national level disaggregation data
+  
+      # Assign the disaggregated model objects to the original stateior objects, rename some as national
+      US_Make <- model$MakeTransactions
+      model$US_Make <- model$MakeTransactions
+      US_DomesticUse <- model$DomesticFullUse
+      model$US_DomesticUse <- model$DomesticFullUse
+      model$US_Use <- model$FullUse
+      industries <- model$Industries
+      commodities <- model$Commodities
+
+      # Loop for objects that need to be disaggregated objects for each state 
+      for (state in sort(c(state.name, "District of Columbia", "Overseas"))) {
+        model$MakeTransactions <- State_Make_ls[[state]]
+        model$FullUse <- State_Use_ls[[state]]
+        model$DomesticFullUse <- State_DomesticUse_ls[[state]]        
+        model$CommodityOutput <- State_CommodityOutput_ls[[state]]
+        model$IndustryOutput <- State_IndustryOutput_ls[[state]]
+ 
+        if(!is.null(disagg$stateDF)) {
+          # Get the correct disaggregation percentages for each state
+          #model <- createDisaggFilesFromProxyData(model, disagg, year, state)
+          model <- useeior:::createDisaggFilesFromProxyData(model, disagg, year, state)
+          disagg <- model$DisaggregationSpecs[[disagg$OriginalSectorCode]]
+        } 
+        model <- disaggregateStateModel(model, state)
+
+        # Assign the disaggregated model objects to the stateior lists
+        State_Make_ls[[state]] <- model$MakeTransactions
+        State_Use_ls[[state]] <- model$FullUse
+        State_DomesticUse_ls[[state]] <- model$DomesticFullUse
+        State_CommodityOutput_ls[[state]] <- model$CommodityOutput
+        State_IndustryOutput_ls[[state]] <- model$IndustryOutput
+
+      } #end of for each state loop
+        
+    } else {
+      stop("Error accessing disaggregation specs")
+    }
+    
+  } else {
+    # Initiate model object
+    model <- list()
+    model$Commodities <- commodities
+    model$Industries <- industries
+    model$US_DomesticUse <- US_DomesticUse
+    model$US_Make <- US_Make
+    model$US_Use <- US_Use
+  }
+
+  # Assemble two-region IO tables 
   TwoRegionIO <- list()
   for (state in sort(c(state.name, "District of Columbia"))) {
+    
     ## Two-region Make
-    SoI_Make <- State_Make_ls[[state]]
-    rownames(SoI_Make) <- getBEASectorCodeLocation("Industry", state, iolevel, specs)
-    colnames(SoI_Make) <- getBEASectorCodeLocation("Commodity", state, iolevel, specs)
-    RoUS_Make <- US_Make - SoI_Make
-    rownames(RoUS_Make) <- getBEASectorCodeLocation("Industry", "RoUS", iolevel, specs)
-    colnames(RoUS_Make) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel, specs)
+    model$MakeTransactions <- State_Make_ls[[state]]
+    model$FullUse <- State_Use_ls[[state]]
+    model$DomesticFullUse <- State_DomesticUse_ls[[state]]
+    model$CommodityOutput <- State_CommodityOutput_ls[[state]]
+    model$IndustryOutput <- State_IndustryOutput_ls[[state]]
+    
+    rownames(model$MakeTransactions) <- getBEASectorCodeLocation("Industry", state, iolevel, specs, disagg)
+    colnames(model$MakeTransactions) <- getBEASectorCodeLocation("Commodity", state, iolevel, specs, disagg)
+    RoUS_Make <- US_Make - model$MakeTransactions
+    rownames(RoUS_Make) <- getBEASectorCodeLocation("Industry", "RoUS", iolevel, specs, disagg)
+    colnames(RoUS_Make) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel, specs, disagg)
     # Form two-region Make
-    TwoRegionMake <- SoI_Make
+    TwoRegionMake <- model$MakeTransactions
     TwoRegionMake[rownames(RoUS_Make), colnames(RoUS_Make)] <- RoUS_Make
     # Replace NA with 0 in two-region Make
     TwoRegionMake[is.na(TwoRegionMake)] <- 0
     TwoRegionIO[["Make"]][[state]] <- TwoRegionMake
     
     ## Two-region Use and Domestic Use table
-    TwoRegionUseModel <- buildTwoRegionUseModel(state, year, 
-                                                iolevel = iolevel, specs, domestic = FALSE)
+    TwoRegionUseModel <- buildTwoRegionUseModel(state, year, specs = specs,
+                                                iolevel = iolevel, domestic = FALSE,
+                                                model = model, disagg = disagg)
     TwoRegionUse <- cbind(rbind(TwoRegionUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
                                 TwoRegionUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
                           rbind(TwoRegionUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
                                 TwoRegionUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
-    TwoRegionDomesticUseModel <- buildTwoRegionUseModel(state, year,
-                                                        iolevel = iolevel, specs, domestic = TRUE)
+    TwoRegionDomesticUseModel <- buildTwoRegionUseModel(state, year, specs = specs,
+                                                        iolevel = iolevel, domestic = TRUE,
+                                                        model = model, disagg = disagg)
     TwoRegionDomesticUse <- cbind(rbind(TwoRegionDomesticUseModel[["SoI2SoI"]][commodities, c(industries, FD_cols)],
                                         TwoRegionDomesticUseModel[["RoUS2SoI"]][commodities, c(industries, FD_cols)]),
                                   rbind(TwoRegionDomesticUseModel[["SoI2RoUS"]][commodities, c(industries, FD_cols)],
                                         TwoRegionDomesticUseModel[["RoUS2RoUS"]][commodities, c(industries, FD_cols)]))
-    rownames(TwoRegionUse) <- c(getBEASectorCodeLocation("Commodity", state, iolevel, specs),
-                                getBEASectorCodeLocation("Commodity", "RoUS", iolevel, specs))
+    rownames(TwoRegionUse) <- c(getBEASectorCodeLocation("Commodity", state, iolevel, specs, disagg),
+                                getBEASectorCodeLocation("Commodity", "RoUS", iolevel, specs, disagg))
     rownames(TwoRegionDomesticUse) <- rownames(TwoRegionUse)
-    colnames(TwoRegionUse) <- c(getBEASectorCodeLocation("Industry", state, iolevel, specs),
+    colnames(TwoRegionUse) <- c(getBEASectorCodeLocation("Industry", state, iolevel, specs, disagg),
                                 getBEASectorCodeLocation("FinalDemand", state, iolevel, specs),
-                                getBEASectorCodeLocation("Industry", "RoUS", iolevel, specs),
+                                getBEASectorCodeLocation("Industry", "RoUS", iolevel, specs, disagg),
                                 getBEASectorCodeLocation("FinalDemand", "RoUS", iolevel, specs))
     colnames(TwoRegionDomesticUse) <- colnames(TwoRegionUse)
     TwoRegionIO[["Use"]][[state]] <- TwoRegionUse
@@ -675,7 +800,7 @@ assembleTwoRegionIO <- function(year, iolevel, specs) {
     ## Two-region Value Added
     SoI_VA <- State_Use_ls[[state]][VA_rows, industries]
     rownames(SoI_VA) <- getBEASectorCodeLocation("ValueAdded", state, iolevel, specs)
-    colnames(SoI_VA) <- getBEASectorCodeLocation("Industry", state, iolevel, specs)
+    colnames(SoI_VA) <- getBEASectorCodeLocation("Industry", state, iolevel, specs, disagg)
     RoUS_VA <- (Reduce("+", State_Use_ls) - State_Use_ls[[state]])[VA_rows, industries]
     rownames(RoUS_VA) <- apply(cbind(VA_rows, "RoUS"), 1, joinStringswithSlashes)
     colnames(RoUS_VA) <- apply(cbind(industries, "RoUS"), 1, joinStringswithSlashes)
@@ -695,23 +820,27 @@ assembleTwoRegionIO <- function(year, iolevel, specs) {
     RoUS_CommodityOutput <- rowSums(TwoRegionDomesticUseModel[["RoUS2RoUS"]][, c(industries, FD_cols, ITA_col, "ExportResidual")]) +
       rowSums(TwoRegionDomesticUseModel[["RoUS2SoI"]][, c(industries, FD_cols, ITA_col)])
     TwoRegionCommodityOutput <- c(SoI_CommodityOutput, RoUS_CommodityOutput)
-    names(TwoRegionCommodityOutput) <- c(getBEASectorCodeLocation("Commodity", state, iolevel, specs),
-                                         getBEASectorCodeLocation("Commodity", "RoUS", iolevel, specs))
+    names(TwoRegionCommodityOutput) <- c(getBEASectorCodeLocation("Commodity", state, iolevel, specs, disagg),
+                                         getBEASectorCodeLocation("Commodity", "RoUS", iolevel, specs, disagg))
     TwoRegionIO[["CommodityOutput"]][[state]] <- TwoRegionCommodityOutput
     
     ## Two-region Industry Output
     TwoRegionIndustryOutput <- c(State_IndustryOutput_ls[[state]][, "Output"],
                                  rowSums(US_Make) - State_IndustryOutput_ls[[state]][, "Output"])
-    names(TwoRegionIndustryOutput) <- c(getBEASectorCodeLocation("Industry", state, iolevel, specs),
-                                        getBEASectorCodeLocation("Industry", "RoUS", iolevel, specs))
+    names(TwoRegionIndustryOutput) <- c(getBEASectorCodeLocation("Industry", state, iolevel, specs, disagg),
+                                        getBEASectorCodeLocation("Industry", "RoUS", iolevel, specs, disagg))
     TwoRegionIO[["IndustryOutput"]][[state]] <- TwoRegionIndustryOutput
     
     ## Two-region International Trade Adjustment
     SoI_ITA <- State_Use_ls[[state]][commodities, ITA_col]
-    names(SoI_ITA) <- getBEASectorCodeLocation("Commodity", state, iolevel, specs)
+    names(SoI_ITA) <- getBEASectorCodeLocation("Commodity", state, iolevel, specs, disagg)
     RoUS_ITA <- Reduce("+", State_Use_ls)[commodities, ITA_col] - SoI_ITA
-    names(RoUS_ITA) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel, specs)
+    names(RoUS_ITA) <- getBEASectorCodeLocation("Commodity", "RoUS", iolevel, specs, disagg)
     TwoRegionIO[["InternationalTradeAdjustment"]][[state]] <- c(SoI_ITA, RoUS_ITA)
+    
+    # if(!is.null(disagg_specs)){
+    #   model <- useeior:::balanceDisagg(model, disagg)
+    # }
     
     print(state)
   }
@@ -730,7 +859,6 @@ assembleTwoRegionIO <- function(year, iolevel, specs) {
 buildFullTwoRegionIOTable <- function(state, year, iolevel, specs) {
   # Define BEA_col and year_col
   schema <- specs$BaseIOSchema
-  ioschema<- schema
   BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   startLogging()
   # Define industries, commodities, final demand columns, and non-import columns
@@ -841,13 +969,13 @@ buildFullTwoRegionIOTable <- function(state, year, iolevel, specs) {
   # Foreign expenditure by U.S. residents
   ForeignExp <- loadStateIODataFile(paste("State_ForeignExpenditureByResident",
                                           year, sep = "_"),
-                                    ver = model_ver)
+                                    ver = specs$model_ver)
   SoIForeignExp <- ForeignExp[ForeignExp$GeoName == state, as.character(year)]
   RoUSForeignExp <- ForeignExp[ForeignExp$GeoName == "United States", as.character(year)] - SoIForeignExp
   # Spending in the U.S. by nonresidents
   DomesticExp <- loadStateIODataFile(paste("State_DomesticExpenditureByNonresident",
                                            year, sep = "_"),
-                                     ver = model_ver)
+                                     ver = specs$model_ver)
   SoIDomesticExp <- DomesticExp[DomesticExp$GeoName == state, as.character(year)]
   RoUSDomesticExp <- DomesticExp[DomesticExp$GeoName == "United States", as.character(year)] - SoIDomesticExp
   

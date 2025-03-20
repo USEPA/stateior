@@ -1,0 +1,35 @@
+Model: "StateIOv1.3-pecan" # Summary level (73 commodities & 71 industries), no adjustments
+BaseIOSchema: 2017
+BaseIOLevel: "Summary"
+model_ver: "0.4.0"
+IOYear:
+  - 2012
+  - 2013
+  - 2014
+  - 2015
+  - 2016
+  - 2017
+  - 2018
+  - 2019
+  - 2020
+  - 2021
+  - 2022
+  - 2023
+GeoScale:
+  - "State"
+  - "TwoRegion" # SoI and RoUS
+IODataSource: "BEA"
+BasePriceType: "PRO"
+BasewithRedefinitions: FALSE
+ScrapIncluded: FALSE
+DisaggregationSpecs: NULL
+
+DataProduct:
+  - "Make"
+  - "Use"
+  - "DomesticUse"
+  - "DomesticUsewithTrade"
+  - "InternationalTradeAdjustment"
+  - "CommodityOutput"
+  - "IndustryOutput"
+  - "ValueAdded"

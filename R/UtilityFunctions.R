@@ -11,12 +11,17 @@ startLogging <- function() {
 loadDatafromUSEEIOR <- function(dataset, appendSchema = TRUE) {
   if(appendSchema && !(grepl("sch", dataset))) {
     dataset_srch <- paste0(dataset, "_17sch")
+    dataset_name <- dataset_srch
     # default 2017 schema
+  } else if(appendSchema && (grepl("12sch", dataset))) {
+    dataset_srch <- gsub("_12sch", "", dataset)
+    dataset_name <- dataset
   } else {
     dataset_srch <- dataset
+    dataset_name <- dataset_srch
   }
   logging::loginfo(paste0("Loading ", dataset_srch, " from USEEIOr."))
-  utils::data(package = "useeior", list = dataset_srch)
+  utils::data(package = "useeior", list = dataset_name)
   df <- get(dataset_srch)
   return(df)
 }
@@ -104,12 +109,11 @@ mapFIPS5toLocationNames <- function(fipscodes, fipssystem) {
 
 #' Load BEA State data (GVA and Employment) to BEA Summary mapping table
 #' @param dataname A string specifying name of the BEA state data
+#' @param schema A string of the IO schema
 #' @return The mapping table
-loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
-  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO2017Schema.csv")
+loadBEAStateDatatoBEASummaryMapping <- function(dataname, schema) {
+  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO", schema, "Schema.csv")
   mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
-  #TODO: temporary
-  colnames(mapping) <- gsub("BEA_2012_", "BEA_2017_", colnames(mapping))
   return(mapping)
 }
 
@@ -120,14 +124,18 @@ loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
 #' can be state name like "Georgia" or "RoUS" representing Rest of US.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param specs A list of model specs including 'BaseIOSchema'
+#' @param disagg optional, disaggregation specs
 #' @return A text value in the format of code/location.
-getBEASectorCodeLocation <- function(sector_type, location, iolevel, specs) {
+getBEASectorCodeLocation <- function(sector_type, location, iolevel, specs, disagg=NULL) {
   # Get code
   if (sector_type != "FinalDemand") {
     if (sector_type == "InternationalTradeAdjustment") {
       code <- ifelse(iolevel == "Detail", "F05100", "F051")
     } else {
       code <- getVectorOfCodes(iolevel, sector_type, specs)
+      if (!is.null(disagg)) {
+        code <- disaggregateStateSectorLists(code, disagg)
+      }
     }
   } else {
     code <- getFinalDemandCodes(iolevel, specs)
@@ -291,6 +299,11 @@ findLatestStateIODatainLocalDirectory <- function(filename) {
 }
 
 #' Load StateIO data file from Data Commons or local data directory.
+#' 
+#' If the file is not found locally, it will be downloaded from Data Commons. Available
+#' files can be found on https://dmap-data-commons-ord.s3.amazonaws.com/index.html#stateio/.
+#' These include Use, DomesticUse, and IndustryOutput tables, among others.
+#' 
 #' @param filename A string specifying filename, e.g. "State_Summary_Use_2017".
 #' @param ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return A StateIO data product (usually a list of dataframes).
@@ -316,7 +329,7 @@ loadStateIODataFile <- function(filename, ver = NULL) {
                                    "not found on Data Commons, either."))
             message("Please confirm ", filename, " is correctly spelled. ",
                     "You should be able to find the correctly spelled file on ",
-                    "https://dmap-data-commons-ord.s3.amazonaws.com/index.html?prefix=stateio/. ",
+                    "https://dmap-data-commons-ord.s3.amazonaws.com/index.html#stateio/. ",
                     "If it's not found there, please open an issue at ",
                     "https://github.com/USEPA/stateior/issues/new ",
                     "and inform package maintainers.\n",

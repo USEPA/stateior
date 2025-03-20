@@ -79,18 +79,19 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, io
     # Determine BEA sectors that need allocation
     allocation_sectors <- SCTGtoBEA[duplicated(SCTGtoBEA$SCTG) |
                                       duplicated(SCTGtoBEA$SCTG, fromLast = TRUE), ]
-    # Use State Emp to allocate
-    StateEmp <- getStateEmploymentbyBEASummary(year, specs)
-    # Merge StateEmp with allocation_sectors
-    Emp <- merge(StateEmp, allocation_sectors, by = BEA_col)
+    # Use State Compensation data to allocate
+    # StateDF <- getStateEmploymentbyBEASummary(year, specs)
+    StateDF <- getStateCompensationbyBEASummary(year, specs)
+    # Merge with allocation_sectors
+    state_df <- merge(StateDF, allocation_sectors, by = BEA_col)
     # Merge FAF_2r and Emp
-    FAF_2r <- merge(FAF_2r, Emp[Emp$State == state, ],
+    FAF_2r <- merge(FAF_2r, state_df[state_df$State == state, ],
                     by = c("SCTG", BEA_col), all.x = TRUE)
     FAF_2r[is.na(FAF_2r$State), "State"] <- state
-    FAF_2r[is.na(FAF_2r$Emp), "Emp"] <- 1
+    FAF_2r[is.na(FAF_2r$Value), "Value"] <- 1
     for (sctg in unique(FAF_2r$SCTG)) {
       # Calculate allocation factor
-      weight_vector <- FAF_2r[FAF_2r$SCTG == sctg, "Emp"]
+      weight_vector <- FAF_2r[FAF_2r$SCTG == sctg, "Value"]
       allocation_factor <- weight_vector/sum(weight_vector/4, na.rm = TRUE)
       # Allocate Value
       value <- FAF_2r[FAF_2r$SCTG == sctg, "VALUE"]*allocation_factor
@@ -153,12 +154,12 @@ calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, spe
     trade <- loadStateIODataFile(paste0("Census_USATrade",
                                         capitalize(flow_ratio_type),
                                         "_", year),
-                                 ver = model_ver)
+                                 ver = specs$model_ver)
   } else {
     trade <- loadStateIODataFile(paste0("Census_State",
                                         capitalize(flow_ratio_type),
                                         "_", year),
-                                 ver = model_ver)
+                                 ver = specs$model_ver)
   }
   # Map from NAICS to BEA
   bea_code <- paste("BEA", schema, iolevel, "Code", sep = "_")
@@ -302,11 +303,16 @@ calculateElectricityFlowRatios <- function(state, year, specs) {
   state_abb <- getStateAbbreviation(state)
   # Load consumption data
   CodeDesc <- loadStateIODataFile("EIA_SEDS_CodeDescription", ver = specs$model_ver)
+  if (year == 2023) {
+    logging::logwarn(paste0("EIA SEDS data for Electricity Consumption not yet final ",
+                            "for ", year, ". Using the prior year's data."))
+    year = year - 1
+    }
   Consumption <- loadStateIODataFile(paste0("EIA_SEDS_StateElectricityConsumption_",
                                             year),
                                      ver = specs$model_ver)
   # Subset SoI and RoUS total consumption
-  consumption_desc <- "Electricity total consumption (i.e., retail sales)"
+  consumption_desc <- "Electricity total consumption (electricity sales to ultimate customers)"
   ConsumptionMSN <- CodeDesc[CodeDesc$Description == consumption_desc &
                                CodeDesc$Unit == "Million kilowatthours", "MSN"]
   Consumption_SoI <- Consumption[Consumption$MSN == ConsumptionMSN &
