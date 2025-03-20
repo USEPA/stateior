@@ -224,9 +224,6 @@ buildStateUseModel <- function(year, specs) {
   import_ratio[] <- lapply(import_ratio, function(x) ifelse(is.infinite(x), 0, x))
   
   # Create state Import matrix then add it to state Use
-  ## DEBUG CODE
-  ## compList <- list()
-  ##
   for (state in states) {
     # Generate state import matrix
     State_Use <- model[["Use"]][[state]][commodities, c(industries, FD_cols)]
@@ -248,22 +245,6 @@ buildStateUseModel <- function(year, specs) {
                                                        industries]))
     colnames(x) <- "Output"
     model[["IndustryOutput"]][[state]] <- x
-    
-    ## DEBUG CODE
-    # # Get relevant row sums from various state use tables/components as well as commodity output
-    # GFGN_Com_Index <- which(rownames(State_Use) == "GFGN")
-    # compList[[state]]$StateUse_rowSums <- rowSums(State_Use[GFGN_Com_Index,])
-    # 
-    # GFGN_Com_Index <- which(rownames(State_Import_m) == "GFGN")
-    # compList[[state]]$StateImportM_rowSums <- rowSums(State_Import_m[GFGN_Com_Index,])
-    # 
-    # GFGN_Com_Index <- which(rownames(State_DomesticUse) == "GFGN")
-    # compList[[state]]$StateDomesticUse_rowSums <- rowSums(State_DomesticUse[GFGN_Com_Index,])
-    # 
-    # GFGN_Com_Index <- which(rownames(CommodityOutput[[state]]) == "GFGN")
-    # compList[[state]]$CommodityOutput_rowSums <- CommodityOutput[[state]][GFGN_Com_Index,]
-    ##
-    
   }
   
   # Validation - interrupt if sum of state commodity output (q_state) and
