@@ -550,13 +550,10 @@ estimateStateExport <- function(year, specs) {
 }
 
 #' Calculate state S&L government expenditure ratio at BEA Summary level.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param specs A list of model specs including 'BaseIOSchema'
-#' @return A data frame contains state S&L government expenditure ratio for all states at a specific year at BEA Summary level.
+#' @param year A numeric value specifying the year of interest.
+#' @param specs A list of model specs including 'model_ver'
+#' @return A data frame contains state S&L government expenditure ratio for all states at a specific year.
 calculateStateSLGovExpenditureRatio <- function(year, specs) {
-  # Define BEA_col and year_col
-  schema <- specs$BaseIOSchema
-  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   # Load state and local government expenditure
   if(year > 2022) {
     # Until 2023 data year available, revert to 2022
@@ -579,39 +576,39 @@ calculateStateSLGovExpenditureRatio <- function(year, specs) {
   }
   GovExp_statetotal <- rowSums(GovExp[, c(state.name, "District of Columbia")])
   GovExp[, "Overseas"] <- GovExp[, "United States Total"] - GovExp_statetotal
-  # Map to BEA Summary sectors
-  filename <- paste0("Crosswalk_StateLocalGovExptoBEASummaryIO", schema, "Schema.csv")
-  mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
-  if(year < 2022) {
-    # Starting in 2022, a specific line was dropped. Thus, select new mappings should
-    # only be included starting in 2022. Those mappings that are flagged are to be
-    # dropped prior to 2022. See issue #50
-    mapping <- mapping[mapping["method_flag"] != "x", ]
-  }
-  mapping$method_flag <- NULL
-  GovExpBEA <- merge(mapping, GovExp, by = c("Line", "Description"))
+
+  # Align specific NIPA line items with specific final demand codes
+  codes <- data.frame("FinalDemand" = c("F10C", "F10E", "F10N", "F10S"),
+                      "Line" = c("68",
+                                 "58",
+                                 "58",
+                                 "58"),
+                      "Description" = c("Other direct general expenditure",
+                                        "Capital outlay",
+                                        "Capital outlay",
+                                        "Capital outlay"))
+  GovExpbyCode <- merge(codes, GovExp, by = c("Line", "Description"))
+  
   # Calculate ratios
   states <- c(state.name, "District of Columbia", "Overseas")
-  GovExpBEA[, states] <- GovExpBEA[, states]/GovExpBEA[, "United States Total"]
+  GovExpbyCode[, states] <- GovExpbyCode[, states]/GovExpbyCode[, "United States Total"]
   # Drop unwanted columns
-  GovExpBEA <- GovExpBEA[, c("FinalDemand", BEA_col, states)]
+  GovExpbyCode <- GovExpbyCode[, c("FinalDemand", states)]
   # Transform table
   # From wide to long
-  GovExpBEA <- reshape2::melt(GovExpBEA, id.vars = c("FinalDemand",
-                                                     BEA_col))
+  GovExpbyCode <- reshape2::melt(GovExpbyCode, id.vars = "FinalDemand")
   # From long to wide
-  GovExpBEA <- reshape2::dcast(GovExpBEA, get(BEA_col) + variable ~ FinalDemand,
-                               value.var = "value")
-  colnames(GovExpBEA)[colnames(GovExpBEA) == "get(BEA_col)"] <- BEA_col
+  GovExpbyCode <- reshape2::dcast(GovExpbyCode, variable ~ FinalDemand,
+                                  value.var = "value")
   # Replace NA with 0
-  GovExpBEA[is.na(GovExpBEA)] <- 0
+  GovExpbyCode[is.na(GovExpbyCode)] <- 0
   # Rename column
-  colnames(GovExpBEA)[2] <- "State"
-  return(GovExpBEA)
+  colnames(GovExpbyCode)[1] <- "State"
+  return(GovExpbyCode)
 }
 
 #' Estimate state S&L government expenditure at BEA Summary level.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state S&L government expenditure for all states
 #' at a specific year at BEA Summary level.
@@ -625,30 +622,18 @@ estimateStateSLGovExpenditure <- function(year, specs) {
   SLGovDemandCodes <- c("F10C", "F10E", "F10N", "F10S")
   US_SLGovExp <- US_Summary_Use[getVectorOfCodes("Summary", "Commodity", specs),
                                 SLGovDemandCodes, drop = FALSE]
+  US_SLGovExp[[BEA_col]] <- row.names(US_SLGovExp)
   # Generate SLGovExp_ratio
   SLGovExp_ratio <- calculateStateSLGovExpenditureRatio(year, specs)
   # Calculate State_SLGovExp
-  State_SLGovExp <- data.frame()
-  for (state in unique(SLGovExp_ratio$State)) {
-    # Merge US_SLGovExp and SLGovExp_ratio
-    State_SLGovExp_state <- merge(SLGovExp_ratio[SLGovExp_ratio$State == state, ],
-                                  US_SLGovExp, by.x = BEA_col,
-                                  by.y = 0, all.y = TRUE)
-    # Modify State column
-    State_SLGovExp_state$State <- state
-    # Repalce NA with 0
-    State_SLGovExp_state[is.na(State_SLGovExp_state)] <- 0
-    x_value <- State_SLGovExp_state[, paste0(SLGovDemandCodes, ".x")]
-    y_value <- State_SLGovExp_state[, paste0(SLGovDemandCodes, ".y")]
-    State_SLGovExp_state[, SLGovDemandCodes] <- x_value * y_value
-    # Modify rownames
-    rownames(State_SLGovExp_state) <- State_SLGovExp_state[[BEA_col]]
-    State_SLGovExp_state <- State_SLGovExp_state[rownames(US_SLGovExp), ]
-    rownames(State_SLGovExp_state) <- paste(state, rownames(State_SLGovExp_state),
-                                            sep = ".")
-    State_SLGovExp <- rbind.data.frame(State_SLGovExp,
-                                       State_SLGovExp_state[, SLGovDemandCodes])
-  }
+  State_SLGovExp <- merge(US_SLGovExp, GovExp2, by=NULL)
+  x_value <- State_SLGovExp[, paste0(SLGovDemandCodes, ".x")]
+  y_value <- State_SLGovExp[, paste0(SLGovDemandCodes, ".y")]
+  State_SLGovExp[, SLGovDemandCodes] <- x_value * y_value
+  row.names(State_SLGovExp) <- paste(State_SLGovExp[["State"]],
+                                     State_SLGovExp[[BEA_col]],
+                                     sep = ".")
+  State_SLGovExp <- State_SLGovExp[, SLGovDemandCodes]
   return(State_SLGovExp)
 }
 
