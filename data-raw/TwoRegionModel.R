@@ -13,11 +13,11 @@ specs <- configr::read.config(configpath)
 # Build model
 alias <- gsub("^.*-", "", model_spec)
 # Store log file
-sink(file= file.path("inst", "extdata", "metadata",
-                     paste0('TwoRegion_', alias, '_', year, '.txt')), split=TRUE)
+# sink(file = file.path("inst", "extdata", "metadata",
+#                       paste0('TwoRegion_', alias, '_', year, '.txt')), split=TRUE)
 TwoRegionModel <- assembleTwoRegionIO(year, iolevel = "Summary", specs,
                                       disagg_specs = specs$DisaggregationSpecs)
-sink()
+# sink()
 
 # Subset data set
 for (name in names(TwoRegionModel)) {
