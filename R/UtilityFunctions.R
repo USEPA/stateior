@@ -222,7 +222,7 @@ getFlowsaData <- function(dataname, year, model_ver = NULL) {
 #' @return A dataframe of StateIO data registry on Data Commons.
 getRegistryonDataCommons <- function(data_group = "stateio") {
   registry_ls <- aws.s3::get_bucket(bucket = "dmap-data-commons-ord",
-                                    prefix = data_group)
+                                    prefix = data_group, max = Inf)
   registry <- cbind.data.frame(basename(sapply(registry_ls, `[[`, "Key")),
                                sapply(registry_ls, `[[`, "LastModified"),
                                stringsAsFactors = FALSE)
