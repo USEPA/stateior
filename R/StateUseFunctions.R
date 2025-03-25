@@ -626,7 +626,7 @@ estimateStateSLGovExpenditure <- function(year, specs) {
   # Generate SLGovExp_ratio
   SLGovExp_ratio <- calculateStateSLGovExpenditureRatio(year, specs)
   # Calculate State_SLGovExp
-  State_SLGovExp <- merge(US_SLGovExp, GovExp2, by=NULL)
+  State_SLGovExp <- merge(US_SLGovExp, SLGovExp_ratio, by=NULL)
   x_value <- State_SLGovExp[, paste0(SLGovDemandCodes, ".x")]
   y_value <- State_SLGovExp[, paste0(SLGovDemandCodes, ".y")]
   State_SLGovExp[, SLGovDemandCodes] <- x_value * y_value
