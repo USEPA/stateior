@@ -197,9 +197,11 @@ getFlowsaData <- function(dataname, year, model_ver = NULL) {
   }
   # Define file directory
   directory <- file.path(rappdirs::user_data_dir(), subdirectory)
+  logging::loginfo(paste0("Loading ", filename, " from local folder..."))
   if (!file.exists(file.path(directory, filename))) {
     url <- paste0("https://dmap-data-commons-ord.s3.amazonaws.com/", subdirectory)
-    logging::loginfo(paste0("file not found, downloading from ", url))
+    logging::loginfo(paste0(filename, " not found, downloading from Data Commons at ",
+                            subdirectory, "..."))
     # Check for and create directory if necessary
     if (!file.exists(directory)) {
       dir.create(directory, recursive = TRUE)
@@ -317,7 +319,7 @@ loadStateIODataFile <- function(filename, ver = NULL) {
         f <- findLatestStateIODatainLocalDirectory(filename)
       },
       error = function(e) {
-        logging::logwarn(paste(filename, "not found in local data directory.",
+        logging::loginfo(paste(filename, "not found in local data directory.",
                                "Looking on Data Commons now..."))
         # If filename not found locally, look for it on Data Commons.
         tryCatch(

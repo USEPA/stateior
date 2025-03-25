@@ -1,4 +1,4 @@
-#' Get US Use table (intermediadete + final demand) of specified iolevel and year.
+#' Get US Use table (intermediate + final demand) of specified iolevel and year.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param year A numeric value specifying the year of interest.
