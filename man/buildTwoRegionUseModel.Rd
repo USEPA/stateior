@@ -19,7 +19,7 @@ buildTwoRegionUseModel(
 \arguments{
 \item{state}{A text value specifying state of interest.}
 
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{iolevel}{BEA sector level of detail, currently can only be "Summary",}
 
@@ -38,8 +38,6 @@ default is TRUE.}
 \item{model}{optional, a model object with state tables}
 
 \item{disagg}{optional, disaggregation specs}
-
-\item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
 }
 \value{
 A list of domestic two-region Use tables.

@@ -17,7 +17,7 @@ generateDomestic2RegionICFs(
 \arguments{
 \item{state}{State name.}
 
-\item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{specs}{A list of model specs including 'BaseIOSchema'}
 

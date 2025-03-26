@@ -4,10 +4,12 @@
 \alias{getStateEmploymentTable}
 \title{Get a table of state employment by BEA Summary sector.}
 \usage{
-getStateEmploymentTable(year)
+getStateEmploymentTable(year, specs = NULL)
 }
 \arguments{
 \item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'.}
 }
 \value{
 A data frame containing employment count by state and BEA Summary sector.

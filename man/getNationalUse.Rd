@@ -2,7 +2,7 @@
 % Please edit documentation in R/StateUseFunctions.R
 \name{getNationalUse}
 \alias{getNationalUse}
-\title{Get US Use table (intermediadete + final demand) of specified iolevel and year.}
+\title{Get US Use table (intermediate + final demand) of specified iolevel and year.}
 \usage{
 getNationalUse(iolevel, year, specs)
 }
@@ -18,5 +18,5 @@ theoretically can be "Detail", or "Sector" in future versions.}
 The US Use table (intermediate + final demand) of specified iolevel and year.
 }
 \description{
-Get US Use table (intermediadete + final demand) of specified iolevel and year.
+Get US Use table (intermediate + final demand) of specified iolevel and year.
 }

@@ -8,7 +8,7 @@ for a given year}
 buildStateSupplyModel(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017.}
+\item{year}{A numeric value.}
 
 \item{specs}{A list of model specs including 'BaseIOSchema'}
 }

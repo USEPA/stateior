@@ -9,7 +9,7 @@ Apply state Gross Output ratio to F02S, F02E, F02N, and F030.}
 estimateStatePrivateInvestment(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{specs}{A list of model specs including 'BaseIOSchema'}
 }

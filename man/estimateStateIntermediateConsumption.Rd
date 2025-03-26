@@ -9,7 +9,7 @@ then multiply US_Use_Intermediate by the ratio to get State_Use_Intermediate.}
 estimateStateIntermediateConsumption(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{specs}{A list of model specs including 'BaseIOSchema'}
 }

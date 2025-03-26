@@ -9,7 +9,7 @@ state/US GVA ratios is used to regionalize US VA to states.}
 assembleStateSummaryGrossValueAdded(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{specs}{A list of model specs including 'BaseIOSchema'}
 }

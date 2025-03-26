@@ -9,7 +9,7 @@ calculateCommodityFlowRatios(state, year, flow_ratio_type, specs, iolevel)
 \arguments{
 \item{state}{State name.}
 
-\item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{flow_ratio_type}{Type of commodity flow, can be "domestic", "export", or "import".}
 

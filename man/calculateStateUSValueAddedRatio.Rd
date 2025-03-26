@@ -18,7 +18,7 @@ in real estate and gov industries from LineCode to BEA Summary.}
 calculateStateUSValueAddedRatio(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{specs}{A list of model specs including 'BaseIOSchema'}
 }

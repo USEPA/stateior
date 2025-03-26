@@ -9,7 +9,7 @@ buildFullTwoRegionIOTable(state, year, iolevel, specs)
 \arguments{
 \item{state}{A text value specifying state of interest.}
 
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{iolevel}{BEA sector level of detail, currently can only be "Summary",
 theoretically can be "Detail", or "Sector" in future versions.}
