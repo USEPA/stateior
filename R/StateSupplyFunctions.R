@@ -17,7 +17,7 @@ getNationalMake <- function(iolevel, year, specs) {
 }
 
 #' Get industry-level GVA for all states at a specific year.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema
 #' @return A data frame contains state GVA for all states at a specific year.
 getStateGVA <- function(year, specs) {
@@ -30,7 +30,7 @@ getStateGVA <- function(year, specs) {
 #' Map state table to BEA Summary, mark sectors that need allocation
 #' @param statetablename Name of pre-saved state table,
 #' can be GVA, Tax, Employment Compensation, and GOS.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state value for all states with row names being BEA sector code.
 mapStateTabletoBEASummary <- function(statetablename, year, specs) {
@@ -44,7 +44,7 @@ mapStateTabletoBEASummary <- function(statetablename, year, specs) {
 }
 
 #' Calculate allocation factors based on state-level data, such as employment
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param allocationweightsource A string specifying the source being used
 #' as the weight in the allocation.
 #' @param specs A list of model specs including 'BaseIOSchema'
@@ -143,7 +143,7 @@ calculateStatetoBEASummaryAllocationFactor <- function(year, allocationweightsou
 #' to BEA Summary based on specified weight
 #' @param statetablename Name of pre-saved state table,
 #' can be GVA, Tax, Employment Compensation, and GOS.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param allocationweightsource Source of allocation weight, can be "Employment"
 #' or "Compensation".
 #' @param specs A list of model specs including 'BaseIOSchema'
@@ -205,7 +205,7 @@ allocateStateTabletoBEASummary <- function(statetablename, year, allocationweigh
 #' When using state employment (from BEA) as source for allocation,
 #' introduce national GVA to disaggregate state employment
 #' in real estate and gov industries from LineCode to BEA Summary.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains ratios of state/US GVA (value added)
 #' for all states at a specific year at BEA Summary level.
@@ -241,7 +241,7 @@ calculateStateUSValueAddedRatio <- function(year, specs) {
 }
 
 #' Calculate state-US GVA (value added) ratios by BEA State LineCode.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains ratios of state/US GVA (value added)
 #' for all states at a specific year by BEA State LineCode.
@@ -275,7 +275,7 @@ calculateStateUSVARatiobyLineCode <- function(year, specs) {
 
 #' Calculate state industry output by BEA State LineCode
 #' by multiplying state_US_VA_ratio_LineCode by USGrossOutput_LineCode.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state industry output by BEA State LineCode.
 calculateStateIndustryOutputbyLineCode <- function(year, specs) {
@@ -309,7 +309,7 @@ calculateStateIndustryOutputbyLineCode <- function(year, specs) {
 #' Estimate state commodity output and ratios from alternative sources, including
 #' USDA Census of Agriculture, NOAA Fisheries, USFS Forestry Inventory, and ORNL
 #' Feight Analysis Framework (FAF).
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains state commodity output from alternative sources
 #' and calculated state/US commodity ratios for each state.
@@ -352,7 +352,7 @@ getStateEmploymentTable <- function(year, specs=NULL) {
 #' Load BEA State Employment data from pre-saved .rds files and State Employment
 #' FlowBySector data from flowsa.
 #' Map to BEA Summary sectors.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema',
 #' @param datasource A str to differentiate primary data source for employment
 #' @return A data frame contains State Employment by BEA Summary.
@@ -390,7 +390,7 @@ getStateEmploymentbyBEASummary <- function(year, specs, datasource="BEA") {
 
 #' Load BEA State Compensation data from pre-saved .rds files.
 #' Map to BEA Summary sectors.
-#' @param year A numeric value between 2007 and 2023 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains State Compensation by BEA Summary.
 getStateCompensationbyBEASummary <- function(year,specs) {
@@ -413,7 +413,7 @@ getStateCompensationbyBEASummary <- function(year,specs) {
 }
 
 #' Estimate state Ag, Fishery and Forestry commodity output ratios
-#' @param year A numeric value between 2007 and 2021 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains state Ag, Fishery and Forestry commodity output
 #' for specified state with row names being BEA sector code.
@@ -464,7 +464,7 @@ getAgFisheryForestryCommodityOutput <- function(year, specs) {
 }
 
 #' Estimate state FAF commodity output ratios
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema',
 #' @return A data frame contains state FAF commodity output
 #' for specified state with row names being BEA sector code.

@@ -18,11 +18,11 @@ getNationalUse <- function(iolevel, year, specs) {
 }
 
 #' Get industry-level Compensation for all states at a specific year.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state Compensation for all states at a specific year.
 getStateEmpCompensation <- function(year, specs) {
-  # Load pre-saved state Compensation 2007-2017
+  # Load pre-saved state Compensation
   StateEmpCompensation <- loadStateIODataFile(paste0("State_Compensation_", year),
                                               ver = specs$model_ver)
   StateEmpCompensation <- StateEmpCompensation[, c("GeoName", "LineCode", as.character(year))]
@@ -30,11 +30,11 @@ getStateEmpCompensation <- function(year, specs) {
 }
 
 #' Get industry-level Tax for all states at a specific year.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state Tax for all states at a specific year.
 getStateTax <- function(year, specs) {
-  # Load pre-saved state Tax 2007-2017
+  # Load pre-saved state Tax
   StateTax <- loadStateIODataFile(paste0("State_Tax_", year),
                                   ver = specs$model_ver)
   StateTax <- StateTax[, c("GeoName", "LineCode", as.character(year))]
@@ -42,11 +42,11 @@ getStateTax <- function(year, specs) {
 }
 
 #' Get industry-level Gross Operating Surplus (GOS) for all states at a specific year.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state GOS for all states at a specific year.
 getStateGOS <- function(year, specs) {
-  # Load pre-saved state GOS 2007-2017
+  # Load pre-saved state GOS
   StateGOS <- loadStateIODataFile(paste0("State_GOS_", year),
                                   ver = specs$model_ver)
   StateGOS <- StateGOS[, c("GeoName", "LineCode", as.character(year))]
@@ -54,7 +54,7 @@ getStateGOS <- function(year, specs) {
 }
 
 #' Get commodity-level Personal Consumption Expenditure (PCE) for all states at a specific year.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state PCE for all states at a specific year.
 getStatePCE <- function(year, specs) {
@@ -68,7 +68,7 @@ getStatePCE <- function(year, specs) {
 #' Calculate state-US Commodity Output ratios at BEA Summary level.
 #' Apply row sum to state and US Make tables to get commodity output vectors and
 #' then Commodity Output Ratio (COR).
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state-US Commodity Output ratios at BEA Summary level.
 calculateStateCommodityOutputRatio <- function(year, specs) {
@@ -97,7 +97,7 @@ calculateStateCommodityOutputRatio <- function(year, specs) {
 #' Estimate state Intermediate Consumption at BEA Summary level.
 #' For each state and industry, calculate state_US_IndustryOutput_ratio,
 #' then multiply US_Use_Intermediate by the ratio to get State_Use_Intermediate.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A list of data.frames containing state Intermediate Consumption.
 estimateStateIntermediateConsumption <- function(year, specs) {
@@ -129,7 +129,7 @@ estimateStateIntermediateConsumption <- function(year, specs) {
 }
 
 #' Adjust EmpComp, Tax, and GOS to fill NA and make them consistent with GVA.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param return A character string showing which attribute to return.
 #' Can be "GVA", "EmpCompensation", "Tax", or "GOS".
 #' @importFrom magrittr %>%
@@ -249,7 +249,7 @@ adjustGVAComponent <- function(year, return) {
 #' Assemble Summary-level gross value added sectors (V001, V002, V003)
 #' for all states at a specific year. For each value added sector, the same set of
 #' state/US GVA ratios is used to regionalize US VA to states.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains Summary-level gross value added (V001, V002, V003)
 #' for all states at a specific year.
@@ -288,7 +288,7 @@ assembleStateSummaryGrossValueAdded <- function(year, specs) {
 }
 
 #' Calculate state total PCE (personal consumption expenditures) at BEA Summary level.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @return A data frame contains ratios of statetotal PCE for all states at a specific year at BEA Summary level.
 calculateStateTotalPCE <- function(year) {
   # Load state and US PCE
@@ -306,7 +306,7 @@ calculateStateTotalPCE <- function(year) {
 }
 
 #' Calculate state-US PCE (personal consumption expenditures) ratios at BEA Summary level.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains ratios of state/US PCE for all states at a specific year at BEA Summary level.
 calculateStateUSPCERatio <- function(year, specs) {
@@ -357,7 +357,7 @@ calculateStateUSPCERatio <- function(year, specs) {
 }
 
 #' Estimate state household demand at BEA Summary level.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state household demand for all states at a specific year at BEA Summary level.
 estimateStateHouseholdDemand <- function(year, specs) {
@@ -395,7 +395,7 @@ estimateStateHouseholdDemand <- function(year, specs) {
 #' Estimate state private investment at BEA Summary level.
 #' Apply state PCE ratio to F02R.
 #' Apply state Gross Output ratio to F02S, F02E, F02N, and F030.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state household demand for all states at a specific year at BEA Summary level.
 estimateStatePrivateInvestment <- function(year, specs) {
@@ -448,7 +448,7 @@ estimateStatePrivateInvestment <- function(year, specs) {
 }
 
 #' Estimate state export at BEA Summary level.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state export for all states at a specific year at BEA Summary level.
 estimateStateExport <- function(year, specs) {
@@ -638,7 +638,7 @@ estimateStateSLGovExpenditure <- function(year, specs) {
 }
 
 #' Calculate state-US employee compensation ratios at BEA Summary level.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state-US employment compensation ratios
 #' for all states at a specific year at BEA Summary level.
@@ -696,7 +696,7 @@ calculateStateUSEmpCompensationRatio <- function(year, specs) {
 }
 
 #' Calculate weighting factor of each expenditure component over US total gov expenditure.
-#' @param year A numeric value between 2007 and 2019 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param defense A logical value indicating if the expenditure is spent on defense or not.
 #' @return A data frame contains weighting factor of each expenditure component over US total gov expenditure.
 calculateUSGovExpenditureWeightFactor <- function(year, defense) {
@@ -827,7 +827,7 @@ calculateStateFedGovExpenditureRatio <- function(year, specs) {
 }
 
 #' Estimate state fed government expenditure at BEA Summary level.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains state fed government expenditure for all states
 #' at a specific year at BEA Summary level.

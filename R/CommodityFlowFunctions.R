@@ -1,6 +1,6 @@
 #' Calculate domestic/import/export commodity flow ratios by state
 #' @param state State name.
-#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param flow_ratio_type Type of commodity flow, can be "domestic", "export", or "import".
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
@@ -139,7 +139,7 @@ calculateCommodityFlowRatios <- function(state, year, flow_ratio_type, specs, io
 }
 
 #' Calculate Census import/export commodity flow ratios by BEA for all available states.
-#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param flow_ratio_type Type of commodity flow, can be "export" or "import".
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
@@ -217,7 +217,7 @@ calculateCensusForeignCommodityFlowRatios <- function(year, flow_ratio_type, spe
 
 #' Calculate domestic hazardous waste management services flow ratios by state
 #' @param state State name.
-#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains hazardous waste management services flow ratios by BEA.
 calculateHazWasteManagementServiceFlowRatios <- function(state, year, specs) {
@@ -274,7 +274,7 @@ calculateHazWasteManagementServiceFlowRatios <- function(state, year, specs) {
 
 #' Calculate domestic waste management services flow ratios by state
 #' @param state State name.
-#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains waste management services flow ratios by BEA.
 calculateWasteManagementServiceFlowRatios <- function(state, year, specs) {
@@ -296,7 +296,7 @@ calculateWasteManagementServiceFlowRatios <- function(state, year, specs) {
 
 #' Calculate domestic interregional electricity flow ratios by state
 #' @param state State name.
-#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains domestic interregional electricity flow ratios by state.
 calculateElectricityFlowRatios <- function(state, year, specs) {
@@ -357,7 +357,7 @@ calculateElectricityFlowRatios <- function(state, year, specs) {
 #' utilities include electricity generation, transmission and distribution,
 #' natural gas distribution and water, sewage and other
 #' @param state State name.
-#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains domestic interregional utilities flow ratios by state.
 calculateUtilitiesFlowRatios <- function(state, year, specs) {

@@ -1,6 +1,6 @@
 #' Calculate domestic local and traded ratio, used for calculating ICF ratios.
 #' @param state State name.
-#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param SoI A logical variable indicating whether to calculate
 #' local and traded ratios for SoI or RoUS.
 #' @param specs A list of model specs including 'BaseIOSchema'
@@ -94,7 +94,7 @@ calculateLocalandTradedRatios <- function(state, year, SoI = TRUE, specs, ioleve
 
 #' Generate domestic 2 region inter-regional commodity flows (ICFs) table.
 #' @param state State name.
-#' @param year A numeric value between 2012 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.

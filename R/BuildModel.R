@@ -1,12 +1,8 @@
-# Define model version for accessing data from DataCommons
-# model_ver <- utils::packageDescription(pkg = "stateior", fields = "Version")
-model_ver <- NULL # to access the latest available data
-
 #' Build a state supply model for all 52 states/regions (including DC and Overseas)
 #' for a given year
 #' @description Build a state supply model for all 52 states/regions
 #' (including DC and Overseas) for a given year.
-#' @param year A numeric value between 2007 and 2017.
+#' @param year A numeric value.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A list of state Make table and commodity output.
 #' @export
@@ -140,7 +136,7 @@ buildStateSupplyModel <- function(year, specs) {
 #' (including DC and Overseas) for a given year
 #' @description Build a state Use model for all 52 states/regions
 #' (including DC and Overseas) for a given year.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A list of state Use table, Domestic Use table and industry output.
 #' @export
@@ -269,7 +265,7 @@ buildStateUseModel <- function(year, specs) {
 #' @description Generate two-region (SoI and RoUS) Use tables
 #' with interregional exports and imports.
 #' @param state A text value specifying state of interest.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' theoretically can be "Detail", or "Sector" in future versions.
@@ -608,7 +604,7 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
 
 #' Assemble two-region make, use, domestic use, and Use tables as well as commodity and industry outputs.
 #' @description Assemble two-region make and use tables as well as commodity and industry outputs.
-#' @param year A numeric value between 2007 and 2021 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' @param specs A list of model specs including 'BaseIOSchema',
 #' theoretically can be "Detail", or "Sector" in future versions.
@@ -831,7 +827,7 @@ assembleTwoRegionIO <- function(year, iolevel, specs, disagg_specs=NULL) {
 #' Build a full two-region IO table for specified state and rest of US for a given year.
 #' @description Build a full two-region IO table for specified state and rest of US for a given year.
 #' @param state A text value specifying state of interest.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.

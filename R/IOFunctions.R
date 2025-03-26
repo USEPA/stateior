@@ -49,7 +49,7 @@ generateInternationalTradeAdjustmentVector <- function(iolevel, year, specs) {
 
 #' Calculate US International Transport Margins Ratio (matrix).
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A data frame contains US International Transport Margins Ratio (matrix) at a specific year at BEA Summary level.
 calculateUSInternationalTransportMarginsRatioMatrix <- function(iolevel, year, specs) {

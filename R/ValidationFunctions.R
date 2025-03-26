@@ -151,7 +151,7 @@ validateStateUseAgainstNationlUse <- function(domestic = FALSE, rel_diff = FALSE
 #' Validate Leontief matrix (L) of two-region model and final demand against
 #' SoI and RoUS output.
 #' @param state A text value specifying state of interest.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
 #' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A list of validation components and result.

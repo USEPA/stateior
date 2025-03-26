@@ -153,7 +153,7 @@ getBEASectorCodeLocation <- function(sector_type, location, iolevel, specs, disa
 
 #' Generate two-region data filename with .rds as suffix.
 #' @description Generate two-region data filename with .rds as suffix.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
@@ -166,7 +166,7 @@ getTwoRegionDataFileName <- function(year, iolevel, dataname) {
 
 #' Load flowsa FlowByActivity or FlowBySector data from Data Commons
 #' @param dataname A string specifying data name, can be "NOAA_FisheryLandings".
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param model_ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return A data frame contains state data from FLOWSA.
 getFlowsaData <- function(dataname, year, model_ver = NULL) {
@@ -361,7 +361,7 @@ loadStateIODataFile <- function(filename, ver = NULL) {
 
 #' Get a datetime object for desired data file on the DataCommons server.
 #' @description Get a datetime object for desired data file on the DataCommons server.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
@@ -378,7 +378,7 @@ getFileUpdateTimefromDataCommons <- function(year, iolevel, dataname) {
 
 #' Write a datetime object for desired data file to local folder.
 #' @description Get a datetime object for desired data file to local folder.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
@@ -393,7 +393,7 @@ writeDatafileMeta <- function(year, iolevel, dataname, path) {
 
 #' Load a datetime object for desired data file from local folder.
 #' @description Load a datetime object for desired data file from local folder.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
