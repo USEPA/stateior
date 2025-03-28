@@ -250,8 +250,6 @@ buildStateUseModel <- function(year, specs) {
   if (max(abs(q_state - demand_state), na.rm = TRUE) > 1.2E7) {
     fails <- abs(q_state - demand_state)
     fails <- sort(fails[fails > 1.2E7], decreasing=TRUE)
-    # stop(paste("Absolute difference between sum of state commodity output and",
-    #            "sum of state demand is larger than $12 million."))
     logging::logwarn(paste("Absolute difference between sum of state commodity output and",
                "sum of state demand is larger than $12 million."))
     logging::logwarn(paste(names(fails), round(fails, -3), sep = ":", collapse = ", "))
@@ -561,13 +559,9 @@ buildTwoRegionUseModel <- function(state, year, iolevel, specs,
   # to avoid very small diffs when commodity output is nonexistant
   if (max(comparison) > 1E-2) {
     if (domestic) {
-      # stop(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
-      #             "doesn't equal to ", state, "'s commodity output."))
       logging::logwarn(paste0(state, "'s commodity output summed from two-region Domestic Use table ",
                   "doesn't equal to ", state, "'s commodity output."))
     } else {
-      # stop(paste0(state, "'s commodity output summed from two-region (total) Use table ",
-      #             "doesn't equal to ", state, "'s commodity output."))
       logging::logwarn(paste0(state, "'s commodity output summed from two-region (total) Use table ",
                   "doesn't equal to ", state, "'s commodity output."))
     }
