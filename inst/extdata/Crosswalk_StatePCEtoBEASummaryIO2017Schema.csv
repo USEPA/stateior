@@ -1,0 +1,84 @@
+BEA_2017_Summary_Code,BEA_2017_Summary_Name,Line,Description
+111CA,Farms,9,   Food and beverages purchased for off-premises consumption
+113FF,"Forestry, fishing, and related activities",9,   Food and beverages purchased for off-premises consumption
+211,Oil and gas extraction,,
+212,"Mining, except oil and gas",11,   Gasoline and other energy goods
+213,Support activities for mining,,
+22,Utilities,15,   Housing and utilities
+23,Construction,15,   Housing and utilities
+321,Wood products,12,   Other nondurable goods
+327,Nonmetallic mineral products,5,   Furnishings and durable household equipment
+331,Primary metals,3,  Durable goods
+332,Fabricated metal products,5,   Furnishings and durable household equipment
+333,Machinery,5,   Furnishings and durable household equipment
+334,Computer and electronic products,5,   Furnishings and durable household equipment
+335,"Electrical equipment, appliances, and components",5,   Furnishings and durable household equipment
+3361MV,"Motor vehicles, bodies and trailers, and parts",4,   Motor vehicles and parts
+,,5,   Furnishings and durable household equipment
+3364OT,Other transportation equipment,4,   Motor vehicles and parts
+,,5,   Furnishings and durable household equipment
+337,Furniture and related products,5,   Furnishings and durable household equipment
+339,Miscellaneous manufacturing,7,   Other durable goods
+,,12,   Other nondurable goods
+311FT,Food and beverage and tobacco products,9,   Food and beverages purchased for off-premises consumption
+,,12,   Other nondurable goods
+313TT,Textile mills and textile product mills,10,   Clothing and footwear
+,,12,   Other nondurable goods
+315AL,Apparel and leather and allied products,10,   Clothing and footwear
+322,Paper products,12,   Other nondurable goods
+323,Printing and related support activities,12,   Other nondurable goods
+324,Petroleum and coal products,11,   Gasoline and other energy goods
+325,Chemical products,12,   Other nondurable goods
+326,Plastics and rubber products,12,   Other nondurable goods
+42,Wholesale trade,2, Goods
+,,13, Services
+441,Motor vehicle and parts dealers,4,   Motor vehicles and parts
+,,6,   Recreational goods and vehicles
+445,Food and beverage stores,9,   Food and beverages purchased for off-premises consumption
+452,General merchandise stores,7,   Other durable goods
+,,12,   Other nondurable goods
+4A0,Other retail,7,   Other durable goods
+,,12,   Other nondurable goods
+481,Air transportation,17,   Transportation services
+482,Rail transportation,17,   Transportation services
+483,Water transportation,17,   Transportation services
+484,Truck transportation,17,   Transportation services
+485,Transit and ground passenger transportation,17,   Transportation services
+486,Pipeline transportation,17,   Transportation services
+487OS,Other transportation and support activities,17,   Transportation services
+,,21,   Other services
+493,Warehousing and storage,21,   Other services
+511,"Publishing industries, except internet (includes software)",21,   Other services
+512,Motion picture and sound recording industries,21,   Other services
+513,Broadcasting and telecommunications,21,   Other services
+514,"Data processing, internet publishing, and other information services",21,   Other services
+521CI,"Federal Reserve banks, credit intermediation, and related activities",20,   Financial services and insurance
+523,"Securities, commodity contracts, and investments",20,   Financial services and insurance
+524,Insurance carriers and related activities,21,   Financial services and insurance
+525,"Funds, trusts, and other financial vehicles",20,   Financial services and insurance
+HS,Housing,15,   Housing and utilities
+ORE,Other real estate,15,   Housing and utilities
+532RL,Rental and leasing services and lessors of intangible assets,21,   Other services
+5411,Legal services,21,   Other services
+5415,Computer systems design and related services,,
+5412OP,"Miscellaneous professional, scientific, and technical services",21,   Other services
+55,Management of companies and enterprises,,
+561,Administrative and support services,21,   Other services
+562,Waste management and remediation services,21,   Other services
+61,Educational services,21,   Other services
+621,Ambulatory health care services,21,   Other services
+622,Hospitals,21,   Other services
+623,Nursing and residential care facilities,21,   Other services
+624,Social assistance,21,   Other services
+711AS,"Performing arts, spectator sports, museums, and related activities",18,   Recreation services
+713,"Amusements, gambling, and recreation industries",18,   Recreation services
+721,Accommodation,15,   Housing and utilities
+722,Food services and drinking places,19,   Food services and accommodations
+81,"Other services, except government",21,   Other services
+GFGD,Federal general government (defense),,
+GFGN,Federal general government (nondefense),,
+GFE,Federal government enterprises,21,   Other services
+GSLG,State and local general government,,
+GSLE,State and local government enterprises,22,  Final consumption expenditures of nonprofit institutions serving households (NPISHs)
+Used,"Scrap, used and secondhand goods",2, Goods
+Other,Noncomparable imports and rest-of-the-world adjustment,2, Goods

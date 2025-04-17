@@ -4,10 +4,12 @@
 \alias{getAgFisheryForestryCommodityOutput}
 \title{Estimate state Ag, Fishery and Forestry commodity output ratios}
 \usage{
-getAgFisheryForestryCommodityOutput(year)
+getAgFisheryForestryCommodityOutput(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema',}
 }
 \value{
 A data frame contains state Ag, Fishery and Forestry commodity output

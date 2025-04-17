@@ -7,7 +7,7 @@
 calculateStateTotalPCE(year)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 }
 \value{
 A data frame contains ratios of statetotal PCE for all states at a specific year at BEA Summary level.

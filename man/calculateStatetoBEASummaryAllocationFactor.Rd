@@ -4,13 +4,15 @@
 \alias{calculateStatetoBEASummaryAllocationFactor}
 \title{Calculate allocation factors based on state-level data, such as employment}
 \usage{
-calculateStatetoBEASummaryAllocationFactor(year, allocationweightsource)
+calculateStatetoBEASummaryAllocationFactor(year, allocationweightsource, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{allocationweightsource}{A string specifying the source being used
 as the weight in the allocation.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains allocation factors

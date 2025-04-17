@@ -1,7 +1,7 @@
 Package: stateior
 Type: Package
 Title: US State Input-Output (stateio) R modeling software
-Version: 0.3.0
+Version: 0.4.0
 Date: 2025-03-06
 Authors@R: c(
   person("Mo","Li", role="aut"),

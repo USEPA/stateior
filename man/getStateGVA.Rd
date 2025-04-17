@@ -4,10 +4,12 @@
 \alias{getStateGVA}
 \title{Get industry-level GVA for all states at a specific year.}
 \usage{
-getStateGVA(year)
+getStateGVA(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema}
 }
 \value{
 A data frame contains state GVA for all states at a specific year.

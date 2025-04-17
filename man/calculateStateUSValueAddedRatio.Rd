@@ -15,10 +15,12 @@ When using state employment (from BEA) as source for allocation,
 introduce national GVA to disaggregate state employment
 in real estate and gov industries from LineCode to BEA Summary.}
 \usage{
-calculateStateUSValueAddedRatio(year)
+calculateStateUSValueAddedRatio(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains ratios of state/US GVA (value added)

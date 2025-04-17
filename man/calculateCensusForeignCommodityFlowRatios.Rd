@@ -7,16 +7,16 @@
 calculateCensusForeignCommodityFlowRatios(
   year,
   flow_ratio_type,
-  ioschema,
+  specs,
   iolevel
 )
 }
 \arguments{
-\item{year}{A numeric value between 2012 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{flow_ratio_type}{Type of commodity flow, can be "export" or "import".}
 
-\item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 
 \item{iolevel}{BEA sector level of detail, currently can only be "Summary",
 theoretically can be "Detail", or "Sector" in future versions.}

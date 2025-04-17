@@ -4,10 +4,12 @@
 \alias{loadBEAStateDatatoBEASummaryMapping}
 \title{Load BEA State data (GVA and Employment) to BEA Summary mapping table}
 \usage{
-loadBEAStateDatatoBEASummaryMapping(dataname)
+loadBEAStateDatatoBEASummaryMapping(dataname, schema)
 }
 \arguments{
 \item{dataname}{A string specifying name of the BEA state data}
+
+\item{schema}{A string of the IO schema}
 }
 \value{
 The mapping table

@@ -4,10 +4,12 @@
 \alias{getFinalDemandCodes}
 \title{Get codes of final demand.}
 \usage{
-getFinalDemandCodes(iolevel)
+getFinalDemandCodes(iolevel, specs)
 }
 \arguments{
 \item{iolevel}{Level of detail, can be "Sector", "Summary, "Detail".}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A vector of final demand codes.

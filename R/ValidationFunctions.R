@@ -151,15 +151,19 @@ validateStateUseAgainstNationlUse <- function(domestic = FALSE, rel_diff = FALSE
 #' Validate Leontief matrix (L) of two-region model and final demand against
 #' SoI and RoUS output.
 #' @param state A text value specifying state of interest.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
-#' @param ioschema A numeric value of either 2012 or 2007 specifying the io schema year.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, can be "Detail", "Summary", or "Sector".
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A list of validation components and result.
-validateTwoRegionLagainstOutput <- function(state, year, ioschema, iolevel) {
+validateTwoRegionLagainstOutput <- function(state, year, iolevel, specs) {
+  # Define BEA_col and year_col
+  schema <- specs$BaseIOSchema
+  ioschema<- schema
+  BEA_col <- paste0("BEA_", schema, "_Summary_Code")
   startLogging()
   # Define industries and commodities
-  industries <- getVectorOfCodes(iolevel, "Industry")
-  commodities <- getVectorOfCodes(iolevel, "Commodity")
+  industries <- getVectorOfCodes(iolevel, "Industry", specs)
+  commodities <- getVectorOfCodes(iolevel, "Commodity", specs)
   ita_column <- ifelse(iolevel == "Detail", "F05100", "F051")
   # Define state abbreviation
   state_abb <- state.abb[which(state.name == state)]

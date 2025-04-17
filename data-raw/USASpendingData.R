@@ -1,3 +1,5 @@
+source("data-raw/data_raw.R")
+library(stringr)
 #' Download Federal Government Spending data by 6-digit NAICS code
 #' By state and county from USASpending.gov.
 #' @param year A numeric value specifying year of interest.
@@ -28,13 +30,21 @@ getFedGovSpending <- function(year) {
   date_last_modified <- stringr::str_match(notes[grep("USAspending Database", notes)],
                                            "Database (.*?) zip")[2]
   data_date <- gsub("-", "", date_last_modified)
+  
+  # In some cases, the data_date is not correct on the home page, instead
+  # acquire it from reading the xml data
+  lines <- readLines("https://files.usaspending.gov/award_data_archive/")[2]
+  data_date <- str_sub(str_sub(lines, str_locate(lines, "<Key>")[1], str_locate(lines, ".zip")[1]-1), -8)
+  
   # Use date_last_modified to determine whether data for input year is available
   if (year + 1 <= gsub("\\-.*", "", date_last_modified)) {
     for (year_N in year_range) {
       # Create the placeholder file
-      FedGovExpzip <- paste0("inst/extdata/FY", year_N, "_All_Contracts_Full_",
+      FedGovExpzip <- paste0(stateio_dir, "/FY",year_N, "_All_Contracts_Full_",
                              data_date, ".zip")
+      
       if (!file.exists(FedGovExpzip)) {
+        options(timeout = 1050)
         utils::download.file(paste0("https://files.usaspending.gov/award_data_archive/FY",
                                     year_N, "_All_Contracts_Full_", data_date, ".zip"),
                              FedGovExpzip, mode = "wb")
@@ -42,7 +52,7 @@ getFedGovSpending <- function(year) {
       # Get the name of all files in the zip archive
       fname <- unzip(FedGovExpzip, list = TRUE)[unzip(FedGovExpzip, list = TRUE)$Length > 0, ]$Name
       # Unzip the file to the designated directory
-      unzip(FedGovExpzip, files = fname, exdir = "inst/extdata/USAspending", overwrite = TRUE)
+      unzip(FedGovExpzip, files = fname, exdir = paste0(stateio_dir, "/USAspending"), overwrite = TRUE)
       file.remove(FedGovExpzip)
       # Load data
       df <- data.frame()
@@ -55,7 +65,7 @@ getFedGovSpending <- function(year) {
                      "primary_place_of_performance_county_name",
                      "award_type_code", "naics_code", "product_or_service_code")
         # Define filename
-        filename <- paste0("inst/extdata/USAspending/", fname[i])
+        filename <- paste0(stateio_dir, "/USAspending/", fname[i])
         # Load data
         df_slice <- as.data.frame(data.table::fread(filename,
                                                     select = columns,

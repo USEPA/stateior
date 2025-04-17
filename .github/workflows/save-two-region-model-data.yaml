@@ -7,7 +7,7 @@ on:
         model_spec:
             description: "Model spec file (in quotes)"
             required: true
-            default: "StateIOv1.2-shoofly"
+            default: "StateIOv1.3-pecan"
             type: string
 
 
@@ -34,12 +34,15 @@ jobs:
           - 2018
           - 2019
           - 2020
+          - 2021
+          - 2022
+          - 2023
 
     # env:
       # R_REMOTES_NO_ERRORS_FROM_WARNINGS: true
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - uses: r-lib/actions/setup-pandoc@v2
 

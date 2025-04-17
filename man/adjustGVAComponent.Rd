@@ -7,7 +7,7 @@
 adjustGVAComponent(year, return)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{return}{A character string showing which attribute to return.
 Can be "GVA", "EmpCompensation", "Tax", or "GOS".}
