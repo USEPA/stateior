@@ -7,8 +7,8 @@
 buildTwoRegionUseModel(
   state,
   year,
-  ioschema,
   iolevel,
+  specs,
   ICF_sensitivity_analysis = FALSE,
   adjust_by = 0,
   domestic = TRUE,
@@ -19,11 +19,11 @@ buildTwoRegionUseModel(
 \arguments{
 \item{state}{A text value specifying state of interest.}
 
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
-\item{ioschema}{A numeric value of either 2012 or 2007 specifying the io schema year.}
+\item{iolevel}{BEA sector level of detail, currently can only be "Summary",}
 
-\item{iolevel}{BEA sector level of detail, currently can only be "Summary",
+\item{specs}{A list of model specs including 'BaseIOSchema'
 theoretically can be "Detail", or "Sector" in future versions.}
 
 \item{ICF_sensitivity_analysis}{A logical value indicating whether to conduct

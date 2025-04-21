@@ -4,12 +4,14 @@
 \alias{getNationalMake}
 \title{Get US Make table of specified iolevel and year.}
 \usage{
-getNationalMake(iolevel, year)
+getNationalMake(iolevel, year, specs)
 }
 \arguments{
 \item{iolevel}{Level of detail, can be "Sector", "Summary, "Detail".}
 
 \item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 The US make table of specified iolevel and year.

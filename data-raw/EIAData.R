@@ -1,8 +1,11 @@
+source("data-raw/data_raw.R")
+#Updated the sheet name from "Codes_and_Descriptions" to "MSN descriptions", and skip row from 9 to 10
+
 #' Get EIA State Energy Data Systems (SEDS) code and description of state electricity data.
 #' @return A data frame of EIA SEDS code and description of state electricity data.
 getEIASEDSCodeDescription <- function() {
   # Download SEDS Codes and Descriptions table
-  CodeDescFile <- "inst/extdata/EIA_SEDS_CodesDescriptions.xlsx"
+  CodeDescFile <- file.path(stateio_dir, "EIA_SEDS_CodesDescriptions.xlsx")
   url <- "https://www.eia.gov/state/seds/CDF/Codes_and_Descriptions.xlsx"
   # Download EIA State Energy Data Systems (SEDS) consumption data
   if (!file.exists(CodeDescFile)) {
@@ -13,8 +16,8 @@ getEIASEDSCodeDescription <- function() {
                                            "Released: (.*?)<br/>")[2]
   date_accessed <- as.character(as.Date(file.mtime(CodeDescFile)))
   CodeDesc <- as.data.frame(readxl::read_excel(CodeDescFile,
-                                               sheet = "Codes_and_Descriptions",
-                                               skip = 9))
+                                               sheet = "MSN descriptions",
+                                               skip = 10))
   # Write data to .rds
   data_name <- paste("EIA_SEDS_CodeDescription",
                      utils::packageDescription("stateior", fields = "Version"),
@@ -33,6 +36,7 @@ getEIASEDSCodeDescription <- function() {
 # Download, save and document state electricity consumption code and description (from EIA)
 getEIASEDSCodeDescription()
 
+
 #' Get state electricity consumption data (total consumption and interstate trade,
 #' in million kilowatt hours) from EIA State Energy Data Systems (SEDS), for a
 #' specified year.
@@ -42,7 +46,7 @@ getEIASEDSCodeDescription()
 #' year.
 getEIASEDSStateElectricityConsumption <- function(year) {
   # Download state electricity consumption data from EIA State Energy Data Systems (SEDS)
-  ConsumptionFile <- "inst/extdata/EIA_SEDS_consumption.csv"
+  ConsumptionFile <- file.path(stateio_dir, "EIA_SEDS_consumption.csv")
   url <- "https://www.eia.gov/state/seds/sep_use/total/csv/use_all_phy.csv"
   if (!file.exists(ConsumptionFile)) {
     utils::download.file(url, ConsumptionFile, mode = "wb")
@@ -54,6 +58,16 @@ getEIASEDSStateElectricityConsumption <- function(year) {
   Consumption <- utils::read.table(ConsumptionFile, sep = ",", header = TRUE,
                                    stringsAsFactors = FALSE, check.names = FALSE,
                                    fill = TRUE)
+  if (!year %in% colnames(Consumption)) {
+    ConsumptionFile <- file.path(stateio_dir, "EIA_SEDS_consumption_prelim.csv")
+    url_prelim <- "https://www.eia.gov/state/seds/sep_update/use_all_phy_update.csv"
+    utils::download.file(url_prelim, ConsumptionFile, mode = "wb")
+    date_last_modified <- "Preliminary data"
+    date_accessed <- as.character(as.Date(file.mtime(ConsumptionFile)))
+    Consumption <- utils::read.table(ConsumptionFile, sep = ",", header = TRUE,
+                                     stringsAsFactors = FALSE, check.names = FALSE,
+                                     fill = TRUE)
+  }
   if (year %in% colnames(Consumption)) {
     # Save data
     df <- Consumption[, c("State", "MSN",  year)]
@@ -72,8 +86,8 @@ getEIASEDSStateElectricityConsumption <- function(year) {
                                   date_last_modified = date_last_modified,
                                   date_accessed = date_accessed)
   } else {
-    logging::logwarn(paste(year, "state electricity consumption data is not",
-                           "avaliable from EIA SEDS. Nothing is returned."))
+    stop(paste(year, "state electricity consumption data is not",
+               "avaliable from EIA SEDS. Nothing is returned."))
   }
 }
 # Download, save and document EIA SEDS state electricity consumption

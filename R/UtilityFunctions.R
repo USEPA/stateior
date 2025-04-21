@@ -9,15 +9,20 @@ startLogging <- function() {
 #' @param appendSchema bool, set to FALSE to ignore schema in name
 #' @return The data loaded from useeior
 loadDatafromUSEEIOR <- function(dataset, appendSchema = TRUE) {
-  if(appendSchema && !"sch" %in% dataset) {
-    dataset_srch <- paste0(dataset, "_12sch")
-    # currently only uses 2012 schema
-    # required due to renaming in useeior #280
+  if(appendSchema && !(grepl("sch", dataset))) {
+    dataset_srch <- paste0(dataset, "_17sch")
+    dataset_name <- dataset_srch
+    # default 2017 schema
+  } else if(appendSchema && (grepl("12sch", dataset))) {
+    dataset_srch <- gsub("_12sch", "", dataset)
+    dataset_name <- dataset
   } else {
     dataset_srch <- dataset
+    dataset_name <- dataset_srch
   }
-  utils::data(package = "useeior", list = dataset_srch)
-  df <- get(dataset)
+  logging::loginfo(paste0("Loading ", dataset_srch, " from USEEIOr."))
+  utils::data(package = "useeior", list = dataset_name)
+  df <- get(dataset_srch)
   return(df)
 }
 
@@ -46,23 +51,27 @@ joinStringswithSlashes <- function(...) {
 #' Extract desired columns from SchemaInfo, return vectors with strings of codes.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
 #' @param colName A text value specifying desired column name.
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A vector of codes.
 #' @export
-getVectorOfCodes <- function(iolevel, colName) {
+getVectorOfCodes <- function(iolevel, colName, specs) {
+  # Define BEA_col and year_col
+  schema <- specs$BaseIOSchema
   SchemaInfo <- readCSV(system.file("extdata",
-                                    paste0("2012_", iolevel, "_Schema_Info.csv"),
+                                    paste0(schema,"_", iolevel, "_Schema_Info.csv"),
                                     package = "stateior"))
   return(as.vector(stats::na.omit(SchemaInfo[, c("Code", colName)])[, "Code"]))
 }
 
 #' Get codes of final demand.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
+#' @param specs A list of model specs including 'BaseIOSchema'
 #' @return A vector of final demand codes.
-getFinalDemandCodes <- function(iolevel) {
+getFinalDemandCodes <- function(iolevel, specs) {
   FinalDemandCodes <- unlist(sapply(list("HouseholdDemand", "InvestmentDemand",
                                          "ChangeInventories", "Export", "Import",
                                          "GovernmentDemand"),
-                                    getVectorOfCodes, iolevel = iolevel))
+                                    getVectorOfCodes, iolevel = iolevel, specs = specs))
   return(FinalDemandCodes)
 }
 
@@ -100,9 +109,10 @@ mapFIPS5toLocationNames <- function(fipscodes, fipssystem) {
 
 #' Load BEA State data (GVA and Employment) to BEA Summary mapping table
 #' @param dataname A string specifying name of the BEA state data
+#' @param schema A string of the IO schema
 #' @return The mapping table
-loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
-  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO2012Schema.csv")
+loadBEAStateDatatoBEASummaryMapping <- function(dataname, schema) {
+  filename <- paste0("Crosswalk_State", dataname, "toBEASummaryIO", schema, "Schema.csv")
   mapping <- readCSV(system.file("extdata", filename, package = "stateior"))
   return(mapping)
 }
@@ -113,21 +123,22 @@ loadBEAStateDatatoBEASummaryMapping <- function(dataname) {
 #' @param location A text value specifying desired location,
 #' can be state name like "Georgia" or "RoUS" representing Rest of US.
 #' @param iolevel Level of detail, can be "Sector", "Summary, "Detail".
-#' @param disagg optional, disaggregation specs 
+#' @param specs A list of model specs including 'BaseIOSchema'
+#' @param disagg optional, disaggregation specs
 #' @return A text value in the format of code/location.
-getBEASectorCodeLocation <- function(sector_type, location, iolevel, disagg=NULL) {
+getBEASectorCodeLocation <- function(sector_type, location, iolevel, specs, disagg=NULL) {
   # Get code
   if (sector_type != "FinalDemand") {
     if (sector_type == "InternationalTradeAdjustment") {
       code <- ifelse(iolevel == "Detail", "F05100", "F051")
     } else {
-      code <- getVectorOfCodes(iolevel, sector_type)
+      code <- getVectorOfCodes(iolevel, sector_type, specs)
       if (!is.null(disagg)) {
         code <- disaggregateStateSectorLists(code, disagg)
       }
     }
   } else {
-    code <- getFinalDemandCodes(iolevel)
+    code <- getFinalDemandCodes(iolevel, specs)
   }
   # Get code_loc
   if (location != "RoUS") {
@@ -142,7 +153,7 @@ getBEASectorCodeLocation <- function(sector_type, location, iolevel, disagg=NULL
 
 #' Generate two-region data filename with .rds as suffix.
 #' @description Generate two-region data filename with .rds as suffix.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
@@ -155,9 +166,10 @@ getTwoRegionDataFileName <- function(year, iolevel, dataname) {
 
 #' Load flowsa FlowByActivity or FlowBySector data from Data Commons
 #' @param dataname A string specifying data name, can be "NOAA_FisheryLandings".
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
+#' @param model_ver A string specifying version of the data, default is NULL, can be "v0.1.0".
 #' @return A data frame contains state data from FLOWSA.
-getFlowsaData <- function(dataname, year) {
+getFlowsaData <- function(dataname, year, model_ver = NULL) {
   if (is.null(model_ver)) {
     model_ver <- "NULL"
   }
@@ -185,9 +197,11 @@ getFlowsaData <- function(dataname, year) {
   }
   # Define file directory
   directory <- file.path(rappdirs::user_data_dir(), subdirectory)
+  logging::loginfo(paste0("Loading ", filename, " from local folder..."))
   if (!file.exists(file.path(directory, filename))) {
     url <- paste0("https://dmap-data-commons-ord.s3.amazonaws.com/", subdirectory)
-    logging::loginfo(paste0("file not found, downloading from ", url))
+    logging::loginfo(paste0(filename, " not found, downloading from Data Commons at ",
+                            subdirectory, "..."))
     # Check for and create directory if necessary
     if (!file.exists(directory)) {
       dir.create(directory, recursive = TRUE)
@@ -210,7 +224,7 @@ getFlowsaData <- function(dataname, year) {
 #' @return A dataframe of StateIO data registry on Data Commons.
 getRegistryonDataCommons <- function(data_group = "stateio") {
   registry_ls <- aws.s3::get_bucket(bucket = "dmap-data-commons-ord",
-                                    prefix = data_group)
+                                    prefix = data_group, max = Inf)
   registry <- cbind.data.frame(basename(sapply(registry_ls, `[[`, "Key")),
                                sapply(registry_ls, `[[`, "LastModified"),
                                stringsAsFactors = FALSE)
@@ -299,22 +313,22 @@ findLatestStateIODatainLocalDirectory <- function(filename) {
 loadStateIODataFile <- function(filename, ver = NULL) {
   # Define file name
   if (is.null(ver)) {
-    # Look for the latest file in Data Commons first.
+    # Look for the latest file in local data directory first.
     tryCatch(
       expr = {
-        f <- findLatestStateIODataonDataCommons(filename)
+        f <- findLatestStateIODatainLocalDirectory(filename)
       },
       error = function(e) {
-        logging::logwarn(paste(filename, "not found on Data Commons.",
-                               "Looking in local data directory now..."))
-        # If filename not found in Data Commons, look for it in local data directory.
+        logging::loginfo(paste(filename, "not found in local data directory.",
+                               "Looking on Data Commons now..."))
+        # If filename not found locally, look for it on Data Commons.
         tryCatch(
           expr = {
-            f <<- findLatestStateIODatainLocalDirectory(filename)
+            f <<- findLatestStateIODataonDataCommons(filename)
           },
           error = function(e) {
             logging::logwarn(paste(filename,
-                                   "not found in local data directory, either."))
+                                   "not found on Data Commons, either."))
             message("Please confirm ", filename, " is correctly spelled. ",
                     "You should be able to find the correctly spelled file on ",
                     "https://dmap-data-commons-ord.s3.amazonaws.com/index.html#stateio/. ",
@@ -347,7 +361,7 @@ loadStateIODataFile <- function(filename, ver = NULL) {
 
 #' Get a datetime object for desired data file on the DataCommons server.
 #' @description Get a datetime object for desired data file on the DataCommons server.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
@@ -364,7 +378,7 @@ getFileUpdateTimefromDataCommons <- function(year, iolevel, dataname) {
 
 #' Write a datetime object for desired data file to local folder.
 #' @description Get a datetime object for desired data file to local folder.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",
@@ -379,7 +393,7 @@ writeDatafileMeta <- function(year, iolevel, dataname, path) {
 
 #' Load a datetime object for desired data file from local folder.
 #' @description Load a datetime object for desired data file from local folder.
-#' @param year A numeric value between 2007 and 2017 specifying the year of interest.
+#' @param year A numeric value specifying the year of interest.
 #' @param iolevel BEA sector level of detail, currently can only be "Summary",
 #' theoretically can be "Detail", or "Sector" in future versions.
 #' @param dataname Name of desired IO data, can be "Make", "Use", "DomesticUse",

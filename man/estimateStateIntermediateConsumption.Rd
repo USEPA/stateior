@@ -6,10 +6,12 @@
 For each state and industry, calculate state_US_IndustryOutput_ratio,
 then multiply US_Use_Intermediate by the ratio to get State_Use_Intermediate.}
 \usage{
-estimateStateIntermediateConsumption(year)
+estimateStateIntermediateConsumption(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A list of data.frames containing state Intermediate Consumption.

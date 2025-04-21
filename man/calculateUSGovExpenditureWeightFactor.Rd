@@ -7,7 +7,7 @@
 calculateUSGovExpenditureWeightFactor(year, defense)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2019 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
 \item{defense}{A logical value indicating if the expenditure is spent on defense or not.}
 }

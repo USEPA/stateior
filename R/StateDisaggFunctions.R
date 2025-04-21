@@ -317,8 +317,6 @@ createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggStat
   
   stop("The function is not yet valid")
   
-  temp <-1
-  
   #Get subset of ratios for current year
   stateDFYear <- subset(disagg$stateDF, Year == disaggYear & State == disaggState)
   
@@ -373,7 +371,6 @@ createDisaggFilesFromProxyData <- function(model, disagg, disaggYear, disaggStat
   
   model$DisaggregationSpecs[[disagg$OriginalSectorCode]] <- disagg
 
-  temp <-2 
   return(model)
   
 }

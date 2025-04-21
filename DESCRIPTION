@@ -1,13 +1,13 @@
 Package: stateior
 Type: Package
 Title: US State Input-Output (stateio) R modeling software
-Version: 0.3.0
-Date: 2025-03-06
+Version: 0.4.0
+Date: 2025-04-17
 Authors@R: c(
   person("Mo","Li", role="aut"),
   person("Jorge","Vendries", email="jvendries@gmail.com", role="aut"),
+  person("Julie", "Chen", email="julie.chen@erg.com", role="aut"),
   person("Ben","Young", email="ben.young@erg.com", role="aut"),
-  person("Brandon", "Istenes", email="bistenes@gmail.com", role="aut"),
   person("Wesley", "Ingwersen", email="ingwersen.wesley@epa.gov", role="cre"))
 Description:
   stateior is an R package that generates and provides US state Make and Use tables

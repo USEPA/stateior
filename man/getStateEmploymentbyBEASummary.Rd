@@ -6,10 +6,14 @@
 FlowBySector data from flowsa.
 Map to BEA Summary sectors.}
 \usage{
-getStateEmploymentbyBEASummary(year)
+getStateEmploymentbyBEASummary(year, specs, datasource = "BEA")
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema',}
+
+\item{datasource}{A str to differentiate primary data source for employment}
 }
 \value{
 A data frame contains State Employment by BEA Summary.

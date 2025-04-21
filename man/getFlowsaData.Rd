@@ -4,12 +4,14 @@
 \alias{getFlowsaData}
 \title{Load flowsa FlowByActivity or FlowBySector data from Data Commons}
 \usage{
-getFlowsaData(dataname, year)
+getFlowsaData(dataname, year, model_ver = NULL)
 }
 \arguments{
 \item{dataname}{A string specifying data name, can be "NOAA_FisheryLandings".}
 
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
+
+\item{model_ver}{A string specifying version of the data, default is NULL, can be "v0.1.0".}
 }
 \value{
 A data frame contains state data from FLOWSA.

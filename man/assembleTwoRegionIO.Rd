@@ -4,12 +4,14 @@
 \alias{assembleTwoRegionIO}
 \title{Assemble two-region make, use, domestic use, and Use tables as well as commodity and industry outputs.}
 \usage{
-assembleTwoRegionIO(year, iolevel, disagg_specs = NULL)
+assembleTwoRegionIO(year, iolevel, specs, disagg_specs = NULL)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
 
-\item{iolevel}{BEA sector level of detail, currently can only be "Summary",
+\item{iolevel}{BEA sector level of detail, currently can only be "Summary",}
+
+\item{specs}{A list of model specs including 'BaseIOSchema',
 theoretically can be "Detail", or "Sector" in future versions.}
 
 \item{disagg_specs}{name of disaggregation.}

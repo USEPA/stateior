@@ -5,10 +5,12 @@
 \title{Build a state use model for all 52 states/regions
 (including DC and Overseas) for a given year}
 \usage{
-buildStateUseModel(year)
+buildStateUseModel(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A list of state Use table, Domestic Use table and industry output.

@@ -1,6 +1,10 @@
 # Generate and save state Make tables
 # Build model
-StateSupplyModel <- buildStateSupplyModel(year)
+specs <- {}
+specs$BaseIOSchema <- 2017
+specs$model_ver <- "0.4.0"
+
+StateSupplyModel <- buildStateSupplyModel(year, specs)
 # Subset data set
 for (name in names(StateSupplyModel)) {
   df <- StateSupplyModel[[name]]

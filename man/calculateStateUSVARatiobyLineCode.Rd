@@ -4,10 +4,12 @@
 \alias{calculateStateUSVARatiobyLineCode}
 \title{Calculate state-US GVA (value added) ratios by BEA State LineCode.}
 \usage{
-calculateStateUSVARatiobyLineCode(year)
+calculateStateUSVARatiobyLineCode(year, specs)
 }
 \arguments{
-\item{year}{A numeric value between 2007 and 2017 specifying the year of interest.}
+\item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 A data frame contains ratios of state/US GVA (value added)

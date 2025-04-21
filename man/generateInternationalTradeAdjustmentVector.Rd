@@ -4,12 +4,14 @@
 \alias{generateInternationalTradeAdjustmentVector}
 \title{Generate international trade adjustment vector from Use and Import matrix.}
 \usage{
-generateInternationalTradeAdjustmentVector(iolevel, year)
+generateInternationalTradeAdjustmentVector(iolevel, year, specs)
 }
 \arguments{
 \item{iolevel}{Level of detail, can be "Sector", "Summary, "Detail".}
 
 \item{year}{A numeric value specifying the year of interest.}
+
+\item{specs}{A list of model specs including 'BaseIOSchema'}
 }
 \value{
 An international trade adjustment vector with names as commodity codes

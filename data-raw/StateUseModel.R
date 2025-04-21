@@ -1,6 +1,10 @@
 # Generate and save state Use and Domestic Use tables and Industry and Commodity Output
 # Build model
-StateUseModel <- buildStateUseModel(year)
+specs <- {}
+specs$BaseIOSchema <- 2017
+specs$model_ver <- "0.4.0"
+
+StateUseModel <- buildStateUseModel(year, specs)
 # Subset data set
 for (name in names(StateUseModel)) {
   df <- StateUseModel[[name]]
